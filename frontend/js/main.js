@@ -160,7 +160,6 @@ function initWaitlistForm() {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
-            const wallet = document.getElementById('wallet').value;
             const submitBtn = form.querySelector('button[type="submit"]');
             
             // Validate email
@@ -182,14 +181,14 @@ function initWaitlistForm() {
                     // Google Apps Script will still receive and process the data
                     const res = await fetch(WAITLIST_ENDPOINT, {
                         method: 'POST',
-                        body: JSON.stringify({ email, wallet }),
+                        body: JSON.stringify({ email }),
                         mode: 'no-cors'
                     });
 
                     // With no-cors, we can't read response, but data is sent
                     form.reset();
                     showNotification('Successfully joined the waitlist! We\'ll be in touch soon.', 'success');
-                    trackWaitlistSignup(email, wallet);
+                    trackWaitlistSignup(email);
                 } catch (err) {
                     console.error('Waitlist submission error:', err);
                     showNotification('Submission failed. Try again later.', 'error');
@@ -439,9 +438,9 @@ function initTooltips() {
 }
 
 // Analytics Tracking (placeholder)
-function trackWaitlistSignup(email, wallet) {
+function trackWaitlistSignup(email) {
     // Replace with actual analytics tracking
-    console.log('Waitlist signup:', { email, wallet, timestamp: new Date().toISOString() });
+    console.log('Waitlist signup:', { email, timestamp: new Date().toISOString() });
     
     // Example Google Analytics event
     // gtag('event', 'signup', {

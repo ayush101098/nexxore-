@@ -8,9 +8,8 @@ This guide shows you how to connect your waitlist form to Google Sheets.
 2. Create a new spreadsheet
 3. Name it "Nexxore Waitlist"
 4. In row 1, add headers:
-   - Column A: **Email**
-   - Column B: **Wallet Address**
-   - Column C: **Timestamp**
+  - Column A: **Email**
+  - Column B: **Timestamp**
 
 ## Step 2: Add Apps Script
 
@@ -25,10 +24,9 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents);
     
     const email = data.email || '';
-    const wallet = data.wallet || '';
     const timestamp = new Date().toISOString();
     
-    sheet.appendRow([email, wallet, timestamp]);
+    sheet.appendRow([email, timestamp]);
     
     return ContentService.createTextOutput(JSON.stringify({
       ok: true,
