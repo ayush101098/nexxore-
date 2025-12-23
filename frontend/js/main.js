@@ -178,40 +178,21 @@ function initWaitlistForm() {
 
             async function doSubmit() {
                 try {
-                    // Use CORS proxy to bypass cross-origin restrictions
-                    const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-                    const fullUrl = corsProxy + WAITLIST_ENDPOINT;
-                    
-                    const res = await fetch(fullUrl, {
+                    // Use no-cors mode to bypass CORS restrictions
+                    // Google Apps Script will still receive and process the data
+                    const res = await fetch(WAITLIST_ENDPOINT, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email, wallet }),
-                        mode: 'cors'
+                        mode: 'no-cors'
                     });
 
-                    const text = await res.text();
-                    let data = {};
-                    try { data = JSON.parse(text); } catch (err) { data = { ok: true }; }
-
+                    // With no-cors, we can't read response, but data is sent
                     form.reset();
                     showNotification('Successfully joined the waitlist! We\'ll be in touch soon.', 'success');
                     trackWaitlistSignup(email, wallet);
                 } catch (err) {
                     console.error('Waitlist submission error:', err);
-                    // Fallback: Try direct request without proxy
-                    try {
-                        await fetch(WAITLIST_ENDPOINT, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email, wallet }),
-                            mode: 'no-cors'
-                        });
-                        form.reset();
-                        showNotification('Successfully joined the waitlist! We\'ll be in touch soon.', 'success');
-                        trackWaitlistSignup(email, wallet);
-                    } catch (fallbackErr) {
-                        showNotification('Submission failed. Try again later.', 'error');
-                    }
+                    showNotification('Submission failed. Try again later.', 'error');
                 } finally {
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
