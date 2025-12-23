@@ -173,23 +173,10 @@ function initWaitlistForm() {
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'Joining...';
             submitBtn.disabled = true;
-            // POST to configured endpoint. Replace the placeholder below with your
-            // deployed Google Apps Script Web App URL.
-            const WAITLIST_ENDPOINT = 'REPLACE_WITH_YOUR_APPS_SCRIPT_URL';
+            
+            const WAITLIST_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzfgnxfO9tUHiE5w642YB5V7B7uA82m58DYF6dF_vRbQ2n2mdkqmzUmnPwwJxhAYdSq/exec';
 
             async function doSubmit() {
-                // If user hasn't replaced the placeholder, fall back to simulated submit
-                if (WAITLIST_ENDPOINT === 'REPLACE_WITH_YOUR_APPS_SCRIPT_URL') {
-                    // Simulated response for local testing
-                    await new Promise(r => setTimeout(r, 800));
-                    form.reset();
-                    submitBtn.textContent = originalText;
-                    submitBtn.disabled = false;
-                    showNotification('Successfully joined the waitlist! (local test)', 'success');
-                    trackWaitlistSignup(email, wallet);
-                    return;
-                }
-
                 try {
                     const res = await fetch(WAITLIST_ENDPOINT, {
                         method: 'POST',
