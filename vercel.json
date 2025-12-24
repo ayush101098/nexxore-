@@ -1,9 +1,13 @@
 {
   "version": 2,
   "builds": [
+    { "src": "agents/server.js", "use": "@vercel/node" },
     { "src": "frontend/**", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/api/(.*)", "dest": "/agents/server.js" },
+    { "src": "/research.html", "dest": "/agents/server.js" },
+    { "src": "/dashboard", "dest": "/agents/server.js" },
     { "src": "/(.*)", "dest": "/frontend/$1" }
   ]
 }
