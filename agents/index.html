@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexxore - Crypto News Intelligence</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .logo {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #00d4ff, #0099ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tagline {
+      font-size: 1.1rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 40px;
+    }
+
+    .hero-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+      margin-bottom: 80px;
+    }
+
+    .hero-text h1 {
+      font-size: 2.5rem;
+      line-height: 1.3;
+      margin-bottom: 20px;
+      color: #00d4ff;
+    }
+
+    .hero-text p {
+      font-size: 1.05rem;
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+
+    .cta-button {
+      display: inline-block;
+      padding: 16px 40px;
+      background: linear-gradient(135deg, #00d4ff, #0099ff);
+      color: #000;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1.05rem;
+      transition: all 0.3s;
+      border: none;
+      cursor: pointer;
+    }
+
+    .cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+    }
+
+    .hero-image {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .hero-image svg {
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      margin-bottom: 80px;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 30px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s;
+    }
+
+    .feature-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-5px);
+    }
+
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+    }
+
+    .feature-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #00d4ff;
+    }
+
+    .feature-desc {
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.5;
+    }
+
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 60px;
+    }
+
+    .news-item {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      transition: all 0.3s;
+      border-left: 4px solid #00d4ff;
+    }
+
+    .news-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-5px);
+    }
+
+    .news-item.bullish {
+      border-left-color: #22c55e;
+    }
+
+    .news-item.bearish {
+      border-left-color: #ef4444;
+    }
+
+    .news-source {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .news-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+
+    .news-summary {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .sentiment-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(0, 212, 255, 0.3);
+      border-top-color: #00d4ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    footer {
+      text-align: center;
+      padding-top: 60px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .hero-section {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-text h1 {
+        font-size: 1.8rem;
+      }
+
+      .news-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="logo">🌐 NEXXORE</div>
+      <p class="tagline">Real-Time Crypto News Intelligence & Analysis</p>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-text">
+        <h1>Stay Ahead with Real-Time Crypto News</h1>
+        <p>Nexxore aggregates crypto news from 30+ sources, analyzes sentiment, and delivers actionable insights instantly. Never miss an alpha opportunity again.</p>
+        <button class="cta-button" onclick="goToDashboard()">📰 Open News Dashboard</button>
+      </div>
+      <div class="hero-image">
+        <div style="font-size: 4rem; margin: 30px 0;">📊</div>
+        <p style="color: rgba(255,255,255,0.6); font-size: 0.95rem;">Live News Analysis</p>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section>
+      <h2 style="text-align: center; font-size: 2rem; margin-bottom: 50px; color: #00d4ff;">Key Features</h2>
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon">📰</div>
+          <div class="feature-title">Multi-Source News</div>
+          <div class="feature-desc">Real-time news from 30+ crypto publications: CoinDesk, CoinTelegraph, The Block, and more.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <div class="feature-title">AI Analysis (Coming)</div>
+          <div class="feature-desc">LLM-powered analysis to summarize, analyze sentiment, and generate actionable insights from news.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <div class="feature-title">Sentiment Tracking</div>
+          <div class="feature-desc">Advanced sentiment analysis to identify market mood, bullish/bearish trends, and protocol mentions.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-title">Real-Time Updates</div>
+          <div class="feature-desc">Live news feed with instant sentiment updates. Never miss breaking crypto news again.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <div class="feature-title">Protocol Tracking</div>
+          <div class="feature-desc">Automatic protocol detection and mention tracking across all crypto news sources.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔔</div>
+          <div class="feature-title">Smart Alerts</div>
+          <div class="feature-desc">Get notified about major news, sentiment spikes, and protocol events via Telegram or email.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- News Grid Section -->
+    <section>
+      <h2 style="text-align: center; font-size: 2rem; margin-bottom: 50px; color: #00d4ff;">Latest Crypto News</h2>
+      <div class="news-grid" id="newsGrid">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p style="margin-top: 15px;">Loading latest news...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section style="text-align: center; margin-bottom: 60px;">
+      <h2 style="font-size: 2rem; margin-bottom: 20px; color: #00d4ff;">Ready to Get Started?</h2>
+      <p style="font-size: 1.1rem; color: rgba(255,255,255,0.7); margin-bottom: 30px;">
+        Open the dashboard to explore real-time crypto news, analyze sentiment, and discover trading opportunities.
+      </p>
+      <button class="cta-button" onclick="goToDashboard()" style="font-size: 1.15rem; padding: 18px 50px;">
+        🚀 Launch Dashboard Now
+      </button>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <p>🌐 Nexxore Research Agent v1.0 | Real-time crypto intelligence platform</p>
+      <p style="margin-top: 10px; font-size: 0.85rem;">Powered by NewsAPI, OpenAI, and CoinGecko</p>
+    </footer>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:3000';
+
+    // Load latest news on page load
+    document.addEventListener('DOMContentLoaded', loadLatestNews);
+
+    async function loadLatestNews() {
+      try {
+        const response = await fetch(`${API_BASE}/api/news`);
+        if (!response.ok) throw new Error('Failed to fetch news');
+        
+        const news = await response.json();
+        displayNewsGrid(news.slice(0, 6));
+      } catch (err) {
+        console.error('Error loading news:', err);
+        document.getElementById('newsGrid').innerHTML = `
+          <div class="loading" style="grid-column: 1/-1;">
+            <p>Unable to load news. Please check connection and try again.</p>
+          </div>
+        `;
+      }
+    }
+
+    function displayNewsGrid(articles) {
+      const grid = document.getElementById('newsGrid');
+      
+      if (articles.length === 0) {
+        grid.innerHTML = '<div class="loading" style="grid-column: 1/-1;">No news available</div>';
+        return;
+      }
+
+      grid.innerHTML = articles.map(article => {
+        const sentiment = article.sentiment > 0.3 ? 'bullish' : article.sentiment < -0.3 ? 'bearish' : '';
+        const sentimentText = article.sentiment > 0.3 ? '📈 Bullish' : article.sentiment < -0.3 ? '📉 Bearish' : '➡️ Neutral';
+        
+        return `
+          <div class="news-item ${sentiment}">
+            <div class="news-source">${article.source || 'Unknown'}</div>
+            <div class="news-title">${article.title}</div>
+            <div class="news-summary">${(article.summary || article.description || '').substring(0, 100)}...</div>
+            <div>
+              <span class="sentiment-badge">${sentimentText}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function goToDashboard() {
+      window.location.href = 'http://localhost:3000/';
+    }
+  </script>
+</body>
+</html>

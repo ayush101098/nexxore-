@@ -113,6 +113,10 @@ async function handleRequest(req, res) {
       return serveDashboard(req, res);
     }
     
+    if (pathname === '/research.html' && method === 'GET') {
+      return serveResearchPage(req, res);
+    }
+    
     // Health check
     if (pathname === '/api/health' && method === 'GET') {
       return healthCheck(req, res);
@@ -176,6 +180,14 @@ async function serveLandingPage(req, res) {
 async function serveDashboard(req, res) {
   const dashboardPath = path.join(__dirname, 'dashboard.html');
   const content = fs.readFileSync(dashboardPath, 'utf-8');
+  
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end(content);
+}
+
+async function serveResearchPage(req, res) {
+  const researchPath = path.join(__dirname, 'research.html');
+  const content = fs.readFileSync(researchPath, 'utf-8');
   
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.end(content);
