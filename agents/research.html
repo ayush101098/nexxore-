@@ -485,12 +485,23 @@
 
   <script>
     const API_BASE = window.location.origin + '/api';
+    
+    console.log('🚀 Research Dashboard Initialized');
+    console.log('📡 API Base URL:', API_BASE);
 
     // Fetch and display news
     async function loadNews() {
+      console.log('📰 Loading news...');
       try {
         const response = await fetch(`${API_BASE}/news`);
+        console.log('📥 News response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('✅ News data loaded:', data);
         
         const newsList = document.getElementById('newsList');
         const newsCount = document.getElementById('newsCount');
@@ -504,20 +515,30 @@
               <span class="news-sentiment sentiment-${item.sentiment || 'neutral'}">${item.sentiment || 'neutral'}</span>
             </div>
           `).join('');
+          console.log('✅ News rendered:', data.news.length, 'items');
         } else {
           newsList.innerHTML = '<div class="error">No news available</div>';
+          console.warn('⚠️ No news data found');
         }
       } catch (error) {
-        console.error('Error loading news:', error);
-        document.getElementById('newsList').innerHTML = '<div class="error">Failed to load news</div>';
+        console.error('❌ Error loading news:', error);
+        document.getElementById('newsList').innerHTML = `<div class="error">Failed to load news: ${error.message}</div>`;
       }
     }
 
     // Fetch and display trending tokens
     async function loadTrending() {
+      console.log('🔥 Loading trending tokens...');
       try {
         const response = await fetch(`${API_BASE}/trending`);
+        console.log('📥 Trending response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('✅ Trending data loaded:', data);
         
         const trendingList = document.getElementById('trendingList');
         const trendingCount = document.getElementById('trendingCount');
@@ -536,12 +557,14 @@
               </div>
             </div>
           `).join('');
+          console.log('✅ Trending rendered:', data.trending.length, 'tokens');
         } else {
           trendingList.innerHTML = '<div class="error">No trending data available</div>';
+          console.warn('⚠️ No trending data found');
         }
       } catch (error) {
-        console.error('Error loading trending:', error);
-        document.getElementById('trendingList').innerHTML = '<div class="error">Failed to load trending tokens</div>';
+        console.error('❌ Error loading trending:', error);
+        document.getElementById('trendingList').innerHTML = `<div class="error">Failed to load trending: ${error.message}</div>`;
       }
     }
 
