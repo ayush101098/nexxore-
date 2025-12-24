@@ -188,7 +188,7 @@ async function getNews(req, res) {
   );
 
   res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify(news));
+  res.end(JSON.stringify({ news }));
 }
 
 async function analyzeNews(req, res) {
@@ -235,7 +235,7 @@ async function getTrendingTokens(req, res) {
   const trending = await newsFetcher.fetchTrendingTokens();
   
   res.writeHead(200);
-  res.end(JSON.stringify(trending));
+  res.end(JSON.stringify({ trending }));
 }
 
 async function healthCheck(req, res) {
