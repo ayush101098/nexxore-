@@ -194,13 +194,24 @@ async function serveResearchPage(req, res) {
 }
 
 async function getNews(req, res) {
-  const news = await newsFetcher.fetchCryptoNews(
-    ['crypto', 'defi', 'ethereum', 'aave', 'curve'],
-    20
-  );
-
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ news }));
+  try {
+    console.log('📰 Fetching news...');
+    const news = await newsFetcher.fetchCryptoNews(
+      ['crypto', 'defi', 'ethereum', 'bitcoin', 'web3'],
+      20
+    );
+    
+    console.log(`✅ Fetched ${news.length} news articles`);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ news }));
+  } catch (err) {
+    console.error('❌ Error fetching news:', err.message);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ 
+      news: [], 
+      error: `Failed to fetch news: ${err.message}` 
+    }));
+  }
 }
 
 async function analyzeNews(req, res) {
@@ -231,23 +242,46 @@ async function chatHandler(req, res) {
     try {
       const { message, context } = JSON.parse(body);
       
+      // Check if OpenAI API key is configured
+      if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.startsWith('abcd')) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          response: 'Chat functionality requires a valid OpenAI API key. Please configure OPENAI_API_KEY in your environment variables.' 
+        }));
+        return;
+      }
+      
       // Use LLM to chat
       const response = await llmEngine.chat(message, context || {});
       
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ response }));
     } catch (err) {
-      res.writeHead(400);
-      res.end(JSON.stringify({ error: err.message }));
+      console.error('Chat error:', err);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        response: `Error: ${err.message}. The chat service may be temporarily unavailable.` 
+      }));
     }
   });
 }
 
 async function getTrendingTokens(req, res) {
-  const trending = await newsFetcher.fetchTrendingTokens();
-  
-  res.writeHead(200);
-  res.end(JSON.stringify({ trending }));
+  try {
+    console.log('🔥 Fetching trending tokens...');
+    const trending = await newsFetcher.fetchTrendingTokens();
+    
+    console.log(`✅ Fetched ${trending.length} trending tokens`);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ trending }));
+  } catch (err) {
+    console.error('❌ Error fetching trending:', err.message);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ 
+      trending: [], 
+      error: `Failed to fetch trending tokens: ${err.message}` 
+    }));
+  }
 }
 
 async function healthCheck(req, res) {

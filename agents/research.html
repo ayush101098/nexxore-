@@ -506,7 +506,10 @@
         const newsList = document.getElementById('newsList');
         const newsCount = document.getElementById('newsCount');
         
-        if (data.news && data.news.length > 0) {
+        if (data.error) {
+          newsList.innerHTML = `<div class="error">${data.error}</div>`;
+          console.error('❌ API returned error:', data.error);
+        } else if (data.news && data.news.length > 0) {
           newsCount.textContent = data.news.length;
           newsList.innerHTML = data.news.map(item => `
             <div class="news-item" onclick="window.open('${item.url}', '_blank')">
@@ -543,7 +546,10 @@
         const trendingList = document.getElementById('trendingList');
         const trendingCount = document.getElementById('trendingCount');
         
-        if (data.trending && data.trending.length > 0) {
+        if (data.error) {
+          trendingList.innerHTML = `<div class="error">${data.error}</div>`;
+          console.error('❌ API returned error:', data.error);
+        } else if (data.trending && data.trending.length > 0) {
           trendingCount.textContent = data.trending.length;
           trendingList.innerHTML = data.trending.map((token, index) => `
             <div class="trending-item">
