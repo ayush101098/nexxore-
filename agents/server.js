@@ -454,11 +454,17 @@ async function analyzeAllNews(req, res) {
   }
 }
 
-// Start server
-const server = http.createServer(handleRequest);
+// Vercel serverless function export
+module.exports = async (req, res) => {
+  return handleRequest(req, res);
+};
 
-server.listen(PORT, () => {
-  console.log(`
+// For local development
+if (require.main === module) {
+  const server = http.createServer(handleRequest);
+
+  server.listen(PORT, () => {
+    console.log(`
 ╔════════════════════════════════════════════════════╗
 ║    🌐 Web3 Intelligence Agent Server              ║
 ╚════════════════════════════════════════════════════╝
@@ -491,15 +497,14 @@ server.listen(PORT, () => {
   TELEGRAM_BOT_TOKEN: ${process.env.TELEGRAM_BOT_TOKEN ? '✅' : '❌'}
   X_API_KEY: ${process.env.X_API_KEY ? '✅' : '❌'}
   `);
-});
-
-process.on('SIGINT', () => {
-  console.log('\n👋 Shutting down gracefully...');
-  server.close(() => {
-    console.log('✅ Server closed');
-    process.exit(0);
   });
-});
 
-module.exports = { handleRequest };
+  process.on('SIGINT', () => {
+    console.log('\n👋 Shutting down gracefully...');
+    server.close(() => {
+      console.log('✅ Server closed');
+      process.exit(0);
+    });
+  });
+}
 
