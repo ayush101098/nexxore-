@@ -2,18 +2,75 @@
 
 Modular, composable agents for DeFi intelligence and automated decision-making.
 
+## Quick Start Dashboard
+
+Run the interactive research dashboard with LLM analysis:
+
+```bash
+cd agents
+
+# Set up API keys
+export NEWS_API_KEY="your_newsapi_key"
+export OPENAI_API_KEY="your_openai_key"
+
+# Start dashboard
+node server.js
+```
+
+Then open **http://localhost:3000** in your browser.
+
+### Dashboard Features
+
+- **📰 News Column**: Real crypto news from NewsAPI, CoinDesk, CoinTelegraph
+- **💬 LLM Chat**: Ask questions, get market analysis powered by OpenAI GPT
+- **🎯 Trade Signals**: AI-generated buy/sell/hold signals with reasoning
+
 ## Architecture
 
 ```
 agents/
-├── shared/           # Common utilities (data fetching, storage, formatting)
-├── research/         # Research Agent (news, sentiment, protocols)
-├── alpha/            # Alpha Detection Agent (scoring, opportunities)
-├── execution/        # Execution Agent (trade signals, automation)
-└── output/           # Output Agents (Telegram, X, Dashboard)
+├── shared/              # Common utilities
+│   ├── utils.js        # Confidence scoring, formatting, logger
+│   ├── dataSources.js  # News, Prices, DeFi, Sentiment APIs
+│   ├── newsFetcher.js  # Real news fetching + sentiment
+│   └── llmEngine.js    # OpenAI integration for analysis
+├── research/           # Research Agent (News + Intelligence)
+│   ├── agent.js       # Main analysis engine
+│   ├── run.js         # CLI runner
+│   ├── package.json
+│   └── ARCHITECTURE.md
+├── dashboard.html      # Interactive web interface
+├── server.js          # API server for dashboard
+└── README.md          # This file
 ```
 
-## Design Principles
+## Configuration
+
+### Get API Keys
+
+1. **NewsAPI** (free tier available)
+   - Sign up at https://newsapi.org
+   - Get key and set: `export NEWS_API_KEY="your_key"`
+
+2. **OpenAI** (required for LLM)
+   - Sign up at https://platform.openai.com
+   - Get API key and set: `export OPENAI_API_KEY="sk-..."`
+
+3. **Optional: CoinGecko** (for price data, free tier)
+   - Sign up at https://www.coingecko.com/api
+
+### Environment File
+
+Create `.env` in `/agents`:
+
+```bash
+NEWS_API_KEY=your_newsapi_key
+OPENAI_API_KEY=your_openai_api_key
+COINGECKO_API_KEY=your_coingecko_key
+DEBUG=nexxore:*
+```
+
+## Research Agent Features
 
 1. **Modular**: Each agent is independent, can run standalone or in combination
 2. **Composable**: Agents can chain together (research → alpha → execution → output)
