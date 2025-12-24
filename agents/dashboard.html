@@ -373,6 +373,47 @@
 
       async analyzeNews() {
         try {
+          // Try advanced analyzer first
+          const response = await fetch(`${API_BASE}/api/analyze-all-news`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+
+          if (!response.ok) throw new Error('Failed to analyze');
+          
+          const result = await response.json();
+          const analysis = result.analysis;
+          
+          // Generate opportunities from analysis
+          this.opportunities = this.generateOpportunitiesFromAnalysis(analysis);
+          this.renderOpportunities();
+          
+          // Show trends and insights in chat
+          if (analysis.summary) {
+            this.addChatMessage(`📊 ${analysis.summary}`, 'system');
+          }
+          
+          // Show identified risks
+          if (analysis.risks && analysis.risks.length > 0) {
+            const riskSummary = analysis.risks.map(r => `⚠️ ${r.title}`).join('\n');
+            this.addChatMessage(`Risks detected:\n${riskSummary}`, 'system');
+          }
+          
+          // Show opportunities
+          if (analysis.opportunities && analysis.opportunities.length > 0) {
+            const oppSummary = analysis.opportunities.map(o => `✅ ${o.title}`).join('\n');
+            this.addChatMessage(`Opportunities found:\n${oppSummary}`, 'system');
+          }
+        } catch (err) {
+          console.error('Analysis error:', err);
+          // Fallback to LLM analyzer
+          this.analyzeNewsWithLLM();
+        }
+      }
+      
+      async analyzeNewsWithLLM() {
+        try {
           const response = await fetch(`${API_BASE}/api/analyze-news`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -388,6 +429,43 @@
           console.error('Analysis error:', err);
           this.renderOpportunities([]);
         }
+      }
+      
+      generateOpportunitiesFromAnalysis(analysis) {
+        const opportunities = [];
+        
+        // Convert identified opportunities to trade signals
+        if (analysis.opportunities) {
+          analysis.opportunities.forEach(opp => {
+            opportunities.push({
+              token: opp.protocols?.[0] || 'UNKNOWN',
+              signal: opp.confidence > 0.7 ? 'BUY' : 'HOLD',
+              confidence: Math.round(opp.confidence),
+              reasoning: opp.title
+            });
+          });
+        }
+        
+        // Add sentiment-based signals from article analysis
+        if (analysis.articles) {
+          const topSentiment = analysis.articles
+            .filter(a => a.sentiment.score > 0.5)
+            .slice(0, 3);
+          
+          topSentiment.forEach(article => {
+            if (article.protocols.length > 0) {
+              opportunities.push({
+                token: article.protocols[0],
+                signal: 'BUY',
+                confidence: Math.round((article.sentiment.score + 1) * 50),
+                reasoning: `Bullish sentiment: ${article.actionItems[0] || 'Monitor'}`
+              });
+            }
+          });
+        }
+        
+        return opportunities.slice(0, 5);
+      }
       }
 
       async sendMessage() {

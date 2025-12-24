@@ -21,6 +21,7 @@ const AlphaDetectionAgent = require('./alpha/agent');
 const Web3IntelligenceAgent = require('./web3-intelligence/agent');
 const RealNewsFetcher = require('./shared/newsFetcher');
 const LLMEngine = require('./shared/llmEngine');
+const NewsAnalyzer = require('./shared/newsAnalyzer');
 
 // Alert system
 const AlertSystem = require('./shared/alertSystem');
@@ -63,6 +64,8 @@ const newsFetcher = new RealNewsFetcher({
 const llmEngine = new LLMEngine({
   apiKey: process.env.OPENAI_API_KEY
 });
+
+const newsAnalyzer = new NewsAnalyzer();
 
 // Register alert handlers
 (async () => {
@@ -149,6 +152,11 @@ async function handleRequest(req, res) {
     // Alert testing
     if (pathname === '/api/alerts/test' && method === 'POST') {
       return testAlert(req, res);
+    }
+    
+    // News analyzer
+    if (pathname === '/api/analyze-all-news' && method === 'POST') {
+      return analyzeAllNews(req, res);
     }
     
     // Not found
@@ -348,6 +356,30 @@ async function testAlert(req, res) {
   }
 }
 
+// Advanced news analyzer handler
+async function analyzeAllNews(req, res) {
+  try {
+    // Fetch latest news
+    const news = await newsFetcher.fetchCryptoNews(
+      ['crypto', 'defi', 'ethereum', 'aave', 'curve', 'uniswap'],
+      20
+    );
+    
+    // Analyze with custom analyzer
+    const analysis = newsAnalyzer.analyzeNews(news);
+    
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      analysis,
+      rawArticles: news.slice(0, 5) // Include top 5 articles
+    }));
+  } catch (err) {
+    res.writeHead(500);
+    res.end(JSON.stringify({ error: err.message }));
+  }
+}
+
 // Start server
 const server = http.createServer(handleRequest);
 
@@ -358,27 +390,28 @@ server.listen(PORT, () => {
 ╚════════════════════════════════════════════════════╝
 
 🔌 API Endpoints:
-  GET  http://localhost:${PORT}                    - Dashboard
-  GET  http://localhost:${PORT}/api/health         - Health check
+  GET  http://localhost:${PORT}                      - Dashboard
+  GET  http://localhost:${PORT}/api/health           - Health check
   
 📊 Research Agent:
-  GET  http://localhost:${PORT}/api/news           - Latest news
-  POST http://localhost:${PORT}/api/analyze-news   - Analyze news
-  POST http://localhost:${PORT}/api/chat           - Chat interface
-  GET  http://localhost:${PORT}/api/trending       - Trending tokens
+  GET  http://localhost:${PORT}/api/news             - Latest news
+  POST http://localhost:${PORT}/api/analyze-news     - LLM news analysis
+  POST http://localhost:${PORT}/api/analyze-all-news - Advanced analyzer
+  POST http://localhost:${PORT}/api/chat             - Chat with AI
+  GET  http://localhost:${PORT}/api/trending         - Trending tokens
 
 🎯 Alpha Detection:
-  POST http://localhost:${PORT}/api/agents/alpha   - Scan for alpha
+  POST http://localhost:${PORT}/api/agents/alpha     - Scan DeFi for alpha
 
 🌐 Web3 Intelligence:
-  POST http://localhost:${PORT}/api/agents/web3    - Generate report
+  POST http://localhost:${PORT}/api/agents/web3      - Ecosystem report
 
 💰 Token Hub:
-  GET  http://localhost:${PORT}/api/tokens/:symbol - Token info
-  POST http://localhost:${PORT}/api/tokens/compare - Compare tokens
+  GET  http://localhost:${PORT}/api/tokens/:symbol   - Token info
+  POST http://localhost:${PORT}/api/tokens/compare   - Compare tokens
 
 🚨 Alerts:
-  POST http://localhost:${PORT}/api/alerts/test    - Test alert system
+  POST http://localhost:${PORT}/api/alerts/test      - Test alerts
 
 🔐 Configuration:
   NEWS_API_KEY: ${process.env.NEWS_API_KEY ? '✅' : '❌'}
