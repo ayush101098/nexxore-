@@ -42,9 +42,20 @@ class NewsAnalyzer {
    * Analyze a batch of news articles
    */
   analyzeNews(articles = []) {
+    if (!articles || articles.length === 0) {
+      return {
+        total: 0,
+        articles: [],
+        summary: 'No articles to analyze',
+        trends: { averageSentiment: 0, sentimentTrend: 'neutral', topProtocols: [], newsVelocity: 'low' },
+        risks: [],
+        opportunities: []
+      };
+    }
+
     return {
       total: articles.length,
-      articles: articles.map(article => this.analyzeArticle(article)),
+      articles: articles.map(article => this.analyzeArticle(article)).slice(0, 20),
       summary: this.generateSummary(articles),
       trends: this.identifyTrends(articles),
       risks: this.identifyRisks(articles),
@@ -206,23 +217,35 @@ class NewsAnalyzer {
    * Identify trends across articles
    */
   identifyTrends(articles) {
+    if (!articles || articles.length === 0) {
+      return {
+        averageSentiment: 0,
+        sentimentTrend: 'neutral',
+        topProtocols: [],
+        newsVelocity: 'low'
+      };
+    }
+
     const protocolMentions = {};
     const sentiments = [];
     
-    articles.forEach(article => {
-      const analysis = this.analyzeArticle(article);
-      sentiments.push(analysis.sentiment.score);
+    articles.slice(0, 20).forEach(article => {
+      const text = `${article.title} ${article.description || ''}`.toLowerCase();
+      sentiments.push(article.sentiment || 0);
       
-      analysis.protocols.forEach(protocol => {
-        protocolMentions[protocol] = (protocolMentions[protocol] || 0) + 1;
-      });
+      // Extract protocols directly without recursive call
+      for (const [protocol, pattern] of Object.entries(this.protocolPatterns)) {
+        if (pattern.test(text)) {
+          protocolMentions[protocol] = (protocolMentions[protocol] || 0) + 1;
+        }
+      }
     });
     
-    const avgSentiment = sentiments.reduce((a, b) => a + b, 0) / sentiments.length;
+    const avgSentiment = sentiments.reduce((a, b) => a + b, 0) / (sentiments.length || 1);
     
     return {
       averageSentiment: avgSentiment,
-      sentimentTrend: avgSentiment > 0 ? 'bullish' : avgSentiment < 0 ? 'bearish' : 'neutral',
+      sentimentTrend: avgSentiment > 0.3 ? 'bullish' : avgSentiment < -0.3 ? 'bearish' : 'neutral',
       topProtocols: Object.entries(protocolMentions)
         .sort(([,a], [,b]) => b - a)
         .slice(0, 3)

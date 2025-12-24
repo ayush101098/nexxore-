@@ -9,7 +9,7 @@
  * - Risk assessment
  */
 
-const { AgentLogger } = require('./utils');
+const { AgentLogger } = require('../shared/utils');
 
 class Web3TokenHub {
   constructor(config = {}) {

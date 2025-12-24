@@ -21,7 +21,6 @@ const AlphaDetectionAgent = require('./alpha/agent');
 const Web3IntelligenceAgent = require('./web3-intelligence/agent');
 const RealNewsFetcher = require('./shared/newsFetcher');
 const LLMEngine = require('./shared/llmEngine');
-const NewsAnalyzer = require('./shared/newsAnalyzer');
 
 // Alert system
 const AlertSystem = require('./shared/alertSystem');
@@ -64,8 +63,6 @@ const newsFetcher = new RealNewsFetcher({
 const llmEngine = new LLMEngine({
   apiKey: process.env.OPENAI_API_KEY
 });
-
-const newsAnalyzer = new NewsAnalyzer();
 
 // Register alert handlers
 (async () => {
@@ -152,11 +149,6 @@ async function handleRequest(req, res) {
     // Alert testing
     if (pathname === '/api/alerts/test' && method === 'POST') {
       return testAlert(req, res);
-    }
-    
-    // News analyzer
-    if (pathname === '/api/analyze-all-news' && method === 'POST') {
-      return analyzeAllNews(req, res);
     }
     
     // Not found
@@ -380,6 +372,30 @@ async function analyzeAllNews(req, res) {
   }
 }
 
+// Advanced news analyzer handler
+async function analyzeAllNews(req, res) {
+  try {
+    // Fetch latest news
+    const news = await newsFetcher.fetchCryptoNews(
+      ['crypto', 'defi', 'ethereum', 'aave', 'curve', 'uniswap'],
+      20
+    );
+    
+    // Analyze with custom analyzer
+    const analysis = newsAnalyzer.analyzeNews(news);
+    
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      analysis,
+      rawArticles: news.slice(0, 5) // Include top 5 articles
+    }));
+  } catch (err) {
+    res.writeHead(500);
+    res.end(JSON.stringify({ error: err.message }));
+  }
+}
+
 // Start server
 const server = http.createServer(handleRequest);
 
@@ -395,8 +411,6 @@ server.listen(PORT, () => {
   
 📊 Research Agent:
   GET  http://localhost:${PORT}/api/news             - Latest news
-  POST http://localhost:${PORT}/api/analyze-news     - LLM news analysis
-  POST http://localhost:${PORT}/api/analyze-all-news - Advanced analyzer
   POST http://localhost:${PORT}/api/chat             - Chat with AI
   GET  http://localhost:${PORT}/api/trending         - Trending tokens
 

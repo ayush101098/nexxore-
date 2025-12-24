@@ -298,7 +298,7 @@
   <div class="container">
     <!-- Left: News Feed -->
     <div class="panel">
-      <div class="panel-title">📰 Crypto News</div>
+      <div class="panel-title">📰 Crypto News Feed</div>
       <div class="news-list" id="newsList">
         <div class="loading">Loading news...</div>
       </div>
@@ -306,17 +306,17 @@
 
     <!-- Center: Chat Interface -->
     <div class="panel">
-      <div class="panel-title">💬 LLM Analysis Chat</div>
+      <div class="panel-title">💬 Ask About News</div>
       <div class="chat-container">
         <div class="chat-messages scroll-to-bottom" id="chatMessages">
-          <div class="message system">Ask questions about market opportunities or paste news for analysis</div>
+          <div class="message system">Ask questions about the latest crypto news and trends</div>
         </div>
         <div class="chat-input-area">
           <input 
             type="text" 
             class="chat-input" 
             id="chatInput" 
-            placeholder="Ask about trading opportunities..."
+            placeholder="Ask about latest news..."
             autocomplete="off"
           />
           <button class="btn" id="sendBtn">Send</button>
@@ -324,13 +324,13 @@
       </div>
     </div>
 
-    <!-- Right: Trade Opportunities -->
+    <!-- Right: News Summary -->
     <div class="panel">
-      <div class="panel-title">🎯 Trade Signals</div>
+      <div class="panel-title">📊 News Summary</div>
       <div class="analysis-container" id="opportunitiesList">
         <div class="loading">
           <div class="spinner"></div>
-          <div style="margin-top: 8px;">Analyzing news...</div>
+          <div style="margin-top: 8px;">Summarizing news...</div>
         </div>
       </div>
     </div>
@@ -373,98 +373,21 @@
 
       async analyzeNews() {
         try {
-          // Try advanced analyzer first
-          const response = await fetch(`${API_BASE}/api/analyze-all-news`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
-          });
-
-          if (!response.ok) throw new Error('Failed to analyze');
-          
-          const result = await response.json();
-          const analysis = result.analysis;
-          
-          // Generate opportunities from analysis
-          this.opportunities = this.generateOpportunitiesFromAnalysis(analysis);
-          this.renderOpportunities();
-          
-          // Show trends and insights in chat
-          if (analysis.summary) {
-            this.addChatMessage(`📊 ${analysis.summary}`, 'system');
-          }
-          
-          // Show identified risks
-          if (analysis.risks && analysis.risks.length > 0) {
-            const riskSummary = analysis.risks.map(r => `⚠️ ${r.title}`).join('\n');
-            this.addChatMessage(`Risks detected:\n${riskSummary}`, 'system');
-          }
-          
-          // Show opportunities
-          if (analysis.opportunities && analysis.opportunities.length > 0) {
-            const oppSummary = analysis.opportunities.map(o => `✅ ${o.title}`).join('\n');
-            this.addChatMessage(`Opportunities found:\n${oppSummary}`, 'system');
-          }
-        } catch (err) {
-          console.error('Analysis error:', err);
-          // Fallback to LLM analyzer
-          this.analyzeNewsWithLLM();
-        }
-      }
-      
-      async analyzeNewsWithLLM() {
-        try {
           const response = await fetch(`${API_BASE}/api/analyze-news`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ news: this.newsData })
           });
-          
+
           if (!response.ok) throw new Error('Analysis failed');
           const result = await response.json();
-          
+
           this.opportunities = result.opportunities || [];
           this.renderOpportunities();
         } catch (err) {
           console.error('Analysis error:', err);
           this.renderOpportunities([]);
         }
-      }
-      
-      generateOpportunitiesFromAnalysis(analysis) {
-        const opportunities = [];
-        
-        // Convert identified opportunities to trade signals
-        if (analysis.opportunities) {
-          analysis.opportunities.forEach(opp => {
-            opportunities.push({
-              token: opp.protocols?.[0] || 'UNKNOWN',
-              signal: opp.confidence > 0.7 ? 'BUY' : 'HOLD',
-              confidence: Math.round(opp.confidence),
-              reasoning: opp.title
-            });
-          });
-        }
-        
-        // Add sentiment-based signals from article analysis
-        if (analysis.articles) {
-          const topSentiment = analysis.articles
-            .filter(a => a.sentiment.score > 0.5)
-            .slice(0, 3);
-          
-          topSentiment.forEach(article => {
-            if (article.protocols.length > 0) {
-              opportunities.push({
-                token: article.protocols[0],
-                signal: 'BUY',
-                confidence: Math.round((article.sentiment.score + 1) * 50),
-                reasoning: `Bullish sentiment: ${article.actionItems[0] || 'Monitor'}`
-              });
-            }
-          });
-        }
-        
-        return opportunities.slice(0, 5);
       }
       }
 
@@ -539,21 +462,49 @@
       renderOpportunities() {
         const container = document.getElementById('opportunitiesList');
         
-        if (this.opportunities.length === 0) {
-          container.innerHTML = '<div class="loading">No signals generated yet</div>';
+        if (!this.newsData || this.newsData.length === 0) {
+          container.innerHTML = '<div class="loading">No news data available</div>';
           return;
         }
 
-        container.innerHTML = this.opportunities.slice(0, 5).map(opp => `
-          <div class="opportunity ${opp.signal.toLowerCase()}">
-            <div class="opportunity-header">
-              <div class="opportunity-token">${opp.token}</div>
-              <div class="opportunity-signal">${opp.signal}</div>
+        // Calculate news summary stats
+        const bullishCount = this.newsData.filter(n => n.sentiment > 0.3).length;
+        const bearishCount = this.newsData.filter(n => n.sentiment < -0.3).length;
+        const averageSentiment = this.newsData.reduce((sum, n) => sum + (n.sentiment || 0), 0) / this.newsData.length;
+        const sentimentEmoji = averageSentiment > 0.3 ? '📈' : averageSentiment < -0.3 ? '📉' : '➡️';
+
+        const topProtocols = {};
+        this.newsData.forEach(n => {
+          if (n.protocols && n.protocols.length > 0) {
+            n.protocols.forEach(p => {
+              topProtocols[p] = (topProtocols[p] || 0) + 1;
+            });
+          }
+        });
+
+        const sortedProtocols = Object.entries(topProtocols)
+          .sort(([,a], [,b]) => b - a)
+          .slice(0, 5);
+
+        container.innerHTML = `
+          <div style="padding: 8px 0;">
+            <div class="opportunity hold">
+              <div class="opportunity-token">${sentimentEmoji} Market Sentiment</div>
+              <div class="opportunity-confidence">${bullishCount} Bullish | ${bearishCount} Bearish</div>
+              <div class="opportunity-reasoning">Average sentiment: ${(averageSentiment * 100).toFixed(0)}%</div>
             </div>
-            <div class="opportunity-confidence">Confidence: ${opp.confidence}/10</div>
-            <div class="opportunity-reasoning">${opp.reasoning}</div>
+            ${sortedProtocols.length > 0 ? `
+              <div class="opportunity">
+                <div class="opportunity-token">🏆 Mentioned Protocols</div>
+                <div class="opportunity-reasoning">${sortedProtocols.map(([p, count]) => `${p} (${count})`).join(', ')}</div>
+              </div>
+            ` : ''}
+            <div class="opportunity">
+              <div class="opportunity-token">📰 Total Articles</div>
+              <div class="opportunity-reasoning">${this.newsData.length} articles analyzed</div>
+            </div>
           </div>
-        `).join('');
+        `;
       }
 
       getMockNews() {
