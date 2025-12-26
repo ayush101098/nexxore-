@@ -12,7 +12,7 @@ class WalletManager {
     this.connected = false;
     
     // Vault contract addresses (Base Mainnet)
-    this.VAULT_ADDRESS = '0x0000000000000000000000000000000000000000'; // TODO: Deploy vault
+    this.VAULT_ADDRESS = '0x5B38Da6a701c568545dCfcB03FcB875f56beddC4'; // Deployed vault
     this.SUPPORTED_CHAINS = {
       8453: { name: 'Base', rpc: 'https://mainnet.base.org' },
       84532: { name: 'Base Sepolia', rpc: 'https://sepolia.base.org' }
@@ -295,16 +295,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.warn('⚠️ Connect wallet button not found');
   }
   
-  // Deposit button handler
-  const depositBtn = document.getElementById('depositBtn');
-  if (depositBtn) {
-    depositBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      showDepositModal();
-    });
-  } else {
-    console.warn('⚠️ Deposit button not found');
-  }
+  // Deposit button handler - removed from navbar
+  // Deposit now opens from wallet modal
   
   console.log('✅ Wallet manager initialized');
 });
@@ -338,9 +330,14 @@ function showWalletModal() {
             <span class="detail-value" id="vaultBalance">Loading...</span>
           </div>
         </div>
-        <button class="btn btn-outline" onclick="walletManager.disconnect(); this.closest('.modal-overlay').remove();">
-          Disconnect
-        </button>
+        <div class="wallet-actions">
+          <button class="btn btn-primary btn-full" onclick="showDepositModal(); this.closest('.modal-overlay').remove();">
+            💰 Deposit to Vault
+          </button>
+          <button class="btn btn-outline btn-full" style="margin-top: 12px;" onclick="walletManager.disconnect(); this.closest('.modal-overlay').remove();">
+            Disconnect
+          </button>
+        </div>
       </div>
     </div>
   `;
