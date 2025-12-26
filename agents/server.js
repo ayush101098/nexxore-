@@ -240,8 +240,8 @@ async function chatHandler(req, res) {
     try {
       const { message, context } = JSON.parse(body);
       
-      // Use LLM to chat
-      const response = await llmEngine.chat(message, context || {});
+      // Simple keyword-based chat (no OpenAI dependency)
+      const response = generateChatResponse(message);
       
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ response }));
@@ -250,6 +250,33 @@ async function chatHandler(req, res) {
       res.end(JSON.stringify({ error: err.message }));
     }
   });
+}
+
+// Simple chat response function
+function generateChatResponse(message) {
+  const lowerMessage = message.toLowerCase();
+  
+  if (lowerMessage.includes('aave') || lowerMessage.includes('protocol')) {
+    return 'AAVE is a leading DeFi lending protocol with over $33B in TVL. It offers flash loans, variable and stable interest rates, and supports multiple blockchain networks.';
+  }
+  
+  if (lowerMessage.includes('defi') || lowerMessage.includes('decentralized')) {
+    return 'DeFi (Decentralized Finance) refers to financial services built on blockchain technology. Major protocols include AAVE, Curve, Uniswap, and Compound. The total value locked across DeFi protocols exceeds $100B.';
+  }
+  
+  if (lowerMessage.includes('tvl')) {
+    return 'TVL (Total Value Locked) measures the total amount of assets deposited in a DeFi protocol. It\'s a key metric for assessing protocol size and health.';
+  }
+  
+  if (lowerMessage.includes('curve') || lowerMessage.includes('stablecoin')) {
+    return 'Curve Finance specializes in stablecoin swaps with low slippage. It\'s optimized for trading between similarly-priced assets like USDC, USDT, and DAI.';
+  }
+  
+  if (lowerMessage.includes('uniswap') || lowerMessage.includes('dex')) {
+    return 'Uniswap is the largest decentralized exchange (DEX) built on Ethereum. It uses an automated market maker (AMM) model for token swaps.';
+  }
+  
+  return 'I can help you with information about DeFi protocols like AAVE, Curve, and Uniswap. Ask me about TVL, yields, or specific protocols!';
 }
 
 async function getTrendingTokens(req, res) {
