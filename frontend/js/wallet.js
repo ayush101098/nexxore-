@@ -265,13 +265,14 @@ class WalletManager {
 // Global wallet instance
 let walletManager;
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize wallet manager immediately
+function initWallet() {
   console.log('🚀 Initializing wallet manager...');
   
   // Check if ethers is loaded
   if (typeof ethers === 'undefined') {
     console.error('❌ Ethers.js not loaded! Make sure the CDN script is included.');
+    setTimeout(initWallet, 100); // Retry after 100ms
     return;
   }
   
@@ -291,17 +292,27 @@ document.addEventListener('DOMContentLoaded', () => {
         await walletManager.connect();
       }
     });
+    console.log('✅ Connect button listener added');
   } else {
     console.warn('⚠️ Connect wallet button not found');
   }
   
-  // Deposit button handler - removed from navbar
-  // Deposit now opens from wallet modal
-  
   console.log('✅ Wallet manager initialized');
-});
+}
+
+// Initialize on page load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initWallet);
+} else {
+  // DOM already loaded
+  initWallet();
+}
 
 function showWalletModal() {
+  // Remove existing modals
+  const existingModal = document.querySelector('.modal-overlay');
+  if (existingModal) existingModal.remove();
+  
   // Create modal for wallet details
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
@@ -309,7 +320,7 @@ function showWalletModal() {
     <div class="modal-content wallet-modal">
       <div class="modal-header">
         <h3>Wallet Details</h3>
-        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+        <button class="modal-close" data-action="close">×</button>
       </div>
       <div class="modal-body">
         <div class="wallet-details">
@@ -331,10 +342,10 @@ function showWalletModal() {
           </div>
         </div>
         <div class="wallet-actions">
-          <button class="btn btn-primary btn-full" onclick="showDepositModal(); this.closest('.modal-overlay').remove();">
+          <button class="btn btn-primary btn-full" data-action="deposit">
             💰 Deposit to Vault
           </button>
-          <button class="btn btn-outline btn-full" style="margin-top: 12px;" onclick="walletManager.disconnect(); this.closest('.modal-overlay').remove();">
+          <button class="btn btn-outline btn-full" style="margin-top: 12px;" data-action="disconnect">
             Disconnect
           </button>
         </div>
@@ -344,13 +355,40 @@ function showWalletModal() {
   
   document.body.appendChild(modal);
   
+  // Add event listeners using delegation
+  modal.addEventListener('click', (e) => {
+    const action = e.target.getAttribute('data-action');
+    if (action === 'close') {
+      modal.remove();
+    } else if (action === 'deposit') {
+      modal.remove();
+      showDepositModal();
+    } else if (action === 'disconnect') {
+      walletManager.disconnect();
+      modal.remove();
+    } else if (e.target === modal) {
+      // Click on overlay background
+      modal.remove();
+    }
+  });
+  
   // Load balances
   walletManager.getBalance().then(balance => {
-    document.getElementById('walletBalance').textContent = `${parseFloat(balance).toFixed(4)} ETH`;
+    const elem = document.getElementById('walletBalance');
+    if (elem) elem.textContent = `${parseFloat(balance).toFixed(4)} ETH`;
+  }).catch(err => {
+    console.error('Failed to load balance:', err);
+    const elem = document.getElementById('walletBalance');
+    if (elem) elem.textContent = 'Error';
   });
   
   walletManager.getVaultBalance().then(balance => {
-    document.getElementById('vaultBalance').textContent = `${parseFloat(balance).toFixed(4)} ETH`;
+    const elem = document.getElementById('vaultBalance');
+    if (elem) elem.textContent = `${parseFloat(balance).toFixed(4)} ETH`;
+  }).catch(err => {
+    console.error('Failed to load vault balance:', err);
+    const elem = document.getElementById('vaultBalance');
+    if (elem) elem.textContent = 'Error';
   });
 }
 
@@ -360,13 +398,17 @@ function showDepositModal() {
     return;
   }
   
+  // Remove existing modals
+  const existingModal = document.querySelector('.modal-overlay');
+  if (existingModal) existingModal.remove();
+  
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
   modal.innerHTML = `
     <div class="modal-content deposit-modal">
       <div class="modal-header">
         <h3>Deposit to Vault</h3>
-        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+        <button class="modal-close" data-action="close">×</button>
       </div>
       <div class="modal-body">
         <p class="modal-description">Deposit ETH into the yield vault to start earning optimized returns.</p>
@@ -384,7 +426,7 @@ function showDepositModal() {
             <span class="apy-value">8.5%</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-full" onclick="executeDeposit()">
+        <button class="btn btn-primary btn-full" data-action="execute-deposit">
           Deposit
         </button>
       </div>
@@ -393,13 +435,30 @@ function showDepositModal() {
   
   document.body.appendChild(modal);
   
+  // Add event listeners
+  modal.addEventListener('click', async (e) => {
+    const action = e.target.getAttribute('data-action');
+    if (action === 'close') {
+      modal.remove();
+    } else if (action === 'execute-deposit') {
+      await executeDeposit(e.target);
+    } else if (e.target === modal) {
+      modal.remove();
+    }
+  });
+  
   // Load available balance
   walletManager.getBalance().then(balance => {
-    document.getElementById('availableBalance').textContent = `${parseFloat(balance).toFixed(4)} ETH`;
+    const elem = document.getElementById('availableBalance');
+    if (elem) elem.textContent = `${parseFloat(balance).toFixed(4)} ETH`;
+  }).catch(err => {
+    console.error('Failed to load balance:', err);
+    const elem = document.getElementById('availableBalance');
+    if (elem) elem.textContent = 'Error';
   });
 }
 
-async function executeDeposit() {
+async function executeDeposit(btn) {
   const amountInput = document.getElementById('depositAmount');
   const amount = parseFloat(amountInput.value);
   
@@ -408,17 +467,24 @@ async function executeDeposit() {
     return;
   }
   
-  const btn = event.target;
   btn.disabled = true;
   btn.textContent = 'Depositing...';
   
-  const result = await walletManager.deposit(amount);
-  
-  if (result.success) {
-    alert(`✅ Deposit successful!\n\nAmount: ${result.amount} ETH\nTx: ${result.txHash}`);
-    document.querySelector('.modal-overlay').remove();
-  } else {
-    alert(`❌ Deposit failed: ${result.error}`);
+  try {
+    const result = await walletManager.deposit(amount);
+    
+    if (result.success) {
+      alert(`✅ Deposit successful!\n\nAmount: ${result.amount} ETH\nTx: ${result.txHash}`);
+      const modal = document.querySelector('.modal-overlay');
+      if (modal) modal.remove();
+    } else {
+      alert(`❌ Deposit failed: ${result.error}`);
+      btn.disabled = false;
+      btn.textContent = 'Deposit';
+    }
+  } catch (error) {
+    console.error('Deposit error:', error);
+    alert(`❌ Deposit failed: ${error.message}`);
     btn.disabled = false;
     btn.textContent = 'Deposit';
   }
