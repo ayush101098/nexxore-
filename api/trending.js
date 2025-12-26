@@ -1,8 +1,20 @@
-const RealNewsFetcher = require('../agents/shared/newsFetcher');
-
-const newsFetcher = new RealNewsFetcher({
-  newsApiKey: process.env.NEWS_API_KEY
-});
+async function fetchTrendingTokens() {
+  try {
+    const url = 'https://api.coingecko.com/api/v3/search/trending';
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    return data.coins.slice(0, 10).map(coin => ({
+      name: coin.item.name,
+      symbol: coin.item.symbol.toUpperCase(),
+      market_cap_rank: coin.item.market_cap_rank,
+      sparkline: coin.item.sparkline
+    }));
+  } catch (err) {
+    console.error('Trending fetch error:', err);
+    return [];
+  }
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,7 +26,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const trending = await newsFetcher.fetchTrendingTokens();
+    const trending = await fetchTrendingTokens();
     res.status(200).json({ trending });
   } catch (err) {
     console.error('Error fetching trending:', err);
