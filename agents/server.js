@@ -162,6 +162,11 @@ async function handleRequest(req, res) {
       return testAlert(req, res);
     }
     
+    // Serve static files (CSS, JS, images, etc.)
+    if (method === 'GET' && !pathname.startsWith('/api/')) {
+      return serveStaticFile(req, res, pathname);
+    }
+    
     // Not found
     res.writeHead(404);
     res.end(JSON.stringify({ error: 'Not found' }));
@@ -173,7 +178,7 @@ async function handleRequest(req, res) {
 }
 
 async function serveLandingPage(req, res) {
-  const landingPath = path.join(__dirname, 'index.html');
+  const landingPath = path.join(__dirname, '..', 'index.html');
   const content = fs.readFileSync(landingPath, 'utf-8');
   
   res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -181,7 +186,7 @@ async function serveLandingPage(req, res) {
 }
 
 async function serveDashboard(req, res) {
-  const dashboardPath = path.join(__dirname, 'dashboard.html');
+  const dashboardPath = path.join(__dirname, '..', 'dashboard.html');
   const content = fs.readFileSync(dashboardPath, 'utf-8');
   
   res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -189,11 +194,53 @@ async function serveDashboard(req, res) {
 }
 
 async function serveResearchPage(req, res) {
-  const researchPath = path.join(__dirname, 'research.html');
+  const researchPath = path.join(__dirname, '..', 'research.html');
   const content = fs.readFileSync(researchPath, 'utf-8');
   
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.end(content);
+}
+
+// Serve static files (CSS, JS, images)
+async function serveStaticFile(req, res, pathname) {
+  const rootDir = path.join(__dirname, '..');
+  const filePath = path.join(rootDir, pathname);
+  
+  // Security check - prevent directory traversal
+  if (!filePath.startsWith(rootDir)) {
+    res.writeHead(403);
+    return res.end('Forbidden');
+  }
+  
+  // Check if file exists
+  if (!fs.existsSync(filePath)) {
+    res.writeHead(404);
+    return res.end('Not Found');
+  }
+  
+  // Get MIME type
+  const ext = path.extname(filePath);
+  const mimeTypes = {
+    '.html': 'text/html',
+    '.css': 'text/css',
+    '.js': 'text/javascript',
+    '.json': 'application/json',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.svg': 'image/svg+xml',
+    '.ico': 'image/x-icon'
+  };
+  
+  const contentType = mimeTypes[ext] || 'text/plain';
+  
+  try {
+    const content = fs.readFileSync(filePath);
+    res.writeHead(200, { 'Content-Type': contentType });
+    res.end(content);
+  } catch (err) {
+    res.writeHead(500);
+    res.end('Error loading file');
+  }
 }
 
 async function getNews(req, res) {

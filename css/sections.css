@@ -1,11 +1,129 @@
 /* Sections: hero, mission, nusd, agents, portfolio, waitlist, footer */
-.hero-section{padding:var(--space-hero) 0;position:relative;overflow:hidden;min-height:72vh;display:flex;align-items:center;justify-content:center}
-.hero-content{width:100%;max-width:980px;margin:0 auto;text-align:center;padding-bottom:0}
-.hero-text{display:block;margin:0 auto;padding:20px}
-.hero-headline{font-size:38px;margin:0 0 12px;line-height:1.05}
-.hero-subheadline{color:var(--muted);margin:0 auto 18px;max-width:720px}
-.hero-cta{display:flex;gap:12px;margin:18px auto 0;justify-content:center}
-.hero-visual{display:flex;align-items:center;justify-content:center;margin-top:14px}
+.hero-section {
+  padding: var(--space-hero) 0;
+  position: relative;
+  overflow: hidden;
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at center,
+    rgba(0, 212, 255, 0.1) 0%,
+    transparent 70%
+  );
+  animation: gradientShift 8s ease-in-out infinite;
+}
+
+.hero-content {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+  padding-bottom: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-text {
+  display: block;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.hero-headline {
+  font-size: 56px;
+  margin: 0 0 24px;
+  line-height: 1.1;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ffffff 0%, var(--accent-2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: fadeInUp 0.8s ease-out;
+  letter-spacing: -0.02em;
+}
+
+.hero-subheadline {
+  color: var(--muted);
+  margin: 0 auto 32px;
+  max-width: 720px;
+  font-size: 1.25rem;
+  line-height: 1.6;
+  animation: fadeInUp 1s ease-out 0.2s backwards;
+}
+
+.hero-cta {
+  display: flex;
+  gap: 16px;
+  margin: 32px auto 0;
+  justify-content: center;
+  animation: fadeInUp 1.2s ease-out 0.4s backwards;
+}
+
+.hero-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 60px;
+  animation: fadeIn 1.5s ease-out 0.6s backwards;
+}
+
+/* Background orbs with better animation */
+.hero-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.gradient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: float 6s ease-in-out infinite;
+}
+
+.gradient-orb-1 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(0, 102, 255, 0.4), transparent);
+  top: -10%;
+  right: -10%;
+  animation-delay: 0s;
+}
+
+.gradient-orb-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.3), transparent);
+  bottom: -5%;
+  left: -5%;
+  animation-delay: 2s;
+}
+
+.gradient-orb-3 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.3), transparent);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: 4s;
+}
 
 .nusd-section{padding:calc(var(--space-nusd) - 8px) 0}
 .section-content{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
@@ -55,16 +173,131 @@
 .detail-graph,.detail-curve{height:80px;background:linear-gradient(90deg,rgba(255,255,255,0.02),transparent);border-radius:6px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
 
 /* Workflow diagram - redesigned cards */
-.workflow-diagram{display:flex;align-items:flex-start;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:18px;padding:20px 0}
-.workflow-card{background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));border-radius:16px;padding:20px;max-width:200px;text-align:center;border:1px solid rgba(255,255,255,0.06);box-shadow:0 12px 36px rgba(2,6,23,0.25);transition:transform 0.25s ease,box-shadow 0.25s ease}
-.workflow-card:hover{transform:translateY(-8px);box-shadow:0 24px 52px rgba(2,6,23,0.35)}
-.workflow-icon{width:72px;height:72px;margin:0 auto 12px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(2,6,23,0.3)}
-.workflow-icon svg{width:36px;height:36px;color:white}
-.workflow-card h3{font-size:0.85rem;font-weight:700;margin:12px 0 6px;letter-spacing:0.5px;color:var(--text)}
-.workflow-card h4{font-size:0.95rem;font-weight:600;margin:6px 0;color:var(--muted)}
-.workflow-card p{font-size:0.88rem;line-height:1.4;color:var(--muted);margin-top:8px}
-.workflow-arrow{display:flex;align-items:center;margin-top:48px}
-.workflow-arrow svg{width:28px;height:28px;color:var(--muted);opacity:0.6}
+.workflow-diagram {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 40px;
+  padding: 40px 20px;
+}
+
+.workflow-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  border-radius: 20px;
+  padding: 32px 24px;
+  max-width: 220px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.workflow-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+}
+
+.workflow-card:hover::before {
+  transform: scaleX(1);
+}
+
+.workflow-card:hover {
+  transform: translateY(-12px) scale(1.05);
+  box-shadow: 0 20px 60px rgba(0, 212, 255, 0.25),
+              0 0 40px rgba(0, 212, 255, 0.1);
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+.workflow-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transition: all 0.4s ease;
+  position: relative;
+}
+
+.workflow-icon::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, var(--accent), var(--accent-2));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.workflow-card:hover .workflow-icon::after {
+  opacity: 0.5;
+  animation: rotateBorder 3s linear infinite;
+}
+
+.workflow-card:hover .workflow-icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 15px 40px rgba(0, 212, 255, 0.4);
+}
+
+.workflow-icon svg {
+  width: 40px;
+  height: 40px;
+  color: white;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+}
+
+.workflow-card h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  letter-spacing: 1px;
+  color: var(--accent-2);
+  text-transform: uppercase;
+}
+
+.workflow-card h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 8px 0 12px;
+  color: var(--text);
+}
+
+.workflow-card p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-top: 12px;
+}
+
+.workflow-arrow {
+  display: flex;
+  align-items: center;
+  margin-top: 60px;
+  animation: slideInRight 0.6s ease-out;
+}
+
+.workflow-arrow svg {
+  width: 32px;
+  height: 32px;
+  color: var(--accent-2);
+  opacity: 0.6;
+  animation: pulse 2s ease-in-out infinite;
+}
 
 /* Workflow section (new full section) */
 .workflow-section{padding:60px 0;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-bottom:1px solid rgba(255,255,255,0.04)}
