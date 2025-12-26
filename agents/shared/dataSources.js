@@ -144,15 +144,22 @@ class DeFiSource {
       const res = await fetchWithTimeout(url);
       const data = await res.json();
       
+      // Extract TVL history array
+      const tvlHistory = Array.isArray(data.tvl) ? data.tvl : [];
+      
+      // Get current TVL from last entry in history
+      const latestTvl = tvlHistory.length > 0 ? tvlHistory[tvlHistory.length - 1] : null;
+      const currentTvl = latestTvl ? (latestTvl.totalLiquidityUSD || 0) : 0;
+      
       const normalized = {
         protocol: protocolName,
-        tvl: data.tvl,
-        tvlChain: data.chainTvls,
-        description: data.description,
-        url: data.url,
+        tvl: currentTvl,
+        tvlChain: data.chainTvls || data.currentChainTvls,
+        description: data.description || '',
+        url: data.url || '',
         metrics: {
-          tvlChange7d: this.calculateChange(data.tvl, data.tvlHistory),
-          yield: data.apy || 0
+          tvlChange7d: tvlHistory.length >= 8 ? this.calculateChange(currentTvl, tvlHistory) : 0,
+          yield: data.apy || data.apyBase || 0
         },
         timestamp: Date.now()
       };
@@ -166,8 +173,10 @@ class DeFiSource {
   }
   
   calculateChange(current, history) {
-    if (!history || history.length < 2) return 0;
-    const previous = history[Math.max(0, history.length - 8)]; // 7d ago
+    if (!history || history.length < 8) return 0;
+    const weekAgo = history[history.length - 8];
+    const previous = weekAgo.totalLiquidityUSD || weekAgo.tvl || weekAgo;
+    if (!previous || previous === 0) return 0;
     return ((current - previous) / previous) * 100;
   }
 }

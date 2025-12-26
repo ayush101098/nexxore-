@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaMask Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #f0f0f0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🦊 MetaMask Connection Test</h1>
+        
+        <div id="status" class="status">
+            Checking MetaMask...
+        </div>
+
+        <button onclick="testConnection()">
+            🔌 Connect to MetaMask
+        </button>
+
+        <button onclick="checkStatus()">
+            ✅ Check Status
+        </button>
+
+        <button onclick="getBalance()">
+            💰 Get Balance
+        </button>
+
+        <div id="output"></div>
+    </div>
+
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+    <script>
+        let provider = null;
+        let signer = null;
+        let address = null;
+
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            output.appendChild(div);
+            console.log(message);
+        }
+
+        async function checkStatus() {
+            const status = document.getElementById('status');
+            
+            // Check if ethereum is available
+            if (typeof window.ethereum === 'undefined') {
+                status.className = 'status error';
+                status.innerHTML = '❌ MetaMask is NOT installed<br><a href="https://metamask.io/download/" target="_blank">Install MetaMask</a>';
+                return;
+            }
+
+            // Check if it's MetaMask
+            if (window.ethereum.isMetaMask) {
+                status.className = 'status success';
+                status.innerHTML = '✅ MetaMask is installed and detected!';
+            } else {
+                status.className = 'status info';
+                status.innerHTML = '⚠️ Ethereum provider found but may not be MetaMask';
+            }
+
+            // Check if connected
+            if (window.ethereum.selectedAddress) {
+                log('Already connected to: ' + window.ethereum.selectedAddress, 'success');
+            } else {
+                log('Not connected yet', 'info');
+            }
+
+            // Check ethers.js
+            if (typeof ethers !== 'undefined') {
+                log('✅ ethers.js loaded: v' + ethers.version, 'success');
+            } else {
+                log('❌ ethers.js not loaded!', 'error');
+            }
+        }
+
+        async function testConnection() {
+            try {
+                log('🔄 Requesting connection...', 'info');
+
+                // Request accounts
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+
+                address = accounts[0];
+                log('✅ Connected to: ' + address, 'success');
+
+                // Initialize provider
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+
+                // Get network
+                const network = await provider.getNetwork();
+                log('📡 Network: ' + network.name + ' (Chain ID: ' + network.chainId + ')', 'success');
+
+                // Get balance
+                const balance = await provider.getBalance(address);
+                const ethBalance = ethers.utils.formatEther(balance);
+                log('💰 Balance: ' + ethBalance + ' ETH', 'success');
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                
+                if (error.code === 4001) {
+                    log('❌ You rejected the connection request', 'error');
+                } else if (error.code === -32002) {
+                    log('⚠️ Connection request already pending - check MetaMask', 'error');
+                } else {
+                    log('❌ Error: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function getBalance() {
+            if (!provider || !address) {
+                log('❌ Please connect first', 'error');
+                return;
+            }
+
+            try {
+                const balance = await provider.getBalance(address);
+                const ethBalance = ethers.utils.formatEther(balance);
+                log('💰 Current Balance: ' + ethBalance + ' ETH', 'success');
+
+                // Get block number
+                const blockNumber = await provider.getBlockNumber();
+                log('📦 Latest Block: ' + blockNumber, 'info');
+
+            } catch (error) {
+                log('❌ Error getting balance: ' + error.message, 'error');
+            }
+        }
+
+        // Auto-check on load
+        window.addEventListener('load', () => {
+            setTimeout(checkStatus, 100);
+        });
+
+        // Listen for account changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length === 0) {
+                    log('🔌 Disconnected from MetaMask', 'info');
+                } else {
+                    log('🔄 Account changed to: ' + accounts[0], 'info');
+                    address = accounts[0];
+                }
+            });
+
+            window.ethereum.on('chainChanged', (chainId) => {
+                log('🔄 Network changed to chain ID: ' + chainId, 'info');
+                window.location.reload();
+            });
+        }
+    </script>
+</body>
+</html>

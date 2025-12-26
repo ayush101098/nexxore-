@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexxore - Getting Started</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .status-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .status-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .status-icon.success {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-icon.error {
+            background: #ef4444;
+            color: white;
+        }
+
+        .status-icon.pending {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .status-text h3 {
+            margin-bottom: 0.25rem;
+        }
+
+        .status-text p {
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .pages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .page-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .page-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .page-card h3 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .page-card p {
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .page-card .features {
+            list-style: none;
+            font-size: 0.875rem;
+            color: #888;
+        }
+
+        .page-card .features li {
+            padding: 0.25rem 0;
+        }
+
+        .page-card .features li:before {
+            content: "✓ ";
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .setup-instructions {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .setup-instructions h2 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .setup-instructions ol {
+            margin-left: 1.5rem;
+        }
+
+        .setup-instructions li {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .setup-instructions code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #e83e8c;
+        }
+
+        .setup-instructions pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 0.5rem 0;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Nexxore Vault</h1>
+            <p>Your Multi-Chain DeFi Platform</p>
+        </div>
+
+        <div class="status-card">
+            <h2 style="margin-bottom: 1.5rem;">System Status</h2>
+            <div class="status-item">
+                <div class="status-icon success">✓</div>
+                <div class="status-text">
+                    <h3>Smart Contract Deployed</h3>
+                    <p>Vault Address: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512</p>
+                </div>
+            </div>
+            <div class="status-item">
+                <div class="status-icon success">✓</div>
+                <div class="status-text">
+                    <h3>Hardhat Node Running</h3>
+                    <p>Network: localhost:8545 (Chain ID: 31337)</p>
+                </div>
+            </div>
+            <div class="status-item">
+                <div class="status-icon" id="metamaskStatus">?</div>
+                <div class="status-text">
+                    <h3>MetaMask Connection</h3>
+                    <p id="metamaskText">Checking...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="pages-grid">
+            <a href="index.html" class="page-card">
+                <h3>🏠 Home</h3>
+                <p>Main landing page with strategy overview</p>
+                <ul class="features">
+                    <li>View workflow</li>
+                    <li>Browse strategies</li>
+                    <li>Connect wallet</li>
+                </ul>
+            </a>
+
+            <a href="deposit-new.html" class="page-card">
+                <h3>💰 Deposit</h3>
+                <p>Deposit your crypto assets</p>
+                <ul class="features">
+                    <li>Auto-detect assets</li>
+                    <li>Deposit ETH, USDT, USDC</li>
+                    <li>View balances</li>
+                </ul>
+            </a>
+
+            <a href="vault-new.html" class="page-card">
+                <h3>🏦 Vault</h3>
+                <p>Manage your portfolio</p>
+                <ul class="features">
+                    <li>Track deposits</li>
+                    <li>View statistics</li>
+                    <li>Manage positions</li>
+                </ul>
+            </a>
+
+            <a href="test-metamask.html" class="page-card">
+                <h3>🔧 Test MetaMask</h3>
+                <p>Diagnostic tool</p>
+                <ul class="features">
+                    <li>Check connection</li>
+                    <li>View balances</li>
+                    <li>Debug issues</li>
+                </ul>
+            </a>
+        </div>
+
+        <div class="setup-instructions">
+            <h2>🛠️ Setup Instructions</h2>
+            <ol>
+                <li>
+                    <strong>Install MetaMask</strong><br>
+                    If you haven't already, install MetaMask browser extension from 
+                    <a href="https://metamask.io/download/" target="_blank" style="color: #667eea;">metamask.io</a>
+                </li>
+
+                <li>
+                    <strong>Add Localhost Network to MetaMask</strong><br>
+                    Open MetaMask → Networks → Add Network → Add Network Manually:
+                    <pre>Network Name: Localhost 8545
+RPC URL: http://127.0.0.1:8545
+Chain ID: 31337
+Currency Symbol: ETH</pre>
+                </li>
+
+                <li>
+                    <strong>Import Test Account</strong><br>
+                    In MetaMask, click Account icon → Import Account → Private Key:
+                    <pre>0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80</pre>
+                    <small style="color: #888;">This account has 10,000 ETH for testing</small>
+                </li>
+
+                <li>
+                    <strong>Connect Wallet on Any Page</strong><br>
+                    Click "Connect Wallet" button → Approve in MetaMask → Start using the vault!
+                </li>
+
+                <li>
+                    <strong>Test Deposits</strong><br>
+                    Go to Deposit page → Select ETH → Enter amount → Click "Deposit to Vault"
+                </li>
+            </ol>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="index.html" class="btn" style="margin-right: 1rem;">Launch App</a>
+            <a href="test-metamask.html" class="btn btn-secondary">Test Connection</a>
+        </div>
+    </div>
+
+    <script>
+        // Check MetaMask status
+        window.addEventListener('load', function() {
+            const statusIcon = document.getElementById('metamaskStatus');
+            const statusText = document.getElementById('metamaskText');
+
+            if (typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask) {
+                statusIcon.className = 'status-icon success';
+                statusIcon.textContent = '✓';
+                
+                if (window.ethereum.selectedAddress) {
+                    statusText.innerHTML = `Connected: ${window.ethereum.selectedAddress.slice(0, 6)}...${window.ethereum.selectedAddress.slice(-4)}`;
+                } else {
+                    statusText.textContent = 'MetaMask detected (not connected)';
+                }
+            } else {
+                statusIcon.className = 'status-icon error';
+                statusIcon.textContent = '✗';
+                statusText.innerHTML = 'MetaMask not installed - <a href="https://metamask.io/download/" target="_blank" style="color: #667eea;">Install Now</a>';
+            }
+        });
+    </script>
+</body>
+</html>

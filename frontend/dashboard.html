@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexxore - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dashboard {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .status-grid {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #10b981;
+        }
+
+        .status-item.error {
+            border-left-color: #ef4444;
+        }
+
+        .status-icon {
+            font-size: 24px;
+            margin-right: 15px;
+        }
+
+        .status-text h3 {
+            font-size: 1rem;
+            margin-bottom: 3px;
+        }
+
+        .status-text p {
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .pages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .page-card {
+            display: block;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+            border: 2px solid #667eea30;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .page-card:hover {
+            transform: translateY(-3px);
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .page-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            color: #667eea;
+        }
+
+        .page-card p {
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .info-box {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .info-box h4 {
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+
+        .info-box code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .info-box p {
+            margin: 5px 0;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>🎯 Nexxore Vault</h1>
+        <p class="subtitle">All Systems Dashboard</p>
+
+        <div class="status-grid">
+            <div class="status-item" id="hardhatStatus">
+                <span class="status-icon">⏳</span>
+                <div class="status-text">
+                    <h3>Hardhat Node</h3>
+                    <p>Checking...</p>
+                </div>
+            </div>
+
+            <div class="status-item" id="serverStatus">
+                <span class="status-icon">✅</span>
+                <div class="status-text">
+                    <h3>HTTP Server</h3>
+                    <p>Running on port 8000</p>
+                </div>
+            </div>
+
+            <div class="status-item" id="metamaskStatus">
+                <span class="status-icon">⏳</span>
+                <div class="status-text">
+                    <h3>MetaMask</h3>
+                    <p>Checking...</p>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-bottom: 15px;">📱 Available Pages</h3>
+        <div class="pages-grid">
+            <a href="index.html" class="page-card">
+                <h3>🏠 Home</h3>
+                <p>Main page</p>
+            </a>
+
+            <a href="deposit-new.html" class="page-card">
+                <h3>💰 Deposit</h3>
+                <p>Add assets</p>
+            </a>
+
+            <a href="vault-new.html" class="page-card">
+                <h3>🏦 Vault</h3>
+                <p>View portfolio</p>
+            </a>
+
+            <a href="research.html" class="page-card">
+                <h3>📊 Research</h3>
+                <p>Info Edge</p>
+            </a>
+
+            <a href="test-metamask.html" class="page-card">
+                <h3>🔧 Test</h3>
+                <p>Diagnostics</p>
+            </a>
+        </div>
+
+        <div class="info-box">
+            <h4>⚡ Quick Setup</h4>
+            <p><strong>1. MetaMask Network:</strong> Add Localhost 8545</p>
+            <p><strong>RPC URL:</strong> <code>http://127.0.0.1:8545</code></p>
+            <p><strong>Chain ID:</strong> <code>31337</code></p>
+            <p><strong>2. Import Account:</strong></p>
+            <p><code style="font-size: 0.7rem;">0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80</code></p>
+            <p><strong>3. Vault:</strong> <code>0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512</code></p>
+        </div>
+    </div>
+
+    <script>
+        // Check Hardhat node
+        fetch('http://127.0.0.1:8545', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'eth_blockNumber',
+                params: [],
+                id: 1
+            })
+        })
+        .then(res => res.json())
+        .then(() => {
+            document.getElementById('hardhatStatus').innerHTML = `
+                <span class="status-icon">✅</span>
+                <div class="status-text">
+                    <h3>Hardhat Node</h3>
+                    <p>Running on port 8545</p>
+                </div>
+            `;
+        })
+        .catch(() => {
+            document.getElementById('hardhatStatus').innerHTML = `
+                <span class="status-icon">❌</span>
+                <div class="status-text">
+                    <h3>Hardhat Node</h3>
+                    <p>Not running - start with: npx hardhat node</p>
+                </div>
+            `;
+            document.getElementById('hardhatStatus').classList.add('error');
+        });
+
+        // Check MetaMask
+        if (typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask) {
+            const addr = window.ethereum.selectedAddress;
+            document.getElementById('metamaskStatus').innerHTML = `
+                <span class="status-icon">✅</span>
+                <div class="status-text">
+                    <h3>MetaMask</h3>
+                    <p>${addr ? 'Connected: ' + addr.slice(0, 6) + '...' + addr.slice(-4) : 'Detected (not connected)'}</p>
+                </div>
+            `;
+        } else {
+            document.getElementById('metamaskStatus').innerHTML = `
+                <span class="status-icon">❌</span>
+                <div class="status-text">
+                    <h3>MetaMask</h3>
+                    <p>Not installed - <a href="https://metamask.io" target="_blank">Install now</a></p>
+                </div>
+            `;
+            document.getElementById('metamaskStatus').classList.add('error');
+        }
+    </script>
+</body>
+</html>

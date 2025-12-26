@@ -18,7 +18,12 @@ async function main() {
   for (let i = 0; i < args.length; i += 2) {
     const key = args[i].replace('--', '');
     const value = args[i + 1];
-    config[key] = isNaN(value) ? value : parseInt(value);
+    // Parse numeric values properly
+    if (!isNaN(value) && value !== '') {
+      config[key] = parseFloat(value);
+    } else {
+      config[key] = value;
+    }
   }
   
   // Load API keys from environment
@@ -32,7 +37,7 @@ async function main() {
   // Initialize agent
   const agent = new ResearchAgent({
     apiKeys,
-    minConfidence: config.confidence || 0.4,
+    minConfidence: config.confidence || 0.2,
     lookbackHours: config.lookback || 24
   });
   

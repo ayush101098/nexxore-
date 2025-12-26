@@ -22,7 +22,7 @@ class ResearchAgent {
     this.name = 'ResearchAgent';
     this.logger = new AgentLogger(this.name);
     this.config = {
-      minConfidence: 0.4,
+      minConfidence: 0.2,
       maxResults: 10,
       lookbackHours: 24,
       ...config
@@ -44,8 +44,12 @@ class ResearchAgent {
     
     try {
       const protocol = context.protocol || null;
-      const keywords = context.keywords || (protocol ? [protocol] : []);
+      const keywords = context.keywords && context.keywords.length > 0 
+        ? context.keywords 
+        : (protocol ? [protocol] : []);
       const lookbackHours = context.lookbackHours || this.config.lookbackHours;
+      
+      this.logger.debug('Processed context', { protocol, keywords, lookbackHours });
       
       // Fetch data from all sources
       const signals = await this.gatherSignals(keywords, lookbackHours);
@@ -95,6 +99,7 @@ class ResearchAgent {
         title: article.title,
         sentiment: article.sentiment,
         relevance: article.relevanceScore,
+        protocol: keywords[0] || 'unknown',
         weight: 0.25
       })));
       
@@ -105,6 +110,7 @@ class ResearchAgent {
         score: sentiment.score,
         mentionCount: sentiment.mentionCount,
         category: categorizeSentiment(sentiment.score),
+        protocol: keywords[0] || 'unknown',
         weight: 0.20
       });
       
@@ -134,6 +140,7 @@ class ResearchAgent {
           signals.push({
             type: 'price_momentum',
             token,
+            protocol: token,
             changePercent24h: data.usd_24h_change,
             volume24h: data.usd_24h_vol,
             weight: 0.15
@@ -171,14 +178,20 @@ class ResearchAgent {
       };
       
       // Calculate confidence
+      const tvlScore = detail.tvlGrowth !== 0 ? Math.min(Math.abs(detail.tvlGrowth) / 10, 1) : 0.1;
+      const sentimentScore = sentimentSignal ? Math.abs(sentimentSignal.score || 0) : 0.1;
+      const newsScore = newsSignals.length > 0 ? Math.min(newsSignals.length / 5, 1) : 0.1;
+      const priceScore = detail.priceChange24h !== 0 ? Math.min(Math.abs(detail.priceChange24h) / 10, 1) : 0.1;
+      
       const confidence = calculateConfidence([
-        { score: Math.abs(sentimentSignal?.score || 0), weight: 0.3 },
-        { score: Math.min(Math.max(detail.tvlGrowth, 0), 100) / 100, weight: 0.3 },
-        { score: newsSignals.length > 0 ? 0.8 : 0.2, weight: 0.2 },
-        { score: Math.abs(detail.priceChange24h) / 100, weight: 0.2 }
+        { score: sentimentScore, weight: 0.25 },
+        { score: tvlScore, weight: 0.35 },
+        { score: newsScore, weight: 0.2 },
+        { score: priceScore, weight: 0.2 }
       ]);
       
       if (confidence < this.config.minConfidence) {
+        this.logger.debug('Filtered low confidence insight', { protocol: name, confidence, minRequired: this.config.minConfidence });
         return null;
       }
       
@@ -205,7 +218,7 @@ class ResearchAgent {
     const grouped = new Map();
     
     signals.forEach(signal => {
-      const key = signal.protocol || 'unknown';
+      const key = signal.protocol || signal.token || 'unknown';
       if (!grouped.has(key)) {
         grouped.set(key, []);
       }
