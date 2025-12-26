@@ -1,42 +1,67 @@
 # Vercel Deployment Guide
 
-## Quick Fix for FUNCTION_INVOCATION_FAILED
+## ✅ Fixed: 404 NOT_FOUND Error
 
-The serverless functions are now **self-contained** and don't require any external dependencies or environment variables to work. They will function immediately upon deployment.
+**Solution:** All frontend files are now in the **root directory** where Vercel expects them.
 
-## Optional Environment Variables
+## Deployment Status
 
-For enhanced functionality, you can add these in Vercel Project Settings:
+Your site structure on Vercel:
+- `https://your-domain.vercel.app/` → index.html (landing page)
+- `https://your-domain.vercel.app/research.html` → Research intelligence dashboard
+- `https://your-domain.vercel.app/deposit-new.html` → Deposit interface
+- `https://your-domain.vercel.app/vault-new.html` → Vault management
+- `https://your-domain.vercel.app/api/health` → API health check
+- `https://your-domain.vercel.app/api/research/insights` → Protocol analysis
+
+## How It Works
+
+1. **Static Files (HTML, CSS, JS)**: Served directly from root directory
+2. **API Endpoints**: Serverless functions in `/api` directory
+3. **Auto-deployment**: Every push to `main` branch triggers Vercel build
+
+## Verify Deployment
+
+After Vercel redeploys (automatic from GitHub), test:
 
 ```bash
-NEWS_API_KEY=your_newsapi_key  # For real news (falls back to mock data)
+# Homepage
+curl https://your-domain.vercel.app/
+
+# Research page
+curl https://your-domain.vercel.app/research.html
+
+# API health
+curl https://your-domain.vercel.app/api/health
+
+# Protocol insights
+curl https://your-domain.vercel.app/api/research/insights?protocols=aave
 ```
 
-**Note:** The functions work WITHOUT these - they use fallback data and public APIs.
+## Project Structure
 
-## Deploy to Vercel
+```
+/
+├── index.html              ← Landing page
+├── research.html           ← Research dashboard  
+├── deposit-new.html        ← Deposit interface
+├── vault-new.html          ← Vault page
+├── css/                    ← Stylesheets
+├── js/                     ← JavaScript
+├── assets/                 ← Icons, images
+└── api/                    ← Serverless functions
+    ├── health.js
+    ├── news.js
+    ├── trending.js
+    ├── chat.js
+    └── research/
+        └── insights.js
+```
 
-1. **Connect GitHub repository** to Vercel
-2. **Import project** from GitHub
-3. **Deploy** - No configuration needed!
-4. *Optional*: Add NEWS_API_KEY in Project Settings → Environment Variables
+## Quick Fix Summary
 
-## API Endpoints (Serverless Functions)
-
-All endpoints work immediately at your Vercel domain:
-
-- `GET /api/health` - Health check (always works)
-- `GET /api/news` - Crypto news (mock data or NewsAPI if key provided)
-- `GET /api/trending` - Trending tokens from CoinGecko (public API)
-- `GET /api/research/insights?protocols=aave,curve` - Protocol TVL analysis from DeFi Llama
-- `POST /api/chat` - Simple keyword-based chat (no OpenAI needed)
-
-## What Changed to Fix the Error
-
-**Before:** Functions tried to `require()` agent classes from `/agents` directory
-**After:** Each function is completely self-contained with inline code
-
-This works in Vercel's isolated serverless environment.
+**Before:** Files in `/frontend` folder → Vercel couldn't find them → 404
+**After:** Files in root `/` → Vercel serves them directly → Works! ✅
 
 ## Frontend Pages
 
