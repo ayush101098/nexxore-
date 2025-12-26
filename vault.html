@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexxore Vault - Multi-Chain Asset Management</title>
+    
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/wallet.css">
+    
+    <style>
+        .vault-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .vault-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .vault-header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .vault-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+            border: 1px solid #667eea30;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .deposit-card, .withdraw-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .wallet-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .wallet-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .wallet-btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 1rem;
+            border: 2px solid #667eea;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .wallet-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .wallet-btn.connected {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+
+        .wallet-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .wallet-info.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="vault-container">
+        <!-- Header -->
+        <div class="vault-header">
+            <h1>🏦 Nexxore Vault</h1>
+            <p>Multi-Chain Asset Management • Ethereum • Solana • Bitcoin</p>
+        </div>
+
+        <!-- Vault Statistics -->
+        <div class="vault-stats">
+            <div class="stat-card">
+                <div class="stat-label">Total Value Locked</div>
+                <div class="stat-value" id="total-tvl">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Your Portfolio</div>
+                <div class="stat-value" id="user-portfolio">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Shares</div>
+                <div class="stat-value" id="total-shares">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Vaults</div>
+                <div class="stat-value">7</div>
+            </div>
+        </div>
+
+        <!-- Wallet Connection -->
+        <div class="wallet-section">
+            <h2>Connect Wallets</h2>
+            <div class="wallet-buttons">
+                <button class="wallet-btn" id="connect-evm">
+                    <span>🦊</span> Connect EVM Wallet
+                </button>
+                <button class="wallet-btn" id="connect-solana">
+                    <span>👻</span> Connect Solana
+                </button>
+                <button class="wallet-btn" id="connect-bitcoin">
+                    <span>₿</span> Connect Bitcoin
+                </button>
+            </div>
+            
+            <div class="wallet-info" id="evm-info">
+                <strong>EVM:</strong> <span id="evm-address">Not connected</span>
+                <button id="disconnect-evm">Disconnect</button>
+            </div>
+            <div class="wallet-info" id="solana-info">
+                <strong>Solana:</strong> <span id="solana-address">Not connected</span>
+                <button id="disconnect-solana">Disconnect</button>
+            </div>
+            <div class="wallet-info" id="bitcoin-info">
+                <strong>Bitcoin:</strong> <span id="btc-address">Not connected</span>
+                <button id="disconnect-bitcoin">Disconnect</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Deposit Section -->
+            <div id="deposit-container"></div>
+
+            <!-- Withdraw Section -->
+            <div id="withdraw-container"></div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="transaction-history">
+            <h2>Recent Transactions</h2>
+            <div id="tx-history">
+                <p class="empty-state">No transactions yet</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { evmWallet, web3Modal } from './js/wallet/evmWallet.js';
+        import { solanaWallet } from './js/wallet/solanaWallet.js';
+        import { btcWallet } from './js/wallet/btcWallet.js';
+        import { DepositUI } from './js/components/depositUI.js';
+        import { WithdrawUI } from './js/components/withdrawUI.js';
+
+        // Configuration
+        const config = {
+            vaults: {
+                evm: {
+                    ETH: '0x...', // Replace with actual addresses
+                    USDC: '0x...',
+                    USDT: '0x...',
+                },
+            },
+            programs: {
+                solana: 'NexxVau1t111111111111111111111111111111111',
+            },
+            mints: {
+                solana: {
+                    SOL: 'So11111111111111111111111111111111111111112',
+                    USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+                },
+            },
+            abis: {
+                vault: [], // Import actual ABI
+            },
+            idls: {
+                solana: {}, // Import actual IDL
+            },
+        };
+
+        // Initialize UI components
+        const depositUI = new DepositUI(config);
+        const withdrawUI = new WithdrawUI(config);
+
+        // Wallet connection handlers
+        document.getElementById('connect-evm').addEventListener('click', async () => {
+            await evmWallet.connect();
+        });
+
+        document.getElementById('connect-solana').addEventListener('click', async () => {
+            await solanaWallet.connect('Phantom');
+        });
+
+        document.getElementById('connect-bitcoin').addEventListener('click', async () => {
+            const wallets = await btcWallet.detectWallets();
+            if (wallets.length > 0) {
+                await btcWallet.connect(wallets[0]);
+            } else {
+                alert('No Bitcoin wallet detected. Please install Xverse or Unisat.');
+            }
+        });
+
+        document.getElementById('disconnect-evm').addEventListener('click', async () => {
+            await evmWallet.disconnect();
+        });
+
+        document.getElementById('disconnect-solana').addEventListener('click', async () => {
+            await solanaWallet.disconnect();
+        });
+
+        document.getElementById('disconnect-bitcoin').addEventListener('click', async () => {
+            await btcWallet.disconnect();
+        });
+
+        // Wallet state subscriptions
+        evmWallet.subscribe((state) => {
+            const btn = document.getElementById('connect-evm');
+            const info = document.getElementById('evm-info');
+            const address = document.getElementById('evm-address');
+
+            if (state.isConnected) {
+                btn.classList.add('connected');
+                btn.textContent = `✓ ${evmWallet.getShortAddress()} (${evmWallet.getChainName()})`;
+                info.classList.add('active');
+                address.textContent = state.address;
+            } else {
+                btn.classList.remove('connected');
+                btn.innerHTML = '<span>🦊</span> Connect EVM Wallet';
+                info.classList.remove('active');
+            }
+        });
+
+        solanaWallet.subscribe((state) => {
+            const btn = document.getElementById('connect-solana');
+            const info = document.getElementById('solana-info');
+            const address = document.getElementById('solana-address');
+
+            if (state.connected) {
+                btn.classList.add('connected');
+                btn.textContent = `✓ ${solanaWallet.getShortAddress()}`;
+                info.classList.add('active');
+                address.textContent = state.publicKey;
+            } else {
+                btn.classList.remove('connected');
+                btn.innerHTML = '<span>👻</span> Connect Solana';
+                info.classList.remove('active');
+            }
+        });
+
+        btcWallet.subscribe((state) => {
+            const btn = document.getElementById('connect-bitcoin');
+            const info = document.getElementById('bitcoin-info');
+            const address = document.getElementById('btc-address');
+
+            if (state.connected) {
+                btn.classList.add('connected');
+                btn.textContent = `✓ ${btcWallet.getShortAddress()}`;
+                info.classList.add('active');
+                address.textContent = state.address;
+            } else {
+                btn.classList.remove('connected');
+                btn.innerHTML = '<span>₿</span> Connect Bitcoin';
+                info.classList.remove('active');
+            }
+        });
+
+        // Initialize wallet connections on load
+        window.addEventListener('load', () => {
+            evmWallet.reconnect();
+        });
+    </script>
+</body>
+</html>

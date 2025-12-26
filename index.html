@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>nexxore — Autonomous capital orchestration</title>
+  <meta name="description" content="Mint nUSD, deploy yield and trading strategies, and let agents manage your portfolio 24/7.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/wallet.css">
+  
+  <!-- Web3 Libraries -->
+  <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-brand"><a href="/" class="brand-link"><svg class="site-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160"><defs><linearGradient id="logoGrad" x1="0" x2="1"><stop offset="0" stop-color="#00d4ff"/><stop offset="1" stop-color="#0066ff"/></linearGradient></defs><g transform="translate(40,40) scale(0.9)"><circle cx="50" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/></g><g transform="translate(150,110)"><text x="0" y="0" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="56" fill="currentColor">nexxore</text></g></svg></a></div>
+      <div class="nav-links">
+        <a href="research.html" class="btn btn-outline" style="margin-right: 10px;">Research</a>
+        <a href="deposit-new.html" class="btn btn-outline" style="margin-right: 10px;">Deposit</a>
+        <a href="vault-new.html" class="btn btn-outline" style="margin-right: 10px;">Vault</a>
+        <button id="connectWalletBtn" class="btn btn-primary">Connect Wallet</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section id="hero" class="hero-section">
+    <div class="container">
+      <div class="hero-content">
+        <h1 class="hero-headline">Autonomous capital execution onchain. Yield, optimized.</h1>
+        <p class="hero-subheadline">Mint nUSD, deploy yield and trading strategies, and let agents manage your portfolio 24/7.</p>
+        <div class="hero-cta">
+          <a href="deposit-new.html" class="btn btn-primary">Start Depositing</a>
+          <a href="vault-new.html" class="btn btn-outline">View Vault</a>
+        </div>
+      </div>
+    </div>
+    <div class="hero-background">
+      <div class="gradient-orb gradient-orb-1"></div>
+      <div class="gradient-orb gradient-orb-2"></div>
+      <div class="gradient-orb gradient-orb-3"></div>
+    </div>
+  </section>
+
+  <!-- Workflow Section -->
+  <section id="workflow" class="workflow-section">
+    <div class="container">
+      <div class="workflow-diagram">
+        <div class="workflow-card">
+          <div class="workflow-icon" style="background:linear-gradient(135deg,#9333ea,#c084fc)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56M15 10l-3-3m0 0l-3 3m3-3v13"/></svg>
+          </div>
+          <h3>COLLATERAL</h3>
+          <h4>Deposit Assets</h4>
+          <p>Users deposit various digital assets into a secure vault to back their stablecoin minting.</p>
+        </div>
+        <div class="workflow-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+        </div>
+        <div class="workflow-card">
+          <div class="workflow-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><text x="12" y="15" font-size="7" text-anchor="middle" fill="currentColor" font-family="Inter">n</text></svg>
+          </div>
+          <h3>nUSD</h3>
+          <h4>Mint Stablecoin</h4>
+          <p>Based on the deposited collateral, users can mint nUSD, a decentralized, algorithmically stabilized stablecoin.</p>
+        </div>
+        <div class="workflow-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+        </div>
+        <div class="workflow-card">
+          <div class="workflow-icon" style="background:linear-gradient(135deg,#14b8a6,#5eead4)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <h3>STRATEGY SANDBOX</h3>
+          <h4>Configure Strategies</h4>
+          <p>Users utilize an intuitive interface to design, test, and configure automated trading or investment strategies.</p>
+        </div>
+        <div class="workflow-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+        </div>
+        <div class="workflow-card">
+          <div class="workflow-icon" style="background:linear-gradient(135deg,#f97316,#fb923c)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="7" width="12" height="9" rx="2"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/><path d="M9 18v1M15 18v1"/></svg>
+          </div>
+          <h3>AGENTS</h3>
+          <h4>Deploy Automation</h4>
+          <p>Configured strategies are deployed as autonomous agents that execute trades and manage assets 24/7.</p>
+        </div>
+        <div class="workflow-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+        </div>
+        <div class="workflow-card">
+          <div class="workflow-icon" style="background:linear-gradient(135deg,#22c55e,#86efac)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17h18M7 13v4M12 9v8M17 5v12"/></svg>
+          </div>
+          <h3>PORTFOLIO</h3>
+          <h4>Track Performance</h4>
+          <p>Users monitor the real-time performance, value, and allocation of their assets and automated strategies in a comprehensive dashboard.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mission-section">
+    <div class="container">
+      <blockquote class="mission-quote">
+        <p><strong>Mission:</strong> Democratize access to institutional-grade yield strategies via on-chain collateralization and autonomous agents.</p>
+      </blockquote>
+    </div>
+  </section><section id="nusd" class="nusd-section">
+    <div class="container">
+      <div class="section-header" style="text-align:center;max-width:900px;margin:0 auto">
+        <h2 class="section-headline">Mint nUSD — Unlock liquidity without selling assets</h2>
+        <p class="section-copy">Deposit collateral, mint nUSD, and deploy capital into strategies instantly.</p>
+      </div>
+      <div class="benefits-grid">
+        <div class="benefit-card">
+          <div class="benefit-number">01</div>
+          <h3>Mint nUSD Instantly</h3>
+          <p>Unlock liquidity without selling underlying assets. Maintain exposure while deploying capital.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-number">02</div>
+          <h3>Automate Execution</h3>
+          <p>Agents monitor and act nonstop. No manual intervention, 24/7 autonomous execution.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-number">03</div>
+          <h3>Optimize Risk & Yield</h3>
+          <p>Portfolio health monitoring and dynamic rebalancing. Maximize returns while managing risk.</p>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:32px">
+        <a href="#" class="btn btn-primary">Launch nUSD App →</a>
+      </div>
+    </div>
+  </section>
+  <section id="agents" class="agents-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-headline">Agent Terminal Preview</h2>
+        <p class="section-copy">Autonomous agents execute strategies 24/7 — preview agent types below.</p>
+      </div>
+
+      <div class="agents-grid">
+        <div class="agent-card" title="Optimizes fills and rebalances positions."><div class="agent-icon"><img src="assets/icons/bolt.svg" alt="Precision Execution" class="icon-svg"/></div><div class="agent-title">Precision Execution</div><div class="agent-sub">Trading Agent — Minimizes slippage and MEV</div></div>
+        <a href="https://sepolia.basescan.org/address/0x5B38Da6a701c568545dCfcB03FcB875f56beddC4" target="_blank" class="agent-card agent-card-clickable" title="View Yield Vault on BaseScan. Scans protocols and rotates capital." style="text-decoration: none; color: inherit; cursor: pointer;"><div class="agent-icon"><img src="assets/icons/rotate.svg" alt="Yield Engine" class="icon-svg"/></div><div class="agent-title">Yield Engine</div><div class="agent-sub">DeFi Strategy Agent — Auto-compounds and reallocates</div><div style="margin-top: 8px; font-size: 0.75rem; color: #00d4ff; font-weight: 600;">→ View Vault Contract</div></a>
+        <a href="research.html" class="agent-card agent-card-clickable" title="Alerts before markets react based on signals. Click to explore live research dashboard." style="text-decoration: none; color: inherit; cursor: pointer;"><div class="agent-icon"><img src="assets/icons/search.svg" alt="Info Edge" class="icon-svg"/></div><div class="agent-title">Info Edge</div><div class="agent-sub">Research/Alpha Agent — Sentiment & trend signals</div><div style="margin-top: 8px; font-size: 0.75rem; color: #00d4ff; font-weight: 600;">→ View Live Dashboard</div></a>
+        <div class="agent-card" title="Event-driven tactical plays with controlled risk."><div class="agent-icon"><img src="assets/icons/target.svg" alt="Tactical Plays" class="icon-svg"/></div><div class="agent-title">Tactical Plays</div><div class="agent-sub">Degen Agent — High-convex setups</div></div>
+      </div>
+    </div>
+  </section><section id="sandbox" class="sandbox-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-headline">Strategy Sandbox</h2>
+        <p class="section-copy">Transparent Strategy Logic. Verifiable Capital Execution.</p>
+        <p class="section-copy" style="margin-top:8px;max-width:900px">Inspect strategy rules, execution logic, historical performance, and live capital allocation — all before deploying a single dollar.</p>
+      </div>
+
+      <div class="sandbox-grid" id="sandboxGrid">
+        <div class="strategy-card" tabindex="0" data-strategy="safe">
+          <div class="strategy-header">
+            <div class="strategy-icon"><img src="assets/icons/dot-green.svg" alt="safe" class="icon-svg"/></div>
+            <div>
+              <div class="strategy-name">Safe Yield</div>
+              <div class="strategy-sub">Capital Preservation Mandate</div>
+            </div>
+          </div>
+          <div class="strategy-preview">
+            <div class="strategy-meta"><strong>Risk:</strong> Low</div>
+            <div class="strategy-status">Deployed: $0</div>
+          </div>
+          <div class="strategy-expandable">
+            <div class="strategy-objective"><strong>Objective:</strong> Stable yield with minimal volatility</div>
+            <ul class="strategy-mix">
+              <li>Blue-chip lending</li>
+              <li>Over-collateralized stable strategies</li>
+              <li>Conservative rebalancing logic</li>
+            </ul>
+            <div class="strategy-live">Target Volatility: &lt; X% — Execution Status: Inactive</div>
+            <div class="strategy-cue">Designed for treasuries & long-term allocators</div>
+            <div class="strategy-actions">
+              <button class="btn btn-outline btn-sm inspect">Inspect</button>
+              <button class="btn btn-secondary btn-sm simulate">Simulate</button>
+              <button class="btn btn-outline btn-sm view-logic">View Logic</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="strategy-card" tabindex="0" data-strategy="balanced">
+          <div class="strategy-header">
+            <div class="strategy-icon"><img src="assets/icons/rotate.svg" alt="balanced" class="icon-svg"/></div>
+            <div>
+              <div class="strategy-name">Balanced Realloc</div>
+              <div class="strategy-sub">Risk-Adjusted Yield Optimization</div>
+            </div>
+          </div>
+          <div class="strategy-preview">
+            <div class="strategy-meta"><strong>Risk:</strong> Medium</div>
+            <div class="strategy-status">Deployed: $0</div>
+          </div>
+          <div class="strategy-expandable">
+            <div class="strategy-objective"><strong>Objective:</strong> Optimize yield while managing drawdowns</div>
+            <ul class="strategy-mix">
+              <li>Yield rotation across protocols</li>
+              <li>Delta-neutral components</li>
+              <li>Dynamic capital reallocation</li>
+            </ul>
+            <div class="strategy-live">Sharpe Target: &gt; X — Execution Status: Inactive</div>
+            <div class="strategy-cue">Built for active capital managers</div>
+            <div class="strategy-actions">
+              <button class="btn btn-outline btn-sm inspect">Inspect</button>
+              <button class="btn btn-secondary btn-sm simulate">Simulate</button>
+              <button class="btn btn-outline btn-sm view-logic">View Logic</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="strategy-card" tabindex="0" data-strategy="oppor">
+          <div class="strategy-header">
+            <div class="strategy-icon"><img src="assets/icons/chart.svg" alt="opportunistic" class="icon-svg"/></div>
+            <div>
+              <div class="strategy-name">Opportunistic Alpha</div>
+              <div class="strategy-sub">Event-Driven Alpha Capture</div>
+            </div>
+          </div>
+          <div class="strategy-preview">
+            <div class="strategy-meta"><strong>Risk:</strong> High</div>
+            <div class="strategy-status">Deployed: $0</div>
+          </div>
+          <div class="strategy-expandable">
+            <div class="strategy-objective"><strong>Objective:</strong> Exploit short-term inefficiencies</div>
+            <ul class="strategy-mix">
+              <li>Basis & funding arbitrage</li>
+              <li>Volatility-driven trades</li>
+              <li>Liquidity dislocation strategies</li>
+            </ul>
+            <div class="strategy-live">Max Drawdown Guardrails: Enabled — Execution Status: Inactive</div>
+            <div class="strategy-cue">Best suited for tactical deployment</div>
+            <div class="strategy-actions">
+              <button class="btn btn-outline btn-sm inspect">Inspect</button>
+              <button class="btn btn-secondary btn-sm simulate">Simulate</button>
+              <button class="btn btn-outline btn-sm view-logic">View Logic</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="strategy-card" tabindex="0" data-strategy="degen">
+          <div class="strategy-header">
+            <div class="strategy-icon"><img src="assets/icons/bolt.svg" alt="degen" class="icon-svg"/></div>
+            <div>
+              <div class="strategy-name">Tactical Degen</div>
+              <div class="strategy-sub">High-Conviction, High-Variance</div>
+            </div>
+          </div>
+          <div class="strategy-preview">
+            <div class="strategy-meta"><strong>Risk:</strong> Very High</div>
+            <div class="strategy-status">Deployed: $0</div>
+          </div>
+          <div class="strategy-expandable">
+            <div class="strategy-objective"><strong>Objective:</strong> Asymmetric upside capture</div>
+            <ul class="strategy-mix">
+              <li>Leverage-aware directional trades</li>
+              <li>Narrative & momentum strategies</li>
+              <li>Experimental agent logic</li>
+            </ul>
+            <div class="strategy-live">Risk Controls: Custom — Execution Status: Inactive</div>
+            <div class="strategy-cue">For advanced users only</div>
+            <div class="strategy-actions">
+              <button class="btn btn-outline btn-sm inspect">Inspect</button>
+              <button class="btn btn-secondary btn-sm simulate">Simulate</button>
+              <button class="btn btn-outline btn-sm view-logic">View Logic</button>
+            </div>
+          </div>
+        </div>
+            <button class="btn btn-outline view-logic">View Execution Logic</button>
+          </div>
+          <div class="strategy-details" aria-hidden="true">
+            <div class="detail-graph">[Logic graph placeholder]</div>
+            <div class="detail-curve">[Backtest curve placeholder]</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="trust-signals" style="margin-top:18px;text-align:center;max-width:900px;margin-left:auto;margin-right:auto;color:var(--muted)">
+        <p><strong>All strategies execute on-chain with deterministic logic.</strong> No black boxes. No discretionary intervention.</p>
+      </div>
+    </div>
+  </section><section id="portfolio" class="portfolio-section">
+    <div class="container">
+      <div class="section-content">
+        <div class="section-text"><h2 class="section-headline">Portfolio Health (Live Score)</h2><p class="section-copy">Real-time health gauge and risk metrics.</p></div>
+        <div class="section-visual">
+          <div class="health-gauge">—</div>
+          <div class="mini-stats"><div class="mini-stat">Risk Utilization</div><div class="mini-stat">Yield Efficiency</div><div class="mini-stat">Volatility Exposure</div></div>
+        </div>
+      </div>
+    </div>
+  </section><section id="waitlist" class="waitlist-section">
+    <div class="container">
+      <div class="waitlist-content">
+        <h2 class="section-headline">Be the first to earn with nexxore</h2>
+        <p class="section-copy">Early users get priority rewards.</p>
+        <form class="waitlist-form" id="waitlistForm"><div class="form-group"><input type="email" id="email" name="email" placeholder="Enter your email" required></div><button type="submit" class="btn btn-primary btn-full">Join the Waitlist</button></form>
+        <p class="form-disclaimer">We'll notify you when new features launch and never spam your inbox.</p>
+      </div>
+    </div>
+  </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand" style="display:flex;align-items:center;gap:12px">
+                    <svg style="height:36px;width:auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160"><defs><linearGradient id="footerLogoGrad" x1="0" x2="1"><stop offset="0" stop-color="#00d4ff"/><stop offset="1" stop-color="#0066ff"/></linearGradient></defs><g transform="translate(40,40) scale(0.9)"><circle cx="50" cy="40" r="28" stroke="url(#footerLogoGrad)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#footerLogoGrad)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#footerLogoGrad)" stroke-width="6" fill="none" opacity="0.85"/></g><g transform="translate(150,110)"><text x="0" y="0" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="56" fill="currentColor">nexxore</text></g></svg>
+                </div>
+
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Products</h4>
+                        <a href="#agents">Agent Terminal</a>
+                        <a href="#sandbox">Strategy Sandbox</a>
+                        <a href="#portfolio">Portfolio Optimizer</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Resources</h4>
+                        <a href="#" target="_blank">Docs</a>
+                        <a href="#" target="_blank">Blog</a>
+                        <a href="#" target="_blank">Support</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Community</h4>
+                        <a href="#" target="_blank">Discord</a>
+                        <a href="#" target="_blank">X</a>
+                        <a href="#" target="_blank">Telegram</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Legal</h4>
+                        <a href="#">Terms</a>
+                        <a href="#">Privacy</a>
+                        <a href="#">Audit</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2025 nexxore. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Strategy Modal -->
+    <div id="strategyModal" class="modal" role="dialog" aria-labelledby="modalTitle" aria-hidden="true">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <button class="modal-close" aria-label="Close modal">&times;</button>
+        <h2 id="modalTitle" class="modal-title">Strategy Details</h2>
+        <div class="modal-body">
+          <p>Loading strategy information...</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" id="modalCancel">Cancel</button>
+          <button class="btn btn-primary" id="modalConfirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/wallet.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

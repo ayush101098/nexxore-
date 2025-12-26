@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Info Edge - Research Intelligence | nexxore</title>
+  <meta name="description" content="Real-time crypto research, sentiment analysis, and alpha signals powered by autonomous agents.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+      color: #e5e7eb;
+      min-height: 100vh;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 32px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .back-link {
+      color: #00d4ff;
+      text-decoration: none;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.3s;
+    }
+
+    .back-link:hover {
+      opacity: 0.7;
+    }
+
+    .header-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #00d4ff, #0099ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-subtitle {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      margin-left: 12px;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr 1fr;
+      gap: 20px;
+      padding: 24px 32px;
+      max-width: 1800px;
+      margin: 0 auto;
+      height: calc(100vh - 90px);
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #00d4ff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .panel-badge {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      background: rgba(0, 212, 255, 0.15);
+      border-radius: 12px;
+      color: #00d4ff;
+    }
+
+    /* News Panel */
+    .news-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .news-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .news-list::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    .news-list::-webkit-scrollbar-thumb {
+      background: rgba(0, 212, 255, 0.3);
+      border-radius: 10px;
+    }
+
+    .news-item {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .news-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(0, 212, 255, 0.3);
+      transform: translateX(4px);
+    }
+
+    .news-source {
+      font-size: 0.75rem;
+      color: #00d4ff;
+      font-weight: 600;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .news-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      line-height: 1.4;
+      color: #f3f4f6;
+    }
+
+    .news-sentiment {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .sentiment-bullish {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+
+    .sentiment-bearish {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .sentiment-neutral {
+      background: rgba(156, 163, 175, 0.2);
+      color: #9ca3af;
+    }
+
+    /* Chat Panel */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-right: 8px;
+    }
+
+    .chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: rgba(0, 212, 255, 0.3);
+      border-radius: 10px;
+    }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: 12px;
+      max-width: 85%;
+      line-height: 1.5;
+      font-size: 0.9rem;
+    }
+
+    .message.user {
+      background: rgba(0, 212, 255, 0.15);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      align-self: flex-end;
+      margin-left: auto;
+    }
+
+    .message.ai {
+      background: rgba(147, 51, 234, 0.15);
+      border: 1px solid rgba(147, 51, 234, 0.3);
+      align-self: flex-start;
+    }
+
+    .message.ai strong {
+      color: #c084fc;
+    }
+
+    .chat-input-container {
+      display: flex;
+      gap: 10px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .chat-input {
+      flex: 1;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: rgba(0, 212, 255, 0.5);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .chat-send {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #00d4ff, #0099ff);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .chat-send:hover {
+      transform: scale(1.05);
+    }
+
+    .chat-send:active {
+      transform: scale(0.98);
+    }
+
+    /* Trending Panel */
+    .trending-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .trending-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .trending-list::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    .trending-list::-webkit-scrollbar-thumb {
+      background: rgba(0, 212, 255, 0.3);
+      border-radius: 10px;
+    }
+
+    .trending-item {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s;
+    }
+
+    .trending-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(0, 212, 255, 0.3);
+    }
+
+    .trending-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .trending-symbol {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #00d4ff;
+    }
+
+    .trending-rank {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    .trending-name {
+      font-size: 0.8rem;
+      color: #d1d5db;
+      margin-bottom: 8px;
+    }
+
+    .trending-stats {
+      display: flex;
+      gap: 12px;
+      font-size: 0.75rem;
+    }
+
+    .stat-item {
+      color: #9ca3af;
+    }
+
+    .stat-value {
+      color: #f3f4f6;
+      font-weight: 600;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+
+    .error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      padding: 12px;
+      border-radius: 10px;
+      margin: 10px 0;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 1400px) {
+      .container {
+        grid-template-columns: 1fr 1fr;
+      }
+      .panel.full-width {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+      .header {
+        padding: 16px;
+      }
+    }
+
+    /* Insights specific styles */
+    .insights-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .insight-item {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s;
+    }
+
+    .insight-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(0, 212, 255, 0.3);
+    }
+
+    .insight-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .insight-protocol {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #00d4ff;
+      text-transform: uppercase;
+    }
+
+    .insight-confidence {
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .confidence-high {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+
+    .confidence-medium {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+    }
+
+    .confidence-low {
+      background: rgba(156, 163, 175, 0.2);
+      color: #9ca3af;
+    }
+
+    .insight-summary {
+      font-size: 0.85rem;
+      color: #d1d5db;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .insight-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      font-size: 0.75rem;
+    }
+
+    .metric-item {
+      background: rgba(255, 255, 255, 0.02);
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .metric-label {
+      color: #9ca3af;
+    }
+
+    .metric-value {
+      color: #f3f4f6;
+      font-weight: 600;
+    }
+
+    .metric-value.positive {
+      color: #22c55e;
+    }
+
+    .metric-value.negative {
+      color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <a href="/" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Home
+      </a>
+      <div>
+        <span class="header-title">Info Edge</span>
+        <span class="header-subtitle">Research Intelligence Dashboard</span>
+      </div>
+    </div>
+    <div class="status-indicator">
+      <span class="status-dot"></span>
+      <span>Live</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Research Insights Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🎯 Alpha Insights</div>
+        <div class="panel-badge" id="insightsCount">0</div>
+      </div>
+      <div class="insights-list" id="insightsList">
+        <div class="loading">Analyzing protocols...</div>
+      </div>
+    </div>
+
+    <!-- News Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📰 Latest News</div>
+        <div class="panel-badge" id="newsCount">0</div>
+      </div>
+      <div class="news-list" id="newsList">
+        <div class="loading">Loading news...</div>
+      </div>
+    </div>
+
+    <!-- Trending Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🔥 Trending</div>
+        <div class="panel-badge" id="trendingCount">0</div>
+      </div>
+      <div class="trending-list" id="trendingList">
+        <div class="loading">Loading trending tokens...</div>
+      </div>
+    </div>
+
+    <!-- Chat Panel - Full Width -->
+    <div class="panel full-width">
+      <div class="panel-header">
+        <div class="panel-title">💬 AI Research Assistant</div>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="message ai">
+          <strong>Info Edge:</strong> Hello! I'm your research agent. Ask me about crypto trends, tokens, or market sentiment. I have access to real-time news and data.
+        </div>
+      </div>
+      <div class="chat-input-container">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Ask about crypto trends, sentiment, or specific tokens..." />
+        <button class="chat-send" id="chatSend">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Use relative path for API in production, localhost in development
+    const API_BASE = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000/api' 
+      : '/api';
+    
+    console.log('🚀 Research Dashboard Initialized');
+    console.log('📡 API Base URL:', API_BASE);
+
+    // Fetch and display research insights
+    async function loadInsights() {
+      console.log('🎯 Loading research insights...');
+      try {
+        const response = await fetch(`${API_BASE}/research/insights?protocols=aave,curve,uniswap,compound`);
+        console.log('📥 Insights response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ Insights data loaded:', data);
+        
+        const insightsList = document.getElementById('insightsList');
+        const insightsCount = document.getElementById('insightsCount');
+        
+        if (data.error) {
+          insightsList.innerHTML = `<div class="error">${data.error}</div>`;
+          console.error('❌ API returned error:', data.error);
+        } else if (data.insights && data.insights.length > 0) {
+          insightsCount.textContent = data.insights.length;
+          insightsList.innerHTML = data.insights.map(insight => {
+            const confidenceClass = insight.confidence >= 0.6 ? 'high' : 
+                                   insight.confidence >= 0.3 ? 'medium' : 'low';
+            const confidenceLabel = insight.confidence >= 0.6 ? 'High' : 
+                                   insight.confidence >= 0.3 ? 'Medium' : 'Low';
+            
+            return `
+              <div class="insight-item">
+                <div class="insight-header">
+                  <div class="insight-protocol">${insight.protocol}</div>
+                  <div class="insight-confidence confidence-${confidenceClass}">
+                    ${confidenceLabel} ${(insight.confidence * 100).toFixed(0)}%
+                  </div>
+                </div>
+                <div class="insight-summary">${insight.summary || 'No summary available'}</div>
+                <div class="insight-metrics">
+                  ${insight.signals && insight.signals.defi && insight.signals.defi.length > 0 ? `
+                    <div class="metric-item">
+                      <span class="metric-label">TVL</span>
+                      <span class="metric-value">$${(insight.signals.defi[0].data.tvl / 1e9).toFixed(2)}B</span>
+                    </div>
+                    <div class="metric-item">
+                      <span class="metric-label">7d Change</span>
+                      <span class="metric-value ${insight.signals.defi[0].data.tvlChange >= 0 ? 'positive' : 'negative'}">
+                        ${insight.signals.defi[0].data.tvlChange >= 0 ? '+' : ''}${insight.signals.defi[0].data.tvlChange.toFixed(2)}%
+                      </span>
+                    </div>
+                  ` : `
+                    <div class="metric-item">
+                      <span class="metric-label">Status</span>
+                      <span class="metric-value">Analyzing...</span>
+                    </div>
+                  `}
+                  <div class="metric-item">
+                    <span class="metric-label">Signals</span>
+                    <span class="metric-value">${Object.values(insight.signals || {}).flat().length}</span>
+                  </div>
+                  <div class="metric-item">
+                    <span class="metric-label">Insights</span>
+                    <span class="metric-value">${insight.insights?.length || 0}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+          console.log('✅ Insights rendered:', data.insights.length, 'items');
+        } else {
+          insightsList.innerHTML = '<div class="error">No insights available</div>';
+          console.warn('⚠️ No insights data found');
+        }
+      } catch (error) {
+        console.error('❌ Error loading insights:', error);
+        document.getElementById('insightsList').innerHTML = `<div class="error">Failed to load insights: ${error.message}</div>`;
+      }
+    }
+
+    // Fetch and display news
+    async function loadNews() {
+      console.log('📰 Loading news...');
+      try {
+        const response = await fetch(`${API_BASE}/news`);
+        console.log('📥 News response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ News data loaded:', data);
+        
+        const newsList = document.getElementById('newsList');
+        const newsCount = document.getElementById('newsCount');
+        
+        if (data.error) {
+          newsList.innerHTML = `<div class="error">${data.error}</div>`;
+          console.error('❌ API returned error:', data.error);
+        } else if (data.news && data.news.length > 0) {
+          newsCount.textContent = data.news.length;
+          newsList.innerHTML = data.news.map(item => `
+            <div class="news-item" onclick="window.open('${item.url}', '_blank')">
+              <div class="news-source">${item.source}</div>
+              <div class="news-title">${item.title}</div>
+              <span class="news-sentiment sentiment-${item.sentiment || 'neutral'}">${item.sentiment || 'neutral'}</span>
+            </div>
+          `).join('');
+          console.log('✅ News rendered:', data.news.length, 'items');
+        } else {
+          newsList.innerHTML = '<div class="error">No news available</div>';
+          console.warn('⚠️ No news data found');
+        }
+      } catch (error) {
+        console.error('❌ Error loading news:', error);
+        document.getElementById('newsList').innerHTML = `<div class="error">Failed to load news: ${error.message}</div>`;
+      }
+    }
+
+    // Fetch and display trending tokens
+    async function loadTrending() {
+      console.log('🔥 Loading trending tokens...');
+      try {
+        const response = await fetch(`${API_BASE}/trending`);
+        console.log('📥 Trending response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ Trending data loaded:', data);
+        
+        const trendingList = document.getElementById('trendingList');
+        const trendingCount = document.getElementById('trendingCount');
+        
+        if (data.error) {
+          trendingList.innerHTML = `<div class="error">${data.error}</div>`;
+          console.error('❌ API returned error:', data.error);
+        } else if (data.trending && data.trending.length > 0) {
+          trendingCount.textContent = data.trending.length;
+          trendingList.innerHTML = data.trending.map((token, index) => `
+            <div class="trending-item">
+              <div class="trending-header">
+                <div class="trending-symbol">${token.symbol}</div>
+                <div class="trending-rank">#${index + 1}</div>
+              </div>
+              <div class="trending-name">${token.name}</div>
+              <div class="trending-stats">
+                <div class="stat-item">Rank: <span class="stat-value">${token.market_cap_rank || 'N/A'}</span></div>
+              </div>
+            </div>
+          `).join('');
+          console.log('✅ Trending rendered:', data.trending.length, 'tokens');
+        } else {
+          trendingList.innerHTML = '<div class="error">No trending data available</div>';
+          console.warn('⚠️ No trending data found');
+        }
+      } catch (error) {
+        console.error('❌ Error loading trending:', error);
+        document.getElementById('trendingList').innerHTML = `<div class="error">Failed to load trending: ${error.message}</div>`;
+      }
+    }
+
+    // Chat functionality
+    async function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const messages = document.getElementById('chatMessages');
+      const message = input.value.trim();
+      
+      if (!message) return;
+      
+      // Add user message
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message user';
+      userMsg.textContent = message;
+      messages.appendChild(userMsg);
+      
+      input.value = '';
+      messages.scrollTop = messages.scrollHeight;
+      
+      // Send to AI
+      try {
+        const response = await fetch(`${API_BASE}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        
+        const data = await response.json();
+        
+        // Add AI response
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'message ai';
+        aiMsg.innerHTML = `<strong>Info Edge:</strong> ${data.response}`;
+        messages.appendChild(aiMsg);
+        
+        messages.scrollTop = messages.scrollHeight;
+      } catch (error) {
+        console.error('Error sending message:', error);
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'message ai error';
+        errorMsg.innerHTML = '<strong>Error:</strong> Failed to get response';
+        messages.appendChild(errorMsg);
+      }
+    }
+
+    // Event listeners
+    document.getElementById('chatSend').addEventListener('click', sendMessage);
+    document.getElementById('chatInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // Initial load
+    loadInsights();
+    loadNews();
+    loadTrending();
+
+    // Auto-refresh every 5 minutes
+    setInterval(() => {
+      loadInsights();
+      loadNews();
+      loadTrending();
+    }, 5 * 60 * 1000);
+  </script>
+</body>
+</html>
