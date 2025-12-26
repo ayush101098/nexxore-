@@ -131,6 +131,9 @@ async function handleRequest(req, res) {
     if (pathname === '/api/trending' && method === 'GET') {
       return getTrendingTokens(req, res);
     }
+    if (pathname === '/api/research/insights' && method === 'GET') {
+      return getResearchInsights(req, res, reqUrl);
+    }
     
     // Alpha detection agent
     if (pathname === '/api/agents/alpha' && method === 'POST') {
@@ -182,13 +185,19 @@ async function serveDashboard(req, res) {
 }
 
 async function getNews(req, res) {
-  const news = await newsFetcher.fetchCryptoNews(
-    ['crypto', 'defi', 'ethereum', 'aave', 'curve'],
-    20
-  );
+  try {
+    const news = await newsFetcher.fetchCryptoNews(
+      ['crypto', 'defi', 'ethereum', 'aave', 'curve'],
+      20
+    );
 
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify(news));
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ news }));
+  } catch (err) {
+    console.error('Error fetching news:', err);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: err.message, news: [] }));
+  }
 }
 
 async function analyzeNews(req, res) {
@@ -232,10 +241,55 @@ async function chatHandler(req, res) {
 }
 
 async function getTrendingTokens(req, res) {
-  const trending = await newsFetcher.fetchTrendingTokens();
-  
-  res.writeHead(200);
-  res.end(JSON.stringify(trending));
+  try {
+    const trending = await newsFetcher.fetchTrendingTokens();
+    
+    res.writeHead(200);
+    res.end(JSON.stringify({ trending }));
+  } catch (err) {
+    console.error('Error fetching trending:', err);
+    res.writeHead(500);
+    res.end(JSON.stringify({ error: err.message, trending: [] }));
+  }
+}
+
+async function getResearchInsights(req, res, reqUrl) {
+  try {
+    const protocols = reqUrl.searchParams.get('protocols') || 'aave,curve,uniswap';
+    const protocolList = protocols.split(',').map(p => p.trim());
+    
+    console.log('🔍 Analyzing protocols:', protocolList);
+    
+    const results = await Promise.all(
+      protocolList.map(async (protocol) => {
+        try {
+          const result = await researchAgent.analyze({ protocol });
+          return {
+            protocol,
+            success: true,
+            ...result
+          };
+        } catch (err) {
+          console.error(`Error analyzing ${protocol}:`, err);
+          return {
+            protocol,
+            success: false,
+            error: err.message
+          };
+        }
+      })
+    );
+    
+    res.writeHead(200);
+    res.end(JSON.stringify({ 
+      insights: results.filter(r => r.success),
+      timestamp: new Date().toISOString()
+    }));
+  } catch (err) {
+    console.error('Error generating research insights:', err);
+    res.writeHead(500);
+    res.end(JSON.stringify({ error: err.message, insights: [] }));
+  }
 }
 
 async function healthCheck(req, res) {
