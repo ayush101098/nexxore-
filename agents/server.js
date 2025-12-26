@@ -109,6 +109,10 @@ async function handleRequest(req, res) {
       return serveLandingPage(req, res);
     }
     
+    if (pathname === '/research.html' && method === 'GET') {
+      return serveResearchPage(req, res);
+    }
+    
     if (pathname === '/dashboard' && method === 'GET') {
       return serveDashboard(req, res);
     }
@@ -179,6 +183,14 @@ async function serveLandingPage(req, res) {
 async function serveDashboard(req, res) {
   const dashboardPath = path.join(__dirname, 'dashboard.html');
   const content = fs.readFileSync(dashboardPath, 'utf-8');
+  
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end(content);
+}
+
+async function serveResearchPage(req, res) {
+  const researchPath = path.join(__dirname, 'research.html');
+  const content = fs.readFileSync(researchPath, 'utf-8');
   
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.end(content);
