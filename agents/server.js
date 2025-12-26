@@ -263,10 +263,30 @@ async function getResearchInsights(req, res, reqUrl) {
     const results = await Promise.all(
       protocolList.map(async (protocol) => {
         try {
-          const result = await researchAgent.analyze({ protocol });
+          // Gather signals first
+          const signals = await researchAgent.gatherSignals([protocol], 24);
+          
+          console.log(`📊 Signals for ${protocol}:`, signals.length, 'signals collected');
+          
+          // Group by type for better organization
+          const groupedSignals = {
+            news: signals.filter(s => s.type === 'news'),
+            sentiment: signals.filter(s => s.type === 'social_sentiment'),
+            defi: signals.filter(s => s.type === 'defi_metrics'),
+            price: signals.filter(s => s.type === 'price_momentum')
+          };
+          
+          // Run analysis
+          const result = await researchAgent.analyze({ 
+            protocol,
+            keywords: [protocol],
+            lookbackHours: 24
+          });
+          
           return {
             protocol,
             success: true,
+            signals: groupedSignals,
             ...result
           };
         } catch (err) {
