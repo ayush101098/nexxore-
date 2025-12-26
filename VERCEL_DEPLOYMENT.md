@@ -1,33 +1,42 @@
 # Vercel Deployment Guide
 
-## Environment Variables
+## Quick Fix for FUNCTION_INVOCATION_FAILED
 
-Set these in your Vercel project settings:
+The serverless functions are now **self-contained** and don't require any external dependencies or environment variables to work. They will function immediately upon deployment.
+
+## Optional Environment Variables
+
+For enhanced functionality, you can add these in Vercel Project Settings:
 
 ```bash
-NEWS_API_KEY=your_newsapi_key
-OPENAI_API_KEY=your_openai_key
-COINGECKO_API_KEY=your_coingecko_key  # Optional
-TELEGRAM_BOT_TOKEN=your_telegram_token  # Optional
-X_API_KEY=your_x_api_key  # Optional
+NEWS_API_KEY=your_newsapi_key  # For real news (falls back to mock data)
 ```
+
+**Note:** The functions work WITHOUT these - they use fallback data and public APIs.
 
 ## Deploy to Vercel
 
-1. **Connect your GitHub repository** to Vercel
-2. **Import the project** from GitHub
-3. **Add environment variables** in Project Settings → Environment Variables
-4. **Deploy** - Vercel will automatically build and deploy
+1. **Connect GitHub repository** to Vercel
+2. **Import project** from GitHub
+3. **Deploy** - No configuration needed!
+4. *Optional*: Add NEWS_API_KEY in Project Settings → Environment Variables
 
 ## API Endpoints (Serverless Functions)
 
-All endpoints are automatically available at your Vercel domain:
+All endpoints work immediately at your Vercel domain:
 
-- `GET /api/health` - Health check and agent status
-- `GET /api/news` - Latest crypto news
-- `GET /api/trending` - Trending tokens from CoinGecko
-- `GET /api/research/insights?protocols=aave,curve` - Protocol analysis
-- `POST /api/chat` - AI chat assistant
+- `GET /api/health` - Health check (always works)
+- `GET /api/news` - Crypto news (mock data or NewsAPI if key provided)
+- `GET /api/trending` - Trending tokens from CoinGecko (public API)
+- `GET /api/research/insights?protocols=aave,curve` - Protocol TVL analysis from DeFi Llama
+- `POST /api/chat` - Simple keyword-based chat (no OpenAI needed)
+
+## What Changed to Fix the Error
+
+**Before:** Functions tried to `require()` agent classes from `/agents` directory
+**After:** Each function is completely self-contained with inline code
+
+This works in Vercel's isolated serverless environment.
 
 ## Frontend Pages
 
