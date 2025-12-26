@@ -111,10 +111,6 @@ Provide 3 actionable trade ideas with entry points and risk levels.`;
    * Call OpenAI API
    */
   async callOpenAI(userMessage, systemMessage = null) {
-    if (!this.apiKey || this.apiKey.startsWith('abcd')) {
-      throw new Error('Valid OpenAI API key is required. Please configure OPENAI_API_KEY.');
-    }
-    
     const messages = [];
     
     if (systemMessage) {
@@ -138,9 +134,8 @@ Provide 3 actionable trade ideas with entry points and risk levels.`;
     });
     
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: { message: 'Unknown API error' } }));
-      logger.error('OpenAI API error', { status: response.status, error });
-      throw new Error(error.error?.message || `OpenAI API error (${response.status})`);
+      const error = await response.json();
+      throw new Error(error.error?.message || 'OpenAI API error');
     }
     
     const data = await response.json();

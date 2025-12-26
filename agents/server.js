@@ -113,10 +113,6 @@ async function handleRequest(req, res) {
       return serveDashboard(req, res);
     }
     
-    if (pathname === '/research.html' && method === 'GET') {
-      return serveResearchPage(req, res);
-    }
-    
     // Health check
     if (pathname === '/api/health' && method === 'GET') {
       return healthCheck(req, res);
@@ -185,33 +181,14 @@ async function serveDashboard(req, res) {
   res.end(content);
 }
 
-async function serveResearchPage(req, res) {
-  const researchPath = path.join(__dirname, 'research.html');
-  const content = fs.readFileSync(researchPath, 'utf-8');
-  
-  res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.end(content);
-}
-
 async function getNews(req, res) {
-  try {
-    console.log('📰 Fetching news...');
-    const news = await newsFetcher.fetchCryptoNews(
-      ['crypto', 'defi', 'ethereum', 'bitcoin', 'web3'],
-      20
-    );
-    
-    console.log(`✅ Fetched ${news.length} news articles`);
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ news }));
-  } catch (err) {
-    console.error('❌ Error fetching news:', err.message);
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ 
-      news: [], 
-      error: `Failed to fetch news: ${err.message}` 
-    }));
-  }
+  const news = await newsFetcher.fetchCryptoNews(
+    ['crypto', 'defi', 'ethereum', 'aave', 'curve'],
+    20
+  );
+
+  res.writeHead(200, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(news));
 }
 
 async function analyzeNews(req, res) {
@@ -242,46 +219,23 @@ async function chatHandler(req, res) {
     try {
       const { message, context } = JSON.parse(body);
       
-      // Check if OpenAI API key is configured
-      if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.startsWith('abcd')) {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
-          response: 'Chat functionality requires a valid OpenAI API key. Please configure OPENAI_API_KEY in your environment variables.' 
-        }));
-        return;
-      }
-      
       // Use LLM to chat
       const response = await llmEngine.chat(message, context || {});
       
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ response }));
     } catch (err) {
-      console.error('Chat error:', err);
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ 
-        response: `Error: ${err.message}. The chat service may be temporarily unavailable.` 
-      }));
+      res.writeHead(400);
+      res.end(JSON.stringify({ error: err.message }));
     }
   });
 }
 
 async function getTrendingTokens(req, res) {
-  try {
-    console.log('🔥 Fetching trending tokens...');
-    const trending = await newsFetcher.fetchTrendingTokens();
-    
-    console.log(`✅ Fetched ${trending.length} trending tokens`);
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ trending }));
-  } catch (err) {
-    console.error('❌ Error fetching trending:', err.message);
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ 
-      trending: [], 
-      error: `Failed to fetch trending tokens: ${err.message}` 
-    }));
-  }
+  const trending = await newsFetcher.fetchTrendingTokens();
+  
+  res.writeHead(200);
+  res.end(JSON.stringify(trending));
 }
 
 async function healthCheck(req, res) {
@@ -454,17 +408,11 @@ async function analyzeAllNews(req, res) {
   }
 }
 
-// Vercel serverless function export
-module.exports = async (req, res) => {
-  return handleRequest(req, res);
-};
+// Start server
+const server = http.createServer(handleRequest);
 
-// For local development
-if (require.main === module) {
-  const server = http.createServer(handleRequest);
-
-  server.listen(PORT, () => {
-    console.log(`
+server.listen(PORT, () => {
+  console.log(`
 ╔════════════════════════════════════════════════════╗
 ║    🌐 Web3 Intelligence Agent Server              ║
 ╚════════════════════════════════════════════════════╝
@@ -497,14 +445,15 @@ if (require.main === module) {
   TELEGRAM_BOT_TOKEN: ${process.env.TELEGRAM_BOT_TOKEN ? '✅' : '❌'}
   X_API_KEY: ${process.env.X_API_KEY ? '✅' : '❌'}
   `);
-  });
+});
 
-  process.on('SIGINT', () => {
-    console.log('\n👋 Shutting down gracefully...');
-    server.close(() => {
-      console.log('✅ Server closed');
-      process.exit(0);
-    });
+process.on('SIGINT', () => {
+  console.log('\n👋 Shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
   });
-}
+});
+
+module.exports = { handleRequest };
 
