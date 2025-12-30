@@ -1,10 +1,51 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/api/news", "destination": "/api/news.js" },
-    { "source": "/api/trending", "destination": "/api/trending.js" },
-    { "source": "/api/chat", "destination": "/api/chat.js" },
-    { "source": "/api/health", "destination": "/api/health.js" },
-    { "source": "/api/research/insights", "destination": "/api/research/insights.js" }
+  "builds": [
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "**/*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "css/**/*",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "js/**/*",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "assets/**/*",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/news",
+      "dest": "/api/news.js"
+    },
+    {
+      "src": "/api/trending",
+      "dest": "/api/trending.js"
+    },
+    {
+      "src": "/api/chat",
+      "dest": "/api/chat.js"
+    },
+    {
+      "src": "/api/health",
+      "dest": "/api/health.js"
+    },
+    {
+      "src": "/api/research/insights",
+      "dest": "/api/research/insights.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
   ]
 }
