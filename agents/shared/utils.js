@@ -103,6 +103,10 @@ async function retryAsync(fn, maxRetries = 3, delayMs = 1000) {
  * Fetch with timeout
  */
 async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
+  // Ensure fetch is available (Node.js 18+)
+  if (typeof fetch === 'undefined') {
+    throw new Error('fetch is not available. Please use Node.js 18+ or install node-fetch');
+  }
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   

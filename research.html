@@ -6,6 +6,10 @@
   <title>Info Edge - Research Intelligence | nexxore</title>
   <meta name="description" content="Real-time crypto research, sentiment analysis, and alpha signals powered by autonomous agents.">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Web3 Libraries -->
+  <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+  
   <style>
     * {
       margin: 0;
@@ -37,6 +41,36 @@
       display: flex;
       align-items: center;
       gap: 24px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+    }
+
+    .btn {
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #00d4ff, #0099ff);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+    }
+
+    .btn-primary.connected {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
     }
 
     .back-link {
@@ -510,20 +544,19 @@
 <body>
   <div class="header">
     <div class="header-left">
-      <a href="/" class="back-link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-        Back to Home
-      </a>
       <div>
         <span class="header-title">Info Edge</span>
         <span class="header-subtitle">Research Intelligence Dashboard</span>
       </div>
     </div>
-    <div class="status-indicator">
-      <span class="status-dot"></span>
-      <span>Live</span>
+    <div class="header-right">
+      <div id="portfolioHealth" style="display: none; margin-right: 20px; padding: 8px 16px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; font-size: 0.9rem;">
+        <span style="color: #9ca3af;">Health Score:</span>
+        <span id="healthScore" style="color: #22c55e; font-weight: 600; margin-left: 8px;">--</span>
+      </div>
+      <button id="connectWalletBtn" class="btn btn-primary" style="padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #00d4ff, #0099ff); color: white; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+        Connect Wallet
+      </button>
     </div>
   </div>
 
@@ -810,6 +843,173 @@
       loadNews();
       loadTrending();
     }, 5 * 60 * 1000);
+
+    // ===== WALLET CONNECTION & PORTFOLIO HEALTH =====
+    let provider = null;
+    let userAddress = null;
+    let userAssets = [];
+
+    // Calculate portfolio health score
+    function calculateHealthScore(assets) {
+      if (!assets || assets.length === 0) return 0;
+
+      let score = 0;
+      let totalValue = 0;
+
+      // Simple health score based on:
+      // - Diversity (multiple assets)
+      // - Balance distribution
+      // - Presence of stablecoins
+      
+      const hasStables = assets.some(a => ['USDT', 'USDC', 'DAI', 'BUSD'].includes(a.symbol));
+      const hasEth = assets.some(a => a.symbol === 'ETH');
+      
+      // Base score
+      score += 30;
+      
+      // Diversity bonus
+      if (assets.length >= 2) score += 20;
+      if (assets.length >= 3) score += 10;
+      if (assets.length >= 4) score += 10;
+      
+      // Stablecoin presence
+      if (hasStables) score += 15;
+      
+      // ETH presence
+      if (hasEth) score += 15;
+
+      return Math.min(100, score);
+    }
+
+    // Update portfolio health UI
+    function updatePortfolioHealth() {
+      const healthScore = calculateHealthScore(userAssets);
+      const healthScoreEl = document.getElementById('healthScore');
+      const portfolioHealthEl = document.getElementById('portfolioHealth');
+
+      if (healthScoreEl && portfolioHealthEl) {
+        healthScoreEl.textContent = healthScore + '/100';
+        
+        // Color based on score
+        if (healthScore >= 70) {
+          healthScoreEl.style.color = '#22c55e'; // Green
+        } else if (healthScore >= 40) {
+          healthScoreEl.style.color = '#fbbf24'; // Yellow
+        } else {
+          healthScoreEl.style.color = '#ef4444'; // Red
+        }
+        
+        portfolioHealthEl.style.display = userAddress ? 'block' : 'none';
+      }
+    }
+
+    // Connect wallet
+    async function connectWallet() {
+      try {
+        if (!window.ethereum) {
+          alert('MetaMask is not installed! Please install MetaMask from https://metamask.io/download/');
+          return;
+        }
+
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        
+        if (!accounts || accounts.length === 0) {
+          throw new Error('No accounts found');
+        }
+
+        userAddress = accounts[0];
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+
+        // Update button
+        const btn = document.getElementById('connectWalletBtn');
+        btn.textContent = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+        btn.classList.add('connected');
+
+        // Load assets and calculate health
+        await loadWalletAssets();
+
+        console.log('✅ Wallet connected:', userAddress);
+
+      } catch (error) {
+        console.error('❌ Error connecting wallet:', error);
+        alert('Failed to connect wallet: ' + error.message);
+      }
+    }
+
+    // Load wallet assets
+    async function loadWalletAssets() {
+      if (!provider || !userAddress) return;
+
+      try {
+        userAssets = [];
+
+        // Get ETH balance
+        const ethBalance = await provider.getBalance(userAddress);
+        const ethAmount = parseFloat(ethers.utils.formatEther(ethBalance));
+        
+        if (ethAmount > 0) {
+          userAssets.push({
+            symbol: 'ETH',
+            name: 'Ethereum',
+            balance: ethAmount
+          });
+        }
+
+        // Common ERC20 tokens
+        const tokens = [
+          { address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', symbol: 'USDT', decimals: 6 },
+          { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', symbol: 'USDC', decimals: 6 },
+          { address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', symbol: 'DAI', decimals: 18 },
+        ];
+
+        for (const token of tokens) {
+          try {
+            const contract = new ethers.Contract(
+              token.address,
+              ['function balanceOf(address) view returns (uint256)'],
+              provider
+            );
+            
+            const balance = await contract.balanceOf(userAddress);
+            const amount = parseFloat(ethers.utils.formatUnits(balance, token.decimals));
+            
+            if (amount > 0.01) {
+              userAssets.push({
+                symbol: token.symbol,
+                balance: amount
+              });
+            }
+          } catch (err) {
+            console.warn(`Failed to load ${token.symbol}:`, err.message);
+          }
+        }
+
+        console.log('📊 Loaded assets:', userAssets);
+        updatePortfolioHealth();
+
+      } catch (error) {
+        console.error('Error loading assets:', error);
+      }
+    }
+
+    // Attach wallet button listener
+    document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
+
+    // Handle account changes
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', (accounts) => {
+        if (accounts.length === 0) {
+          userAddress = null;
+          userAssets = [];
+          const btn = document.getElementById('connectWalletBtn');
+          btn.textContent = 'Connect Wallet';
+          btn.classList.remove('connected');
+          updatePortfolioHealth();
+        } else {
+          connectWallet();
+        }
+      });
+    }
   </script>
 </body>
 </html>
