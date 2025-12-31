@@ -7,6 +7,7 @@
   <meta name="description" content="Capital preservation yield vault designed for DAOs, treasuries, and long-term allocators. Zero leverage, conservative yield.">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+  <script src="js/walletConnect.js" defer></script>
   <style>
     * {
       margin: 0;
@@ -1440,45 +1441,9 @@ VaultRisk = Σ (Allocationᵢ × RiskScoreᵢ)
         `After ${months} months`;
     }
 
-    // Wallet connection
-    let userAddress = null;
-
-    async function connectWallet() {
-      try {
-        if (!window.ethereum) {
-          alert('MetaMask is not installed! Please install MetaMask from https://metamask.io/download/');
-          return;
-        }
-
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        
-        if (accounts && accounts.length > 0) {
-          userAddress = accounts[0];
-          const btn = document.getElementById('connectWalletBtn');
-          btn.textContent = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
-          btn.classList.add('connected');
-        }
-      } catch (error) {
-        console.error('Error connecting wallet:', error);
-        alert('Failed to connect wallet: ' + error.message);
-      }
-    }
-
-    document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
-
-    // Handle account changes
-    if (window.ethereum) {
-      window.ethereum.on('accountsChanged', (accounts) => {
-        if (accounts.length === 0) {
-          userAddress = null;
-          const btn = document.getElementById('connectWalletBtn');
-          btn.textContent = 'Connect Wallet';
-          btn.classList.remove('connected');
-        } else {
-          connectWallet();
-        }
-      });
-    }
+    // Initialize on page load
+    initializeTabs();
+    updateSimulation();
   </script>
 </body>
 </html>

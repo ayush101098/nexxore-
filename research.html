@@ -843,29 +843,23 @@
       loadNews();
       loadTrending();
     }, 5 * 60 * 1000);
-
-    // ===== WALLET CONNECTION & PORTFOLIO HEALTH =====
-    let provider = null;
-    let userAddress = null;
+  </script>
+  
+  <!-- Wallet Connection Module -->
+  <script src="js/walletConnect.js"></script>
+  
+  <script>
+    // Portfolio Health Score Integration
     let userAssets = [];
 
     // Calculate portfolio health score
     function calculateHealthScore(assets) {
       if (!assets || assets.length === 0) return 0;
 
-      let score = 0;
-      let totalValue = 0;
-
-      // Simple health score based on:
-      // - Diversity (multiple assets)
-      // - Balance distribution
-      // - Presence of stablecoins
+      let score = 30; // Base score
       
       const hasStables = assets.some(a => ['USDT', 'USDC', 'DAI', 'BUSD'].includes(a.symbol));
       const hasEth = assets.some(a => a.symbol === 'ETH');
-      
-      // Base score
-      score += 30;
       
       // Diversity bonus
       if (assets.length >= 2) score += 20;
@@ -886,76 +880,40 @@
       const healthScore = calculateHealthScore(userAssets);
       const healthScoreEl = document.getElementById('healthScore');
       const portfolioHealthEl = document.getElementById('portfolioHealth');
+      const walletState = window.WalletConnect ? window.WalletConnect.getState() : null;
 
-      if (healthScoreEl && portfolioHealthEl) {
+      if (healthScoreEl && portfolioHealthEl && walletState) {
         healthScoreEl.textContent = healthScore + '/100';
         
-        // Color based on score
         if (healthScore >= 70) {
-          healthScoreEl.style.color = '#22c55e'; // Green
+          healthScoreEl.style.color = '#22c55e';
         } else if (healthScore >= 40) {
-          healthScoreEl.style.color = '#fbbf24'; // Yellow
+          healthScoreEl.style.color = '#fbbf24';
         } else {
-          healthScoreEl.style.color = '#ef4444'; // Red
+          healthScoreEl.style.color = '#ef4444';
         }
         
-        portfolioHealthEl.style.display = userAddress ? 'block' : 'none';
+        portfolioHealthEl.style.display = walletState.address ? 'block' : 'none';
       }
     }
 
-    // Connect wallet
-    async function connectWallet() {
-      try {
-        if (!window.ethereum) {
-          alert('MetaMask is not installed! Please install MetaMask from https://metamask.io/download/');
-          return;
-        }
-
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        
-        if (!accounts || accounts.length === 0) {
-          throw new Error('No accounts found');
-        }
-
-        userAddress = accounts[0];
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-
-        // Update button
-        const btn = document.getElementById('connectWalletBtn');
-        btn.textContent = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
-        btn.classList.add('connected');
-
-        // Load assets and calculate health
-        await loadWalletAssets();
-
-        console.log('✅ Wallet connected:', userAddress);
-
-      } catch (error) {
-        console.error('❌ Error connecting wallet:', error);
-        alert('Failed to connect wallet: ' + error.message);
-      }
-    }
-
-    // Load wallet assets
-    async function loadWalletAssets() {
-      if (!provider || !userAddress) return;
+    // Load wallet assets for health score
+    async function loadWalletAssetsForHealth() {
+      const walletState = window.WalletConnect ? window.WalletConnect.getState() : null;
+      if (!walletState || !walletState.provider || !walletState.address) return;
 
       try {
         userAssets = [];
 
         // Get ETH balance
-        const ethBalance = await provider.getBalance(userAddress);
+        const ethBalance = await walletState.provider.getBalance(walletState.address);
         const ethAmount = parseFloat(ethers.utils.formatEther(ethBalance));
         
         if (ethAmount > 0) {
-          userAssets.push({
-            symbol: 'ETH',
-            name: 'Ethereum',
-            balance: ethAmount
-          });
+          userAssets.push({ symbol: 'ETH', balance: ethAmount });
         }
 
-        // Common ERC20 tokens
+        // Check common tokens
         const tokens = [
           { address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', symbol: 'USDT', decimals: 6 },
           { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', symbol: 'USDC', decimals: 6 },
@@ -967,49 +925,34 @@
             const contract = new ethers.Contract(
               token.address,
               ['function balanceOf(address) view returns (uint256)'],
-              provider
+              walletState.provider
             );
-            
-            const balance = await contract.balanceOf(userAddress);
+            const balance = await contract.balanceOf(walletState.address);
             const amount = parseFloat(ethers.utils.formatUnits(balance, token.decimals));
-            
             if (amount > 0.01) {
-              userAssets.push({
-                symbol: token.symbol,
-                balance: amount
-              });
+              userAssets.push({ symbol: token.symbol, balance: amount });
             }
           } catch (err) {
-            console.warn(`Failed to load ${token.symbol}:`, err.message);
+            console.warn(`Failed to load ${token.symbol}`);
           }
         }
 
-        console.log('📊 Loaded assets:', userAssets);
         updatePortfolioHealth();
-
       } catch (error) {
         console.error('Error loading assets:', error);
       }
     }
 
-    // Attach wallet button listener
-    document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
-
-    // Handle account changes
-    if (window.ethereum) {
-      window.ethereum.on('accountsChanged', (accounts) => {
-        if (accounts.length === 0) {
-          userAddress = null;
-          userAssets = [];
-          const btn = document.getElementById('connectWalletBtn');
-          btn.textContent = 'Connect Wallet';
-          btn.classList.remove('connected');
-          updatePortfolioHealth();
-        } else {
-          connectWallet();
-        }
-      });
-    }
+    // Listen for wallet state changes
+    window.addEventListener('walletStateChanged', (e) => {
+      const state = e.detail;
+      if (state.status === 'connected') {
+        loadWalletAssetsForHealth();
+      } else {
+        userAssets = [];
+        updatePortfolioHealth();
+      }
+    });
   </script>
 </body>
 </html>
