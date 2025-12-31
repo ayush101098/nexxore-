@@ -1,913 +1,971 @@
 /**
  * Nexxore Wallet Connection Module
- * Supports MetaMask, WalletConnect, Coinbase Wallet, and more
+ * Production-ready implementation with wagmi-inspired patterns
+ * Supports: MetaMask, WalletConnect, Coinbase Wallet
  */
 
-// Wallet state
-const WalletState = {
-  NOT_CONNECTED: 'not_connected',
-  CONNECTING: 'connecting',
-  CONNECTED: 'connected',
-  ERROR: 'error'
+// ============================================================================
+// Configuration
+// ============================================================================
+
+const SUPPORTED_CHAINS = {
+  1: { name: 'Ethereum', symbol: 'ETH', explorer: 'https://etherscan.io' },
+  137: { name: 'Polygon', symbol: 'MATIC', explorer: 'https://polygonscan.com' },
+  42161: { name: 'Arbitrum', symbol: 'ETH', explorer: 'https://arbiscan.io' },
+  10: { name: 'Optimism', symbol: 'ETH', explorer: 'https://optimistic.etherscan.io' },
+  8453: { name: 'Base', symbol: 'ETH', explorer: 'https://basescan.org' },
 };
 
-// Global wallet state
+const WALLET_PROVIDERS = {
+  metamask: {
+    id: 'metamask',
+    name: 'MetaMask',
+    icon: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M32.9583 3L21.7083 11.7917L23.8333 6.45833L32.9583 3Z" fill="#E2761B"/><path d="M7.04167 3L18.2083 11.875L16.1667 6.45833L7.04167 3Z" fill="#E4761B"/><path d="M28.5417 26.0417L25.4167 30.9167L32.2917 32.8333L34.3333 26.1667L28.5417 26.0417Z" fill="#E4761B"/><path d="M5.66667 26.1667L7.70833 32.8333L14.5833 30.9167L11.4583 26.0417L5.66667 26.1667Z" fill="#E4761B"/><path d="M14.2083 17.4583L12.25 20.4583L19.0833 20.75L18.8333 13.375L14.2083 17.4583Z" fill="#E4761B"/><path d="M25.7917 17.4583L21.0833 13.2917L20.9167 20.75L27.75 20.4583L25.7917 17.4583Z" fill="#E4761B"/><path d="M14.5833 30.9167L18.6667 28.9167L15.125 26.2083L14.5833 30.9167Z" fill="#E4761B"/><path d="M21.3333 28.9167L25.4167 30.9167L24.875 26.2083L21.3333 28.9167Z" fill="#E4761B"/><path d="M25.4167 30.9167L21.3333 28.9167L21.6667 31.5417L21.625 32.75L25.4167 30.9167Z" fill="#D7C1B3"/><path d="M14.5833 30.9167L18.375 32.75L18.3333 31.5417L18.6667 28.9167L14.5833 30.9167Z" fill="#D7C1B3"/><path d="M18.4583 24.5L15.0417 23.5L17.4583 22.4167L18.4583 24.5Z" fill="#233447"/><path d="M21.5417 24.5L22.5417 22.4167L24.9583 23.5L21.5417 24.5Z" fill="#233447"/><path d="M14.5833 30.9167L15.1667 26.0417L11.4583 26.1667L14.5833 30.9167Z" fill="#CD6116"/><path d="M24.8333 26.0417L25.4167 30.9167L28.5417 26.1667L24.8333 26.0417Z" fill="#CD6116"/><path d="M27.75 20.4583L20.9167 20.75L21.5417 24.5L22.5417 22.4167L24.9583 23.5L27.75 20.4583Z" fill="#CD6116"/><path d="M15.0417 23.5L17.4583 22.4167L18.4583 24.5L19.0833 20.75L12.25 20.4583L15.0417 23.5Z" fill="#CD6116"/><path d="M12.25 20.4583L15.125 26.2083L15.0417 23.5L12.25 20.4583Z" fill="#E4751F"/><path d="M24.9583 23.5L24.875 26.2083L27.75 20.4583L24.9583 23.5Z" fill="#E4751F"/><path d="M19.0833 20.75L18.4583 24.5L19.25 28.5L19.4167 23.2083L19.0833 20.75Z" fill="#E4751F"/><path d="M20.9167 20.75L20.5833 23.2083L20.75 28.5L21.5417 24.5L20.9167 20.75Z" fill="#E4751F"/><path d="M21.5417 24.5L20.75 28.5L21.3333 28.9167L24.875 26.2083L24.9583 23.5L21.5417 24.5Z" fill="#F6851B"/><path d="M15.0417 23.5L15.125 26.2083L18.6667 28.9167L19.25 28.5L18.4583 24.5L15.0417 23.5Z" fill="#F6851B"/><path d="M21.625 32.75L21.6667 31.5417L21.3333 31.25H18.6667L18.3333 31.5417L18.375 32.75L14.5833 30.9167L15.875 31.9583L18.625 33.875H21.375L24.125 31.9583L25.4167 30.9167L21.625 32.75Z" fill="#C0AD9E"/><path d="M21.3333 28.9167L20.75 28.5H19.25L18.6667 28.9167L18.3333 31.5417L18.6667 31.25H21.3333L21.6667 31.5417L21.3333 28.9167Z" fill="#161616"/><path d="M33.5 12.2917L34.5 7.41667L32.9583 3L21.3333 11.4583L25.7917 17.4583L32.0833 19.3333L33.5833 17.5833L32.9167 17.0833L33.9583 16.125L33.125 15.4583L34.1667 14.6667L33.5 12.2917Z" fill="#763D16"/><path d="M5.5 7.41667L6.5 12.2917L5.83333 14.6667L6.875 15.4583L6.04167 16.125L7.08333 17.0833L6.41667 17.5833L7.91667 19.3333L14.2083 17.4583L18.6667 11.4583L7.04167 3L5.5 7.41667Z" fill="#763D16"/><path d="M32.0833 19.3333L25.7917 17.4583L27.75 20.4583L24.875 26.2083L28.5417 26.1667H34.3333L32.0833 19.3333Z" fill="#F6851B"/><path d="M14.2083 17.4583L7.91667 19.3333L5.66667 26.1667H11.4583L15.125 26.2083L12.25 20.4583L14.2083 17.4583Z" fill="#F6851B"/><path d="M20.9167 20.75L21.3333 11.4583L23.8333 6.45833H16.1667L18.6667 11.4583L19.0833 20.75L19.25 23.2083V28.5H20.75V23.2083L20.9167 20.75Z" fill="#F6851B"/></svg>`,
+    check: () => typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask,
+    connect: connectMetaMask,
+  },
+  walletconnect: {
+    id: 'walletconnect',
+    name: 'WalletConnect',
+    icon: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="8" fill="#3B99FC"/><path d="M13.3 16.5c4.1-4 10.7-4 14.8 0l.5.5c.2.2.2.5 0 .7l-1.7 1.6c-.1.1-.3.1-.4 0l-.7-.6c-2.8-2.8-7.4-2.8-10.3 0l-.7.7c-.1.1-.3.1-.4 0l-1.7-1.6c-.2-.2-.2-.5 0-.7l.6-.6zm18.3 3.4l1.5 1.4c.2.2.2.5 0 .7l-6.7 6.6c-.2.2-.5.2-.7 0l-4.8-4.7c0-.1-.1-.1-.2 0l-4.8 4.7c-.2.2-.5.2-.7 0L8.5 22c-.2-.2-.2-.5 0-.7l1.5-1.4c.2-.2.5-.2.7 0l4.8 4.7c0 .1.1.1.2 0l4.8-4.7c.2-.2.5-.2.7 0l4.8 4.7c0 .1.1.1.2 0l4.8-4.7c.2-.2.5-.2.7 0z" fill="#fff"/></svg>`,
+    check: () => true,
+    connect: connectWalletConnect,
+  },
+  coinbase: {
+    id: 'coinbase',
+    name: 'Coinbase Wallet',
+    icon: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="8" fill="#0052FF"/><path d="M20 6C12.268 6 6 12.268 6 20s6.268 14 14 14 14-6.268 14-14S27.732 6 20 6zm-4.2 11.8c0-.99.81-1.8 1.8-1.8h4.8c.99 0 1.8.81 1.8 1.8v4.4c0 .99-.81 1.8-1.8 1.8h-4.8c-.99 0-1.8-.81-1.8-1.8v-4.4z" fill="#fff"/></svg>`,
+    check: () => typeof window.ethereum !== 'undefined' && (window.ethereum.isCoinbaseWallet || window.ethereum.providers?.some(p => p.isCoinbaseWallet)),
+    connect: connectCoinbaseWallet,
+  },
+};
+
+// ============================================================================
+// State Management
+// ============================================================================
+
+const WalletState = {
+  NOT_CONNECTED: 'NOT_CONNECTED',
+  CONNECTING: 'CONNECTING',
+  CONNECTED: 'CONNECTED',
+  ERROR: 'ERROR',
+};
+
 let walletState = {
   status: WalletState.NOT_CONNECTED,
   address: null,
   chainId: null,
-  provider: null,
   balance: null,
-  error: null
+  provider: null,
+  walletType: null,
+  error: null,
 };
 
-// Supported wallets configuration
-const SUPPORTED_WALLETS = [
-  {
-    id: 'metamask',
-    name: 'MetaMask',
-    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M21.3622 3L13.0497 9.16875L14.5122 5.4825L21.3622 3Z" fill="#E17726"/><path d="M2.64844 3L10.8847 9.225L9.49844 5.4825L2.64844 3Z" fill="#E27625"/><path d="M18.4497 16.8188L16.2559 20.2313L20.8934 21.5063L22.2184 16.8938L18.4497 16.8188Z" fill="#E27625"/><path d="M1.79688 16.8938L3.11438 21.5063L7.74438 20.2313L5.55813 16.8188L1.79688 16.8938Z" fill="#E27625"/><path d="M7.50375 10.6687L6.225 12.6L10.8225 12.8062L10.665 7.89374L7.50375 10.6687Z" fill="#E27625"/><path d="M16.5037 10.6688L13.2937 7.8375L13.1987 12.8063L17.7825 12.6L16.5037 10.6688Z" fill="#E27625"/><path d="M7.74438 20.2313L10.5469 18.8813L8.12438 16.9312L7.74438 20.2313Z" fill="#E27625"/><path d="M13.4609 18.8813L16.2559 20.2313L15.8834 16.9312L13.4609 18.8813Z" fill="#E27625"/></svg>`,
-    checkInstalled: () => typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask,
-    connect: connectMetaMask,
-    installUrl: 'https://metamask.io/download/'
-  },
-  {
-    id: 'walletconnect',
-    name: 'WalletConnect',
-    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M6.09 8.62C9.36 5.48 14.64 5.48 17.91 8.62L18.29 8.99C18.45 9.15 18.45 9.4 18.29 9.55L16.96 10.83C16.88 10.91 16.75 10.91 16.67 10.83L16.14 10.32C13.86 8.12 10.14 8.12 7.86 10.32L7.29 10.87C7.21 10.95 7.08 10.95 7 10.87L5.67 9.59C5.51 9.44 5.51 9.19 5.67 9.03L6.09 8.62ZM20.65 11.29L21.83 12.43C21.99 12.58 21.99 12.83 21.83 12.99L16.41 18.23C16.25 18.39 15.99 18.39 15.84 18.23L12.05 14.56C12.01 14.52 11.95 14.52 11.91 14.56L8.12 18.23C7.96 18.39 7.7 18.39 7.55 18.23L2.17 12.99C2.01 12.83 2.01 12.58 2.17 12.43L3.35 11.29C3.51 11.13 3.77 11.13 3.92 11.29L7.71 14.96C7.75 15 7.81 15 7.85 14.96L11.64 11.29C11.8 11.13 12.06 11.13 12.21 11.29L15.99 14.96C16.03 15 16.09 15 16.13 14.96L19.92 11.29C20.08 11.13 20.34 11.13 20.49 11.29L20.65 11.29Z" fill="#3B99FC"/></svg>`,
-    checkInstalled: () => true, // Always available
-    connect: connectWalletConnect
-  },
-  {
-    id: 'coinbase',
-    name: 'Coinbase Wallet',
-    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#0052FF"/><path d="M12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6ZM10.5 10.5H13.5V13.5H10.5V10.5Z" fill="white"/></svg>`,
-    checkInstalled: () => typeof window.ethereum !== 'undefined' && window.ethereum.isCoinbaseWallet,
-    connect: connectCoinbase,
-    installUrl: 'https://www.coinbase.com/wallet'
-  }
-];
+const stateListeners = new Set();
 
-// Storage keys
-const STORAGE_KEYS = {
-  CONNECTED_WALLET: 'nexxore_connected_wallet',
-  WALLET_ADDRESS: 'nexxore_wallet_address'
-};
-
-// Initialize wallet module
-function initWallet() {
-  console.log('🔌 Initializing wallet module...');
-  
-  // Check for persisted connection
-  const savedWallet = localStorage.getItem(STORAGE_KEYS.CONNECTED_WALLET);
-  const savedAddress = localStorage.getItem(STORAGE_KEYS.WALLET_ADDRESS);
-  
-  if (savedWallet && savedAddress && window.ethereum) {
-    // Try to restore connection
-    restoreConnection(savedWallet, savedAddress);
-  }
-  
-  // Setup event listeners
-  setupWalletListeners();
-  
-  // Setup UI
-  setupWalletUI();
+function updateState(newState) {
+  walletState = { ...walletState, ...newState };
+  stateListeners.forEach(listener => listener(walletState));
+  saveStateToStorage();
 }
 
-// Restore previous connection
-async function restoreConnection(walletId, address) {
-  console.log('🔄 Restoring wallet connection...', walletId);
-  
+function onStateChange(listener) {
+  stateListeners.add(listener);
+  return () => stateListeners.delete(listener);
+}
+
+// ============================================================================
+// Local Storage
+// ============================================================================
+
+const STORAGE_KEY = 'nexxore_wallet';
+
+function saveStateToStorage() {
+  if (walletState.status === WalletState.CONNECTED) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      address: walletState.address,
+      chainId: walletState.chainId,
+      walletType: walletState.walletType,
+    }));
+  } else {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+}
+
+function loadStateFromStorage() {
   try {
-    if (window.ethereum) {
-      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-      
-      if (accounts.length > 0 && accounts[0].toLowerCase() === address.toLowerCase()) {
-        walletState.status = WalletState.CONNECTED;
-        walletState.address = accounts[0];
-        walletState.provider = new ethers.providers.Web3Provider(window.ethereum);
-        
-        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-        walletState.chainId = parseInt(chainId, 16);
-        
-        await updateBalance();
-        updateWalletUI();
-        
-        console.log('✅ Wallet connection restored:', walletState.address);
-      } else {
-        clearStoredConnection();
-      }
-    }
-  } catch (error) {
-    console.error('Failed to restore connection:', error);
-    clearStoredConnection();
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
   }
 }
 
-// Setup wallet event listeners
-function setupWalletListeners() {
-  if (window.ethereum) {
-    window.ethereum.on('accountsChanged', handleAccountsChanged);
-    window.ethereum.on('chainChanged', handleChainChanged);
-    window.ethereum.on('disconnect', handleDisconnect);
+// ============================================================================
+// Wallet Connection Functions
+// ============================================================================
+
+async function connectMetaMask() {
+  if (!window.ethereum) {
+    throw new Error('MetaMask is not installed. Please install it from metamask.io');
   }
-}
 
-// Handle account changes
-function handleAccountsChanged(accounts) {
-  console.log('👤 Accounts changed:', accounts);
-  
-  if (accounts.length === 0) {
-    disconnectWallet();
-  } else if (accounts[0] !== walletState.address) {
-    walletState.address = accounts[0];
-    localStorage.setItem(STORAGE_KEYS.WALLET_ADDRESS, accounts[0]);
-    updateBalance();
-    updateWalletUI();
+  let provider = window.ethereum;
+  if (window.ethereum.providers?.length) {
+    provider = window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum;
   }
-}
 
-// Handle chain changes
-function handleChainChanged(chainId) {
-  console.log('🔗 Chain changed:', chainId);
-  walletState.chainId = parseInt(chainId, 16);
-  updateWalletUI();
-}
+  const accounts = await provider.request({ method: 'eth_requestAccounts' });
+  const chainId = await provider.request({ method: 'eth_chainId' });
 
-// Handle disconnect
-function handleDisconnect() {
-  console.log('🔌 Wallet disconnected');
-  disconnectWallet();
-}
-
-// Setup wallet UI elements
-function setupWalletUI() {
-  // Create wallet modal if it doesn't exist
-  if (!document.getElementById('walletModal')) {
-    createWalletModal();
+  if (!accounts || accounts.length === 0) {
+    throw new Error('No accounts found. Please unlock MetaMask.');
   }
-  
-  // Attach click handlers to all connect buttons
-  document.querySelectorAll('#connectWalletBtn, .connect-wallet-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      handleWalletButtonClick();
-    });
+
+  const balance = await provider.request({
+    method: 'eth_getBalance',
+    params: [accounts[0], 'latest']
   });
-  
-  // Initial UI update
-  updateWalletUI();
+
+  return {
+    address: accounts[0],
+    chainId: parseInt(chainId, 16),
+    balance: parseInt(balance, 16) / 1e18,
+    provider: provider,
+  };
 }
 
-// Create wallet selection modal
-function createWalletModal() {
+async function connectWalletConnect() {
+  throw new Error('WalletConnect integration requires Web3Modal. Please use MetaMask for now.');
+}
+
+async function connectCoinbaseWallet() {
+  if (!window.ethereum) {
+    throw new Error('Coinbase Wallet is not installed. Please install it from coinbase.com/wallet');
+  }
+
+  let provider = window.ethereum;
+  if (window.ethereum.providers?.length) {
+    provider = window.ethereum.providers.find(p => p.isCoinbaseWallet);
+    if (!provider) {
+      throw new Error('Coinbase Wallet not found. Please make sure it\'s installed.');
+    }
+  } else if (!window.ethereum.isCoinbaseWallet) {
+    throw new Error('Coinbase Wallet not detected. Please install it from coinbase.com/wallet');
+  }
+
+  const accounts = await provider.request({ method: 'eth_requestAccounts' });
+  const chainId = await provider.request({ method: 'eth_chainId' });
+
+  if (!accounts || accounts.length === 0) {
+    throw new Error('No accounts found. Please unlock Coinbase Wallet.');
+  }
+
+  const balance = await provider.request({
+    method: 'eth_getBalance',
+    params: [accounts[0], 'latest']
+  });
+
+  return {
+    address: accounts[0],
+    chainId: parseInt(chainId, 16),
+    balance: parseInt(balance, 16) / 1e18,
+    provider: provider,
+  };
+}
+
+// ============================================================================
+// Main Connect/Disconnect Functions
+// ============================================================================
+
+async function connect(walletType) {
+  const wallet = WALLET_PROVIDERS[walletType];
+  if (!wallet) {
+    throw new Error(`Unknown wallet type: ${walletType}`);
+  }
+
+  updateState({ status: WalletState.CONNECTING, error: null });
+
+  try {
+    const result = await wallet.connect();
+
+    updateState({
+      status: WalletState.CONNECTED,
+      address: result.address,
+      chainId: result.chainId,
+      balance: result.balance,
+      provider: result.provider,
+      walletType: walletType,
+      error: null,
+    });
+
+    setupProviderListeners(result.provider);
+    return result;
+  } catch (error) {
+    let errorMessage = error.message;
+
+    if (error.code === 4001) {
+      errorMessage = 'Connection rejected. Please approve the connection in your wallet.';
+    } else if (error.code === -32002) {
+      errorMessage = 'Connection pending. Please check your wallet for requests.';
+    }
+
+    updateState({
+      status: WalletState.ERROR,
+      error: errorMessage
+    });
+
+    throw new Error(errorMessage);
+  }
+}
+
+function disconnect() {
+  if (walletState.provider) {
+    walletState.provider.removeAllListeners?.('accountsChanged');
+    walletState.provider.removeAllListeners?.('chainChanged');
+  }
+
+  updateState({
+    status: WalletState.NOT_CONNECTED,
+    address: null,
+    chainId: null,
+    balance: null,
+    provider: null,
+    walletType: null,
+    error: null,
+  });
+
+  closeModal();
+}
+
+// ============================================================================
+// Provider Event Listeners
+// ============================================================================
+
+function setupProviderListeners(provider) {
+  if (!provider) return;
+
+  provider.on('accountsChanged', async (accounts) => {
+    if (accounts.length === 0) {
+      disconnect();
+    } else {
+      const balance = await provider.request({
+        method: 'eth_getBalance',
+        params: [accounts[0], 'latest']
+      });
+
+      updateState({
+        address: accounts[0],
+        balance: parseInt(balance, 16) / 1e18,
+      });
+    }
+  });
+
+  provider.on('chainChanged', (chainId) => {
+    updateState({ chainId: parseInt(chainId, 16) });
+  });
+
+  provider.on('disconnect', () => {
+    disconnect();
+  });
+}
+
+// ============================================================================
+// Auto-reconnect
+// ============================================================================
+
+async function tryAutoConnect() {
+  const saved = loadStateFromStorage();
+  if (!saved?.walletType) return;
+
+  const wallet = WALLET_PROVIDERS[saved.walletType];
+  if (!wallet?.check()) return;
+
+  try {
+    const provider = window.ethereum;
+    if (!provider) return;
+
+    const accounts = await provider.request({ method: 'eth_accounts' });
+    if (accounts.length === 0) return;
+
+    await connect(saved.walletType);
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+}
+
+// ============================================================================
+// Modal UI
+// ============================================================================
+
+let modalElement = null;
+
+function createModal() {
+  if (modalElement) return modalElement;
+
   const modal = document.createElement('div');
   modal.id = 'walletModal';
-  modal.className = 'wallet-modal';
   modal.innerHTML = `
-    <div class="wallet-modal-backdrop" onclick="closeWalletModal()"></div>
-    <div class="wallet-modal-content">
+    <div class="wallet-modal-backdrop"></div>
+    <div class="wallet-modal-container">
       <div class="wallet-modal-header">
         <h3>Connect Wallet</h3>
-        <button class="wallet-modal-close" onclick="closeWalletModal()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="wallet-modal-close" aria-label="Close">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
       </div>
       <div class="wallet-modal-body">
         <p class="wallet-modal-subtitle">Choose your preferred wallet</p>
-        <div class="wallet-options" id="walletOptions">
-          ${SUPPORTED_WALLETS.map(wallet => `
-            <button class="wallet-option" data-wallet="${wallet.id}" onclick="selectWallet('${wallet.id}')">
-              <div class="wallet-option-icon">${wallet.icon}</div>
-              <div class="wallet-option-info">
-                <span class="wallet-option-name">${wallet.name}</span>
-                <span class="wallet-option-status" id="status-${wallet.id}">
-                  ${wallet.checkInstalled() ? 'Available' : 'Not Installed'}
-                </span>
-              </div>
-              <svg class="wallet-option-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 18l6-6-6-6"/>
-              </svg>
-            </button>
-          `).join('')}
-        </div>
-        <div class="wallet-modal-footer">
-          <p>By connecting, you agree to the Terms of Service</p>
-        </div>
+        <div class="wallet-options"></div>
+        <div class="wallet-modal-error"></div>
       </div>
-      <div class="wallet-connecting" id="walletConnecting" style="display: none;">
-        <div class="connecting-spinner"></div>
-        <p>Connecting to <span id="connectingWalletName">wallet</span>...</p>
-        <button class="btn-cancel" onclick="cancelConnection()">Cancel</button>
-      </div>
-      <div class="wallet-error" id="walletError" style="display: none;">
-        <div class="error-icon">⚠️</div>
-        <p id="errorMessage">Connection failed</p>
-        <button class="btn-retry" onclick="retryConnection()">Try Again</button>
+      <div class="wallet-modal-footer">
+        <p>New to wallets? <a href="https://ethereum.org/wallets/" target="_blank">Learn more</a></p>
       </div>
     </div>
   `;
-  
-  // Add modal styles
+
   const styles = document.createElement('style');
   styles.textContent = `
-    .wallet-modal {
-      display: none;
+    #walletModal {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       z-index: 10000;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
     }
-    
-    .wallet-modal.open {
+
+    #walletModal.open {
+      display: flex;
+    }
+
+    .wallet-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      animation: wmFadeIn 0.2s ease;
+    }
+
+    .wallet-modal-container {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      background: linear-gradient(180deg, rgba(30, 30, 35, 0.98) 0%, rgba(20, 20, 25, 0.98) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+      animation: wmSlideUp 0.3s ease;
+      overflow: hidden;
+    }
+
+    .wallet-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 24px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .wallet-modal-header h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #fff;
+      margin: 0;
+    }
+
+    .wallet-modal-close {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #9ca3af;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .wallet-modal-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .wallet-modal-body {
+      padding: 20px 24px 24px;
+    }
+
+    .wallet-modal-subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin: 0 0 20px;
+    }
+
+    .wallet-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .wallet-option {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wallet-option:hover:not(.disabled) {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(59, 130, 246, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .wallet-option.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .wallet-option.connecting {
+      pointer-events: none;
+    }
+
+    .wallet-option.connecting::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+      animation: wmShimmer 1.5s infinite;
+    }
+
+    .wallet-option-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.05);
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    
-    .wallet-modal-backdrop {
-      position: absolute;
-      top: 0;
-      left: 0;
+
+    .wallet-option-icon svg {
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(4px);
     }
-    
-    .wallet-modal-content {
+
+    .wallet-option-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .wallet-option-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .wallet-option-status {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    .wallet-option-status.detected {
+      color: #22c55e;
+    }
+
+    .wallet-option-status.connecting {
+      color: #3b82f6;
+    }
+
+    .wallet-option-arrow {
+      color: #4b5563;
+      transition: transform 0.2s;
+    }
+
+    .wallet-option:hover:not(.disabled) .wallet-option-arrow {
+      transform: translateX(4px);
+      color: #9ca3af;
+    }
+
+    .wallet-modal-error {
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 12px;
+      color: #f87171;
+      font-size: 0.875rem;
+      display: none;
+      animation: wmFadeIn 0.2s ease;
+    }
+
+    .wallet-modal-error.show {
+      display: block;
+    }
+
+    .wallet-modal-footer {
+      padding: 16px 24px 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .wallet-modal-footer p {
+      font-size: 0.8rem;
+      color: #6b7280;
+      text-align: center;
+      margin: 0;
+    }
+
+    .wallet-modal-footer a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+
+    .wallet-modal-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Connected Button Wrapper */
+    .wallet-connected-wrapper {
       position: relative;
-      background: linear-gradient(135deg, #1a1f3a 0%, #0a0e27 100%);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      width: 100%;
-      max-width: 420px;
-      max-height: 90vh;
-      overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      animation: modalSlideIn 0.3s ease;
     }
-    
-    @keyframes modalSlideIn {
+
+    .wallet-connected-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05));
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .wallet-connected-btn:hover {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1));
+      border-color: rgba(34, 197, 94, 0.5);
+    }
+
+    .wallet-connected-indicator {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+    }
+
+    .wallet-connected-address {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #fff;
+    }
+
+    .wallet-connected-chevron {
+      color: #9ca3af;
+      transition: transform 0.2s;
+    }
+
+    .wallet-connected-wrapper.open .wallet-connected-chevron {
+      transform: rotate(180deg);
+    }
+
+    .wallet-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      min-width: 220px;
+      background: rgba(30, 30, 35, 0.98);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.2s ease;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .wallet-connected-wrapper.open .wallet-dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .wallet-dropdown-header {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .wallet-dropdown-balance {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .wallet-dropdown-chain {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .wallet-dropdown-chain-dot {
+      width: 6px;
+      height: 6px;
+      background: #22c55e;
+      border-radius: 50%;
+    }
+
+    .wallet-dropdown-actions {
+      padding: 8px;
+    }
+
+    .wallet-dropdown-action {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      border: none;
+      border-radius: 10px;
+      color: #d1d5db;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+      font-family: inherit;
+    }
+
+    .wallet-dropdown-action:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+    }
+
+    .wallet-dropdown-action.danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: #f87171;
+    }
+
+    .wallet-dropdown-action svg {
+      width: 18px;
+      height: 18px;
+      opacity: 0.7;
+    }
+
+    @keyframes wmFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes wmSlideUp {
       from {
         opacity: 0;
-        transform: translateY(-20px) scale(0.95);
+        transform: translateY(20px) scale(0.98);
       }
       to {
         opacity: 1;
         transform: translateY(0) scale(1);
       }
     }
-    
-    .wallet-modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 24px 24px 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+    @keyframes wmShimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
     }
-    
-    .wallet-modal-header h3 {
-      margin: 0;
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #fff;
-    }
-    
-    .wallet-modal-close {
-      background: rgba(255, 255, 255, 0.05);
-      border: none;
-      border-radius: 10px;
-      padding: 8px;
-      cursor: pointer;
-      color: #9ca3af;
-      transition: all 0.2s;
-    }
-    
-    .wallet-modal-close:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: #fff;
-    }
-    
-    .wallet-modal-body {
-      padding: 20px 24px 24px;
-    }
-    
-    .wallet-modal-subtitle {
-      color: #9ca3af;
-      font-size: 0.9rem;
-      margin: 0 0 20px;
-    }
-    
-    .wallet-options {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    
-    .wallet-option {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      width: 100%;
-      padding: 16px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: left;
-    }
-    
-    .wallet-option:hover {
-      background: rgba(255, 255, 255, 0.06);
-      border-color: rgba(0, 212, 255, 0.3);
-      transform: translateY(-2px);
-    }
-    
-    .wallet-option:active {
-      transform: translateY(0);
-    }
-    
-    .wallet-option-icon {
-      width: 48px;
-      height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-    }
-    
-    .wallet-option-icon svg {
-      width: 28px;
-      height: 28px;
-    }
-    
-    .wallet-option-info {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    
-    .wallet-option-name {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #fff;
-    }
-    
-    .wallet-option-status {
-      font-size: 0.8rem;
-      color: #22c55e;
-    }
-    
-    .wallet-option-status.not-installed {
-      color: #9ca3af;
-    }
-    
-    .wallet-option-arrow {
-      color: #6b7280;
-      transition: transform 0.2s;
-    }
-    
-    .wallet-option:hover .wallet-option-arrow {
-      transform: translateX(4px);
-      color: #00d4ff;
-    }
-    
-    .wallet-modal-footer {
-      margin-top: 20px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    
-    .wallet-modal-footer p {
-      color: #6b7280;
-      font-size: 0.75rem;
-      text-align: center;
-      margin: 0;
-    }
-    
-    .wallet-connecting,
-    .wallet-error {
-      padding: 48px 24px;
-      text-align: center;
-    }
-    
-    .connecting-spinner {
-      width: 48px;
-      height: 48px;
-      border: 3px solid rgba(0, 212, 255, 0.2);
-      border-top-color: #00d4ff;
-      border-radius: 50%;
-      margin: 0 auto 20px;
-      animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    .wallet-connecting p,
-    .wallet-error p {
-      color: #9ca3af;
-      margin: 0 0 20px;
-    }
-    
-    .error-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-    }
-    
-    .btn-cancel,
-    .btn-retry {
-      padding: 12px 24px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      background: transparent;
-      color: #fff;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .btn-cancel:hover,
-    .btn-retry:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-    
-    /* Connected dropdown */
-    .wallet-connected-dropdown {
-      position: relative;
-    }
-    
-    .wallet-connected-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 16px;
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    
-    .wallet-connected-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
-    }
-    
-    .wallet-address-display {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .wallet-icon {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .wallet-dropdown-menu {
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
-      background: linear-gradient(135deg, #1a1f3a 0%, #0a0e27 100%);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      min-width: 220px;
-      padding: 8px;
-      display: none;
-      z-index: 1000;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-    }
-    
-    .wallet-dropdown-menu.open {
-      display: block;
-      animation: dropdownSlide 0.2s ease;
-    }
-    
-    @keyframes dropdownSlide {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
+
+    @media (max-width: 480px) {
+      .wallet-modal-container {
+        max-width: none;
+        margin: 10px;
+        border-radius: 16px;
       }
-      to {
-        opacity: 1;
-        transform: translateY(0);
+
+      .wallet-modal-header {
+        padding: 20px 20px 14px;
       }
-    }
-    
-    .dropdown-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      padding: 12px 16px;
-      background: transparent;
-      border: none;
-      border-radius: 8px;
-      color: #e5e7eb;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: left;
-    }
-    
-    .dropdown-item:hover {
-      background: rgba(255, 255, 255, 0.05);
-    }
-    
-    .dropdown-item.disconnect {
-      color: #ef4444;
-    }
-    
-    .dropdown-item.disconnect:hover {
-      background: rgba(239, 68, 68, 0.1);
-    }
-    
-    .dropdown-divider {
-      height: 1px;
-      background: rgba(255, 255, 255, 0.08);
-      margin: 8px 0;
-    }
-    
-    .balance-display {
-      padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 8px;
-      margin-bottom: 8px;
-    }
-    
-    .balance-label {
-      font-size: 0.75rem;
-      color: #9ca3af;
-      margin-bottom: 4px;
-    }
-    
-    .balance-value {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #fff;
+
+      .wallet-modal-body {
+        padding: 16px 20px 20px;
+      }
+
+      .wallet-option {
+        padding: 14px 16px;
+      }
+
+      .wallet-option-icon {
+        width: 40px;
+        height: 40px;
+      }
     }
   `;
-  
+
   document.head.appendChild(styles);
   document.body.appendChild(modal);
+
+  const optionsContainer = modal.querySelector('.wallet-options');
+  Object.values(WALLET_PROVIDERS).forEach(wallet => {
+    const isAvailable = wallet.check();
+    const option = document.createElement('div');
+    option.className = `wallet-option ${!isAvailable && wallet.id !== 'walletconnect' ? 'disabled' : ''}`;
+    option.dataset.walletId = wallet.id;
+    option.innerHTML = `
+      <div class="wallet-option-icon">${wallet.icon}</div>
+      <div class="wallet-option-info">
+        <div class="wallet-option-name">${wallet.name}</div>
+        <div class="wallet-option-status ${isAvailable ? 'detected' : ''}">${
+          wallet.id === 'walletconnect' ? 'Scan with mobile' :
+          isAvailable ? 'Detected' : 'Not installed'
+        }</div>
+      </div>
+      <svg class="wallet-option-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 18l6-6-6-6"/>
+      </svg>
+    `;
+
+    option.addEventListener('click', () => handleWalletSelect(wallet.id, option));
+    optionsContainer.appendChild(option);
+  });
+
+  modal.querySelector('.wallet-modal-backdrop').addEventListener('click', closeModal);
+  modal.querySelector('.wallet-modal-close').addEventListener('click', closeModal);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) {
+      closeModal();
+    }
+  });
+
+  modalElement = modal;
+  return modal;
 }
 
-// Handle wallet button click
-function handleWalletButtonClick() {
+async function handleWalletSelect(walletId, optionElement) {
+  const errorEl = modalElement.querySelector('.wallet-modal-error');
+  errorEl.classList.remove('show');
+  errorEl.textContent = '';
+
+  optionElement.classList.add('connecting');
+  const statusEl = optionElement.querySelector('.wallet-option-status');
+  const originalStatus = statusEl.textContent;
+  statusEl.textContent = 'Connecting...';
+  statusEl.classList.remove('detected');
+  statusEl.classList.add('connecting');
+
+  try {
+    await connect(walletId);
+    closeModal();
+  } catch (error) {
+    errorEl.textContent = error.message;
+    errorEl.classList.add('show');
+
+    optionElement.classList.remove('connecting');
+    statusEl.textContent = originalStatus;
+    statusEl.classList.remove('connecting');
+    if (WALLET_PROVIDERS[walletId].check()) {
+      statusEl.classList.add('detected');
+    }
+  }
+}
+
+function openModal() {
+  const modal = createModal();
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  if (modalElement) {
+    modalElement.classList.remove('open');
+    document.body.style.overflow = '';
+
+    const errorEl = modalElement.querySelector('.wallet-modal-error');
+    errorEl.classList.remove('show');
+    errorEl.textContent = '';
+  }
+}
+
+// ============================================================================
+// UI Binding
+// ============================================================================
+
+function formatAddress(address) {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function formatBalance(balance) {
+  if (balance === null || balance === undefined) return '0.00';
+  return balance.toFixed(4);
+}
+
+function updateButtonUI(button) {
+  if (!button) return;
+
+  const parent = button.parentElement;
+
+  const existingWrapper = parent.querySelector('.wallet-connected-wrapper');
+  if (existingWrapper) {
+    existingWrapper.remove();
+  }
+
   if (walletState.status === WalletState.CONNECTED) {
-    toggleWalletDropdown();
-  } else {
-    openWalletModal();
-  }
-}
+    button.style.display = 'none';
 
-// Open wallet modal
-function openWalletModal() {
-  const modal = document.getElementById('walletModal');
-  if (modal) {
-    modal.classList.add('open');
-    // Reset to wallet selection view
-    document.querySelector('.wallet-modal-body').style.display = 'block';
-    document.getElementById('walletConnecting').style.display = 'none';
-    document.getElementById('walletError').style.display = 'none';
-  }
-}
+    const wrapper = document.createElement('div');
+    wrapper.className = 'wallet-connected-wrapper';
 
-// Close wallet modal
-function closeWalletModal() {
-  const modal = document.getElementById('walletModal');
-  if (modal) {
-    modal.classList.remove('open');
-  }
-}
+    const chainInfo = SUPPORTED_CHAINS[walletState.chainId] || { name: `Chain ${walletState.chainId}`, symbol: 'ETH' };
 
-// Select wallet
-async function selectWallet(walletId) {
-  const wallet = SUPPORTED_WALLETS.find(w => w.id === walletId);
-  if (!wallet) return;
-  
-  console.log('🔌 Selecting wallet:', wallet.name);
-  
-  // Check if wallet is installed (for browser wallets)
-  if (!wallet.checkInstalled() && wallet.installUrl) {
-    if (confirm(`${wallet.name} is not installed. Would you like to install it?`)) {
-      window.open(wallet.installUrl, '_blank');
-    }
-    return;
-  }
-  
-  // Show connecting state
-  showConnectingState(wallet.name);
-  walletState.status = WalletState.CONNECTING;
-  
-  try {
-    await wallet.connect();
-    closeWalletModal();
-  } catch (error) {
-    console.error('Connection error:', error);
-    showErrorState(error.message);
-  }
-}
-
-// Show connecting state
-function showConnectingState(walletName) {
-  document.querySelector('.wallet-modal-body').style.display = 'none';
-  document.getElementById('walletConnecting').style.display = 'block';
-  document.getElementById('walletError').style.display = 'none';
-  document.getElementById('connectingWalletName').textContent = walletName;
-}
-
-// Show error state
-function showErrorState(message) {
-  document.querySelector('.wallet-modal-body').style.display = 'none';
-  document.getElementById('walletConnecting').style.display = 'none';
-  document.getElementById('walletError').style.display = 'block';
-  document.getElementById('errorMessage').textContent = message;
-  walletState.status = WalletState.ERROR;
-  walletState.error = message;
-}
-
-// Cancel connection
-function cancelConnection() {
-  walletState.status = WalletState.NOT_CONNECTED;
-  document.querySelector('.wallet-modal-body').style.display = 'block';
-  document.getElementById('walletConnecting').style.display = 'none';
-}
-
-// Retry connection
-function retryConnection() {
-  document.querySelector('.wallet-modal-body').style.display = 'block';
-  document.getElementById('walletError').style.display = 'none';
-  walletState.status = WalletState.NOT_CONNECTED;
-  walletState.error = null;
-}
-
-// Connect MetaMask
-async function connectMetaMask() {
-  if (!window.ethereum || !window.ethereum.isMetaMask) {
-    throw new Error('MetaMask is not installed');
-  }
-  
-  try {
-    const accounts = await window.ethereum.request({ 
-      method: 'eth_requestAccounts' 
-    });
-    
-    if (!accounts || accounts.length === 0) {
-      throw new Error('No accounts found');
-    }
-    
-    walletState.address = accounts[0];
-    walletState.provider = new ethers.providers.Web3Provider(window.ethereum);
-    
-    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-    walletState.chainId = parseInt(chainId, 16);
-    
-    await updateBalance();
-    
-    walletState.status = WalletState.CONNECTED;
-    
-    // Persist connection
-    localStorage.setItem(STORAGE_KEYS.CONNECTED_WALLET, 'metamask');
-    localStorage.setItem(STORAGE_KEYS.WALLET_ADDRESS, accounts[0]);
-    
-    updateWalletUI();
-    
-    console.log('✅ Connected to MetaMask:', walletState.address);
-  } catch (error) {
-    walletState.status = WalletState.ERROR;
-    
-    if (error.code === 4001) {
-      throw new Error('Connection rejected. Please approve the connection in MetaMask.');
-    } else if (error.code === -32002) {
-      throw new Error('Connection request pending. Please check MetaMask.');
-    }
-    
-    throw error;
-  }
-}
-
-// Connect WalletConnect (simplified for demo - would use @walletconnect/web3-provider in production)
-async function connectWalletConnect() {
-  // For now, fallback to MetaMask if available, show message otherwise
-  if (window.ethereum) {
-    return connectMetaMask();
-  }
-  throw new Error('WalletConnect requires additional setup. Please use MetaMask or install a Web3 wallet.');
-}
-
-// Connect Coinbase Wallet
-async function connectCoinbase() {
-  if (!window.ethereum || !window.ethereum.isCoinbaseWallet) {
-    if (window.ethereum) {
-      // Try connecting anyway - might be in Coinbase Wallet browser
-      return connectMetaMask();
-    }
-    throw new Error('Coinbase Wallet is not installed');
-  }
-  
-  return connectMetaMask(); // Same flow for browser extension
-}
-
-// Update balance
-async function updateBalance() {
-  if (!walletState.provider || !walletState.address) return;
-  
-  try {
-    const balance = await walletState.provider.getBalance(walletState.address);
-    walletState.balance = ethers.utils.formatEther(balance);
-  } catch (error) {
-    console.error('Failed to fetch balance:', error);
-    walletState.balance = null;
-  }
-}
-
-// Disconnect wallet
-function disconnectWallet() {
-  console.log('🔌 Disconnecting wallet...');
-  
-  walletState = {
-    status: WalletState.NOT_CONNECTED,
-    address: null,
-    chainId: null,
-    provider: null,
-    balance: null,
-    error: null
-  };
-  
-  clearStoredConnection();
-  updateWalletUI();
-  closeWalletDropdown();
-}
-
-// Clear stored connection
-function clearStoredConnection() {
-  localStorage.removeItem(STORAGE_KEYS.CONNECTED_WALLET);
-  localStorage.removeItem(STORAGE_KEYS.WALLET_ADDRESS);
-}
-
-// Update wallet UI
-function updateWalletUI() {
-  const buttons = document.querySelectorAll('#connectWalletBtn, .connect-wallet-btn');
-  
-  buttons.forEach(btn => {
-    if (walletState.status === WalletState.CONNECTED && walletState.address) {
-      const shortAddress = `${walletState.address.slice(0, 6)}...${walletState.address.slice(-4)}`;
-      
-      // Replace button with connected dropdown
-      btn.outerHTML = `
-        <div class="wallet-connected-dropdown" id="walletDropdown">
-          <button class="wallet-connected-btn" onclick="toggleWalletDropdown()">
-            <div class="wallet-icon">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="12" cy="12" r="10"/>
-              </svg>
-            </div>
-            <span>${shortAddress}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M6 9l6 6 6-6"/>
+    wrapper.innerHTML = `
+      <button class="wallet-connected-btn" type="button">
+        <span class="wallet-connected-indicator"></span>
+        <span class="wallet-connected-address">${formatAddress(walletState.address)}</span>
+        <svg class="wallet-connected-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+      <div class="wallet-dropdown">
+        <div class="wallet-dropdown-header">
+          <div class="wallet-dropdown-balance">${formatBalance(walletState.balance)} ${chainInfo.symbol}</div>
+          <div class="wallet-dropdown-chain">
+            <span class="wallet-dropdown-chain-dot"></span>
+            ${chainInfo.name}
+          </div>
+        </div>
+        <div class="wallet-dropdown-actions">
+          <button class="wallet-dropdown-action" data-action="copy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
             </svg>
+            Copy Address
           </button>
-          <div class="wallet-dropdown-menu" id="walletDropdownMenu">
-            <div class="balance-display">
-              <div class="balance-label">Balance</div>
-              <div class="balance-value">${walletState.balance ? parseFloat(walletState.balance).toFixed(4) : '0.0000'} ETH</div>
-            </div>
-            <button class="dropdown-item" onclick="copyAddress()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <button class="wallet-dropdown-action" data-action="explorer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            View on Explorer
+          </button>
+          <button class="wallet-dropdown-action danger" data-action="disconnect">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Disconnect
+          </button>
+        </div>
+      </div>
+    `;
+
+    button.insertAdjacentElement('afterend', wrapper);
+
+    const btn = wrapper.querySelector('.wallet-connected-btn');
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      wrapper.classList.toggle('open');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        wrapper.classList.remove('open');
+      }
+    });
+
+    wrapper.querySelectorAll('.wallet-dropdown-action').forEach(action => {
+      action.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const actionType = action.dataset.action;
+
+        if (actionType === 'copy') {
+          navigator.clipboard.writeText(walletState.address);
+          action.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Copied!
+          `;
+          setTimeout(() => {
+            action.innerHTML = `
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2"/>
                 <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
               </svg>
               Copy Address
-            </button>
-            <button class="dropdown-item" onclick="viewOnExplorer()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
-                <polyline points="15 3 21 3 21 9"/>
-                <line x1="10" y1="14" x2="21" y2="3"/>
-              </svg>
-              View on Explorer
-            </button>
-            <div class="dropdown-divider"></div>
-            <button class="dropdown-item disconnect" onclick="disconnectWallet()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
-              Disconnect
-            </button>
-          </div>
-        </div>
-      `;
-    } else if (walletState.status === WalletState.CONNECTING) {
-      btn.innerHTML = `
-        <span class="connecting-dots">Connecting</span>
-      `;
-      btn.disabled = true;
-    } else {
-      // Ensure button is reset to default state
-      if (btn.tagName === 'DIV') {
-        btn.outerHTML = `<button id="connectWalletBtn" class="btn btn-primary" style="padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #00d4ff, #0099ff); color: white; font-weight: 600; cursor: pointer; transition: all 0.3s;">Connect Wallet</button>`;
-        // Re-attach event listener
-        setTimeout(() => {
-          const newBtn = document.getElementById('connectWalletBtn');
-          if (newBtn) {
-            newBtn.addEventListener('click', (e) => {
-              e.preventDefault();
-              handleWalletButtonClick();
-            });
-          }
-        }, 0);
-      } else {
-        btn.textContent = 'Connect Wallet';
-        btn.disabled = false;
-        btn.classList.remove('connected');
-      }
-    }
-  });
-  
-  // Dispatch custom event for other components
-  window.dispatchEvent(new CustomEvent('walletStateChanged', { detail: walletState }));
-}
+            `;
+          }, 2000);
+        } else if (actionType === 'explorer') {
+          const explorer = chainInfo.explorer || 'https://etherscan.io';
+          window.open(`${explorer}/address/${walletState.address}`, '_blank');
+        } else if (actionType === 'disconnect') {
+          disconnect();
+        }
 
-// Toggle wallet dropdown
-function toggleWalletDropdown() {
-  const menu = document.getElementById('walletDropdownMenu');
-  if (menu) {
-    menu.classList.toggle('open');
-  }
-}
-
-// Close wallet dropdown
-function closeWalletDropdown() {
-  const menu = document.getElementById('walletDropdownMenu');
-  if (menu) {
-    menu.classList.remove('open');
-  }
-}
-
-// Copy address to clipboard
-function copyAddress() {
-  if (walletState.address) {
-    navigator.clipboard.writeText(walletState.address).then(() => {
-      alert('Address copied to clipboard!');
+        wrapper.classList.remove('open');
+      });
     });
+  } else {
+    button.style.display = '';
+    button.textContent = walletState.status === WalletState.CONNECTING ? 'Connecting...' : 'Connect Wallet';
+    button.disabled = walletState.status === WalletState.CONNECTING;
   }
-  closeWalletDropdown();
 }
 
-// View on block explorer
-function viewOnExplorer() {
-  if (walletState.address) {
-    const explorerUrl = walletState.chainId === 1 
-      ? `https://etherscan.io/address/${walletState.address}`
-      : `https://sepolia.etherscan.io/address/${walletState.address}`;
-    window.open(explorerUrl, '_blank');
-  }
-  closeWalletDropdown();
+// ============================================================================
+// Initialize
+// ============================================================================
+
+function initWallet() {
+  const buttons = document.querySelectorAll('#connectWalletBtn, [data-wallet-connect]');
+
+  buttons.forEach(button => {
+    updateButtonUI(button);
+
+    button.addEventListener('click', () => {
+      if (walletState.status === WalletState.CONNECTED) {
+        return;
+      }
+      openModal();
+    });
+
+    onStateChange(() => updateButtonUI(button));
+  });
+
+  tryAutoConnect();
 }
 
-// Close dropdown when clicking outside
-document.addEventListener('click', (e) => {
-  const dropdown = document.getElementById('walletDropdown');
-  if (dropdown && !dropdown.contains(e.target)) {
-    closeWalletDropdown();
-  }
-});
-
-// Initialize on DOM ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initWallet);
 } else {
   initWallet();
 }
 
-// Export for external use
-window.WalletConnect = {
-  init: initWallet,
-  connect: openWalletModal,
-  disconnect: disconnectWallet,
+window.nexxoreWallet = {
+  connect,
+  disconnect,
   getState: () => walletState,
-  getAddress: () => walletState.address,
-  getProvider: () => walletState.provider,
-  isConnected: () => walletState.status === WalletState.CONNECTED
+  onStateChange,
+  openModal,
+  closeModal,
 };
