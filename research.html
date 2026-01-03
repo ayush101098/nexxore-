@@ -720,6 +720,51 @@
       color: #fcd34d;
       border: 1px solid rgba(251, 191, 36, 0.25);
     }
+    
+    /* New positioning-based trade types */
+    .signal-type-badge.fade_trade {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    
+    .signal-type-badge.squeeze_setup {
+      background: rgba(14, 165, 233, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(14, 165, 233, 0.25);
+    }
+    
+    .signal-type-badge.vol_expansion {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.25);
+    }
+    
+    /* Conviction indicator */
+    .conviction-badge {
+      font-size: 0.65rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 6px;
+    }
+    
+    .conviction-badge.high {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
+    
+    .conviction-badge.medium {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fcd34d;
+    }
+    
+    .conviction-badge.low {
+      background: rgba(148, 163, 184, 0.2);
+      color: #94a3b8;
+    }
 
     .signal-asset {
       font-family: var(--font-heading);
@@ -1175,10 +1220,11 @@
           <div class="panel-badge" id="signalCount">0 signals</div>
         </div>
         <div class="scanner-controls">
-          <button class="scanner-btn active" data-type="all" onclick="filterSignals('all')">All Signals</button>
-          <button class="scanner-btn" data-type="oi_divergence" onclick="filterSignals('oi_divergence')">OI Divergence</button>
+          <button class="scanner-btn active" data-type="all" onclick="filterSignals('all')">All</button>
+          <button class="scanner-btn" data-type="fade_trade" onclick="filterSignals('fade_trade')">Fade Trade</button>
+          <button class="scanner-btn" data-type="squeeze_setup" onclick="filterSignals('squeeze_setup')">Squeeze</button>
+          <button class="scanner-btn" data-type="vol_expansion" onclick="filterSignals('vol_expansion')">Vol Expand</button>
           <button class="scanner-btn" data-type="tvl_lag" onclick="filterSignals('tvl_lag')">TVL Lag</button>
-          <button class="scanner-btn" data-type="funding_divergence" onclick="filterSignals('funding_divergence')">Funding</button>
           <button class="scanner-btn refresh-btn" onclick="runAlphaScan(true)">↻ Refresh</button>
         </div>
       </div>
@@ -1626,12 +1672,12 @@
       }
     }
 
-    // Fetch signals directly from public APIs
+    // Fetch signals directly from public APIs with advanced positioning analysis
     async function fetchDirectSignals() {
       const signals = [];
       
-      // Fetch from CoinGecko
-      const cgResponse = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,pendle,gmx,aave&order=market_cap_desc&sparkline=true&price_change_percentage=1h,24h,7d');
+      // Fetch from CoinGecko with comprehensive data
+      const cgResponse = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,pendle,gmx,aave,arbitrum,optimism&order=market_cap_desc&sparkline=true&price_change_percentage=1h,24h,7d');
       
       if (!cgResponse.ok) throw new Error('CoinGecko unavailable');
       
@@ -1649,7 +1695,34 @@
       const tvlData = await Promise.all(tvlPromises);
       console.log('📈 DeFiLlama data loaded');
       
-      // Analyze for TVL Lag signals
+      // === POSITIONING-BASED SIGNAL ANALYSIS ===
+      for (const coin of marketData) {
+        const sparkline = coin.sparkline_in_7d?.price || [];
+        if (sparkline.length < 24) continue;
+        
+        // Multi-period funding proxy analysis
+        const positioning = analyzePositioningFromSparkline(sparkline, coin);
+        if (!positioning) continue;
+        
+        // Calculate volatility metrics
+        const volatility = calculateSparklineVolatility(sparkline);
+        const recentVol = calculateSparklineVolatility(sparkline.slice(-24));
+        const volCompression = volatility > 0 ? recentVol / volatility : 1;
+        
+        // Classify trade setup
+        const tradeSetup = classifyTradeSetupFrontend(positioning, {
+          current: recentVol,
+          historical: volatility,
+          compression: volCompression
+        }, coin);
+        
+        if (tradeSetup.valid && tradeSetup.conviction !== 'LOW') {
+          const signal = generatePositioningSignalFrontend(coin, positioning, tradeSetup, sparkline);
+          signals.push(signal);
+        }
+      }
+      
+      // === TVL LAG ANALYSIS ===
       for (let i = 0; i < protocols.length; i++) {
         const protocol = protocols[i];
         const tvl = tvlData[i];
@@ -1666,10 +1739,14 @@
         const priceChange7d = price.price_change_percentage_7d_in_currency || 0;
         const divergence = tvlChange7d - priceChange7d;
         
+        // REJECT: Weak divergence
         if (divergence > 8 && tvlChange7d > 5) {
           signals.push({
             signalType: 'TVL_LAG',
+            tradeType: 'TVL_LAG',
             asset: `${tvl.name} (${price.symbol.toUpperCase()})`,
+            direction: 'LONG',
+            conviction: divergence > 15 ? 'HIGH' : 'MEDIUM',
             marketContext: `${tvl.name} TVL: $${formatNumber(currentTvl)}. 7d TVL change: ${tvlChange7d > 0 ? '+' : ''}${tvlChange7d.toFixed(1)}%. Token price 7d: ${priceChange7d > 0 ? '+' : ''}${priceChange7d.toFixed(1)}%.`,
             observedAnomaly: `TVL growth (${tvlChange7d > 0 ? '+' : ''}${tvlChange7d.toFixed(1)}%) outpacing token price (${priceChange7d.toFixed(1)}%). Divergence: ${divergence.toFixed(1)}%.`,
             whyMatters: 'Capital flowing into protocol but token price lagging. Protocol fundamentals improving faster than market recognition.',
@@ -1684,72 +1761,224 @@
         }
       }
       
-      // Analyze for OI Divergence / Volume anomalies
-      for (const coin of marketData) {
-        const sparkline = coin.sparkline_in_7d?.price || [];
-        if (sparkline.length < 24) continue;
+      // Sort by confidence and return top signals
+      return signals
+        .filter(s => s.confidenceScore >= 45) // Reject weak signals
+        .sort((a, b) => {
+          // Sort by conviction then confidence
+          const convOrder = { 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+          const aConv = convOrder[a.conviction] || 2;
+          const bConv = convOrder[b.conviction] || 2;
+          if (bConv !== aConv) return bConv - aConv;
+          return b.confidenceScore - a.confidenceScore;
+        })
+        .slice(0, 10);
+    }
+    
+    // Analyze positioning from sparkline (multi-period funding proxy)
+    function analyzePositioningFromSparkline(sparkline, coin) {
+      if (!sparkline || sparkline.length < 24) return null;
+      
+      // Split into 8 periods for funding analysis
+      const periods = [];
+      const periodSize = Math.floor(sparkline.length / 8);
+      
+      for (let i = 0; i < 8; i++) {
+        const start = i * periodSize;
+        const end = i === 7 ? sparkline.length : (i + 1) * periodSize;
+        const periodPrices = sparkline.slice(start, end);
+        const avgPrice = periodPrices.reduce((a, b) => a + b, 0) / periodPrices.length;
+        const endPrice = periodPrices[periodPrices.length - 1];
+        const fundingProxy = ((endPrice - avgPrice) / avgPrice) * 100;
+        periods.push({ avgPrice, endPrice, fundingProxy });
+      }
+      
+      // Count persistent positive/negative funding
+      const positiveFunding = periods.filter(p => p.fundingProxy > 0.5).length;
+      const negativeFunding = periods.filter(p => p.fundingProxy < -0.5).length;
+      
+      // Calculate persistence
+      const persistence = Math.max(positiveFunding, negativeFunding);
+      const fundingDirection = positiveFunding > negativeFunding ? 'positive' : 'negative';
+      
+      // Calculate price movement over period
+      const startPrice = sparkline[0];
+      const endPrice = sparkline[sparkline.length - 1];
+      const priceChange = ((endPrice - startPrice) / startPrice) * 100;
+      
+      // Check for divergence (funding vs price)
+      const fundingAligned = (fundingDirection === 'positive' && priceChange > 3) || 
+                            (fundingDirection === 'negative' && priceChange < -3);
+      const fundingDiverged = (fundingDirection === 'positive' && priceChange < -2) || 
+                             (fundingDirection === 'negative' && priceChange > 2);
+      
+      // Calculate stress score (0-100)
+      let stressScore = 0;
+      stressScore += persistence * 8; // Up to 64
+      if (fundingDiverged) stressScore += 20;
+      
+      // Volume ratio adds to stress
+      const volumeRatio = coin.total_volume / coin.market_cap;
+      if (volumeRatio > 0.1) stressScore += 15;
+      else if (volumeRatio > 0.05) stressScore += 8;
+      
+      // 24h price position extremity
+      const pricePosition = coin.high_24h && coin.low_24h 
+        ? (coin.current_price - coin.low_24h) / (coin.high_24h - coin.low_24h)
+        : 0.5;
+      
+      if (pricePosition > 0.9 || pricePosition < 0.1) stressScore += 12;
+      else if (pricePosition > 0.8 || pricePosition < 0.2) stressScore += 6;
+      
+      return {
+        fundingDirection,
+        persistence,
+        priceChange,
+        fundingAligned,
+        fundingDiverged,
+        stressScore: Math.min(100, stressScore),
+        pricePosition,
+        volumeRatio,
+        avgFunding: periods.reduce((a, p) => a + p.fundingProxy, 0) / periods.length
+      };
+    }
+    
+    // Classify trade setup (FADE, SQUEEZE, VOL_EXPANSION)
+    function classifyTradeSetupFrontend(positioning, volatility, coin) {
+      const { persistence, stressScore, fundingDiverged, fundingDirection, pricePosition, priceChange } = positioning;
+      
+      // REJECT: Insufficient data
+      if (persistence < 3) {
+        return { valid: false, reason: 'Insufficient persistence' };
+      }
+      
+      // REJECT: Low stress
+      if (stressScore < 30) {
+        return { valid: false, reason: 'Low positioning stress' };
+      }
+      
+      // VOL_EXPANSION: Compressed volatility with position buildup
+      if (volatility.compression < 0.6 && stressScore > 45) {
+        return {
+          valid: true,
+          tradeType: 'VOL_EXPANSION',
+          direction: fundingDirection === 'positive' ? 'LONG' : 'SHORT',
+          conviction: stressScore > 65 ? 'HIGH' : 'MEDIUM',
+          rationale: 'Volatility compression with positioning buildup - breakout imminent'
+        };
+      }
+      
+      // FADE_TRADE: Crowded positioning at price extreme
+      if (persistence >= 5 && (pricePosition > 0.85 || pricePosition < 0.15)) {
+        const fadeLong = pricePosition < 0.15 && fundingDirection === 'negative';
+        const fadeShort = pricePosition > 0.85 && fundingDirection === 'positive';
         
-        const volatility = calculateSparklineVolatility(sparkline);
-        const volumeRatio = coin.total_volume / coin.market_cap;
-        const priceFlat = Math.abs(coin.price_change_percentage_7d_in_currency || 0) < 5;
-        
-        if (priceFlat && volumeRatio > 0.08 && volatility < 0.025) {
-          const avgPrice = sparkline.reduce((a, b) => a + b, 0) / sparkline.length;
-          const likelyOffsides = coin.current_price > avgPrice ? 'late longs' : 'late shorts';
-          
-          signals.push({
-            signalType: 'OI_DIVERGENCE',
-            asset: coin.symbol.toUpperCase(),
-            marketContext: `${coin.symbol.toUpperCase()} at $${formatNumber(coin.current_price)}. Vol/MCap: ${(volumeRatio * 100).toFixed(1)}%. 7d volatility: ${(volatility * 100).toFixed(2)}%.`,
-            observedAnomaly: `High volume with compressed volatility. Price flat (${coin.price_change_percentage_7d_in_currency?.toFixed(1)}% 7d) despite ${(volumeRatio * 100).toFixed(1)}% daily turnover.`,
-            whyMatters: `Position buildup during range compression. ${likelyOffsides} likely to get squeezed on breakout.`,
-            tradeExpression: likelyOffsides === 'late longs' 
-              ? `Short on breakdown below $${formatNumber(Math.min(...sparkline.slice(-24)))}` 
-              : `Long on breakout above $${formatNumber(Math.max(...sparkline.slice(-24)))}`,
-            timeHorizon: '24-72 hours',
-            keyRisks: 'False breakout, news catalyst override',
-            invalidationLevel: likelyOffsides === 'late longs' 
-              ? `Above $${formatNumber(Math.max(...sparkline.slice(-24)) * 1.02)}` 
-              : `Below $${formatNumber(Math.min(...sparkline.slice(-24)) * 0.98)}`,
-            confidenceScore: Math.min(65, 40 + Math.floor(volumeRatio * 100)),
-            timestamp: new Date().toISOString(),
-            rawData: { price: coin.current_price, volumeRatio, volatility }
-          });
-        }
-        
-        // Funding divergence approximation
-        const pricePosition = coin.high_24h && coin.low_24h 
-          ? (coin.current_price - coin.low_24h) / (coin.high_24h - coin.low_24h)
-          : 0.5;
-        
-        if ((pricePosition > 0.88 || pricePosition < 0.12) && volumeRatio > 0.05) {
-          const isCrowdedLong = pricePosition > 0.85;
-          
-          signals.push({
-            signalType: 'FUNDING_DIVERGENCE',
-            asset: coin.symbol.toUpperCase(),
-            marketContext: `${coin.symbol.toUpperCase()} at $${formatNumber(coin.current_price)}. 24h: $${formatNumber(coin.low_24h)} - $${formatNumber(coin.high_24h)}. Position: ${(pricePosition * 100).toFixed(0)}% of range.`,
-            observedAnomaly: `${isCrowdedLong ? 'Crowded long' : 'Crowded short'} positioning. Price at ${isCrowdedLong ? 'top' : 'bottom'} of 24h range with elevated volume.`,
-            whyMatters: 'One-sided positioning creates funding pressure and mean-reversion opportunity.',
-            tradeExpression: isCrowdedLong 
-              ? `Fade longs: Target return to VWAP ~$${formatNumber((coin.high_24h + coin.low_24h) / 2)}` 
-              : `Fade shorts: Target return to VWAP ~$${formatNumber((coin.high_24h + coin.low_24h) / 2)}`,
-            timeHorizon: '4-24 hours',
-            keyRisks: 'Trend continuation, news catalyst',
-            invalidationLevel: isCrowdedLong 
-              ? `New high above $${formatNumber(coin.high_24h * 1.01)}` 
-              : `New low below $${formatNumber(coin.low_24h * 0.99)}`,
-            confidenceScore: Math.min(55, 35 + Math.floor(Math.abs(pricePosition - 0.5) * 40)),
-            timestamp: new Date().toISOString(),
-            rawData: { pricePosition, high24h: coin.high_24h, low24h: coin.low_24h }
-          });
+        if (fadeLong || fadeShort) {
+          return {
+            valid: true,
+            tradeType: 'FADE_TRADE',
+            direction: fadeLong ? 'LONG' : 'SHORT',
+            conviction: persistence >= 6 && stressScore > 55 ? 'HIGH' : 'MEDIUM',
+            rationale: `Crowded ${fadeLong ? 'shorts' : 'longs'} at price extreme - mean reversion setup`
+          };
         }
       }
       
-      // Sort by confidence and return top signals
-      return signals
-        .sort((a, b) => b.confidenceScore - a.confidenceScore)
-        .slice(0, 10);
+      // SQUEEZE_SETUP: High leverage with divergent price action
+      if (fundingDiverged && stressScore > 50) {
+        const squeezeDirection = fundingDirection === 'positive' ? 'SHORT' : 'LONG';
+        return {
+          valid: true,
+          tradeType: 'SQUEEZE_SETUP',
+          direction: squeezeDirection,
+          conviction: stressScore > 70 ? 'HIGH' : 'MEDIUM',
+          rationale: `${fundingDirection === 'positive' ? 'Longs' : 'Shorts'} offside - funding/price divergence indicates squeeze potential`
+        };
+      }
+      
+      return { valid: false, reason: 'No clear trade setup' };
+    }
+    
+    // Generate positioning-based signal
+    function generatePositioningSignalFrontend(coin, positioning, tradeSetup, sparkline) {
+      const { tradeType, direction, conviction, rationale } = tradeSetup;
+      const symbol = coin.symbol.toUpperCase();
+      
+      const min7d = Math.min(...sparkline.slice(-24));
+      const max7d = Math.max(...sparkline.slice(-24));
+      
+      let tradeExpression, invalidation, timeHorizon;
+      
+      switch (tradeType) {
+        case 'FADE_TRADE':
+          tradeExpression = direction === 'LONG'
+            ? `Fade shorts: Long ${symbol} with stop below recent low. Target: return to 7d VWAP (~$${formatNumber((max7d + min7d) / 2)})`
+            : `Fade longs: Short ${symbol} with stop above recent high. Target: return to 7d VWAP (~$${formatNumber((max7d + min7d) / 2)})`;
+          invalidation = direction === 'LONG'
+            ? `New low below $${formatNumber(min7d * 0.98)}`
+            : `New high above $${formatNumber(max7d * 1.02)}`;
+          timeHorizon = '4-24 hours';
+          break;
+          
+        case 'SQUEEZE_SETUP':
+          tradeExpression = direction === 'LONG'
+            ? `Long ${symbol} on short squeeze. Entry: $${formatNumber(coin.current_price)}. Target: +8-12% as shorts cover.`
+            : `Short ${symbol} on long liquidation cascade. Target: -8-12% as longs capitulate.`;
+          invalidation = direction === 'LONG'
+            ? `Price drops below $${formatNumber(min7d * 0.95)}`
+            : `Price breaks above $${formatNumber(max7d * 1.05)}`;
+          timeHorizon = '12-48 hours';
+          break;
+          
+        case 'VOL_EXPANSION':
+          tradeExpression = direction === 'LONG'
+            ? `Long ${symbol} volatility expansion. Buy breakout above $${formatNumber(max7d)}. Target: 5-10% move on vol release.`
+            : `Short ${symbol} on breakdown below $${formatNumber(min7d)}. Target: 5-10% downside on vol release.`;
+          invalidation = direction === 'LONG'
+            ? `False breakout - rejection back below $${formatNumber(max7d * 0.98)}`
+            : `False breakdown - recovery above $${formatNumber(min7d * 1.02)}`;
+          timeHorizon = '24-72 hours';
+          break;
+      }
+      
+      // Calculate confidence
+      let confidence = 40;
+      confidence += Math.min(20, positioning.persistence * 3);
+      confidence += Math.min(15, positioning.stressScore / 5);
+      if (positioning.fundingDiverged) confidence += 10;
+      if (conviction === 'HIGH') confidence += 5;
+      
+      return {
+        signalType: tradeType,
+        tradeType: tradeType,
+        asset: symbol,
+        direction,
+        conviction,
+        marketContext: `${symbol} at $${formatNumber(coin.current_price)}. 7d: ${positioning.priceChange > 0 ? '+' : ''}${positioning.priceChange.toFixed(1)}%. 24h range: $${formatNumber(coin.low_24h)} - $${formatNumber(coin.high_24h)}. Vol/MCap: ${(positioning.volumeRatio * 100).toFixed(1)}%.`,
+        observedAnomaly: `${rationale}. Positioning stress: ${positioning.stressScore}/100. Funding persistence: ${positioning.persistence}/8 periods ${positioning.fundingDirection}.`,
+        whyMatters: tradeType === 'FADE_TRADE' 
+          ? 'Crowded positioning at extremes creates mean-reversion opportunity. Funding costs and liquidation risk force position unwind.'
+          : tradeType === 'SQUEEZE_SETUP'
+            ? 'Price diverging from positioning suggests trapped traders. Liquidation cascade likely when stops trigger.'
+            : 'Volatility compression with position buildup creates explosive breakout potential. Stored energy ready to release.',
+        tradeExpression,
+        timeHorizon,
+        keyRisks: tradeType === 'FADE_TRADE'
+          ? 'Trend continuation, news catalyst, funding can remain extreme longer than expected'
+          : tradeType === 'SQUEEZE_SETUP'
+            ? 'False signal, whale positioning unknown, exchange-specific dynamics'
+            : 'False breakout/breakdown, liquidity gaps, market-wide correlation',
+        invalidationLevel: invalidation,
+        confidenceScore: Math.min(80, confidence),
+        timestamp: new Date().toISOString(),
+        rawData: {
+          price: coin.current_price,
+          priceChange7d: positioning.priceChange,
+          stressScore: positioning.stressScore,
+          persistence: positioning.persistence,
+          fundingDirection: positioning.fundingDirection
+        }
+      };
     }
 
     // Calculate volatility from sparkline
@@ -1787,39 +2016,77 @@
       return date.toLocaleTimeString();
     }
 
-    // Demo signals (last resort fallback)
+    // Demo signals (last resort fallback) - showcasing all signal types
     function generateDemoSignals() {
       return [
         {
+          signalType: 'FADE_TRADE',
+          tradeType: 'FADE_TRADE',
+          asset: 'ETH',
+          direction: 'SHORT',
+          conviction: 'HIGH',
+          marketContext: 'ETH at $3,450. 7d: +12.3%. 24h range: $3,380 - $3,470. Vol/MCap: 8.2%. Price at 92% of 24h range.',
+          observedAnomaly: 'Crowded longs at price extreme - mean reversion setup. Positioning stress: 72/100. Funding persistence: 6/8 periods positive.',
+          whyMatters: '[DEMO] Crowded positioning at extremes creates mean-reversion opportunity. Funding costs and liquidation risk force position unwind.',
+          tradeExpression: 'Fade longs: Short ETH with stop above recent high. Target: return to 7d VWAP (~$3,400)',
+          timeHorizon: '4-24 hours',
+          keyRisks: '[DEMO] Trend continuation, news catalyst, funding can remain extreme longer than expected',
+          invalidationLevel: 'New high above $3,540',
+          confidenceScore: 68,
+          timestamp: new Date().toISOString()
+        },
+        {
+          signalType: 'SQUEEZE_SETUP',
+          tradeType: 'SQUEEZE_SETUP',
+          asset: 'SOL',
+          direction: 'LONG',
+          conviction: 'MEDIUM',
+          marketContext: 'SOL at $178. 7d: -4.2%. 24h range: $175 - $182. Vol/MCap: 11.5%. Funding persistently negative despite price holding.',
+          observedAnomaly: 'Shorts offside - funding/price divergence indicates squeeze potential. Positioning stress: 58/100. Funding persistence: 5/8 periods negative.',
+          whyMatters: '[DEMO] Price diverging from positioning suggests trapped traders. Liquidation cascade likely when stops trigger.',
+          tradeExpression: 'Long SOL on short squeeze. Entry: $178. Target: +8-12% as shorts cover.',
+          timeHorizon: '12-48 hours',
+          keyRisks: '[DEMO] False signal, whale positioning unknown, exchange-specific dynamics',
+          invalidationLevel: 'Price drops below $168',
+          confidenceScore: 62,
+          timestamp: new Date().toISOString()
+        },
+        {
+          signalType: 'VOL_EXPANSION',
+          tradeType: 'VOL_EXPANSION',
+          asset: 'BTC',
+          direction: 'LONG',
+          conviction: 'MEDIUM',
+          marketContext: 'BTC at $97,500. 7d: +1.2%. Volatility compression: 0.52x normal. Vol/MCap: 5.8%. Range-bound for 5 days.',
+          observedAnomaly: 'Volatility compression with positioning buildup - breakout imminent. Positioning stress: 55/100. Funding persistence: 4/8 periods positive.',
+          whyMatters: '[DEMO] Volatility compression with position buildup creates explosive breakout potential. Stored energy ready to release.',
+          tradeExpression: 'Long BTC volatility expansion. Buy breakout above $98,200. Target: 5-10% move on vol release.',
+          timeHorizon: '24-72 hours',
+          keyRisks: '[DEMO] False breakout/breakdown, liquidity gaps, market-wide correlation',
+          invalidationLevel: 'False breakout - rejection back below $97,000',
+          confidenceScore: 56,
+          timestamp: new Date().toISOString()
+        },
+        {
           signalType: 'TVL_LAG',
+          tradeType: 'TVL_LAG',
           asset: 'Pendle (PENDLE)',
+          direction: 'LONG',
+          conviction: 'HIGH',
           marketContext: 'Pendle TVL: $4.2B. 7d TVL change: +18.4%. Token price 7d: +3.2%. TVL/MCap ratio: 6.8x.',
           observedAnomaly: 'TVL growth (+18.4%) significantly outpacing token appreciation (+3.2%). Divergence: 15.2%.',
-          whyMatters: 'Capital flowing into protocol but token price lagging. This is demo data - connect to live API for real signals.',
+          whyMatters: '[DEMO] Capital flowing into protocol but token price lagging. Connect to live API for real signals.',
           tradeExpression: 'Long PENDLE spot. Entry: current. Target: 12-15% catch-up move.',
           timeHorizon: '1-2 weeks',
           keyRisks: '[DEMO] Mercenary TVL, token inflation, smart contract risk',
           invalidationLevel: 'TVL drops >10%',
           confidenceScore: 72,
           timestamp: new Date().toISOString()
-        },
-        {
-          signalType: 'OI_DIVERGENCE',
-          asset: 'SOL',
-          marketContext: 'SOL showing compressed volatility with elevated volume. Price flat over 7d.',
-          observedAnomaly: 'High trading activity without directional follow-through. This is demo data.',
-          whyMatters: 'Position buildup during range compression. Connect to live API for real analysis.',
-          tradeExpression: 'Long SOL on breakout above 7d high',
-          timeHorizon: '24-72 hours',
-          keyRisks: '[DEMO] False breakout, news catalyst',
-          invalidationLevel: 'Below 7d low',
-          confidenceScore: 58,
-          timestamp: new Date().toISOString()
         }
       ];
     }
 
-    // Filter signals by type
+    // Filter signals by type (supports both tradeType and signalType)
     function filterSignals(type) {
       currentFilter = type;
       
@@ -1830,7 +2097,11 @@
       
       const filtered = type === 'all' 
         ? allAlphaSignals 
-        : allAlphaSignals.filter(s => s.signalType.toLowerCase() === type);
+        : allAlphaSignals.filter(s => {
+            const tradeType = (s.tradeType || '').toLowerCase();
+            const signalType = (s.signalType || '').toLowerCase();
+            return tradeType === type || signalType === type;
+          });
       
       renderSignals(filtered);
     }
@@ -1852,15 +2123,19 @@
       
       container.innerHTML = signals.map((signal, idx) => {
         const confClass = signal.confidenceScore >= 60 ? 'high' : signal.confidenceScore >= 40 ? 'medium' : 'low';
-        const typeClass = signal.signalType.toLowerCase();
+        const typeClass = getTradeTypeClass(signal);
         const signalTime = signal.timestamp ? formatTimestamp(signal.timestamp) : 'just now';
+        const displayType = signal.tradeType || signal.signalType;
+        const convictionBadge = getConvictionBadge(signal.conviction);
+        const directionIcon = signal.direction === 'LONG' ? '📈' : signal.direction === 'SHORT' ? '📉' : '';
         
         return `
           <div class="signal-card" data-signal-id="${idx}">
             <div class="signal-header">
               <div>
-                <span class="signal-type-badge ${typeClass}">${formatSignalType(signal.signalType)}</span>
-                <div class="signal-asset" style="margin-top: 6px;">${signal.asset}</div>
+                <span class="signal-type-badge ${typeClass}">${formatSignalType(displayType)}</span>
+                ${convictionBadge}
+                <div class="signal-asset" style="margin-top: 6px;">${directionIcon} ${signal.asset}</div>
               </div>
               <div class="confidence-meter">
                 <span class="signal-timestamp" style="font-size: 0.7rem; color: #475569; margin-right: 8px;">${signalTime}</span>
@@ -1932,9 +2207,27 @@
       const types = {
         'OI_DIVERGENCE': 'OI Divergence',
         'TVL_LAG': 'TVL Lag',
-        'FUNDING_DIVERGENCE': 'Funding'
+        'FUNDING_DIVERGENCE': 'Funding',
+        'FADE_TRADE': 'Fade Trade',
+        'SQUEEZE_SETUP': 'Squeeze Setup',
+        'VOL_EXPANSION': 'Vol Expansion',
+        'POSITIONING': 'Positioning'
       };
-      return types[type] || type;
+      return types[type] || type.replace(/_/g, ' ');
+    }
+    
+    // Get trade type class for styling
+    function getTradeTypeClass(signal) {
+      // Prefer tradeType if available, otherwise use signalType
+      const type = signal.tradeType || signal.signalType;
+      return type.toLowerCase();
+    }
+    
+    // Get conviction badge HTML
+    function getConvictionBadge(conviction) {
+      if (!conviction) return '';
+      const level = conviction.toLowerCase();
+      return `<span class="conviction-badge ${level}">${conviction}</span>`;
     }
 
     // Setup auto-refresh

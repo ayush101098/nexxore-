@@ -7,9 +7,15 @@
  * - Coinglass/alternative APIs (funding rates, open interest)
  * 
  * Signal Types:
- * 1. OI Divergence: Rising open interest + flat price
- * 2. TVL Lag: Accelerating TVL + lagging token price
- * 3. Funding Divergence: Cross-exchange funding rate anomalies
+ * 1. FADE_TRADE: Mean reversion against crowded positioning
+ * 2. SQUEEZE_SETUP: Liquidation cascade potential
+ * 3. VOL_EXPANSION: Volatility breakout from compression
+ * 4. TVL_LAG: Protocol TVL diverging from token price
+ * 
+ * Trade Classification:
+ * - Fade: Counter-trend against crowded positions
+ * - Squeeze: Breakout that triggers liquidation cascade
+ * - Volatility Expansion: Directional breakout from range
  */
 
 const { fetchWithTimeout, AgentLogger } = require('../shared/utils');
@@ -21,17 +27,19 @@ const APIS = {
   COINGECKO: 'https://api.coingecko.com/api/v3',
   DEFILLAMA: 'https://api.llama.fi',
   DEFILLAMA_COINS: 'https://coins.llama.fi',
-  COINGLASS_ALT: 'https://open-api.coinglass.com/public/v2' // Limited free tier
+  COINGLASS_ALT: 'https://open-api.coinglass.com/public/v2'
 };
 
-// Assets to scan
+// Assets to scan (liquid perps markets)
 const SCAN_ASSETS = [
-  { id: 'bitcoin', symbol: 'BTC', defillamaId: null },
-  { id: 'ethereum', symbol: 'ETH', defillamaId: null },
-  { id: 'solana', symbol: 'SOL', defillamaId: null },
-  { id: 'avalanche-2', symbol: 'AVAX', defillamaId: null },
-  { id: 'arbitrum', symbol: 'ARB', defillamaId: 'arbitrum' },
-  { id: 'optimism', symbol: 'OP', defillamaId: 'optimism' }
+  { id: 'bitcoin', symbol: 'BTC', defillamaId: null, hasPerps: true },
+  { id: 'ethereum', symbol: 'ETH', defillamaId: null, hasPerps: true },
+  { id: 'solana', symbol: 'SOL', defillamaId: null, hasPerps: true },
+  { id: 'avalanche-2', symbol: 'AVAX', defillamaId: null, hasPerps: true },
+  { id: 'arbitrum', symbol: 'ARB', defillamaId: 'arbitrum', hasPerps: true },
+  { id: 'optimism', symbol: 'OP', defillamaId: 'optimism', hasPerps: true },
+  { id: 'dogecoin', symbol: 'DOGE', defillamaId: null, hasPerps: true },
+  { id: 'pepe', symbol: 'PEPE', defillamaId: null, hasPerps: true }
 ];
 
 // DeFi protocols to scan
@@ -48,11 +56,26 @@ const SCAN_PROTOCOLS = [
   { slug: 'ethena', token: 'ethena', name: 'Ethena' }
 ];
 
+// ============================================================================
+// SIGNAL QUALITY THRESHOLDS - Reject weak/ambiguous signals
+// ============================================================================
+const SIGNAL_THRESHOLDS = {
+  MIN_CONFIDENCE: 45,              // Reject below this
+  MIN_VOLUME_RATIO: 0.04,          // Min 4% daily volume/mcap
+  MAX_PRICE_NOISE: 0.03,           // Max 3% random noise tolerance
+  MIN_DIVERGENCE: 5,               // Min 5% divergence for signal
+  MIN_PERSISTENCE_PERIODS: 3,      // Funding must persist 3+ periods
+  VOL_COMPRESSION_THRESHOLD: 0.018, // Volatility considered compressed
+  EXTREME_PRICE_POSITION: 0.15,    // Top/bottom 15% of range
+  SQUEEZE_LEVERAGE_THRESHOLD: 0.12 // Volume/MCap suggesting leverage
+};
+
 /**
  * Standard output schema for signals
  */
 function formatSignal({
   signalType,
+  tradeType,
   marketContext,
   observedAnomaly,
   whyMatters,
@@ -62,10 +85,12 @@ function formatSignal({
   invalidationLevel,
   confidenceScore,
   asset,
+  positioningAnalysis = {},
   rawData = {}
 }) {
   return {
     signalType,
+    tradeType, // 'FADE' | 'SQUEEZE' | 'VOL_EXPANSION'
     asset,
     marketContext,
     observedAnomaly,
@@ -75,6 +100,7 @@ function formatSignal({
     keyRisks,
     invalidationLevel,
     confidenceScore: Math.min(100, Math.max(0, confidenceScore)),
+    positioningAnalysis,
     timestamp: new Date().toISOString(),
     rawData
   };
@@ -116,6 +142,208 @@ async function fetchMarketData(tokenIds) {
   }
 }
 
+// ============================================================================
+// ADVANCED POSITIONING ANALYSIS
+// ============================================================================
+
+/**
+ * Analyze funding rate persistence and positioning stress
+ * Uses price/volume dynamics as proxy for funding when direct API unavailable
+ */
+function analyzePositioning(priceData) {
+  if (!priceData || !priceData.sparkline || priceData.sparkline.length < 24) {
+    return null;
+  }
+  
+  const sparkline = priceData.sparkline;
+  const volumeRatio = priceData.volume24h / priceData.marketCap;
+  
+  // Calculate multi-period funding proxy
+  // Positive funding = longs paying shorts = bullish bias
+  // Negative funding = shorts paying longs = bearish bias
+  const periods = splitIntoPeriods(sparkline, 8); // 8 periods of ~21 hours each
+  
+  const fundingProxy = periods.map((period, idx) => {
+    const periodReturn = period.length > 1 
+      ? (period[period.length - 1] - period[0]) / period[0]
+      : 0;
+    const periodVolatility = calculateVolatility(period);
+    
+    // High volume + positive return = positive funding proxy
+    // High volume + negative return = negative funding proxy
+    return {
+      period: idx + 1,
+      return: periodReturn,
+      volatility: periodVolatility,
+      fundingBias: periodReturn > 0.005 ? 'positive' : periodReturn < -0.005 ? 'negative' : 'neutral'
+    };
+  });
+  
+  // Check persistence: how many consecutive periods with same bias
+  const positivePeriods = fundingProxy.filter(p => p.fundingBias === 'positive').length;
+  const negativePeriods = fundingProxy.filter(p => p.fundingBias === 'negative').length;
+  const neutralPeriods = fundingProxy.filter(p => p.fundingBias === 'neutral').length;
+  
+  // Determine dominant funding bias
+  let dominantBias = 'neutral';
+  let persistence = 0;
+  let fundingStrength = 0;
+  
+  if (positivePeriods >= SIGNAL_THRESHOLDS.MIN_PERSISTENCE_PERIODS) {
+    dominantBias = 'persistent_positive';
+    persistence = positivePeriods;
+    fundingStrength = positivePeriods / periods.length;
+  } else if (negativePeriods >= SIGNAL_THRESHOLDS.MIN_PERSISTENCE_PERIODS) {
+    dominantBias = 'persistent_negative';
+    persistence = negativePeriods;
+    fundingStrength = negativePeriods / periods.length;
+  }
+  
+  // Check price confirmation vs divergence
+  const totalReturn = (sparkline[sparkline.length - 1] - sparkline[0]) / sparkline[0];
+  const priceConfirms = (dominantBias === 'persistent_positive' && totalReturn > 0.02) ||
+                        (dominantBias === 'persistent_negative' && totalReturn < -0.02);
+  const priceDiverges = (dominantBias === 'persistent_positive' && totalReturn < -0.01) ||
+                        (dominantBias === 'persistent_negative' && totalReturn > 0.01);
+  
+  // Calculate positioning stress score (0-100)
+  // Higher = more crowded/stressed positioning
+  let stressScore = 0;
+  
+  // High volume relative to mcap suggests leverage
+  if (volumeRatio > SIGNAL_THRESHOLDS.SQUEEZE_LEVERAGE_THRESHOLD) {
+    stressScore += 25;
+  } else if (volumeRatio > 0.08) {
+    stressScore += 15;
+  }
+  
+  // Persistent funding adds stress
+  if (persistence >= 5) stressScore += 30;
+  else if (persistence >= 3) stressScore += 20;
+  
+  // Price at extreme positions
+  const pricePosition = (priceData.price - priceData.low24h) / (priceData.high24h - priceData.low24h);
+  if (pricePosition > 0.9 || pricePosition < 0.1) {
+    stressScore += 25;
+  } else if (pricePosition > 0.85 || pricePosition < 0.15) {
+    stressScore += 15;
+  }
+  
+  // Price divergence from funding suggests stress
+  if (priceDiverges) stressScore += 20;
+  
+  // Determine crowding
+  let crowding = 'neutral';
+  if (stressScore >= 50) {
+    if (dominantBias === 'persistent_positive' || pricePosition > 0.75) {
+      crowding = 'crowded_longs';
+    } else if (dominantBias === 'persistent_negative' || pricePosition < 0.25) {
+      crowding = 'crowded_shorts';
+    }
+  }
+  
+  return {
+    dominantBias,
+    persistence,
+    fundingStrength,
+    priceConfirms,
+    priceDiverges,
+    stressScore,
+    crowding,
+    volumeRatio,
+    pricePosition,
+    totalReturn7d: totalReturn * 100,
+    periodAnalysis: fundingProxy
+  };
+}
+
+/**
+ * Split sparkline into N periods for analysis
+ */
+function splitIntoPeriods(arr, n) {
+  const periods = [];
+  const size = Math.floor(arr.length / n);
+  for (let i = 0; i < n; i++) {
+    const start = i * size;
+    const end = i === n - 1 ? arr.length : (i + 1) * size;
+    periods.push(arr.slice(start, end));
+  }
+  return periods;
+}
+
+/**
+ * Classify trade type based on positioning analysis
+ */
+function classifyTradeSetup(positioning, volatility) {
+  if (!positioning) return null;
+  
+  const { dominantBias, priceDiverges, stressScore, crowding, pricePosition, volumeRatio } = positioning;
+  
+  // REJECT: Weak or ambiguous signals
+  if (stressScore < 30 && crowding === 'neutral') {
+    return { valid: false, reason: 'Insufficient positioning stress' };
+  }
+  
+  if (dominantBias === 'neutral' && Math.abs(positioning.totalReturn7d) < 3) {
+    return { valid: false, reason: 'Ambiguous funding with flat price' };
+  }
+  
+  // FADE TRADE: Mean reversion against crowded positioning
+  // Conditions: High stress + extreme price position + funding persists
+  if (stressScore >= 50 && crowding !== 'neutral') {
+    const fadeDirection = crowding === 'crowded_longs' ? 'SHORT' : 'LONG';
+    const isFade = (crowding === 'crowded_longs' && pricePosition > 0.75) ||
+                   (crowding === 'crowded_shorts' && pricePosition < 0.25);
+    
+    if (isFade) {
+      return {
+        valid: true,
+        tradeType: 'FADE',
+        direction: fadeDirection,
+        conviction: stressScore >= 70 ? 'high' : 'medium',
+        rationale: `Crowded ${crowding === 'crowded_longs' ? 'long' : 'short'} positioning with price at extreme. Funding costs will pressure overleveraged traders.`
+      };
+    }
+  }
+  
+  // SQUEEZE SETUP: Liquidation cascade potential
+  // Conditions: High leverage (volume ratio) + price diverging from positioning
+  if (volumeRatio > SIGNAL_THRESHOLDS.SQUEEZE_LEVERAGE_THRESHOLD && priceDiverges) {
+    const squeezeDirection = dominantBias === 'persistent_negative' ? 'LONG' : 'SHORT';
+    
+    return {
+      valid: true,
+      tradeType: 'SQUEEZE',
+      direction: squeezeDirection,
+      conviction: stressScore >= 60 ? 'high' : 'medium',
+      rationale: `Price diverging from ${dominantBias.replace('persistent_', '')} funding. High leverage suggests liquidation cascade potential.`
+    };
+  }
+  
+  // VOLATILITY EXPANSION: Breakout from compression
+  // Conditions: Low volatility + high volume + positioning buildup
+  if (volatility < SIGNAL_THRESHOLDS.VOL_COMPRESSION_THRESHOLD && 
+      volumeRatio > SIGNAL_THRESHOLDS.MIN_VOLUME_RATIO &&
+      positioning.persistence >= 2) {
+    
+    // Direction based on dominant positioning (breakout direction)
+    const breakoutDirection = dominantBias === 'persistent_positive' ? 'LONG' : 
+                              dominantBias === 'persistent_negative' ? 'SHORT' : null;
+    
+    if (breakoutDirection) {
+      return {
+        valid: true,
+        tradeType: 'VOL_EXPANSION',
+        direction: breakoutDirection,
+        conviction: 'medium',
+        rationale: `Volatility compressed to ${(volatility * 100).toFixed(2)}% with position buildup. Breakout imminent in direction of dominant positioning.`
+      };
+    }
+  }
+  
+  return { valid: false, reason: 'No clear trade setup identified' };
+}
+
 /**
  * Fetch TVL data from DeFiLlama
  */
@@ -155,129 +383,225 @@ async function fetchTVLData(protocolSlug) {
   }
 }
 
-/**
- * Fetch derivatives data (OI, funding) - using free alternatives
- * Note: Full OI data requires paid APIs, using estimation methods
- */
-async function fetchDerivativesData(symbol) {
-  try {
-    // CoinGecko derivatives endpoint (limited but free)
-    const url = `${APIS.COINGECKO}/derivatives/exchanges?per_page=10`;
-    const res = await fetchWithTimeout(url, { timeout: 10000 });
-    
-    if (!res.ok) return null;
-    
-    const exchanges = await res.json();
-    
-    // Aggregate OI estimates from exchanges
-    const exchangeData = exchanges.map(ex => ({
-      name: ex.name,
-      openInterestBtc: ex.open_interest_btc,
-      tradeVolume24hBtc: ex.trade_volume_24h_btc
-    }));
-    
-    return {
-      exchanges: exchangeData,
-      totalOI: exchangeData.reduce((sum, ex) => sum + (ex.openInterestBtc || 0), 0),
-      totalVolume: exchangeData.reduce((sum, ex) => sum + (ex.tradeVolume24hBtc || 0), 0)
-    };
-  } catch (err) {
-    logger.debug('Failed to fetch derivatives data', { error: err.message });
-    return null;
-  }
-}
+// ============================================================================
+// SCAN FUNCTIONS - Detect & Classify Signals
+// ============================================================================
 
 /**
- * Estimate funding rate sentiment from volume/price dynamics
- * (Approximation when direct funding API unavailable)
+ * SCAN: Funding/OI-based positioning signals
+ * Detects: Fade trades, Squeeze setups, Volatility expansion plays
  */
-function estimateFundingSentiment(priceData) {
-  if (!priceData) return null;
-  
-  // High volume + positive price = likely positive funding
-  // High volume + negative price = likely negative funding
-  const volumeRatio = priceData.volume24h / priceData.marketCap;
-  const priceDirection = priceData.priceChange24h > 0 ? 1 : -1;
-  
-  // Normalize
-  const fundingEstimate = volumeRatio * priceDirection * 100;
-  
-  return {
-    estimated: true,
-    value: Math.max(-0.1, Math.min(0.1, fundingEstimate / 1000)), // Clamp to realistic range
-    sentiment: fundingEstimate > 0.02 ? 'crowded_long' : fundingEstimate < -0.02 ? 'crowded_short' : 'neutral',
-    confidence: 40 // Low confidence since estimated
-  };
-}
-
-/**
- * SCAN TYPE 1: OI Divergence
- * Rising open interest but flat/declining price
- * Indicates: Position buildup, potential squeeze setup
- */
-async function scanOIDivergence() {
-  logger.info('Scanning for OI divergence...');
+async function scanPositioningSignals() {
+  logger.info('Scanning for positioning-based signals...');
   const signals = [];
   
   try {
     const tokenIds = SCAN_ASSETS.map(a => a.id);
     const marketData = await fetchMarketData(tokenIds);
-    const derivativesData = await fetchDerivativesData('BTC');
     
     for (const asset of SCAN_ASSETS) {
       const price = marketData[asset.id];
-      if (!price) continue;
+      if (!price || !price.sparkline || price.sparkline.length < 48) continue;
       
-      // Check for flat price with high volume (proxy for OI buildup)
-      const priceFlat = Math.abs(price.priceChange7d) < 5; // <5% change
-      const volumeHigh = price.volume24h > price.marketCap * 0.1; // >10% of mcap
-      const recentVolatility = calculateVolatility(price.sparkline);
-      const volatilityCompressing = recentVolatility < 0.02; // Low recent vol
+      // Skip low-volume assets
+      const volumeRatio = price.volume24h / price.marketCap;
+      if (volumeRatio < SIGNAL_THRESHOLDS.MIN_VOLUME_RATIO) continue;
       
-      if (priceFlat && volumeHigh && volatilityCompressing) {
-        // Determine likely positioning
-        const avgPrice7d = price.sparkline.reduce((a, b) => a + b, 0) / price.sparkline.length;
-        const currentVsAvg = ((price.price - avgPrice7d) / avgPrice7d) * 100;
-        const likelyOffsides = currentVsAvg > 0 ? 'late longs' : 'late shorts';
-        
-        const signal = formatSignal({
-          signalType: 'OI_DIVERGENCE',
-          asset: asset.symbol,
-          marketContext: `${asset.symbol} showing compressed volatility (${(recentVolatility * 100).toFixed(2)}%) with elevated volume ($${formatNumber(price.volume24h)}). Price flat over 7d (${price.priceChange7d?.toFixed(2)}%).`,
-          observedAnomaly: `High trading activity without directional follow-through. Volume/MCap ratio: ${((price.volume24h / price.marketCap) * 100).toFixed(2)}%. This typically precedes breakouts.`,
-          whyMatters: `Position buildup during range compression often leads to liquidation cascades when price breaks. ${likelyOffsides === 'late longs' ? 'Longs accumulated near resistance' : 'Shorts accumulated near support'} are likely offsides.`,
-          tradeExpression: likelyOffsides === 'late longs' 
-            ? `Short ${asset.symbol} on breakdown below 7d low ($${formatNumber(Math.min(...price.sparkline))}), target 5-8% move` 
-            : `Long ${asset.symbol} on breakout above 7d high ($${formatNumber(Math.max(...price.sparkline))}), target 5-8% move`,
-          timeHorizon: '24-72 hours',
-          keyRisks: 'False breakout, news catalyst overriding technical setup, low liquidity slippage',
-          invalidationLevel: likelyOffsides === 'late longs' 
-            ? `Above $${formatNumber(Math.max(...price.sparkline) * 1.02)}` 
-            : `Below $${formatNumber(Math.min(...price.sparkline) * 0.98)}`,
-          confidenceScore: calculateOIConfidence(price, recentVolatility),
-          rawData: {
-            price: price.price,
-            priceChange7d: price.priceChange7d,
-            volume24h: price.volume24h,
-            volatility: recentVolatility,
-            sparkline: price.sparkline.slice(-24)
-          }
-        });
-        
-        signals.push(signal);
+      // Analyze positioning
+      const positioning = analyzePositioning(price);
+      if (!positioning) continue;
+      
+      // Calculate volatility
+      const volatility = calculateVolatility(price.sparkline);
+      
+      // Classify trade setup
+      const tradeSetup = classifyTradeSetup(positioning, volatility);
+      
+      // REJECT weak signals
+      if (!tradeSetup.valid) {
+        logger.debug(`Rejected ${asset.symbol}: ${tradeSetup.reason}`);
+        continue;
       }
+      
+      // Calculate confidence score
+      const confidence = calculatePositioningConfidence(positioning, tradeSetup, volatility);
+      
+      // REJECT low confidence
+      if (confidence < SIGNAL_THRESHOLDS.MIN_CONFIDENCE) {
+        logger.debug(`Rejected ${asset.symbol}: Low confidence (${confidence})`);
+        continue;
+      }
+      
+      // Generate signal based on trade type
+      const signal = generatePositioningSignal(asset, price, positioning, tradeSetup, volatility, confidence);
+      if (signal) signals.push(signal);
     }
   } catch (err) {
-    logger.error('OI divergence scan failed', { error: err.message });
+    logger.error('Positioning scan failed', { error: err.message });
   }
   
   return signals;
 }
 
 /**
- * SCAN TYPE 2: TVL Lag
- * Accelerating TVL growth but token price lagging
- * Indicates: Undervalued protocol, potential catch-up trade
+ * Generate signal object for positioning-based trades
+ */
+function generatePositioningSignal(asset, price, positioning, tradeSetup, volatility, confidence) {
+  const { tradeType, direction, conviction, rationale } = tradeSetup;
+  const sparkline = price.sparkline;
+  const high7d = Math.max(...sparkline);
+  const low7d = Math.min(...sparkline);
+  
+  let signalType, marketContext, observedAnomaly, whyMatters, tradeExpression, timeHorizon, keyRisks, invalidationLevel;
+  
+  if (tradeType === 'FADE') {
+    signalType = 'FADE_TRADE';
+    marketContext = `${asset.symbol} at $${formatNumber(price.price)}. Funding bias: ${positioning.dominantBias.replace('persistent_', '')} for ${positioning.persistence} periods. Price position: ${(positioning.pricePosition * 100).toFixed(0)}% of 24h range. Stress score: ${positioning.stressScore}/100.`;
+    observedAnomaly = `${positioning.crowding === 'crowded_longs' ? 'Crowded long' : 'Crowded short'} positioning detected. Volume/MCap: ${(positioning.volumeRatio * 100).toFixed(1)}%. ${positioning.priceDiverges ? 'Price DIVERGING from positioning bias.' : 'Price at extreme without reversal yet.'}`;
+    whyMatters = rationale + ` High funding costs erode leveraged positions. Mean reversion probability increases at positioning extremes.`;
+    
+    const targetPrice = positioning.crowding === 'crowded_longs'
+      ? (price.high24h + price.low24h) / 2  // Target VWAP for short
+      : (price.high24h + price.low24h) / 2; // Target VWAP for long
+    
+    tradeExpression = direction === 'SHORT'
+      ? `Fade longs: Short ${asset.symbol} at $${formatNumber(price.price)}. Target: VWAP ~$${formatNumber(targetPrice)} (-${((price.price - targetPrice) / price.price * 100).toFixed(1)}%). Use tight stop.`
+      : `Fade shorts: Long ${asset.symbol} at $${formatNumber(price.price)}. Target: VWAP ~$${formatNumber(targetPrice)} (+${((targetPrice - price.price) / price.price * 100).toFixed(1)}%). Use tight stop.`;
+    
+    timeHorizon = '4-24 hours';
+    keyRisks = 'Trend continuation, news catalyst, exchange-specific dynamics. Fade trades require precise timing.';
+    invalidationLevel = direction === 'SHORT'
+      ? `New 24h high above $${formatNumber(price.high24h * 1.015)}`
+      : `New 24h low below $${formatNumber(price.low24h * 0.985)}`;
+      
+  } else if (tradeType === 'SQUEEZE') {
+    signalType = 'SQUEEZE_SETUP';
+    marketContext = `${asset.symbol} at $${formatNumber(price.price)}. High leverage indicated: Vol/MCap ${(positioning.volumeRatio * 100).toFixed(1)}%. Funding ${positioning.dominantBias.replace('persistent_', '')} but price DIVERGING.`;
+    observedAnomaly = `Price divergence from persistent ${positioning.dominantBias.replace('persistent_', '')} funding. 7d return: ${positioning.totalReturn7d > 0 ? '+' : ''}${positioning.totalReturn7d.toFixed(1)}% vs ${positioning.dominantBias.replace('persistent_', '')} funding bias. Liquidation cascade potential.`;
+    whyMatters = rationale + ` When price moves against crowded positioning, stop losses and liquidations create cascading effect.`;
+    
+    const squeezeTarget = direction === 'LONG'
+      ? high7d * 1.05  // 5% above 7d high
+      : low7d * 0.95;  // 5% below 7d low
+    
+    tradeExpression = direction === 'LONG'
+      ? `Squeeze play: Long ${asset.symbol} on break above $${formatNumber(high7d)}. Target: $${formatNumber(squeezeTarget)} (short liquidation zone). Scale in on confirmation.`
+      : `Squeeze play: Short ${asset.symbol} on break below $${formatNumber(low7d)}. Target: $${formatNumber(squeezeTarget)} (long liquidation zone). Scale in on confirmation.`;
+    
+    timeHorizon = '1-3 days';
+    keyRisks = 'False breakout, insufficient open interest for cascade, broader market correlation override.';
+    invalidationLevel = direction === 'LONG'
+      ? `Rejection at $${formatNumber(high7d)} or new low below $${formatNumber(low7d * 0.98)}`
+      : `Rejection at $${formatNumber(low7d)} or new high above $${formatNumber(high7d * 1.02)}`;
+      
+  } else if (tradeType === 'VOL_EXPANSION') {
+    signalType = 'VOL_EXPANSION';
+    marketContext = `${asset.symbol} volatility compressed to ${(volatility * 100).toFixed(2)}% (threshold: <${SIGNAL_THRESHOLDS.VOL_COMPRESSION_THRESHOLD * 100}%). Volume/MCap: ${(positioning.volumeRatio * 100).toFixed(1)}%. Position buildup: ${positioning.persistence} periods of ${positioning.dominantBias.replace('persistent_', '')} bias.`;
+    observedAnomaly = `Volatility compression with significant position buildup. Range: $${formatNumber(low7d)} - $${formatNumber(high7d)} (${((high7d - low7d) / low7d * 100).toFixed(1)}% band). Breakout imminent.`;
+    whyMatters = rationale + ` Compressed volatility acts like coiled spring. Directional bias from positioning suggests likely breakout direction.`;
+    
+    const breakoutTarget = direction === 'LONG'
+      ? high7d * 1.08  // 8% above high
+      : low7d * 0.92;  // 8% below low
+    
+    tradeExpression = direction === 'LONG'
+      ? `Vol expansion: Long ${asset.symbol} on break of $${formatNumber(high7d)}. Target: $${formatNumber(breakoutTarget)} (8% expansion). Trail stop at breakout level.`
+      : `Vol expansion: Short ${asset.symbol} on break of $${formatNumber(low7d)}. Target: $${formatNumber(breakoutTarget)} (8% expansion). Trail stop at breakout level.`;
+    
+    timeHorizon = '24-72 hours';
+    keyRisks = 'False breakout, range extension rather than trend, low liquidity slippage.';
+    invalidationLevel = direction === 'LONG'
+      ? `Close below $${formatNumber((high7d + low7d) / 2)} after breakout`
+      : `Close above $${formatNumber((high7d + low7d) / 2)} after breakout`;
+  } else {
+    return null;
+  }
+  
+  return formatSignal({
+    signalType,
+    tradeType,
+    asset: asset.symbol,
+    marketContext,
+    observedAnomaly,
+    whyMatters,
+    tradeExpression,
+    timeHorizon,
+    keyRisks,
+    invalidationLevel,
+    confidenceScore: confidence,
+    positioningAnalysis: {
+      dominantBias: positioning.dominantBias,
+      persistence: positioning.persistence,
+      stressScore: positioning.stressScore,
+      crowding: positioning.crowding,
+      pricePosition: positioning.pricePosition,
+      conviction
+    },
+    rawData: {
+      price: price.price,
+      high24h: price.high24h,
+      low24h: price.low24h,
+      high7d,
+      low7d,
+      volumeRatio: positioning.volumeRatio,
+      volatility,
+      totalReturn7d: positioning.totalReturn7d
+    }
+  });
+}
+
+/**
+ * Calculate confidence score for positioning signals
+ */
+function calculatePositioningConfidence(positioning, tradeSetup, volatility) {
+  let score = 35; // Base score
+  
+  // Stress score contribution
+  if (positioning.stressScore >= 70) score += 20;
+  else if (positioning.stressScore >= 50) score += 12;
+  else if (positioning.stressScore >= 30) score += 5;
+  
+  // Persistence contribution
+  if (positioning.persistence >= 5) score += 15;
+  else if (positioning.persistence >= 3) score += 8;
+  
+  // Price divergence bonus (stronger signal)
+  if (positioning.priceDiverges) score += 10;
+  
+  // Conviction from trade classification
+  if (tradeSetup.conviction === 'high') score += 10;
+  else if (tradeSetup.conviction === 'medium') score += 5;
+  
+  // Volatility context
+  if (tradeSetup.tradeType === 'VOL_EXPANSION' && volatility < 0.015) score += 8;
+  if (tradeSetup.tradeType === 'FADE' && positioning.pricePosition > 0.9 || positioning.pricePosition < 0.1) score += 8;
+  
+  // Discount for data quality (using proxy, not direct funding)
+  score -= 8;
+  
+  return Math.min(80, score);
+}
+
+/**
+ * Legacy funding sentiment estimator (kept for backward compatibility)
+ */
+function estimateFundingSentiment(priceData) {
+  if (!priceData) return null;
+  
+  const volumeRatio = priceData.volume24h / priceData.marketCap;
+  const priceDirection = priceData.priceChange24h > 0 ? 1 : -1;
+  const fundingEstimate = volumeRatio * priceDirection * 100;
+  
+  return {
+    estimated: true,
+    value: Math.max(-0.1, Math.min(0.1, fundingEstimate / 1000)),
+    sentiment: fundingEstimate > 0.02 ? 'crowded_long' : fundingEstimate < -0.02 ? 'crowded_short' : 'neutral',
+    confidence: 40
+  };
+}
+
+/**
+ * SCAN TYPE 2: TVL Lag (kept for protocol analysis)
  */
 async function scanTVLLag() {
   logger.info('Scanning for TVL-price divergence...');
@@ -293,111 +617,36 @@ async function scanTVLLag() {
       
       if (!tvlData || !priceData) continue;
       
-      // Check for TVL growth outpacing price
       const tvlGrowth7d = tvlData.tvlChange7d;
       const priceGrowth7d = priceData.priceChange7d || 0;
       const divergence = tvlGrowth7d - priceGrowth7d;
       
-      // Significant divergence: TVL growing >5% more than price
-      // Also check acceleration (TVL growth accelerating)
-      const isAccelerating = tvlData.tvlAcceleration > 2; // Accelerating by >2%
-      const hasDivergence = divergence > 8;
+      // REJECT: Weak divergence
+      if (divergence < SIGNAL_THRESHOLDS.MIN_DIVERGENCE) continue;
+      if (tvlGrowth7d < 3) continue; // No TVL growth
       
-      if (hasDivergence && tvlGrowth7d > 5) {
-        // Calculate TVL per token metric
-        const tvlPerMcap = tvlData.currentTvl / priceData.marketCap;
-        
-        const signal = formatSignal({
-          signalType: 'TVL_LAG',
-          asset: `${protocol.name} (${priceData.symbol})`,
-          marketContext: `${protocol.name} TVL: $${formatNumber(tvlData.currentTvl)}. 7d TVL change: +${tvlGrowth7d.toFixed(2)}%. Token price 7d: ${priceGrowth7d > 0 ? '+' : ''}${priceGrowth7d.toFixed(2)}%. TVL/MCap ratio: ${tvlPerMcap.toFixed(2)}x.`,
-          observedAnomaly: `TVL growth (+${tvlGrowth7d.toFixed(2)}%) significantly outpacing token appreciation (${priceGrowth7d.toFixed(2)}%). Divergence: ${divergence.toFixed(2)}%. ${isAccelerating ? 'TVL growth is ACCELERATING.' : ''}`,
-          whyMatters: `Capital is flowing into protocol but token price hasn't adjusted. This suggests: (1) LPs/yield farmers don't hold governance token, or (2) Market hasn't priced in growth. Protocol revenue/fees typically correlate with TVL over medium term.`,
-          tradeExpression: `Long ${priceData.symbol} spot. Entry: current ($${priceData.price.toFixed(4)}). Target: ${(priceGrowth7d + divergence * 0.5).toFixed(1)}% catch-up move over 1-2 weeks.`,
-          timeHorizon: '1-2 weeks',
-          keyRisks: 'Mercenary TVL (incentivized, will leave), token inflation diluting value, smart contract risk, broader market downturn',
-          invalidationLevel: `TVL drops >10% or price falls below 30d low ($${formatNumber(priceData.price * (1 + (priceData.priceChange30d || -15) / 100))})`,
-          confidenceScore: calculateTVLLagConfidence(tvlData, priceData, divergence),
-          rawData: {
-            tvl: tvlData.currentTvl,
-            tvlChange7d,
-            tvlAcceleration: tvlData.tvlAcceleration,
-            priceChange7d,
-            divergence,
-            tvlPerMcap
-          }
-        });
-        
-        signals.push(signal);
-      }
+      const isAccelerating = tvlData.tvlAcceleration > 2;
+      const tvlPerMcap = tvlData.currentTvl / priceData.marketCap;
+      
+      const signal = formatSignal({
+        signalType: 'TVL_LAG',
+        tradeType: 'FUNDAMENTAL',
+        asset: `${protocol.name} (${priceData.symbol})`,
+        marketContext: `${protocol.name} TVL: $${formatNumber(tvlData.currentTvl)}. 7d TVL change: +${tvlGrowth7d.toFixed(2)}%. Token price 7d: ${priceGrowth7d > 0 ? '+' : ''}${priceGrowth7d.toFixed(2)}%. TVL/MCap ratio: ${tvlPerMcap.toFixed(2)}x.`,
+        observedAnomaly: `TVL growth (+${tvlGrowth7d.toFixed(2)}%) outpacing token appreciation (${priceGrowth7d.toFixed(2)}%). Divergence: ${divergence.toFixed(2)}%. ${isAccelerating ? 'TVL growth ACCELERATING.' : ''}`,
+        whyMatters: `Capital flowing into protocol but token price lagging. Protocol revenue correlates with TVL over medium term. Market hasn't priced in fundamental improvement.`,
+        tradeExpression: `Long ${priceData.symbol} spot. Target: ${(divergence * 0.5).toFixed(1)}% catch-up move.`,
+        timeHorizon: '1-2 weeks',
+        keyRisks: 'Mercenary TVL, token inflation, smart contract risk, market downturn',
+        invalidationLevel: `TVL drops >10% or price below $${formatNumber(priceData.price * 0.85)}`,
+        confidenceScore: calculateTVLLagConfidence(tvlData, priceData, divergence),
+        rawData: { tvl: tvlData.currentTvl, tvlChange7d, priceChange7d: priceGrowth7d, divergence, tvlPerMcap }
+      });
+      
+      signals.push(signal);
     }
   } catch (err) {
     logger.error('TVL lag scan failed', { error: err.message });
-  }
-  
-  return signals;
-}
-
-/**
- * SCAN TYPE 3: Funding Rate Divergence
- * Cross-exchange funding rate anomalies
- * Indicates: Arbitrage opportunity, crowded positioning
- */
-async function scanFundingDivergence() {
-  logger.info('Scanning for funding divergence...');
-  const signals = [];
-  
-  try {
-    const tokenIds = SCAN_ASSETS.slice(0, 4).map(a => a.id); // Top 4 liquid assets
-    const marketData = await fetchMarketData(tokenIds);
-    
-    for (const asset of SCAN_ASSETS.slice(0, 4)) {
-      const price = marketData[asset.id];
-      if (!price) continue;
-      
-      const fundingEstimate = estimateFundingSentiment(price);
-      if (!fundingEstimate) continue;
-      
-      // Check for extreme sentiment
-      if (fundingEstimate.sentiment !== 'neutral') {
-        const isCrowdedLong = fundingEstimate.sentiment === 'crowded_long';
-        
-        // Additional confirmation: price near recent high/low
-        const pricePosition = (price.price - price.low24h) / (price.high24h - price.low24h);
-        const atExtreme = isCrowdedLong ? pricePosition > 0.85 : pricePosition < 0.15;
-        
-        if (atExtreme) {
-          const signal = formatSignal({
-            signalType: 'FUNDING_DIVERGENCE',
-            asset: asset.symbol,
-            marketContext: `${asset.symbol} at $${formatNumber(price.price)}. 24h range: $${formatNumber(price.low24h)} - $${formatNumber(price.high24h)}. Currently at ${(pricePosition * 100).toFixed(0)}% of range.`,
-            observedAnomaly: `${isCrowdedLong ? 'Crowded long' : 'Crowded short'} positioning detected. High volume (${((price.volume24h / price.marketCap) * 100).toFixed(2)}% of MCap) with price ${isCrowdedLong ? 'near highs' : 'near lows'}. This often precedes mean reversion.`,
-            whyMatters: `When positioning gets one-sided, funding costs increase for the crowded side. This creates: (1) Pressure to close positions, (2) Arbitrage incentive for market makers, (3) Squeeze risk if price moves against crowd.`,
-            tradeExpression: isCrowdedLong 
-              ? `Fade longs: Short ${asset.symbol} with tight stop above 24h high. Target: return to 24h VWAP (~$${formatNumber((price.high24h + price.low24h) / 2)})` 
-              : `Fade shorts: Long ${asset.symbol} with stop below 24h low. Target: return to 24h VWAP (~$${formatNumber((price.high24h + price.low24h) / 2)})`,
-            timeHorizon: '4-24 hours',
-            keyRisks: 'Trend continuation invalidates thesis, news catalyst, exchange-specific dynamics',
-            invalidationLevel: isCrowdedLong 
-              ? `New 24h high above $${formatNumber(price.high24h * 1.01)}` 
-              : `New 24h low below $${formatNumber(price.low24h * 0.99)}`,
-            confidenceScore: Math.min(60, fundingEstimate.confidence + (atExtreme ? 15 : 0)),
-            rawData: {
-              price: price.price,
-              high24h: price.high24h,
-              low24h: price.low24h,
-              pricePosition,
-              fundingEstimate: fundingEstimate.value,
-              sentiment: fundingEstimate.sentiment
-            }
-          });
-          
-          signals.push(signal);
-        }
-      }
-    }
-  } catch (err) {
-    logger.error('Funding divergence scan failed', { error: err.message });
   }
   
   return signals;
@@ -483,7 +732,7 @@ function formatNumber(num) {
 class AlphaScanner {
   constructor(config = {}) {
     this.config = {
-      minConfidence: 40,
+      minConfidence: SIGNAL_THRESHOLDS.MIN_CONFIDENCE,
       maxSignals: 10,
       ...config
     };
@@ -491,31 +740,53 @@ class AlphaScanner {
   
   /**
    * Run all scans and return ranked signals
+   * Includes new positioning-based signal detection
    */
   async scan() {
-    logger.info('Starting alpha scan...');
+    logger.info('Starting comprehensive alpha scan...');
     const startTime = Date.now();
     
     const allSignals = [];
     
-    // Run scans in parallel
-    const [oiSignals, tvlSignals, fundingSignals] = await Promise.all([
-      scanOIDivergence(),
-      scanTVLLag(),
-      scanFundingDivergence()
+    // Run all scans in parallel (including new positioning analysis)
+    const [positioningSignals, tvlSignals] = await Promise.all([
+      scanPositioningSignals(),
+      scanTVLLag()
     ]);
     
-    allSignals.push(...oiSignals, ...tvlSignals, ...fundingSignals);
+    allSignals.push(...positioningSignals, ...tvlSignals);
     
-    // Filter and rank
+    // Apply strict filtering - REJECT weak or ambiguous signals
     const filtered = allSignals
-      .filter(s => s.confidenceScore >= this.config.minConfidence)
-      .sort((a, b) => b.confidenceScore - a.confidenceScore)
+      .filter(s => {
+        // Must meet minimum confidence
+        if (s.confidenceScore < this.config.minConfidence) return false;
+        
+        // Must have valid trade type
+        if (!s.tradeType || s.tradeType === 'UNKNOWN') return false;
+        
+        // Must have conviction level
+        if (s.conviction && s.conviction === 'LOW') return false;
+        
+        return true;
+      })
+      .sort((a, b) => {
+        // Sort by confidence, then by conviction level
+        const convictionOrder = { 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+        const aConv = convictionOrder[a.conviction] || 2;
+        const bConv = convictionOrder[b.conviction] || 2;
+        
+        if (b.confidenceScore !== a.confidenceScore) {
+          return b.confidenceScore - a.confidenceScore;
+        }
+        return bConv - aConv;
+      })
       .slice(0, this.config.maxSignals);
     
     logger.info(`Scan complete. Found ${filtered.length} actionable signals.`, {
       total: allSignals.length,
       filtered: filtered.length,
+      rejected: allSignals.length - filtered.length,
       durationMs: Date.now() - startTime
     });
     
@@ -526,7 +797,8 @@ class AlphaScanner {
         scannedAssets: SCAN_ASSETS.length,
         scannedProtocols: SCAN_PROTOCOLS.length,
         timestamp: new Date().toISOString(),
-        executionTimeMs: Date.now() - startTime
+        executionTimeMs: Date.now() - startTime,
+        signalTypes: this.countByType(filtered)
       }
     };
   }
@@ -536,42 +808,57 @@ class AlphaScanner {
    */
   async scanType(type) {
     switch (type) {
-      case 'oi_divergence':
-        return await scanOIDivergence();
+      case 'positioning':
+        return await scanPositioningSignals();
       case 'tvl_lag':
         return await scanTVLLag();
-      case 'funding_divergence':
-        return await scanFundingDivergence();
+      case 'fade':
+        const signals = await scanPositioningSignals();
+        return signals.filter(s => s.tradeType === 'FADE_TRADE');
+      case 'squeeze':
+        const squeezeSignals = await scanPositioningSignals();
+        return squeezeSignals.filter(s => s.tradeType === 'SQUEEZE_SETUP');
+      case 'vol_expansion':
+        const volSignals = await scanPositioningSignals();
+        return volSignals.filter(s => s.tradeType === 'VOL_EXPANSION');
       default:
         return [];
     }
   }
   
-  generateSummary(signals) {
-    if (signals.length === 0) {
-      return 'No actionable signals detected. Markets appear range-bound with no significant anomalies.';
-    }
-    
-    const byType = signals.reduce((acc, s) => {
-      acc[s.signalType] = (acc[s.signalType] || 0) + 1;
+  countByType(signals) {
+    return signals.reduce((acc, s) => {
+      acc[s.tradeType || s.signalType] = (acc[s.tradeType || s.signalType] || 0) + 1;
       return acc;
     }, {});
+  }
+  
+  generateSummary(signals) {
+    if (signals.length === 0) {
+      return 'No actionable signals detected. Market positioning appears balanced with no significant anomalies. Waiting for clearer setups.';
+    }
+    
+    const byType = this.countByType(signals);
     
     const topSignal = signals[0];
     const typeBreakdown = Object.entries(byType)
-      .map(([type, count]) => `${type}: ${count}`)
+      .map(([type, count]) => `${type.replace('_', ' ')}: ${count}`)
       .join(', ');
     
-    return `Found ${signals.length} signals. Top: ${topSignal.asset} (${topSignal.signalType}, ${topSignal.confidenceScore}% confidence). Breakdown: ${typeBreakdown}`;
+    const highConviction = signals.filter(s => s.conviction === 'HIGH').length;
+    
+    return `Found ${signals.length} actionable signals (${highConviction} high conviction). Top: ${topSignal.asset} ${topSignal.tradeType || topSignal.signalType} (${topSignal.confidenceScore}% confidence, ${topSignal.conviction || 'MEDIUM'} conviction). Breakdown: ${typeBreakdown}`;
   }
 }
 
 module.exports = {
   AlphaScanner,
-  scanOIDivergence,
+  scanPositioningSignals,
   scanTVLLag,
-  scanFundingDivergence,
+  analyzePositioning,
+  classifyTradeSetup,
   formatSignal,
   SCAN_ASSETS,
-  SCAN_PROTOCOLS
+  SCAN_PROTOCOLS,
+  SIGNAL_THRESHOLDS
 };
