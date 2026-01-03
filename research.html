@@ -902,6 +902,70 @@
       font-weight: 500;
     }
 
+    /* Data Freshness Indicator */
+    .data-freshness {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      margin-top: 16px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 0.8rem;
+      color: #64748b;
+      flex-shrink: 0;
+    }
+
+    .freshness-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #64748b;
+      transition: background 0.3s;
+    }
+
+    .freshness-dot.live {
+      background: #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+      animation: pulse 2s infinite;
+    }
+
+    .freshness-dot.stale {
+      background: #fbbf24;
+    }
+
+    .freshness-dot.error {
+      background: #ef4444;
+    }
+
+    .freshness-text {
+      flex: 1;
+    }
+
+    .freshness-countdown {
+      font-family: var(--font-mono);
+      color: #475569;
+      font-size: 0.75rem;
+    }
+
+    .data-source-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.65rem;
+      padding: 3px 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      color: #475569;
+      margin-left: 8px;
+    }
+
+    .data-source-badge.live {
+      background: rgba(34, 197, 94, 0.1);
+      color: #22c55e;
+    }
+
     @media (max-width: 1400px) {
       .panels-row {
         grid-template-columns: repeat(2, 1fr);
@@ -1122,6 +1186,12 @@
         <div id="alphaSignals" class="alpha-signals-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 20px;">
           <div class="loading">Scanning for alpha signals...</div>
         </div>
+      </div>
+      <!-- Data Freshness Indicator -->
+      <div class="data-freshness" id="scannerFreshness">
+        <span class="freshness-dot"></span>
+        <span class="freshness-text">Initializing...</span>
+        <span class="freshness-countdown" id="refreshCountdown"></span>
       </div>
     </div>
 
@@ -1426,43 +1496,327 @@
     loadTrending();
     runAlphaScan();
 
-    // Auto-refresh every 5 minutes
-    setInterval(() => {
-      loadInsights();
-      loadNews();
-      loadTrending();
-      runAlphaScan();
-    }, 5 * 60 * 1000);
-
     // ===============================
     // ALPHA SCANNER FUNCTIONALITY
     // ===============================
     
     let allAlphaSignals = [];
     let currentFilter = 'all';
+    let lastScanTimestamp = null;
+    let scanSource = 'initializing';
+    let refreshInterval = null;
+    let countdownInterval = null;
+    const AUTO_REFRESH_MS = 2 * 60 * 1000; // 2 minutes for real-time feel
 
-    // Run alpha scan
+    // Update freshness indicator
+    function updateFreshnessIndicator(status, message, timestamp = null) {
+      const freshness = document.getElementById('scannerFreshness');
+      const dot = freshness.querySelector('.freshness-dot');
+      const text = freshness.querySelector('.freshness-text');
+      
+      dot.className = 'freshness-dot ' + status;
+      text.innerHTML = message;
+      
+      if (timestamp) {
+        lastScanTimestamp = timestamp;
+      }
+    }
+
+    // Start countdown timer
+    function startCountdown() {
+      if (countdownInterval) clearInterval(countdownInterval);
+      
+      let secondsLeft = AUTO_REFRESH_MS / 1000;
+      const countdownEl = document.getElementById('refreshCountdown');
+      
+      countdownInterval = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft <= 0) {
+          countdownEl.textContent = 'Refreshing...';
+          return;
+        }
+        const mins = Math.floor(secondsLeft / 60);
+        const secs = secondsLeft % 60;
+        countdownEl.textContent = `Next refresh: ${mins}:${secs.toString().padStart(2, '0')}`;
+      }, 1000);
+    }
+
+    // Run alpha scan with real API
     async function runAlphaScan(refresh = false) {
       console.log('🎯 Running alpha scan...');
       const container = document.getElementById('alphaSignals');
       const countBadge = document.getElementById('signalCount');
       
       container.innerHTML = '<div class="loading">Scanning markets for anomalies...</div>';
+      updateFreshnessIndicator('', 'Fetching live data from CoinGecko & DeFiLlama...');
       
       try {
-        // For now, use mock data since API might not be deployed
-        // In production, this would call: `${API_BASE}/research/alpha-scan${refresh ? '?refresh=true' : ''}`
-        const signals = await generateMockSignals();
+        // Try real API first
+        const apiUrl = `${API_BASE}/research/alpha-scan${refresh ? '?refresh=true' : ''}`;
+        console.log('📡 Calling API:', apiUrl);
+        
+        const response = await fetch(apiUrl, { 
+          timeout: 15000,
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ API response:', data);
+        
+        if (data.signals && data.signals.length >= 0) {
+          allAlphaSignals = data.signals;
+          scanSource = 'live';
+          
+          const cached = data.cached ? ' (cached)' : '';
+          const timestamp = data.metadata?.timestamp || new Date().toISOString();
+          
+          countBadge.innerHTML = `${data.signals.length} signals <span class="data-source-badge live">● LIVE</span>`;
+          updateFreshnessIndicator('live', 
+            `Live data from CoinGecko & DeFiLlama${cached} • Updated ${formatTimestamp(timestamp)}`,
+            timestamp
+          );
+          
+          renderSignals(data.signals);
+          startCountdown();
+          
+          console.log('✅ Alpha scan complete (LIVE):', data.signals.length, 'signals');
+          return;
+        }
+      } catch (apiError) {
+        console.warn('⚠️ API unavailable, using real-time fallback:', apiError.message);
+      }
+      
+      // Fallback: Direct API calls to CoinGecko & DeFiLlama
+      try {
+        updateFreshnessIndicator('', 'API unavailable, fetching directly from data sources...');
+        const signals = await fetchDirectSignals();
         
         allAlphaSignals = signals;
-        countBadge.textContent = signals.length + ' signals';
+        scanSource = 'direct';
+        
+        countBadge.innerHTML = `${signals.length} signals <span class="data-source-badge live">● DIRECT</span>`;
+        updateFreshnessIndicator('live', 
+          `Direct feed from CoinGecko & DeFiLlama • Updated ${formatTimestamp(new Date().toISOString())}`,
+          new Date().toISOString()
+        );
         
         renderSignals(signals);
-        console.log('✅ Alpha scan complete:', signals.length, 'signals');
-      } catch (error) {
-        console.error('❌ Alpha scan failed:', error);
-        container.innerHTML = `<div class="error">Scan failed: ${error.message}</div>`;
+        startCountdown();
+        
+        console.log('✅ Alpha scan complete (DIRECT):', signals.length, 'signals');
+      } catch (fallbackError) {
+        console.error('❌ All data sources failed:', fallbackError);
+        
+        // Last resort: Use demo data
+        const demoSignals = generateDemoSignals();
+        allAlphaSignals = demoSignals;
+        scanSource = 'demo';
+        
+        countBadge.innerHTML = `${demoSignals.length} signals <span class="data-source-badge">DEMO</span>`;
+        updateFreshnessIndicator('stale', 
+          'Using demo data (live APIs unavailable) • Simulated signals for demonstration'
+        );
+        
+        renderSignals(demoSignals);
+        startCountdown();
       }
+    }
+
+    // Fetch signals directly from public APIs
+    async function fetchDirectSignals() {
+      const signals = [];
+      
+      // Fetch from CoinGecko
+      const cgResponse = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,pendle,gmx,aave&order=market_cap_desc&sparkline=true&price_change_percentage=1h,24h,7d');
+      
+      if (!cgResponse.ok) throw new Error('CoinGecko unavailable');
+      
+      const marketData = await cgResponse.json();
+      console.log('📊 CoinGecko data:', marketData.length, 'assets');
+      
+      // Fetch TVL from DeFiLlama
+      const protocols = ['pendle', 'gmx', 'aave', 'lido', 'uniswap'];
+      const tvlPromises = protocols.map(p => 
+        fetch(`https://api.llama.fi/protocol/${p}`)
+          .then(r => r.ok ? r.json() : null)
+          .catch(() => null)
+      );
+      
+      const tvlData = await Promise.all(tvlPromises);
+      console.log('📈 DeFiLlama data loaded');
+      
+      // Analyze for TVL Lag signals
+      for (let i = 0; i < protocols.length; i++) {
+        const protocol = protocols[i];
+        const tvl = tvlData[i];
+        const price = marketData.find(m => m.id === protocol || m.symbol.toLowerCase() === protocol);
+        
+        if (!tvl || !price) continue;
+        
+        const tvlHistory = tvl.tvl || [];
+        if (tvlHistory.length < 8) continue;
+        
+        const currentTvl = tvlHistory[tvlHistory.length - 1]?.totalLiquidityUSD || 0;
+        const tvl7dAgo = tvlHistory[tvlHistory.length - 8]?.totalLiquidityUSD || currentTvl;
+        const tvlChange7d = tvl7dAgo > 0 ? ((currentTvl - tvl7dAgo) / tvl7dAgo) * 100 : 0;
+        const priceChange7d = price.price_change_percentage_7d_in_currency || 0;
+        const divergence = tvlChange7d - priceChange7d;
+        
+        if (divergence > 8 && tvlChange7d > 5) {
+          signals.push({
+            signalType: 'TVL_LAG',
+            asset: `${tvl.name} (${price.symbol.toUpperCase()})`,
+            marketContext: `${tvl.name} TVL: $${formatNumber(currentTvl)}. 7d TVL change: ${tvlChange7d > 0 ? '+' : ''}${tvlChange7d.toFixed(1)}%. Token price 7d: ${priceChange7d > 0 ? '+' : ''}${priceChange7d.toFixed(1)}%.`,
+            observedAnomaly: `TVL growth (${tvlChange7d > 0 ? '+' : ''}${tvlChange7d.toFixed(1)}%) outpacing token price (${priceChange7d.toFixed(1)}%). Divergence: ${divergence.toFixed(1)}%.`,
+            whyMatters: 'Capital flowing into protocol but token price lagging. Protocol fundamentals improving faster than market recognition.',
+            tradeExpression: `Long ${price.symbol.toUpperCase()} spot. Target: ${(divergence * 0.5).toFixed(1)}% catch-up move.`,
+            timeHorizon: '1-2 weeks',
+            keyRisks: 'Mercenary TVL, token inflation, smart contract risk',
+            invalidationLevel: `TVL drops >10% or price below $${(price.current_price * 0.9).toFixed(2)}`,
+            confidenceScore: Math.min(75, 35 + Math.floor(divergence * 2)),
+            timestamp: new Date().toISOString(),
+            rawData: { tvl: currentTvl, tvlChange7d, priceChange7d, divergence }
+          });
+        }
+      }
+      
+      // Analyze for OI Divergence / Volume anomalies
+      for (const coin of marketData) {
+        const sparkline = coin.sparkline_in_7d?.price || [];
+        if (sparkline.length < 24) continue;
+        
+        const volatility = calculateSparklineVolatility(sparkline);
+        const volumeRatio = coin.total_volume / coin.market_cap;
+        const priceFlat = Math.abs(coin.price_change_percentage_7d_in_currency || 0) < 5;
+        
+        if (priceFlat && volumeRatio > 0.08 && volatility < 0.025) {
+          const avgPrice = sparkline.reduce((a, b) => a + b, 0) / sparkline.length;
+          const likelyOffsides = coin.current_price > avgPrice ? 'late longs' : 'late shorts';
+          
+          signals.push({
+            signalType: 'OI_DIVERGENCE',
+            asset: coin.symbol.toUpperCase(),
+            marketContext: `${coin.symbol.toUpperCase()} at $${formatNumber(coin.current_price)}. Vol/MCap: ${(volumeRatio * 100).toFixed(1)}%. 7d volatility: ${(volatility * 100).toFixed(2)}%.`,
+            observedAnomaly: `High volume with compressed volatility. Price flat (${coin.price_change_percentage_7d_in_currency?.toFixed(1)}% 7d) despite ${(volumeRatio * 100).toFixed(1)}% daily turnover.`,
+            whyMatters: `Position buildup during range compression. ${likelyOffsides} likely to get squeezed on breakout.`,
+            tradeExpression: likelyOffsides === 'late longs' 
+              ? `Short on breakdown below $${formatNumber(Math.min(...sparkline.slice(-24)))}` 
+              : `Long on breakout above $${formatNumber(Math.max(...sparkline.slice(-24)))}`,
+            timeHorizon: '24-72 hours',
+            keyRisks: 'False breakout, news catalyst override',
+            invalidationLevel: likelyOffsides === 'late longs' 
+              ? `Above $${formatNumber(Math.max(...sparkline.slice(-24)) * 1.02)}` 
+              : `Below $${formatNumber(Math.min(...sparkline.slice(-24)) * 0.98)}`,
+            confidenceScore: Math.min(65, 40 + Math.floor(volumeRatio * 100)),
+            timestamp: new Date().toISOString(),
+            rawData: { price: coin.current_price, volumeRatio, volatility }
+          });
+        }
+        
+        // Funding divergence approximation
+        const pricePosition = coin.high_24h && coin.low_24h 
+          ? (coin.current_price - coin.low_24h) / (coin.high_24h - coin.low_24h)
+          : 0.5;
+        
+        if ((pricePosition > 0.88 || pricePosition < 0.12) && volumeRatio > 0.05) {
+          const isCrowdedLong = pricePosition > 0.85;
+          
+          signals.push({
+            signalType: 'FUNDING_DIVERGENCE',
+            asset: coin.symbol.toUpperCase(),
+            marketContext: `${coin.symbol.toUpperCase()} at $${formatNumber(coin.current_price)}. 24h: $${formatNumber(coin.low_24h)} - $${formatNumber(coin.high_24h)}. Position: ${(pricePosition * 100).toFixed(0)}% of range.`,
+            observedAnomaly: `${isCrowdedLong ? 'Crowded long' : 'Crowded short'} positioning. Price at ${isCrowdedLong ? 'top' : 'bottom'} of 24h range with elevated volume.`,
+            whyMatters: 'One-sided positioning creates funding pressure and mean-reversion opportunity.',
+            tradeExpression: isCrowdedLong 
+              ? `Fade longs: Target return to VWAP ~$${formatNumber((coin.high_24h + coin.low_24h) / 2)}` 
+              : `Fade shorts: Target return to VWAP ~$${formatNumber((coin.high_24h + coin.low_24h) / 2)}`,
+            timeHorizon: '4-24 hours',
+            keyRisks: 'Trend continuation, news catalyst',
+            invalidationLevel: isCrowdedLong 
+              ? `New high above $${formatNumber(coin.high_24h * 1.01)}` 
+              : `New low below $${formatNumber(coin.low_24h * 0.99)}`,
+            confidenceScore: Math.min(55, 35 + Math.floor(Math.abs(pricePosition - 0.5) * 40)),
+            timestamp: new Date().toISOString(),
+            rawData: { pricePosition, high24h: coin.high_24h, low24h: coin.low_24h }
+          });
+        }
+      }
+      
+      // Sort by confidence and return top signals
+      return signals
+        .sort((a, b) => b.confidenceScore - a.confidenceScore)
+        .slice(0, 10);
+    }
+
+    // Calculate volatility from sparkline
+    function calculateSparklineVolatility(prices) {
+      if (!prices || prices.length < 2) return 0;
+      const returns = [];
+      for (let i = 1; i < prices.length; i++) {
+        returns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
+      }
+      const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+      const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
+      return Math.sqrt(variance);
+    }
+
+    // Format numbers for display
+    function formatNumber(num) {
+      if (!num) return '0';
+      if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+      if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+      if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+      if (num < 1) return num.toFixed(6);
+      return num.toFixed(2);
+    }
+
+    // Format timestamp for display
+    function formatTimestamp(isoString) {
+      const date = new Date(isoString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffSecs = Math.floor(diffMs / 1000);
+      const diffMins = Math.floor(diffSecs / 60);
+      
+      if (diffSecs < 60) return 'just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      return date.toLocaleTimeString();
+    }
+
+    // Demo signals (last resort fallback)
+    function generateDemoSignals() {
+      return [
+        {
+          signalType: 'TVL_LAG',
+          asset: 'Pendle (PENDLE)',
+          marketContext: 'Pendle TVL: $4.2B. 7d TVL change: +18.4%. Token price 7d: +3.2%. TVL/MCap ratio: 6.8x.',
+          observedAnomaly: 'TVL growth (+18.4%) significantly outpacing token appreciation (+3.2%). Divergence: 15.2%.',
+          whyMatters: 'Capital flowing into protocol but token price lagging. This is demo data - connect to live API for real signals.',
+          tradeExpression: 'Long PENDLE spot. Entry: current. Target: 12-15% catch-up move.',
+          timeHorizon: '1-2 weeks',
+          keyRisks: '[DEMO] Mercenary TVL, token inflation, smart contract risk',
+          invalidationLevel: 'TVL drops >10%',
+          confidenceScore: 72,
+          timestamp: new Date().toISOString()
+        },
+        {
+          signalType: 'OI_DIVERGENCE',
+          asset: 'SOL',
+          marketContext: 'SOL showing compressed volatility with elevated volume. Price flat over 7d.',
+          observedAnomaly: 'High trading activity without directional follow-through. This is demo data.',
+          whyMatters: 'Position buildup during range compression. Connect to live API for real analysis.',
+          tradeExpression: 'Long SOL on breakout above 7d high',
+          timeHorizon: '24-72 hours',
+          keyRisks: '[DEMO] False breakout, news catalyst',
+          invalidationLevel: 'Below 7d low',
+          confidenceScore: 58,
+          timestamp: new Date().toISOString()
+        }
+      ];
     }
 
     // Filter signals by type
@@ -1499,6 +1853,7 @@
       container.innerHTML = signals.map((signal, idx) => {
         const confClass = signal.confidenceScore >= 60 ? 'high' : signal.confidenceScore >= 40 ? 'medium' : 'low';
         const typeClass = signal.signalType.toLowerCase();
+        const signalTime = signal.timestamp ? formatTimestamp(signal.timestamp) : 'just now';
         
         return `
           <div class="signal-card" data-signal-id="${idx}">
@@ -1508,6 +1863,7 @@
                 <div class="signal-asset" style="margin-top: 6px;">${signal.asset}</div>
               </div>
               <div class="confidence-meter">
+                <span class="signal-timestamp" style="font-size: 0.7rem; color: #475569; margin-right: 8px;">${signalTime}</span>
                 <div class="confidence-bar">
                   <div class="confidence-fill ${confClass}" style="width: ${signal.confidenceScore}%;"></div>
                 </div>
@@ -1581,62 +1937,20 @@
       return types[type] || type;
     }
 
-    // Generate mock signals for demo (replace with API call in production)
-    async function generateMockSignals() {
-      // Simulate API delay
-      await new Promise(r => setTimeout(r, 1500));
+    // Setup auto-refresh
+    function setupAutoRefresh() {
+      if (refreshInterval) clearInterval(refreshInterval);
       
-      return [
-        {
-          signalType: 'TVL_LAG',
-          asset: 'Pendle (PENDLE)',
-          marketContext: 'Pendle TVL: $4.2B. 7d TVL change: +18.4%. Token price 7d: +3.2%. TVL/MCap ratio: 6.8x.',
-          observedAnomaly: 'TVL growth (+18.4%) significantly outpacing token appreciation (+3.2%). Divergence: 15.2%. TVL growth is ACCELERATING with new yield markets launching.',
-          whyMatters: 'Capital is flowing into protocol but token price hasn\'t adjusted. This suggests: (1) LPs/yield farmers don\'t hold governance token, or (2) Market hasn\'t priced in growth. Protocol revenue/fees typically correlate with TVL over medium term.',
-          tradeExpression: 'Long PENDLE spot. Entry: current ($5.42). Target: 12-15% catch-up move over 1-2 weeks based on TVL/price convergence.',
-          timeHorizon: '1-2 weeks',
-          keyRisks: 'Mercenary TVL (incentivized, will leave), token inflation diluting value, smart contract risk, broader market downturn',
-          invalidationLevel: 'TVL drops >10% or price falls below $4.80',
-          confidenceScore: 72
-        },
-        {
-          signalType: 'OI_DIVERGENCE',
-          asset: 'SOL',
-          marketContext: 'SOL showing compressed volatility (1.8%) with elevated volume ($2.1B). Price flat over 7d (-0.8%). Volume/MCap ratio: 2.4%.',
-          observedAnomaly: 'High trading activity without directional follow-through. Volume/MCap ratio: 2.4%. This typically precedes breakouts. Late shorts accumulated near support are likely offsides.',
-          whyMatters: 'Position buildup during range compression often leads to liquidation cascades when price breaks. Shorts accumulated near support are likely offsides given strong ecosystem fundamentals.',
-          tradeExpression: 'Long SOL on breakout above 7d high ($198.50), target 5-8% move to $210-$215',
-          timeHorizon: '24-72 hours',
-          keyRisks: 'False breakout, news catalyst overriding technical setup, low liquidity slippage during breakout',
-          invalidationLevel: 'Below $188.00 (-2% from 7d low)',
-          confidenceScore: 58
-        },
-        {
-          signalType: 'FUNDING_DIVERGENCE',
-          asset: 'ETH',
-          marketContext: 'ETH at $3,420. 24h range: $3,380 - $3,465. Currently at 87% of range (near highs).',
-          observedAnomaly: 'Crowded long positioning detected. High volume (3.1% of MCap) with price near highs. This often precedes mean reversion as funding costs pressure overleveraged longs.',
-          whyMatters: 'When positioning gets one-sided, funding costs increase for the crowded side. This creates: (1) Pressure to close positions, (2) Arbitrage incentive for market makers, (3) Squeeze risk if price moves against crowd.',
-          tradeExpression: 'Fade longs: Short ETH with tight stop above 24h high. Target: return to 24h VWAP (~$3,422)',
-          timeHorizon: '4-24 hours',
-          keyRisks: 'Trend continuation invalidates thesis, ETF flow news catalyst, exchange-specific dynamics',
-          invalidationLevel: 'New 24h high above $3,495',
-          confidenceScore: 48
-        },
-        {
-          signalType: 'TVL_LAG',
-          asset: 'Morpho (MORPHO)',
-          marketContext: 'Morpho TVL: $3.8B. 7d TVL change: +12.1%. Token price 7d: -1.4%. TVL/MCap ratio: 9.2x.',
-          observedAnomaly: 'TVL growth (+12.1%) while token price declining (-1.4%). Divergence: 13.5%. Capital inflows continue despite token weakness.',
-          whyMatters: 'Extreme TVL/price divergence suggests mispricing. Morpho\'s optimized lending rates attracting capital, but token holders are selling. Classic accumulation opportunity if TVL growth is organic.',
-          tradeExpression: 'Long MORPHO spot. Entry: current ($2.18). Target: 10% reversion to fair value based on TVL multiple.',
-          timeHorizon: '1-2 weeks',
-          keyRisks: 'Concentrated TVL in few wallets, token unlock schedule, regulatory risk for lending protocols',
-          invalidationLevel: 'TVL drops >8% or price falls below $1.95',
-          confidenceScore: 65
-        }
-      ];
+      refreshInterval = setInterval(() => {
+        runAlphaScan();
+        loadInsights();
+        loadNews();
+        loadTrending();
+      }, AUTO_REFRESH_MS);
     }
+
+    // Initialize on load
+    setupAutoRefresh();
   </script>
   
   <!-- Wallet Connection Module -->
