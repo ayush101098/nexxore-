@@ -3,24 +3,46 @@
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     initScrollAnimations();
+    initNavbarScroll();
     initCounterAnimations();
     initParticles();
     initSmoothScroll();
     initCardInteractions();
     initBackgroundEffects();
+    initStaggerAnimations();
 });
+
+// Navbar scroll effect
+function initNavbarScroll() {
+    const navbar = document.querySelector('.navbar');
+    if (!navbar) return;
+    
+    let lastScroll = 0;
+    
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        
+        if (currentScroll > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+        
+        lastScroll = currentScroll;
+    }, { passive: true });
+}
 
 // Intersection Observer for scroll-triggered animations
 function initScrollAnimations() {
     const observerOptions = {
         threshold: 0.1,
-        rootMargin: '0px 0px -100px 0px'
+        rootMargin: '0px 0px -80px 0px'
     };
 
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                entry.target.classList.add('revealed');
+                entry.target.classList.add('revealed', 'visible');
                 
                 // Add stagger effect to children
                 const children = entry.target.querySelectorAll('.stagger-item');
@@ -34,19 +56,19 @@ function initScrollAnimations() {
     }, observerOptions);
 
     // Observe elements with scroll-reveal class
-    document.querySelectorAll('.scroll-reveal').forEach(el => {
+    document.querySelectorAll('.scroll-reveal, .animate-on-scroll').forEach(el => {
         observer.observe(el);
     });
 
     // Observe workflow cards
-    document.querySelectorAll('.workflow-card').forEach((card, index) => {
+    document.querySelectorAll('.workflow-card, .flow-step').forEach((card, index) => {
         card.style.opacity = '0';
         card.style.transform = 'translateY(30px)';
         setTimeout(() => {
-            card.style.transition = 'all 0.6s ease';
+            card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
             card.style.opacity = '1';
             card.style.transform = 'translateY(0)';
-        }, index * 150);
+        }, 300 + index * 150);
     });
 
     // Observe agent cards
@@ -230,6 +252,38 @@ document.addEventListener('click', function(e) {
     }
 });
 
+// Initialize stagger animations for grid elements
+function initStaggerAnimations() {
+    const staggerContainers = document.querySelectorAll('.stagger-children, .agents-grid, .dashboard-stats');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                
+                // Animate children with stagger
+                const children = entry.target.children;
+                Array.from(children).forEach((child, index) => {
+                    child.style.opacity = '0';
+                    child.style.transform = 'translateY(25px)';
+                    
+                    setTimeout(() => {
+                        child.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                        child.style.opacity = '1';
+                        child.style.transform = 'translateY(0)';
+                    }, index * 100);
+                });
+                
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.2 });
+    
+    staggerContainers.forEach(container => {
+        observer.observe(container);
+    });
+}
+
 // Scroll progress indicator
 function initScrollProgress() {
     const progressBar = document.createElement('div');
@@ -239,10 +293,11 @@ function initScrollProgress() {
         top: 0;
         left: 0;
         height: 3px;
-        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        background: linear-gradient(90deg, #0EA5E9, #8B5CF6);
         width: 0%;
         z-index: 9999;
         transition: width 0.1s ease;
+        box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
     `;
     document.body.appendChild(progressBar);
 
@@ -251,7 +306,7 @@ function initScrollProgress() {
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
         const scrollPercent = (scrollTop / docHeight) * 100;
         progressBar.style.width = scrollPercent + '%';
-    });
+    }, { passive: true });
 }
 
 initScrollProgress();
@@ -263,10 +318,13 @@ window.addEventListener('load', function() {
     // Trigger hero animations
     const heroElements = document.querySelectorAll('.hero-headline, .hero-subheadline, .hero-cta');
     heroElements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
         setTimeout(() => {
+            el.style.transition = 'all 0.7s cubic-bezier(0.4, 0, 0.2, 1)';
             el.style.opacity = '1';
             el.style.transform = 'translateY(0)';
-        }, index * 200);
+        }, 200 + index * 150);
     });
 });
 
