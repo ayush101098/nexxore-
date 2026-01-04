@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeYield Vault - Test Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            color: #00ff88;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-box {
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-box label {
+            display: block;
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-box .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #aaa;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #00ff88;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            color: #0f0f23;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4444, #ff6b6b);
+            color: #fff;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .status-dot.connected {
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        .status-dot.disconnected {
+            background: #ff4444;
+        }
+
+        .log-container {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .log-entry.success {
+            color: #00ff88;
+        }
+
+        .log-entry.error {
+            color: #ff4444;
+        }
+
+        .log-entry.info {
+            color: #00d4ff;
+        }
+
+        .address {
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .contracts-list {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .contract-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .contract-item label {
+            color: #888;
+        }
+
+        @media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏦 SafeYield Vault - Local Test</h1>
+
+        <!-- Connection Status -->
+        <div class="card">
+            <h2>🔗 Network Connection</h2>
+            <div class="status">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Disconnected</span>
+            </div>
+            <div class="button-group">
+                <button class="btn-primary" id="connectBtn" onclick="connectWallet()">Connect MetaMask</button>
+                <button class="btn-secondary" id="switchNetworkBtn" onclick="switchToLocalhost()" style="display:none;">Switch to Localhost</button>
+            </div>
+            <div style="margin-top: 1rem;">
+                <p>Wallet: <span class="address" id="walletAddress">Not connected</span></p>
+                <p style="margin-top: 0.5rem;">Chain ID: <span id="chainId">-</span></p>
+            </div>
+        </div>
+
+        <!-- Deployed Contracts -->
+        <div class="card">
+            <h2>📜 Deployed Contracts (Localhost:8545)</h2>
+            <div class="contracts-list">
+                <div class="contract-item">
+                    <label>Mock USDC:</label>
+                    <span class="address">0x8A791620dd6260079BF849Dc5567aDC3F2FdC318</span>
+                </div>
+                <div class="contract-item">
+                    <label>Risk Oracle:</label>
+                    <span class="address">0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e</span>
+                </div>
+                <div class="contract-item">
+                    <label>SafeYield Vault:</label>
+                    <span class="address">0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vault Stats -->
+        <div class="card">
+            <h2>📊 Vault Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <label>Total Value Locked</label>
+                    <div class="value" id="tvl">-</div>
+                </div>
+                <div class="stat-box">
+                    <label>Your Shares (syUSDC)</label>
+                    <div class="value" id="userShares">-</div>
+                </div>
+                <div class="stat-box">
+                    <label>Your Value (USDC)</label>
+                    <div class="value" id="userValue">-</div>
+                </div>
+                <div class="stat-box">
+                    <label>USDC Balance</label>
+                    <div class="value" id="usdcBalance">-</div>
+                </div>
+            </div>
+            <div class="button-group" style="margin-top: 1rem;">
+                <button class="btn-secondary" onclick="refreshStats()">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <!-- Deposit/Withdraw -->
+        <div class="card">
+            <h2>💰 Deposit & Withdraw</h2>
+            <div class="input-group">
+                <label>Amount (USDC)</label>
+                <input type="number" id="amount" placeholder="Enter amount..." value="100">
+            </div>
+            <div class="button-group">
+                <button class="btn-primary" onclick="mintUSDC()">🪙 Mint Test USDC</button>
+                <button class="btn-primary" onclick="deposit()">📥 Deposit</button>
+                <button class="btn-danger" onclick="withdraw()">📤 Withdraw</button>
+            </div>
+        </div>
+
+        <!-- Transaction Log -->
+        <div class="card">
+            <h2>📝 Transaction Log</h2>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry info">Waiting for wallet connection...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Contract addresses (localhost deployment)
+        const CONTRACTS = {
+            USDC: '0x8A791620dd6260079BF849Dc5567aDC3F2FdC318',
+            Vault: '0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0'
+        };
+
+        // ABIs
+        const ERC20_ABI = [
+            "function balanceOf(address) view returns (uint256)",
+            "function approve(address, uint256) returns (bool)",
+            "function allowance(address, address) view returns (uint256)",
+            "function mint(address, uint256)"
+        ];
+
+        const VAULT_ABI = [
+            "function deposit(uint256, address) returns (uint256)",
+            "function withdraw(uint256, address, address) returns (uint256)",
+            "function balanceOf(address) view returns (uint256)",
+            "function totalAssets() view returns (uint256)",
+            "function convertToAssets(uint256) view returns (uint256)",
+            "function asset() view returns (address)"
+        ];
+
+        let provider, signer, usdc, vault;
+
+        function log(message, type = 'info') {
+            const container = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function updateStatus(connected, address = null, chainId = null) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            const switchBtn = document.getElementById('switchNetworkBtn');
+            
+            if (connected) {
+                dot.className = 'status-dot connected';
+                text.textContent = chainId === 31337 ? 'Connected to Localhost' : 'Connected (Wrong Network)';
+                document.getElementById('walletAddress').textContent = address;
+                document.getElementById('chainId').textContent = chainId;
+                
+                if (chainId !== 31337) {
+                    switchBtn.style.display = 'inline-block';
+                } else {
+                    switchBtn.style.display = 'none';
+                }
+            } else {
+                dot.className = 'status-dot disconnected';
+                text.textContent = 'Disconnected';
+                document.getElementById('walletAddress').textContent = 'Not connected';
+                document.getElementById('chainId').textContent = '-';
+                switchBtn.style.display = 'none';
+            }
+        }
+
+        async function connectWallet() {
+            try {
+                if (!window.ethereum) {
+                    log('MetaMask not detected! Please install MetaMask.', 'error');
+                    return;
+                }
+
+                log('Connecting to MetaMask...');
+                provider = new ethers.BrowserProvider(window.ethereum);
+                
+                await provider.send("eth_requestAccounts", []);
+                signer = await provider.getSigner();
+                const address = await signer.getAddress();
+                const network = await provider.getNetwork();
+                
+                usdc = new ethers.Contract(CONTRACTS.USDC, ERC20_ABI, signer);
+                vault = new ethers.Contract(CONTRACTS.Vault, VAULT_ABI, signer);
+
+                updateStatus(true, address, Number(network.chainId));
+                log(`Connected: ${address}`, 'success');
+                
+                if (Number(network.chainId) !== 31337) {
+                    log('⚠️ Please switch to Localhost network (Chain ID: 31337)', 'error');
+                } else {
+                    await refreshStats();
+                }
+
+            } catch (error) {
+                log(`Connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function switchToLocalhost() {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: '0x7A69', // 31337 in hex
+                        chainName: 'Hardhat Localhost',
+                        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                        rpcUrls: ['http://127.0.0.1:8545']
+                    }]
+                });
+                log('Switched to Localhost network', 'success');
+                await connectWallet();
+            } catch (error) {
+                log(`Network switch failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function refreshStats() {
+            try {
+                if (!vault || !usdc) {
+                    log('Please connect wallet first', 'error');
+                    return;
+                }
+
+                const address = await signer.getAddress();
+                
+                // Get balances
+                const tvl = await vault.totalAssets();
+                const shares = await vault.balanceOf(address);
+                const usdcBal = await usdc.balanceOf(address);
+                
+                // Convert shares to assets
+                let value = 0n;
+                if (shares > 0n) {
+                    value = await vault.convertToAssets(shares);
+                }
+
+                // Update UI (assuming 18 decimals for mock USDC)
+                document.getElementById('tvl').textContent = 
+                    Number(ethers.formatUnits(tvl, 18)).toLocaleString() + ' USDC';
+                document.getElementById('userShares').textContent = 
+                    Number(ethers.formatUnits(shares, 18)).toLocaleString();
+                document.getElementById('userValue').textContent = 
+                    Number(ethers.formatUnits(value, 18)).toLocaleString() + ' USDC';
+                document.getElementById('usdcBalance').textContent = 
+                    Number(ethers.formatUnits(usdcBal, 18)).toLocaleString() + ' USDC';
+
+                log('Stats refreshed', 'success');
+            } catch (error) {
+                log(`Refresh failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function mintUSDC() {
+            try {
+                if (!usdc) {
+                    log('Please connect wallet first', 'error');
+                    return;
+                }
+
+                const amount = document.getElementById('amount').value;
+                const weiAmount = ethers.parseUnits(amount, 18);
+                const address = await signer.getAddress();
+
+                log(`Minting ${amount} USDC...`);
+                const tx = await usdc.mint(address, weiAmount);
+                await tx.wait();
+                
+                log(`Minted ${amount} USDC!`, 'success');
+                await refreshStats();
+            } catch (error) {
+                log(`Mint failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function deposit() {
+            try {
+                if (!vault || !usdc) {
+                    log('Please connect wallet first', 'error');
+                    return;
+                }
+
+                const amount = document.getElementById('amount').value;
+                const weiAmount = ethers.parseUnits(amount, 18);
+                const address = await signer.getAddress();
+
+                // Check allowance
+                log(`Checking allowance...`);
+                const allowance = await usdc.allowance(address, CONTRACTS.Vault);
+                
+                if (allowance < weiAmount) {
+                    log(`Approving vault to spend USDC...`);
+                    const approveTx = await usdc.approve(CONTRACTS.Vault, weiAmount);
+                    await approveTx.wait();
+                    log('Approval confirmed', 'success');
+                }
+
+                log(`Depositing ${amount} USDC...`);
+                const tx = await vault.deposit(weiAmount, address);
+                await tx.wait();
+                
+                log(`Deposited ${amount} USDC!`, 'success');
+                await refreshStats();
+            } catch (error) {
+                log(`Deposit failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function withdraw() {
+            try {
+                if (!vault) {
+                    log('Please connect wallet first', 'error');
+                    return;
+                }
+
+                const amount = document.getElementById('amount').value;
+                const weiAmount = ethers.parseUnits(amount, 18);
+                const address = await signer.getAddress();
+
+                log(`Withdrawing ${amount} USDC...`);
+                const tx = await vault.withdraw(weiAmount, address, address);
+                await tx.wait();
+                
+                log(`Withdrew ${amount} USDC!`, 'success');
+                await refreshStats();
+            } catch (error) {
+                log(`Withdraw failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Listen for account/network changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length === 0) {
+                    updateStatus(false);
+                } else {
+                    connectWallet();
+                }
+            });
+
+            window.ethereum.on('chainChanged', () => {
+                window.location.reload();
+            });
+        }
+    </script>
+</body>
+</html>

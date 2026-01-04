@@ -4,8 +4,8 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title SafeYieldVault
@@ -423,7 +423,7 @@ contract SafeYieldVault is ERC4626, AccessControl, ReentrancyGuard, Pausable {
 
         // Execute rebalance
         uint256 withdrawn = IStrategy(proposal.fromStrategy).withdraw(proposal.amount);
-        IERC20(asset()).safeApprove(proposal.toStrategy, withdrawn);
+        IERC20(asset()).forceApprove(proposal.toStrategy, withdrawn);
         IStrategy(proposal.toStrategy).deposit(withdrawn);
 
         // Update strategy states
