@@ -740,6 +740,31 @@
       border: 1px solid rgba(168, 85, 247, 0.25);
     }
     
+    /* DeFi Yield signal types */
+    .signal-type-badge.yield_spike {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    
+    .signal-type-badge.yield_opportunity {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    
+    .signal-type-badge.tvl_inflow_lead {
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+    }
+    
+    .signal-type-badge.fundamental_lead {
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+    }
+    
     /* Conviction indicator */
     .conviction-badge {
       font-size: 0.65rem;
@@ -1221,10 +1246,11 @@
         </div>
         <div class="scanner-controls">
           <button class="scanner-btn active" data-type="all" onclick="filterSignals('all')">All</button>
-          <button class="scanner-btn" data-type="fade_trade" onclick="filterSignals('fade_trade')">Fade Trade</button>
+          <button class="scanner-btn" data-type="yield" onclick="filterSignals('yield')">💰 Yield</button>
+          <button class="scanner-btn" data-type="fade_trade" onclick="filterSignals('fade_trade')">Fade</button>
           <button class="scanner-btn" data-type="squeeze_setup" onclick="filterSignals('squeeze_setup')">Squeeze</button>
-          <button class="scanner-btn" data-type="vol_expansion" onclick="filterSignals('vol_expansion')">Vol Expand</button>
-          <button class="scanner-btn" data-type="tvl_lag" onclick="filterSignals('tvl_lag')">TVL Lag</button>
+          <button class="scanner-btn" data-type="vol_expansion" onclick="filterSignals('vol_expansion')">Vol</button>
+          <button class="scanner-btn" data-type="tvl_lag" onclick="filterSignals('tvl_lag')">TVL</button>
           <button class="scanner-btn refresh-btn" onclick="runAlphaScan(true)">↻ Refresh</button>
         </div>
       </div>
@@ -2082,6 +2108,40 @@
           invalidationLevel: 'TVL drops >10%',
           confidenceScore: 72,
           timestamp: new Date().toISOString()
+        },
+        {
+          signalType: 'YIELD_SPIKE',
+          tradeType: 'YIELD_OPPORTUNITY',
+          asset: 'Ethena (ENA)',
+          direction: 'LONG',
+          conviction: 'HIGH',
+          marketContext: 'Ethena yield spiked +85% to 28.5% APY. Pool: sUSDe on Ethereum. Pool TVL: $2.8B. Token price 7d: +2.1%.',
+          observedAnomaly: 'Yield spike detected: APY jumped from 15.4% to 28.5% (+85%) but token price only moved +2.1%. This is a 40x yield-to-price divergence.',
+          whyMatters: '[DEMO] Elevated yields attract capital → increased protocol revenue → token value. Token price essentially flat despite yield spike. Yield change too recent for market to fully digest.',
+          tradeExpression: 'Long ENA spot. Entry: $0.92. Target: +12% as market prices in elevated yield. Stop: -8%.',
+          alternativeTrade: 'Yield Capture + Hedge: Deposit into sUSDe pool (28.5% APY). Hedge token exposure by shorting ENA perps. Net yield: ~20% after funding.',
+          timeHorizon: '3-10 days',
+          keyRisks: '[DEMO] Yield could normalize quickly, smart contract risk, broader market selloff',
+          invalidationLevel: 'APY drops below 17% or token price drops >12%',
+          confidenceScore: 68,
+          timestamp: new Date().toISOString()
+        },
+        {
+          signalType: 'TVL_INFLOW_LEAD',
+          tradeType: 'FUNDAMENTAL_LEAD',
+          asset: 'Aave (AAVE)',
+          direction: 'LONG',
+          conviction: 'MEDIUM',
+          marketContext: 'Aave TVL: $12.8B. 7d TVL: +14.2% | 30d TVL: +28.5%. Token 7d: +4.8%. TVL/MCap: 4.2x.',
+          observedAnomaly: 'TVL inflows (+14.2%) significantly outpacing token price (+4.8%). Divergence: 9.4%. TVL growth is ACCELERATING.',
+          whyMatters: '[DEMO] Historically, sustained TVL inflows precede token appreciation by 1-3 weeks. Price (+4.8%) lagging TVL inflow (+14.2%). High TVL/MCap ratio (4.2x) suggests undervaluation.',
+          tradeExpression: 'Long AAVE spot. TVL leading price by 9.4%. Target: +6% catch-up move over 1-2 weeks.',
+          alternativeTrade: 'Yield + Appreciation: Deposit assets into Aave (earn yield while gaining token exposure). Or: Long token + short perps for delta-neutral TVL play.',
+          timeHorizon: '1-3 weeks',
+          keyRisks: '[DEMO] Mercenary capital, token inflation, smart contract exploit',
+          invalidationLevel: 'TVL drops >15% or price falls below $142',
+          confidenceScore: 58,
+          timestamp: new Date().toISOString()
         }
       ];
     }
@@ -2095,13 +2155,26 @@
         btn.classList.toggle('active', btn.dataset.type === type);
       });
       
-      const filtered = type === 'all' 
-        ? allAlphaSignals 
-        : allAlphaSignals.filter(s => {
-            const tradeType = (s.tradeType || '').toLowerCase();
-            const signalType = (s.signalType || '').toLowerCase();
-            return tradeType === type || signalType === type;
-          });
+      let filtered;
+      if (type === 'all') {
+        filtered = allAlphaSignals;
+      } else if (type === 'yield') {
+        // Special filter for all yield-related signals
+        filtered = allAlphaSignals.filter(s => {
+          const signalType = (s.signalType || '').toLowerCase();
+          const tradeType = (s.tradeType || '').toLowerCase();
+          return signalType.includes('yield') || 
+                 signalType === 'tvl_inflow_lead' ||
+                 tradeType === 'yield_opportunity' ||
+                 tradeType === 'fundamental_lead';
+        });
+      } else {
+        filtered = allAlphaSignals.filter(s => {
+          const tradeType = (s.tradeType || '').toLowerCase();
+          const signalType = (s.signalType || '').toLowerCase();
+          return tradeType === type || signalType === type;
+        });
+      }
       
       renderSignals(filtered);
     }
@@ -2156,6 +2229,10 @@
             <div class="trade-expression">
               <div class="signal-section-title">Trade Expression</div>
               <div class="signal-section-content">${signal.tradeExpression}</div>
+              ${signal.alternativeTrade ? `
+              <div class="signal-section-title" style="margin-top: 12px; color: #34d399;">Alternative: Yield + Hedge</div>
+              <div class="signal-section-content" style="font-size: 0.82rem; color: #9ca3af;">${signal.alternativeTrade}</div>
+              ` : ''}
             </div>
             
             <div class="signal-meta">
@@ -2211,7 +2288,12 @@
         'FADE_TRADE': 'Fade Trade',
         'SQUEEZE_SETUP': 'Squeeze Setup',
         'VOL_EXPANSION': 'Vol Expansion',
-        'POSITIONING': 'Positioning'
+        'POSITIONING': 'Positioning',
+        // Yield signal types
+        'YIELD_SPIKE': '💰 Yield Spike',
+        'YIELD_OPPORTUNITY': '💰 Yield Opp',
+        'TVL_INFLOW_LEAD': '📊 TVL Lead',
+        'FUNDAMENTAL_LEAD': '📊 Fundamental'
       };
       return types[type] || type.replace(/_/g, ' ');
     }

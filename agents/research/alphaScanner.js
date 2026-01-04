@@ -3,7 +3,7 @@
  * 
  * Scans for tradeable anomalies using free public APIs:
  * - CoinGecko (prices, volume, market data)
- * - DeFiLlama (TVL, protocol metrics)
+ * - DeFiLlama (TVL, protocol metrics, yields)
  * - Coinglass/alternative APIs (funding rates, open interest)
  * 
  * Signal Types:
@@ -11,11 +11,12 @@
  * 2. SQUEEZE_SETUP: Liquidation cascade potential
  * 3. VOL_EXPANSION: Volatility breakout from compression
  * 4. TVL_LAG: Protocol TVL diverging from token price
+ * 5. YIELD_SPIKE: APY/APR spike without price response
+ * 6. TVL_INFLOW_LEAD: Historical pattern of TVL preceding appreciation
  * 
  * Trade Classification:
- * - Fade: Counter-trend against crowded positions
- * - Squeeze: Breakout that triggers liquidation cascade
- * - Volatility Expansion: Directional breakout from range
+ * - Directional: Pure long/short based on signal
+ * - Yield + Hedge: Capture elevated yield while hedging token exposure
  */
 
 const { fetchWithTimeout, AgentLogger } = require('../shared/utils');
@@ -27,6 +28,7 @@ const APIS = {
   COINGECKO: 'https://api.coingecko.com/api/v3',
   DEFILLAMA: 'https://api.llama.fi',
   DEFILLAMA_COINS: 'https://coins.llama.fi',
+  DEFILLAMA_YIELDS: 'https://yields.llama.fi',
   COINGLASS_ALT: 'https://open-api.coinglass.com/public/v2'
 };
 
@@ -42,18 +44,18 @@ const SCAN_ASSETS = [
   { id: 'pepe', symbol: 'PEPE', defillamaId: null, hasPerps: true }
 ];
 
-// DeFi protocols to scan
+// DeFi protocols to scan (with yield-bearing products)
 const SCAN_PROTOCOLS = [
-  { slug: 'aave', token: 'aave', name: 'Aave' },
-  { slug: 'lido', token: 'lido-dao', name: 'Lido' },
-  { slug: 'uniswap', token: 'uniswap', name: 'Uniswap' },
-  { slug: 'curve-dex', token: 'curve-dao-token', name: 'Curve' },
-  { slug: 'maker', token: 'maker', name: 'Maker' },
-  { slug: 'eigenlayer', token: 'eigenlayer', name: 'EigenLayer' },
-  { slug: 'pendle', token: 'pendle', name: 'Pendle' },
-  { slug: 'gmx', token: 'gmx', name: 'GMX' },
-  { slug: 'morpho', token: 'morpho', name: 'Morpho' },
-  { slug: 'ethena', token: 'ethena', name: 'Ethena' }
+  { slug: 'aave', token: 'aave', name: 'Aave', hasYield: true, yieldType: 'lending' },
+  { slug: 'lido', token: 'lido-dao', name: 'Lido', hasYield: true, yieldType: 'staking' },
+  { slug: 'uniswap', token: 'uniswap', name: 'Uniswap', hasYield: true, yieldType: 'lp' },
+  { slug: 'curve-dex', token: 'curve-dao-token', name: 'Curve', hasYield: true, yieldType: 'lp' },
+  { slug: 'maker', token: 'maker', name: 'Maker', hasYield: true, yieldType: 'lending' },
+  { slug: 'eigenlayer', token: 'eigenlayer', name: 'EigenLayer', hasYield: true, yieldType: 'restaking' },
+  { slug: 'pendle', token: 'pendle', name: 'Pendle', hasYield: true, yieldType: 'yield-trading' },
+  { slug: 'gmx', token: 'gmx', name: 'GMX', hasYield: true, yieldType: 'perps-lp' },
+  { slug: 'morpho', token: 'morpho', name: 'Morpho', hasYield: true, yieldType: 'lending' },
+  { slug: 'ethena', token: 'ethena', name: 'Ethena', hasYield: true, yieldType: 'synthetic' }
 ];
 
 // ============================================================================
@@ -67,7 +69,13 @@ const SIGNAL_THRESHOLDS = {
   MIN_PERSISTENCE_PERIODS: 3,      // Funding must persist 3+ periods
   VOL_COMPRESSION_THRESHOLD: 0.018, // Volatility considered compressed
   EXTREME_PRICE_POSITION: 0.15,    // Top/bottom 15% of range
-  SQUEEZE_LEVERAGE_THRESHOLD: 0.12 // Volume/MCap suggesting leverage
+  SQUEEZE_LEVERAGE_THRESHOLD: 0.12, // Volume/MCap suggesting leverage
+  // Yield-specific thresholds
+  MIN_YIELD_SPIKE: 25,             // 25% yield increase to trigger signal
+  MIN_APY_ABSOLUTE: 5,             // Minimum 5% APY to be interesting
+  TVL_INFLOW_THRESHOLD: 8,         // 8% weekly TVL inflow
+  TVL_LEAD_LOOKBACK: 30,           // Days to analyze TVL-price relationship
+  YIELD_PRICE_LAG_WINDOW: 72       // Hours of yield spike without price response
 };
 
 /**
@@ -383,9 +391,470 @@ async function fetchTVLData(protocolSlug) {
   }
 }
 
+/**
+ * Fetch yield/APY data from DeFiLlama Yields API
+ * Returns pools with their APY history
+ */
+async function fetchYieldData(protocolName) {
+  try {
+    // Fetch all pools
+    const poolsUrl = `${APIS.DEFILLAMA_YIELDS}/pools`;
+    const res = await fetchWithTimeout(poolsUrl, { timeout: 15000 });
+    if (!res.ok) throw new Error(`Yields API error: ${res.status}`);
+    
+    const allPools = await res.json();
+    
+    // Filter for this protocol's pools
+    const protocolPools = allPools.data?.filter(pool => 
+      pool.project?.toLowerCase() === protocolName.toLowerCase() &&
+      pool.tvlUsd > 1000000 && // Only pools with >$1M TVL
+      pool.apy > 0
+    ) || [];
+    
+    if (protocolPools.length === 0) return null;
+    
+    // Get the top pools by TVL
+    const topPools = protocolPools
+      .sort((a, b) => b.tvlUsd - a.tvlUsd)
+      .slice(0, 5);
+    
+    // For each pool, fetch historical APY data
+    const poolsWithHistory = await Promise.all(topPools.map(async (pool) => {
+      try {
+        const historyUrl = `${APIS.DEFILLAMA_YIELDS}/chart/${pool.pool}`;
+        const histRes = await fetchWithTimeout(historyUrl, { timeout: 10000 });
+        if (!histRes.ok) return { ...pool, history: [] };
+        
+        const histData = await histRes.json();
+        return {
+          ...pool,
+          history: histData.data?.slice(-30) || [] // Last 30 days
+        };
+      } catch {
+        return { ...pool, history: [] };
+      }
+    }));
+    
+    return poolsWithHistory;
+  } catch (err) {
+    logger.debug('Failed to fetch yield data', { protocol: protocolName, error: err.message });
+    return null;
+  }
+}
+
+/**
+ * Analyze yield dynamics for a protocol
+ * Detects: Yield spikes, yield compression, yield-TVL relationships
+ */
+function analyzeYieldDynamics(pools, priceData) {
+  if (!pools || pools.length === 0) return null;
+  
+  const analysis = {
+    hasYieldSpike: false,
+    spikeMagnitude: 0,
+    avgCurrentApy: 0,
+    avgHistoricalApy: 0,
+    yieldTrend: 'stable',
+    priceResponseToYield: 'none',
+    topPool: null,
+    spikeDetails: null
+  };
+  
+  // Calculate aggregate metrics across top pools
+  let totalCurrentApy = 0;
+  let totalHistoricalApy = 0;
+  let poolCount = 0;
+  let maxSpike = 0;
+  let spikePool = null;
+  
+  for (const pool of pools) {
+    if (!pool.history || pool.history.length < 7) continue;
+    
+    const currentApy = pool.apy;
+    const history = pool.history;
+    
+    // Calculate 7-day average APY
+    const recent7dApy = history.slice(-7).reduce((sum, d) => sum + (d.apy || 0), 0) / 7;
+    // Calculate 14-30 day average (prior period)
+    const priorApy = history.slice(-30, -7).reduce((sum, d) => sum + (d.apy || 0), 0) / Math.max(1, history.slice(-30, -7).length);
+    
+    totalCurrentApy += currentApy;
+    totalHistoricalApy += priorApy;
+    poolCount++;
+    
+    // Detect yield spike: Current APY significantly higher than historical average
+    if (priorApy > 0) {
+      const apyChange = ((currentApy - priorApy) / priorApy) * 100;
+      
+      if (apyChange > SIGNAL_THRESHOLDS.MIN_YIELD_SPIKE && currentApy > SIGNAL_THRESHOLDS.MIN_APY_ABSOLUTE) {
+        if (apyChange > maxSpike) {
+          maxSpike = apyChange;
+          spikePool = {
+            poolName: pool.symbol || pool.pool,
+            chain: pool.chain,
+            currentApy,
+            priorApy,
+            apyChange,
+            tvl: pool.tvlUsd,
+            poolId: pool.pool
+          };
+        }
+      }
+    }
+  }
+  
+  if (poolCount > 0) {
+    analysis.avgCurrentApy = totalCurrentApy / poolCount;
+    analysis.avgHistoricalApy = totalHistoricalApy / poolCount;
+    analysis.topPool = pools[0];
+  }
+  
+  // Determine yield trend
+  const yieldChangePercent = analysis.avgHistoricalApy > 0 
+    ? ((analysis.avgCurrentApy - analysis.avgHistoricalApy) / analysis.avgHistoricalApy) * 100 
+    : 0;
+    
+  if (yieldChangePercent > 20) analysis.yieldTrend = 'spiking';
+  else if (yieldChangePercent > 5) analysis.yieldTrend = 'rising';
+  else if (yieldChangePercent < -20) analysis.yieldTrend = 'collapsing';
+  else if (yieldChangePercent < -5) analysis.yieldTrend = 'declining';
+  
+  // Check if price has responded to yield changes
+  if (priceData && analysis.yieldTrend === 'spiking') {
+    const priceChange7d = priceData.priceChange7d || 0;
+    
+    if (priceChange7d < 2) {
+      analysis.priceResponseToYield = 'lagging'; // Yield up, price flat = opportunity
+    } else if (priceChange7d > 5) {
+      analysis.priceResponseToYield = 'confirming'; // Already priced in
+    } else {
+      analysis.priceResponseToYield = 'partial'; // Some response
+    }
+  }
+  
+  // Record spike details
+  if (maxSpike > SIGNAL_THRESHOLDS.MIN_YIELD_SPIKE) {
+    analysis.hasYieldSpike = true;
+    analysis.spikeMagnitude = maxSpike;
+    analysis.spikeDetails = spikePool;
+  }
+  
+  return analysis;
+}
+
+/**
+ * Analyze TVL-Price lead/lag relationship
+ * Identifies protocols where TVL inflows historically precede price appreciation
+ */
+function analyzeTVLPriceLeadLag(tvlData, priceData) {
+  if (!tvlData?.tvlHistory || tvlData.tvlHistory.length < 14 || !priceData?.sparkline) {
+    return null;
+  }
+  
+  const tvlHistory = tvlData.tvlHistory;
+  const sparkline = priceData.sparkline;
+  
+  // Align timeframes: TVL is daily, sparkline is hourly (168 hours = 7 days)
+  // Convert sparkline to daily averages for comparison
+  const dailyPrices = [];
+  const pointsPerDay = Math.floor(sparkline.length / 7);
+  
+  for (let i = 0; i < 7; i++) {
+    const dayStart = i * pointsPerDay;
+    const dayEnd = Math.min(dayStart + pointsPerDay, sparkline.length);
+    const dayPrices = sparkline.slice(dayStart, dayEnd);
+    const avgPrice = dayPrices.reduce((a, b) => a + b, 0) / dayPrices.length;
+    dailyPrices.push(avgPrice);
+  }
+  
+  // Calculate correlation between TVL changes and subsequent price changes
+  // Look for pattern: TVL up today → price up 2-5 days later
+  const tvlRecent7 = tvlHistory.slice(-7);
+  
+  // Calculate TVL velocity for each day
+  const tvlVelocity = [];
+  for (let i = 1; i < tvlRecent7.length; i++) {
+    const change = tvlRecent7[i-1].totalLiquidityUSD > 0
+      ? ((tvlRecent7[i].totalLiquidityUSD - tvlRecent7[i-1].totalLiquidityUSD) / tvlRecent7[i-1].totalLiquidityUSD) * 100
+      : 0;
+    tvlVelocity.push(change);
+  }
+  
+  // Check for significant recent TVL inflow
+  const recentTvlInflow = tvlData.tvlChange7d;
+  const isSignificantInflow = recentTvlInflow > SIGNAL_THRESHOLDS.TVL_INFLOW_THRESHOLD;
+  
+  // Check if price has NOT yet responded
+  const priceChange7d = priceData.priceChange7d || 0;
+  const priceLagging = priceChange7d < recentTvlInflow * 0.3; // Price moved less than 30% of TVL move
+  
+  // Analyze TVL acceleration (is inflow accelerating?)
+  const tvlAccelerating = tvlData.tvlAcceleration > 3;
+  
+  // Calculate lead indicator score
+  let leadScore = 0;
+  if (isSignificantInflow) leadScore += 30;
+  if (priceLagging) leadScore += 25;
+  if (tvlAccelerating) leadScore += 20;
+  if (tvlData.tvlChange30d > tvlData.tvlChange7d * 2) leadScore += 15; // Sustained inflow
+  
+  // Check TVL-to-MCap ratio (undervaluation indicator)
+  const tvlToMcap = tvlData.currentTvl / priceData.marketCap;
+  if (tvlToMcap > 3) leadScore += 10; // High TVL relative to market cap
+  
+  return {
+    isSignificantInflow,
+    priceLagging,
+    tvlAccelerating,
+    leadScore,
+    tvlChange7d: tvlData.tvlChange7d,
+    tvlChange30d: tvlData.tvlChange30d,
+    priceChange7d,
+    tvlToMcap,
+    divergence: recentTvlInflow - priceChange7d,
+    pattern: leadScore >= 50 ? 'TVL_LEADING' : leadScore >= 30 ? 'TVL_SLIGHT_LEAD' : 'NO_PATTERN'
+  };
+}
+
 // ============================================================================
 // SCAN FUNCTIONS - Detect & Classify Signals
 // ============================================================================
+
+/**
+ * SCAN: Yield Spike without Price Response
+ * Identifies protocols where APY has spiked but token price hasn't reacted
+ */
+async function scanYieldSpikes() {
+  logger.info('Scanning for yield spikes without price response...');
+  const signals = [];
+  
+  try {
+    const tokenIds = SCAN_PROTOCOLS.filter(p => p.hasYield).map(p => p.token);
+    const marketData = await fetchMarketData(tokenIds);
+    
+    for (const protocol of SCAN_PROTOCOLS.filter(p => p.hasYield)) {
+      const yieldData = await fetchYieldData(protocol.name);
+      const priceData = marketData[protocol.token];
+      
+      if (!yieldData || !priceData) continue;
+      
+      const yieldAnalysis = analyzeYieldDynamics(yieldData, priceData);
+      if (!yieldAnalysis) continue;
+      
+      // SIGNAL: Yield spike with lagging price
+      if (yieldAnalysis.hasYieldSpike && yieldAnalysis.priceResponseToYield === 'lagging') {
+        const spike = yieldAnalysis.spikeDetails;
+        const priceChange7d = priceData.priceChange7d || 0;
+        
+        // Calculate why market hasn't priced this in
+        const notPricedInReasons = [];
+        if (Math.abs(priceChange7d) < 3) notPricedInReasons.push('Token price essentially flat despite yield spike');
+        if (spike.apyChange > 50) notPricedInReasons.push('Yield change too recent (<72h) for market to fully digest');
+        if (priceData.volume24h / priceData.marketCap < 0.05) notPricedInReasons.push('Low trading volume = slow price discovery');
+        
+        // Formulate trade strategies
+        const directionalTrade = `Long ${priceData.symbol} spot. Entry: $${formatNumber(priceData.price)}. Target: +${Math.min(spike.apyChange * 0.3, 15).toFixed(1)}% as market prices in elevated yield. Stop: -8%.`;
+        
+        const yieldHedgeTrade = `Yield Capture + Hedge: Deposit into ${spike.poolName} pool (${spike.currentApy.toFixed(1)}% APY). Hedge token exposure by shorting ${priceData.symbol} perps (delta-neutral). Net yield: ~${(spike.currentApy * 0.7).toFixed(1)}% after funding costs.`;
+        
+        const confidence = calculateYieldSpikeConfidence(yieldAnalysis, priceData);
+        
+        // REJECT if confidence too low
+        if (confidence < SIGNAL_THRESHOLDS.MIN_CONFIDENCE) continue;
+        
+        const signal = formatSignal({
+          signalType: 'YIELD_SPIKE',
+          tradeType: 'YIELD_OPPORTUNITY',
+          asset: `${protocol.name} (${priceData.symbol})`,
+          direction: 'LONG',
+          conviction: confidence >= 65 ? 'HIGH' : confidence >= 50 ? 'MEDIUM' : 'LOW',
+          marketContext: `${protocol.name} yield spiked +${spike.apyChange.toFixed(0)}% to ${spike.currentApy.toFixed(1)}% APY. Pool: ${spike.poolName} on ${spike.chain}. Pool TVL: $${formatNumber(spike.tvl)}. Token price 7d: ${priceChange7d > 0 ? '+' : ''}${priceChange7d.toFixed(1)}%.`,
+          observedAnomaly: `Yield spike detected: APY jumped from ${spike.priorApy.toFixed(1)}% to ${spike.currentApy.toFixed(1)}% (+${spike.apyChange.toFixed(0)}%) but token price only moved ${priceChange7d.toFixed(1)}%. This is a ${(spike.apyChange / Math.max(1, Math.abs(priceChange7d))).toFixed(1)}x yield-to-price divergence.`,
+          whyMatters: `Elevated yields attract capital → increased protocol revenue → token value. ${notPricedInReasons.join('. ')}. Historically, yield spikes >25% lead to token appreciation within 1-2 weeks as yield farmers rotate in.`,
+          tradeExpression: directionalTrade,
+          alternativeTrade: yieldHedgeTrade,
+          timeHorizon: '3-10 days',
+          keyRisks: 'Yield could normalize quickly (emissions reduction), smart contract risk, impermanent loss (for LP pools), broader market selloff',
+          invalidationLevel: `APY drops below ${(spike.priorApy * 1.1).toFixed(1)}% or token price drops >12%`,
+          confidenceScore: confidence,
+          rawData: {
+            currentApy: spike.currentApy,
+            priorApy: spike.priorApy,
+            apyChange: spike.apyChange,
+            poolTvl: spike.tvl,
+            priceChange7d,
+            yieldTrend: yieldAnalysis.yieldTrend
+          }
+        });
+        
+        signals.push(signal);
+      }
+    }
+  } catch (err) {
+    logger.error('Yield spike scan failed', { error: err.message });
+  }
+  
+  return signals;
+}
+
+/**
+ * SCAN: TVL Inflows that historically precede token appreciation
+ * Identifies protocols with significant capital inflows where price hasn't caught up
+ */
+async function scanTVLInflowLead() {
+  logger.info('Scanning for TVL inflow leading price patterns...');
+  const signals = [];
+  
+  try {
+    const tokenIds = SCAN_PROTOCOLS.map(p => p.token);
+    const marketData = await fetchMarketData(tokenIds);
+    
+    for (const protocol of SCAN_PROTOCOLS) {
+      const tvlData = await fetchTVLData(protocol.slug);
+      const priceData = marketData[protocol.token];
+      
+      if (!tvlData || !priceData) continue;
+      
+      // Analyze TVL-price lead/lag relationship
+      const leadLagAnalysis = analyzeTVLPriceLeadLag(tvlData, priceData);
+      if (!leadLagAnalysis || leadLagAnalysis.pattern === 'NO_PATTERN') continue;
+      
+      // Only signal if TVL is clearly leading
+      if (leadLagAnalysis.leadScore < 45) continue;
+      
+      // Calculate why market hasn't priced this in
+      const notPricedInReasons = [];
+      if (leadLagAnalysis.priceLagging) {
+        notPricedInReasons.push(`Price (+${leadLagAnalysis.priceChange7d.toFixed(1)}%) lagging TVL inflow (+${leadLagAnalysis.tvlChange7d.toFixed(1)}%)`);
+      }
+      if (leadLagAnalysis.tvlAccelerating) {
+        notPricedInReasons.push('TVL inflows accelerating - market may not have recognized the trend');
+      }
+      if (leadLagAnalysis.tvlToMcap > 2) {
+        notPricedInReasons.push(`High TVL/MCap ratio (${leadLagAnalysis.tvlToMcap.toFixed(1)}x) suggests undervaluation`);
+      }
+      if (priceData.volume24h / priceData.marketCap < 0.06) {
+        notPricedInReasons.push('Low trading activity = slow price adjustment');
+      }
+      
+      // Formulate trade strategies
+      const expectedCatchup = Math.min(leadLagAnalysis.divergence * 0.5, 20);
+      const directionalTrade = `Long ${priceData.symbol} spot. TVL leading price by ${leadLagAnalysis.divergence.toFixed(1)}%. Target: +${expectedCatchup.toFixed(1)}% catch-up move over 1-2 weeks.`;
+      
+      // For yield-bearing protocols, add yield capture strategy
+      let yieldHedgeTrade = null;
+      if (protocol.hasYield) {
+        yieldHedgeTrade = `Yield + Appreciation: Deposit assets into ${protocol.name} (earn yield while gaining token exposure). Or: Long token + short perps to capture TVL-driven appreciation while earning funding.`;
+      }
+      
+      const confidence = calculateTVLLeadConfidence(leadLagAnalysis, tvlData, priceData);
+      
+      // REJECT if confidence too low
+      if (confidence < SIGNAL_THRESHOLDS.MIN_CONFIDENCE) continue;
+      
+      const signal = formatSignal({
+        signalType: 'TVL_INFLOW_LEAD',
+        tradeType: 'FUNDAMENTAL_LEAD',
+        asset: `${protocol.name} (${priceData.symbol})`,
+        direction: 'LONG',
+        conviction: confidence >= 65 ? 'HIGH' : confidence >= 50 ? 'MEDIUM' : 'LOW',
+        marketContext: `${protocol.name} TVL: $${formatNumber(tvlData.currentTvl)}. 7d TVL: +${leadLagAnalysis.tvlChange7d.toFixed(1)}% | 30d TVL: +${leadLagAnalysis.tvlChange30d.toFixed(1)}%. Token 7d: ${leadLagAnalysis.priceChange7d > 0 ? '+' : ''}${leadLagAnalysis.priceChange7d.toFixed(1)}%. TVL/MCap: ${leadLagAnalysis.tvlToMcap.toFixed(2)}x.`,
+        observedAnomaly: `TVL inflows (+${leadLagAnalysis.tvlChange7d.toFixed(1)}%) significantly outpacing token price (+${leadLagAnalysis.priceChange7d.toFixed(1)}%). Divergence: ${leadLagAnalysis.divergence.toFixed(1)}%. ${leadLagAnalysis.tvlAccelerating ? 'TVL growth is ACCELERATING.' : 'TVL growth is sustained.'}`,
+        whyMatters: `Historically, sustained TVL inflows precede token appreciation by 1-3 weeks. Capital flows into protocol → increased revenue/fees → token accrual → price catch-up. ${notPricedInReasons.join('. ')}.`,
+        tradeExpression: directionalTrade,
+        alternativeTrade: yieldHedgeTrade,
+        timeHorizon: '1-3 weeks',
+        keyRisks: 'Mercenary capital (incentivized TVL that will leave), token inflation diluting gains, smart contract exploit, broader market correction',
+        invalidationLevel: `TVL drops >15% from current or price falls below $${formatNumber(priceData.price * 0.88)}`,
+        confidenceScore: confidence,
+        rawData: {
+          tvl: tvlData.currentTvl,
+          tvlChange7d: leadLagAnalysis.tvlChange7d,
+          tvlChange30d: leadLagAnalysis.tvlChange30d,
+          priceChange7d: leadLagAnalysis.priceChange7d,
+          divergence: leadLagAnalysis.divergence,
+          tvlToMcap: leadLagAnalysis.tvlToMcap,
+          leadScore: leadLagAnalysis.leadScore
+        }
+      });
+      
+      signals.push(signal);
+    }
+  } catch (err) {
+    logger.error('TVL inflow lead scan failed', { error: err.message });
+  }
+  
+  return signals;
+}
+
+/**
+ * Calculate confidence for yield spike signals
+ */
+function calculateYieldSpikeConfidence(yieldAnalysis, priceData) {
+  let score = 35; // Base score
+  
+  const spike = yieldAnalysis.spikeDetails;
+  if (!spike) return 0;
+  
+  // Larger yield spike = more confidence
+  if (spike.apyChange > 100) score += 20;
+  else if (spike.apyChange > 50) score += 15;
+  else if (spike.apyChange > 25) score += 8;
+  
+  // Higher absolute APY = more attractive
+  if (spike.currentApy > 20) score += 12;
+  else if (spike.currentApy > 10) score += 8;
+  else if (spike.currentApy > 5) score += 4;
+  
+  // Price hasn't moved = clearer opportunity
+  const priceMove = Math.abs(priceData.priceChange7d || 0);
+  if (priceMove < 2) score += 15;
+  else if (priceMove < 5) score += 8;
+  
+  // Pool TVL health
+  if (spike.tvl > 100e6) score += 10; // >$100M TVL
+  else if (spike.tvl > 10e6) score += 5;
+  
+  // Discount for uncertainty
+  score -= 10; // Yield sustainability uncertain
+  
+  return Math.min(80, score);
+}
+
+/**
+ * Calculate confidence for TVL inflow lead signals
+ */
+function calculateTVLLeadConfidence(leadLagAnalysis, tvlData, priceData) {
+  let score = 30; // Base score
+  
+  // Higher lead score = more confidence
+  if (leadLagAnalysis.leadScore >= 70) score += 25;
+  else if (leadLagAnalysis.leadScore >= 50) score += 15;
+  else if (leadLagAnalysis.leadScore >= 30) score += 8;
+  
+  // Larger divergence = stronger signal
+  if (leadLagAnalysis.divergence > 20) score += 15;
+  else if (leadLagAnalysis.divergence > 10) score += 10;
+  else if (leadLagAnalysis.divergence > 5) score += 5;
+  
+  // TVL acceleration adds confidence
+  if (leadLagAnalysis.tvlAccelerating) score += 12;
+  
+  // Sustained inflow (30d > 7d extrapolated)
+  if (tvlData.tvlChange30d > tvlData.tvlChange7d * 3) score += 10;
+  
+  // Higher TVL = more reliable
+  if (tvlData.currentTvl > 1e9) score += 8;
+  else if (tvlData.currentTvl > 100e6) score += 4;
+  
+  // Price not already pumping
+  if (priceData.priceChange7d < 3) score += 8;
+  
+  // Discount for mercenary capital risk
+  score -= 12;
+  
+  return Math.min(80, score);
+}
 
 /**
  * SCAN: Funding/OI-based positioning signals
@@ -733,28 +1202,36 @@ class AlphaScanner {
   constructor(config = {}) {
     this.config = {
       minConfidence: SIGNAL_THRESHOLDS.MIN_CONFIDENCE,
-      maxSignals: 10,
+      maxSignals: 15,
+      includeYieldScans: true,
       ...config
     };
   }
   
   /**
    * Run all scans and return ranked signals
-   * Includes new positioning-based signal detection
+   * Includes: Positioning, TVL, Yield Spikes, TVL Inflow Lead
    */
   async scan() {
-    logger.info('Starting comprehensive alpha scan...');
+    logger.info('Starting comprehensive alpha scan (including DeFi yield analysis)...');
     const startTime = Date.now();
     
     const allSignals = [];
     
-    // Run all scans in parallel (including new positioning analysis)
-    const [positioningSignals, tvlSignals] = await Promise.all([
+    // Run all scans in parallel
+    const scanPromises = [
       scanPositioningSignals(),
       scanTVLLag()
-    ]);
+    ];
     
-    allSignals.push(...positioningSignals, ...tvlSignals);
+    // Add yield scans if enabled
+    if (this.config.includeYieldScans) {
+      scanPromises.push(scanYieldSpikes());
+      scanPromises.push(scanTVLInflowLead());
+    }
+    
+    const results = await Promise.all(scanPromises);
+    results.forEach(signals => allSignals.push(...signals));
     
     // Apply strict filtering - REJECT weak or ambiguous signals
     const filtered = allSignals
@@ -765,7 +1242,7 @@ class AlphaScanner {
         // Must have valid trade type
         if (!s.tradeType || s.tradeType === 'UNKNOWN') return false;
         
-        // Must have conviction level
+        // Must have conviction level (reject LOW unless explicitly configured)
         if (s.conviction && s.conviction === 'LOW') return false;
         
         return true;
@@ -798,7 +1275,8 @@ class AlphaScanner {
         scannedProtocols: SCAN_PROTOCOLS.length,
         timestamp: new Date().toISOString(),
         executionTimeMs: Date.now() - startTime,
-        signalTypes: this.countByType(filtered)
+        signalTypes: this.countByType(filtered),
+        includesYieldAnalysis: this.config.includeYieldScans
       }
     };
   }
@@ -812,15 +1290,26 @@ class AlphaScanner {
         return await scanPositioningSignals();
       case 'tvl_lag':
         return await scanTVLLag();
+      case 'yield_spike':
+        return await scanYieldSpikes();
+      case 'tvl_inflow_lead':
+        return await scanTVLInflowLead();
       case 'fade':
-        const signals = await scanPositioningSignals();
-        return signals.filter(s => s.tradeType === 'FADE_TRADE');
+        const fadeSignals = await scanPositioningSignals();
+        return fadeSignals.filter(s => s.tradeType === 'FADE_TRADE');
       case 'squeeze':
         const squeezeSignals = await scanPositioningSignals();
         return squeezeSignals.filter(s => s.tradeType === 'SQUEEZE_SETUP');
       case 'vol_expansion':
         const volSignals = await scanPositioningSignals();
         return volSignals.filter(s => s.tradeType === 'VOL_EXPANSION');
+      case 'yield':
+        // All yield-related signals
+        const [yieldSpikes, tvlLead] = await Promise.all([
+          scanYieldSpikes(),
+          scanTVLInflowLead()
+        ]);
+        return [...yieldSpikes, ...tvlLead];
       default:
         return [];
     }
@@ -835,29 +1324,48 @@ class AlphaScanner {
   
   generateSummary(signals) {
     if (signals.length === 0) {
-      return 'No actionable signals detected. Market positioning appears balanced with no significant anomalies. Waiting for clearer setups.';
+      return 'No actionable signals detected. Market positioning appears balanced. DeFi yields stable. Waiting for clearer setups.';
     }
     
     const byType = this.countByType(signals);
     
     const topSignal = signals[0];
     const typeBreakdown = Object.entries(byType)
-      .map(([type, count]) => `${type.replace('_', ' ')}: ${count}`)
+      .map(([type, count]) => `${type.replace(/_/g, ' ')}: ${count}`)
       .join(', ');
     
     const highConviction = signals.filter(s => s.conviction === 'HIGH').length;
+    const yieldSignals = signals.filter(s => 
+      s.signalType === 'YIELD_SPIKE' || s.signalType === 'TVL_INFLOW_LEAD'
+    ).length;
     
-    return `Found ${signals.length} actionable signals (${highConviction} high conviction). Top: ${topSignal.asset} ${topSignal.tradeType || topSignal.signalType} (${topSignal.confidenceScore}% confidence, ${topSignal.conviction || 'MEDIUM'} conviction). Breakdown: ${typeBreakdown}`;
+    let summary = `Found ${signals.length} actionable signals (${highConviction} high conviction).`;
+    if (yieldSignals > 0) {
+      summary += ` Including ${yieldSignals} DeFi yield opportunities.`;
+    }
+    summary += ` Top: ${topSignal.asset} ${topSignal.tradeType || topSignal.signalType} (${topSignal.confidenceScore}% confidence). Breakdown: ${typeBreakdown}`;
+    
+    return summary;
   }
 }
 
 module.exports = {
   AlphaScanner,
+  // Scan functions
   scanPositioningSignals,
   scanTVLLag,
+  scanYieldSpikes,
+  scanTVLInflowLead,
+  // Analysis functions
   analyzePositioning,
+  analyzeYieldDynamics,
+  analyzeTVLPriceLeadLag,
   classifyTradeSetup,
+  // Utilities
   formatSignal,
+  fetchYieldData,
+  fetchTVLData,
+  // Constants
   SCAN_ASSETS,
   SCAN_PROTOCOLS,
   SIGNAL_THRESHOLDS
