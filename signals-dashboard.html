@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Signals - Performance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        button {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            color: #0a0a1a;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4444, #ff6b6b);
+            color: #fff;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .stat-card label {
+            display: block;
+            color: #888;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .stat-card .value.positive { color: #00ff88; }
+        .stat-card .value.negative { color: #ff4444; }
+        .stat-card .value.neutral { color: #00d4ff; }
+
+        .stat-card .subtext {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        /* Main Layout */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card Styles */
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            color: #00d4ff;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+        }
+
+        /* Signal List */
+        .signal-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .signal-item {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid;
+            transition: transform 0.2s;
+        }
+
+        .signal-item:hover {
+            transform: translateX(4px);
+        }
+
+        .signal-item.high-score { border-color: #00ff88; }
+        .signal-item.medium-score { border-color: #ffaa00; }
+        .signal-item.low-score { border-color: #ff4444; }
+
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .signal-protocol {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .signal-score {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .signal-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .signal-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .signal-actions button {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+        }
+
+        /* Position List */
+        .position-item {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .position-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .position-pnl {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .position-pnl.positive { color: #00ff88; }
+        .position-pnl.negative { color: #ff4444; }
+
+        .position-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .position-details div {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+
+        .position-details label {
+            display: block;
+            color: #666;
+            font-size: 0.7rem;
+            margin-bottom: 0.2rem;
+        }
+
+        /* Performance Chart */
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+
+        /* Strategy Performance */
+        .strategy-grid {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .strategy-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .strategy-name {
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+
+        .strategy-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00ff88;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status Badge */
+        .badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge.active { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
+        .badge.executed { background: rgba(0, 212, 255, 0.2); color: #00d4ff; }
+        .badge.expired { background: rgba(255, 68, 68, 0.2); color: #ff4444; }
+        .badge.open { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
+        .badge.closed { background: rgba(136, 136, 136, 0.2); color: #888; }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Alpha Signals Dashboard</h1>
+            <div class="header-actions">
+                <button class="btn-secondary" onclick="refreshData()">🔄 Refresh</button>
+                <button class="btn-primary" onclick="autoExecuteSignals()">⚡ Auto-Execute</button>
+            </div>
+        </header>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <label>Portfolio Value</label>
+                <div class="value neutral" id="portfolioValue">$0</div>
+                <div class="subtext" id="portfolioPnl">-</div>
+            </div>
+            <div class="stat-card">
+                <label>Total P&L</label>
+                <div class="value" id="totalPnl">$0</div>
+                <div class="subtext" id="totalPnlPct">0%</div>
+            </div>
+            <div class="stat-card">
+                <label>Win Rate</label>
+                <div class="value neutral" id="winRate">0%</div>
+                <div class="subtext" id="winLossCount">0W / 0L</div>
+            </div>
+            <div class="stat-card">
+                <label>Active Signals</label>
+                <div class="value neutral" id="activeSignals">0</div>
+                <div class="subtext" id="totalSignals">0 total</div>
+            </div>
+            <div class="stat-card">
+                <label>Open Positions</label>
+                <div class="value neutral" id="openPositions">0</div>
+                <div class="subtext" id="unrealizedPnl">$0 unrealized</div>
+            </div>
+            <div class="stat-card">
+                <label>Profit Factor</label>
+                <div class="value neutral" id="profitFactor">0.00</div>
+                <div class="subtext" id="sharpeRatio">Sharpe: 0</div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Left Column -->
+            <div class="left-column">
+                <!-- Signals Card -->
+                <div class="card">
+                    <h2>🎯 Alpha Signals</h2>
+                    <div class="tabs">
+                        <button class="tab active" data-tab="active" onclick="switchTab('active')">Active</button>
+                        <button class="tab" data-tab="executed" onclick="switchTab('executed')">Executed</button>
+                        <button class="tab" data-tab="all" onclick="switchTab('all')">All</button>
+                    </div>
+                    <div class="signal-list" id="signalList">
+                        <div class="loading">Loading signals...</div>
+                    </div>
+                </div>
+
+                <!-- Positions Card -->
+                <div class="card">
+                    <h2>💼 Positions</h2>
+                    <div class="tabs">
+                        <button class="tab active" data-tab="open" onclick="switchPositionTab('open')">Open</button>
+                        <button class="tab" data-tab="closed" onclick="switchPositionTab('closed')">Closed</button>
+                    </div>
+                    <div class="signal-list" id="positionList">
+                        <div class="loading">Loading positions...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="right-column">
+                <!-- Performance Chart -->
+                <div class="card">
+                    <h2>📈 P&L Over Time</h2>
+                    <div class="chart-container">
+                        <canvas id="pnlChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Strategy Performance -->
+                <div class="card">
+                    <h2>🎮 Strategy Performance</h2>
+                    <div class="strategy-grid" id="strategyGrid">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Protocol Performance -->
+                <div class="card">
+                    <h2>🏛️ Top Protocols</h2>
+                    <div class="strategy-grid" id="protocolGrid">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase config - update with your credentials
+        const SUPABASE_URL = 'https://ypqqutnxetrrhhwneyni.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwcXF1dG54ZXRycmhod25leW5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0MDk5OTgsImV4cCI6MjA1MDk4NTk5OH0.example';
+        
+        let supabase;
+        let pnlChart;
+        let currentSignalTab = 'active';
+        let currentPositionTab = 'open';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initSupabase();
+            refreshData();
+            initChart();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(refreshData, 30000);
+        });
+
+        function initSupabase() {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        async function refreshData() {
+            await Promise.all([
+                loadStats(),
+                loadSignals(),
+                loadPositions(),
+                loadStrategyPerformance(),
+                loadProtocolPerformance(),
+                loadPnlHistory()
+            ]);
+        }
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                // Get portfolio
+                const { data: portfolio } = await supabase
+                    .from('mock_portfolio')
+                    .select('*')
+                    .limit(1)
+                    .single();
+
+                // Get open positions for unrealized P&L
+                const { data: openPositions } = await supabase
+                    .from('mock_positions')
+                    .select('unrealized_pnl')
+                    .eq('status', 'OPEN');
+
+                // Get closed positions for metrics
+                const { data: closedPositions } = await supabase
+                    .from('mock_positions')
+                    .select('realized_pnl')
+                    .eq('status', 'CLOSED');
+
+                // Get signal counts
+                const { count: activeCount } = await supabase
+                    .from('alpha_signals')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'ACTIVE');
+
+                const { count: totalSignals } = await supabase
+                    .from('alpha_signals')
+                    .select('*', { count: 'exact', head: true });
+
+                if (portfolio) {
+                    const unrealizedPnl = openPositions?.reduce((sum, p) => sum + parseFloat(p.unrealized_pnl || 0), 0) || 0;
+                    const realizedPnl = parseFloat(portfolio.total_realized_pnl || 0);
+                    const totalPnl = realizedPnl + unrealizedPnl;
+                    const totalValue = parseFloat(portfolio.available_capital || 0) + 
+                                      parseFloat(portfolio.allocated_capital || 0) + 
+                                      unrealizedPnl;
+                    const pnlPct = (totalPnl / parseFloat(portfolio.total_capital)) * 100;
+
+                    // Calculate win rate
+                    const wins = portfolio.winning_trades || 0;
+                    const losses = portfolio.losing_trades || 0;
+                    const winRate = (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0;
+
+                    // Calculate profit factor
+                    const winningPnl = closedPositions?.filter(p => parseFloat(p.realized_pnl) > 0)
+                        .reduce((sum, p) => sum + parseFloat(p.realized_pnl), 0) || 0;
+                    const losingPnl = Math.abs(closedPositions?.filter(p => parseFloat(p.realized_pnl) < 0)
+                        .reduce((sum, p) => sum + parseFloat(p.realized_pnl), 0) || 0);
+                    const profitFactor = losingPnl > 0 ? winningPnl / losingPnl : winningPnl > 0 ? Infinity : 0;
+
+                    // Update UI
+                    document.getElementById('portfolioValue').textContent = `$${totalValue.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+                    document.getElementById('portfolioPnl').textContent = `Started: $${parseFloat(portfolio.total_capital).toLocaleString()}`;
+                    
+                    const totalPnlEl = document.getElementById('totalPnl');
+                    totalPnlEl.textContent = `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+                    totalPnlEl.className = `value ${totalPnl >= 0 ? 'positive' : 'negative'}`;
+                    document.getElementById('totalPnlPct').textContent = `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%`;
+
+                    document.getElementById('winRate').textContent = `${winRate.toFixed(1)}%`;
+                    document.getElementById('winLossCount').textContent = `${wins}W / ${losses}L`;
+
+                    document.getElementById('activeSignals').textContent = activeCount || 0;
+                    document.getElementById('totalSignals').textContent = `${totalSignals || 0} total`;
+
+                    document.getElementById('openPositions').textContent = openPositions?.length || 0;
+                    document.getElementById('unrealizedPnl').textContent = `${unrealizedPnl >= 0 ? '+' : ''}$${unrealizedPnl.toFixed(2)} unrealized`;
+
+                    document.getElementById('profitFactor').textContent = profitFactor === Infinity ? '∞' : profitFactor.toFixed(2);
+                }
+            } catch (err) {
+                console.error('Failed to load stats:', err);
+            }
+        }
+
+        // Load signals
+        async function loadSignals() {
+            const container = document.getElementById('signalList');
+            
+            try {
+                let query = supabase
+                    .from('alpha_signals')
+                    .select('*')
+                    .order('generated_at', { ascending: false })
+                    .limit(50);
+
+                if (currentSignalTab === 'active') {
+                    query = query.eq('status', 'ACTIVE');
+                } else if (currentSignalTab === 'executed') {
+                    query = query.eq('status', 'EXECUTED');
+                }
+
+                const { data: signals, error } = await query;
+
+                if (error) throw error;
+
+                if (!signals || signals.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                            </svg>
+                            <p>No signals found</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = signals.map(signal => {
+                    const scoreClass = signal.alpha_score >= 70 ? 'high-score' : 
+                                      signal.alpha_score >= 50 ? 'medium-score' : 'low-score';
+                    const time = new Date(signal.generated_at).toLocaleString();
+                    
+                    return `
+                        <div class="signal-item ${scoreClass}">
+                            <div class="signal-header">
+                                <span class="signal-protocol">${signal.protocol}</span>
+                                <span class="signal-score">Score: ${signal.alpha_score}</span>
+                            </div>
+                            <div class="signal-meta">
+                                <span>📍 ${signal.chain}</span>
+                                <span>📊 ${signal.signal_type}</span>
+                                <span>🎯 ${signal.action}</span>
+                                <span class="badge ${signal.status.toLowerCase()}">${signal.status}</span>
+                            </div>
+                            <div class="signal-meta" style="margin-top: 0.5rem;">
+                                <span>💰 Entry: $${parseFloat(signal.entry_price || 0).toFixed(6)}</span>
+                                <span>🎯 Target: $${parseFloat(signal.target_price || 0).toFixed(6)}</span>
+                                <span>🛑 Stop: $${parseFloat(signal.stop_loss_price || 0).toFixed(6)}</span>
+                            </div>
+                            <div class="signal-meta" style="margin-top: 0.25rem; color: #666;">
+                                <span>⏰ ${time}</span>
+                                <span>📈 Expected: +${signal.expected_return_pct || 0}%</span>
+                            </div>
+                            ${signal.status === 'ACTIVE' ? `
+                                <div class="signal-actions">
+                                    <button class="btn-primary" onclick="executeSignal('${signal.signal_id}')">Execute</button>
+                                    <button class="btn-secondary" onclick="viewSignalDetails('${signal.signal_id}')">Details</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Failed to load signals:', err);
+                container.innerHTML = '<div class="empty-state">Failed to load signals</div>';
+            }
+        }
+
+        // Load positions
+        async function loadPositions() {
+            const container = document.getElementById('positionList');
+            
+            try {
+                const status = currentPositionTab === 'open' ? 'OPEN' : 'CLOSED';
+                const { data: positions, error } = await supabase
+                    .from('mock_positions')
+                    .select('*')
+                    .eq('status', status)
+                    .order('entry_timestamp', { ascending: false })
+                    .limit(50);
+
+                if (error) throw error;
+
+                if (!positions || positions.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <p>No ${currentPositionTab} positions</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = positions.map(pos => {
+                    const pnl = currentPositionTab === 'open' 
+                        ? parseFloat(pos.unrealized_pnl || 0) 
+                        : parseFloat(pos.realized_pnl || 0);
+                    const pnlPct = currentPositionTab === 'open'
+                        ? parseFloat(pos.unrealized_pnl_pct || 0)
+                        : parseFloat(pos.realized_pnl_pct || 0);
+                    const pnlClass = pnl >= 0 ? 'positive' : 'negative';
+
+                    return `
+                        <div class="position-item">
+                            <div class="position-header">
+                                <div>
+                                    <strong>${pos.protocol}</strong>
+                                    <span class="badge ${pos.position_type.toLowerCase()}">${pos.position_type}</span>
+                                </div>
+                                <div class="position-pnl ${pnlClass}">
+                                    ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pnlPct.toFixed(2)}%)
+                                </div>
+                            </div>
+                            <div class="position-details">
+                                <div>
+                                    <label>Entry Price</label>
+                                    $${parseFloat(pos.entry_price).toFixed(6)}
+                                </div>
+                                <div>
+                                    <label>Current/Exit</label>
+                                    $${parseFloat(pos.current_price || pos.exit_price || 0).toFixed(6)}
+                                </div>
+                                <div>
+                                    <label>Size</label>
+                                    $${parseFloat(pos.entry_amount).toFixed(2)}
+                                </div>
+                            </div>
+                            ${currentPositionTab === 'open' ? `
+                                <div class="signal-actions">
+                                    <button class="btn-danger" onclick="closePosition('${pos.position_id}')">Close</button>
+                                </div>
+                            ` : `
+                                <div class="signal-meta" style="margin-top: 0.5rem; color: #666;">
+                                    <span>Exit: ${pos.exit_reason}</span>
+                                    <span>Closed: ${new Date(pos.exit_timestamp).toLocaleString()}</span>
+                                </div>
+                            `}
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Failed to load positions:', err);
+                container.innerHTML = '<div class="empty-state">Failed to load positions</div>';
+            }
+        }
+
+        // Load strategy performance
+        async function loadStrategyPerformance() {
+            const container = document.getElementById('strategyGrid');
+            
+            try {
+                const { data: strategies, error } = await supabase
+                    .from('strategy_performance')
+                    .select('*')
+                    .order('total_pnl', { ascending: false });
+
+                if (error) throw error;
+
+                if (!strategies || strategies.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No strategy data yet</div>';
+                    return;
+                }
+
+                container.innerHTML = strategies.map(s => `
+                    <div class="strategy-item">
+                        <span class="strategy-name">${s.strategy_type}</span>
+                        <div class="strategy-stats">
+                            <span style="color: ${parseFloat(s.total_pnl) >= 0 ? '#00ff88' : '#ff4444'}">
+                                ${parseFloat(s.total_pnl) >= 0 ? '+' : ''}$${parseFloat(s.total_pnl).toFixed(2)}
+                            </span>
+                            <span style="color: #888">${s.win_rate}% WR</span>
+                            <span style="color: #666">${s.total_positions} trades</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Failed to load strategy performance:', err);
+            }
+        }
+
+        // Load protocol performance
+        async function loadProtocolPerformance() {
+            const container = document.getElementById('protocolGrid');
+            
+            try {
+                const { data: protocols, error } = await supabase
+                    .from('protocol_performance')
+                    .select('*')
+                    .order('total_pnl', { ascending: false })
+                    .limit(5);
+
+                if (error) throw error;
+
+                if (!protocols || protocols.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No protocol data yet</div>';
+                    return;
+                }
+
+                container.innerHTML = protocols.map(p => `
+                    <div class="strategy-item">
+                        <span class="strategy-name">${p.protocol}</span>
+                        <div class="strategy-stats">
+                            <span style="color: ${parseFloat(p.total_pnl) >= 0 ? '#00ff88' : '#ff4444'}">
+                                ${parseFloat(p.total_pnl) >= 0 ? '+' : ''}$${parseFloat(p.total_pnl).toFixed(2)}
+                            </span>
+                            <span style="color: #888">${p.win_rate}% WR</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Failed to load protocol performance:', err);
+            }
+        }
+
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('pnlChart').getContext('2d');
+            pnlChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Cumulative P&L',
+                        data: [],
+                        borderColor: '#00ff88',
+                        backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#666' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { 
+                                color: '#666',
+                                callback: value => '$' + value
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load P&L history for chart
+        async function loadPnlHistory() {
+            try {
+                const { data: positions, error } = await supabase
+                    .from('mock_positions')
+                    .select('exit_timestamp, realized_pnl')
+                    .eq('status', 'CLOSED')
+                    .order('exit_timestamp', { ascending: true })
+                    .limit(100);
+
+                if (error) throw error;
+                if (!positions || positions.length === 0) return;
+
+                let cumulative = 0;
+                const labels = [];
+                const data = [];
+
+                positions.forEach(p => {
+                    cumulative += parseFloat(p.realized_pnl || 0);
+                    labels.push(new Date(p.exit_timestamp).toLocaleDateString());
+                    data.push(cumulative);
+                });
+
+                pnlChart.data.labels = labels;
+                pnlChart.data.datasets[0].data = data;
+                pnlChart.update();
+            } catch (err) {
+                console.error('Failed to load P&L history:', err);
+            }
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            currentSignalTab = tab;
+            document.querySelectorAll('.tabs button[data-tab]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+            loadSignals();
+        }
+
+        function switchPositionTab(tab) {
+            currentPositionTab = tab;
+            document.querySelectorAll('.card:nth-child(2) .tabs button').forEach((btn, idx) => {
+                btn.classList.toggle('active', (tab === 'open' && idx === 0) || (tab === 'closed' && idx === 1));
+            });
+            loadPositions();
+        }
+
+        // Actions
+        async function executeSignal(signalId) {
+            if (!confirm('Execute this signal?')) return;
+            
+            // This would typically call your backend API
+            alert(`Signal ${signalId} queued for execution. Implement backend API to execute.`);
+            refreshData();
+        }
+
+        async function closePosition(positionId) {
+            if (!confirm('Close this position?')) return;
+            
+            // This would typically call your backend API
+            alert(`Position ${positionId} queued for closing. Implement backend API to close.`);
+            refreshData();
+        }
+
+        function viewSignalDetails(signalId) {
+            // Could open a modal with full signal details
+            alert(`View details for signal: ${signalId}`);
+        }
+
+        async function autoExecuteSignals() {
+            if (!confirm('Auto-execute all signals with alpha score >= 70?')) return;
+            alert('Auto-execution queued. Implement backend API for batch execution.');
+        }
+    </script>
+</body>
+</html>
