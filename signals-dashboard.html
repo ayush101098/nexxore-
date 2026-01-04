@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alpha Signals - Nexxore</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -74,6 +73,8 @@
             margin-bottom: 2rem;
             padding-bottom: 1rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         h1 {
@@ -87,14 +88,15 @@
 
         .header-actions {
             display: flex;
-            gap: 1rem;
+            gap: 0.75rem;
+            flex-wrap: wrap;
         }
 
         button {
             padding: 0.6rem 1.2rem;
             border: none;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
@@ -399,6 +401,66 @@
             margin-bottom: 1rem;
             opacity: 0.5;
         }
+
+        /* Status Banner */
+        .status-banner {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .status-banner.success {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: #00ff88;
+        }
+        .status-banner.error {
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            color: #ff4444;
+        }
+        .status-banner.info {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: #00d4ff;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 0.9rem;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Signal Reasoning */
+        .signal-reasoning {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: #aaa;
+            line-height: 1.4;
+        }
+
+        /* Position Badge Types */
+        .badge.long { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
+        .badge.short { background: rgba(255, 136, 0, 0.2); color: #ff8800; }
     </style>
 </head>
 <body>
@@ -415,11 +477,16 @@
     </nav>
 
     <div class="container">
+        <!-- Status Banner -->
+        <div id="statusBanner" class="status-banner info" style="display: none;"></div>
+
         <header>
             <h1>📊 Alpha Signals Dashboard</h1>
             <div class="header-actions">
+                <button class="btn-secondary" onclick="fetchLiveSignals()">🔍 Fetch Signals</button>
                 <button class="btn-secondary" onclick="refreshData()">🔄 Refresh</button>
                 <button class="btn-primary" onclick="autoExecuteSignals()">⚡ Auto-Execute</button>
+                <button class="btn-danger" onclick="resetPortfolio()">🗑️ Reset</button>
             </div>
         </header>
 
@@ -516,450 +583,821 @@
     </div>
 
     <script>
-        // Supabase config - update with your credentials
-        const SUPABASE_URL = 'https://ypqqutnxetrrhhwneyni.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlwcXF1dG54ZXRycmhod25leW5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0MDk5OTgsImV4cCI6MjA1MDk4NTk5OH0.example';
+        // ========================================
+        // DATA STORE (localStorage-based - works without backend)
+        // ========================================
+        const STORAGE_KEYS = {
+            SIGNALS: 'nexxore_signals',
+            POSITIONS: 'nexxore_positions',
+            PORTFOLIO: 'nexxore_portfolio',
+            PNL_HISTORY: 'nexxore_pnl_history'
+        };
+
+        // Portfolio management
+        function getPortfolio() {
+            const stored = localStorage.getItem(STORAGE_KEYS.PORTFOLIO);
+            if (stored) return JSON.parse(stored);
+            
+            const initial = {
+                totalCapital: 100000,
+                availableCapital: 100000,
+                allocatedCapital: 0,
+                realizedPnl: 0,
+                totalTrades: 0,
+                winningTrades: 0,
+                losingTrades: 0
+            };
+            savePortfolio(initial);
+            return initial;
+        }
+
+        function savePortfolio(portfolio) {
+            localStorage.setItem(STORAGE_KEYS.PORTFOLIO, JSON.stringify(portfolio));
+        }
+
+        function getSignals() {
+            const stored = localStorage.getItem(STORAGE_KEYS.SIGNALS);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        function saveSignals(signals) {
+            localStorage.setItem(STORAGE_KEYS.SIGNALS, JSON.stringify(signals));
+        }
+
+        function getPositions() {
+            const stored = localStorage.getItem(STORAGE_KEYS.POSITIONS);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        function savePositions(positions) {
+            localStorage.setItem(STORAGE_KEYS.POSITIONS, JSON.stringify(positions));
+        }
+
+        function getPnlHistory() {
+            const stored = localStorage.getItem(STORAGE_KEYS.PNL_HISTORY);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        function savePnlHistory(history) {
+            localStorage.setItem(STORAGE_KEYS.PNL_HISTORY, JSON.stringify(history));
+        }
+
+        // ========================================
+        // LIVE SIGNAL GENERATION (Simulated Real Data)
+        // ========================================
         
-        let supabase;
+        const PROTOCOLS = [
+            { name: 'AAVE', chain: 'ethereum', type: 'lending', tvl: 12500000000, token: 'AAVE' },
+            { name: 'Uniswap', chain: 'ethereum', type: 'dex', tvl: 5800000000, token: 'UNI' },
+            { name: 'Lido', chain: 'ethereum', type: 'liquid-staking', tvl: 28000000000, token: 'LDO' },
+            { name: 'Curve', chain: 'ethereum', type: 'dex', tvl: 2100000000, token: 'CRV' },
+            { name: 'Compound', chain: 'ethereum', type: 'lending', tvl: 2800000000, token: 'COMP' },
+            { name: 'GMX', chain: 'arbitrum', type: 'perps', tvl: 520000000, token: 'GMX' },
+            { name: 'Pendle', chain: 'ethereum', type: 'yield', tvl: 4200000000, token: 'PENDLE' },
+            { name: 'Eigenlayer', chain: 'ethereum', type: 'restaking', tvl: 15000000000, token: 'EIGEN' },
+            { name: 'Morpho', chain: 'ethereum', type: 'lending', tvl: 3200000000, token: 'MORPHO' },
+            { name: 'Ethena', chain: 'ethereum', type: 'stablecoin', tvl: 5500000000, token: 'ENA' },
+            { name: 'Maker', chain: 'ethereum', type: 'cdp', tvl: 8100000000, token: 'MKR' },
+            { name: 'Rocket Pool', chain: 'ethereum', type: 'staking', tvl: 3800000000, token: 'RPL' },
+            { name: 'Jupiter', chain: 'solana', type: 'dex', tvl: 1200000000, token: 'JUP' },
+            { name: 'Raydium', chain: 'solana', type: 'dex', tvl: 680000000, token: 'RAY' },
+            { name: 'dYdX', chain: 'dydx', type: 'perps', tvl: 480000000, token: 'DYDX' }
+        ];
+
+        const YIELD_DATA = {
+            'AAVE': { apy: 4.2, change: 0.3, price: 245.50 },
+            'Uniswap': { apy: 12.5, change: -0.8, price: 11.25 },
+            'Lido': { apy: 3.8, change: 0.1, price: 1.85 },
+            'Curve': { apy: 8.2, change: 1.2, price: 0.42 },
+            'Compound': { apy: 3.5, change: -0.2, price: 52.30 },
+            'GMX': { apy: 18.5, change: 2.1, price: 28.75 },
+            'Pendle': { apy: 25.0, change: 5.5, price: 4.85 },
+            'Eigenlayer': { apy: 6.2, change: 0.8, price: 3.20 },
+            'Morpho': { apy: 5.8, change: 0.4, price: 2.15 },
+            'Ethena': { apy: 27.0, change: -3.2, price: 0.85 },
+            'Maker': { apy: 8.0, change: 0.5, price: 1450.00 },
+            'Rocket Pool': { apy: 3.2, change: 0.05, price: 18.50 },
+            'Jupiter': { apy: 15.0, change: 2.3, price: 0.92 },
+            'Raydium': { apy: 22.0, change: 4.1, price: 1.75 },
+            'dYdX': { apy: 22.0, change: -1.5, price: 1.45 }
+        };
+
+        async function fetchLiveSignals() {
+            showStatus('🔍 Scanning DeFi protocols for alpha opportunities...', 'info');
+            document.getElementById('signalList').innerHTML = '<div class="loading">Analyzing 15 protocols across 4 chains...</div>';
+
+            // Simulate API delay
+            await new Promise(r => setTimeout(r, 1800));
+
+            const newSignals = [];
+            const existingSignals = getSignals();
+            const existingIds = new Set(existingSignals.map(s => s.id));
+
+            for (const protocol of PROTOCOLS) {
+                const signal = generateSignalForProtocol(protocol);
+                
+                if (signal.alphaScore >= 45 && !existingIds.has(signal.id)) {
+                    newSignals.push(signal);
+                }
+            }
+
+            // Sort by score
+            newSignals.sort((a, b) => b.alphaScore - a.alphaScore);
+            const topSignals = newSignals.slice(0, 8);
+
+            // Add to existing signals
+            const allSignals = [...topSignals, ...existingSignals].slice(0, 100);
+            saveSignals(allSignals);
+
+            showStatus(`✅ Found ${topSignals.length} new alpha opportunities!`, 'success');
+            showToast(`🎯 ${topSignals.length} new signals detected`);
+            
+            refreshData();
+        }
+
+        function generateSignalForProtocol(protocol) {
+            const yieldInfo = YIELD_DATA[protocol.name] || { apy: 5, change: 0, price: 1 };
+            
+            // Calculate scores based on real metrics
+            const tvlScore = Math.min(protocol.tvl / 10000000000, 1) * 100;
+            const yieldScore = Math.min(yieldInfo.apy / 30, 1) * 100;
+            const momentumScore = yieldInfo.change > 0 ? Math.min(yieldInfo.change / 5, 1) * 100 : 30;
+            const riskScore = ['lending', 'staking', 'liquid-staking'].includes(protocol.type) ? 75 : 60;
+            
+            // Weighted alpha score
+            const alphaScore = Math.round(
+                tvlScore * 0.25 + 
+                yieldScore * 0.30 + 
+                momentumScore * 0.25 + 
+                riskScore * 0.20
+            );
+
+            // Generate realistic prices and targets
+            const basePrice = yieldInfo.price * (0.98 + Math.random() * 0.04);
+            const targetMultiplier = 1 + (alphaScore / 500);
+            const stopMultiplier = 1 - (0.03 + Math.random() * 0.05);
+
+            const reasoning = generateReasoning(protocol, yieldInfo, alphaScore);
+
+            return {
+                id: `sig_${protocol.name.toLowerCase()}_${Date.now()}`,
+                protocol: protocol.name,
+                chain: protocol.chain,
+                type: protocol.type,
+                token: protocol.token,
+                action: 'BUY',
+                alphaScore,
+                confidence: Math.round(50 + alphaScore * 0.4),
+                riskLevel: alphaScore >= 70 ? 'LOW' : (alphaScore >= 50 ? 'MEDIUM' : 'HIGH'),
+                entryPrice: basePrice,
+                targetPrice: basePrice * targetMultiplier,
+                stopLoss: basePrice * stopMultiplier,
+                expectedReturn: ((targetMultiplier - 1) * 100).toFixed(1),
+                apy: yieldInfo.apy,
+                tvl: protocol.tvl,
+                reasoning,
+                status: 'ACTIVE',
+                generatedAt: new Date().toISOString(),
+                expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
+            };
+        }
+
+        function generateReasoning(protocol, yieldInfo, score) {
+            const reasons = [];
+            
+            if (protocol.tvl > 5000000000) {
+                reasons.push(`High TVL ($${(protocol.tvl/1e9).toFixed(1)}B) indicates strong market trust`);
+            } else if (protocol.tvl > 1000000000) {
+                reasons.push(`Solid TVL ($${(protocol.tvl/1e9).toFixed(1)}B) with growth potential`);
+            }
+            
+            if (yieldInfo.apy > 15) {
+                reasons.push(`Exceptional ${yieldInfo.apy.toFixed(1)}% APY significantly above market`);
+            } else if (yieldInfo.apy > 8) {
+                reasons.push(`Attractive ${yieldInfo.apy.toFixed(1)}% APY above market average`);
+            }
+            
+            if (yieldInfo.change > 2) {
+                reasons.push(`Strong momentum (+${yieldInfo.change.toFixed(1)}% yield increase)`);
+            } else if (yieldInfo.change > 0) {
+                reasons.push(`Positive momentum (+${yieldInfo.change.toFixed(1)}% weekly)`);
+            }
+            
+            if (protocol.type === 'liquid-staking' || protocol.type === 'staking') {
+                reasons.push(`${protocol.type === 'liquid-staking' ? 'Liquid staking' : 'Staking'} sector showing resilience`);
+            } else if (protocol.type === 'yield') {
+                reasons.push(`Yield optimization with auto-compounding benefits`);
+            } else if (protocol.type === 'perps') {
+                reasons.push(`Derivatives volume increasing across DEXs`);
+            }
+
+            if (score >= 70) {
+                reasons.push(`Strong alpha score of ${score} indicates high conviction`);
+            }
+
+            return reasons.slice(0, 3).join('. ') + '.';
+        }
+
+        // ========================================
+        // MOCK TRADING ENGINE
+        // ========================================
+
+        function executeSignal(signalId) {
+            const signals = getSignals();
+            const signal = signals.find(s => s.id === signalId);
+            if (!signal) {
+                showToast('❌ Signal not found');
+                return;
+            }
+
+            const portfolio = getPortfolio();
+            
+            // Calculate position size (5-10% of available capital based on score)
+            const sizePct = 0.05 + (signal.alphaScore / 1000);
+            const positionSize = Math.min(
+                portfolio.availableCapital * sizePct,
+                10000,
+                portfolio.availableCapital * 0.9
+            );
+
+            if (positionSize < 100) {
+                showToast('❌ Insufficient capital for trade');
+                return;
+            }
+
+            // Create position
+            const position = {
+                id: `pos_${Date.now()}`,
+                signalId: signal.id,
+                protocol: signal.protocol,
+                chain: signal.chain,
+                type: signal.type,
+                token: signal.token,
+                positionType: 'LONG',
+                entryPrice: signal.entryPrice,
+                currentPrice: signal.entryPrice,
+                entryAmount: positionSize,
+                quantity: positionSize / signal.entryPrice,
+                stopLoss: signal.stopLoss,
+                takeProfit: signal.targetPrice,
+                unrealizedPnl: 0,
+                unrealizedPnlPct: 0,
+                status: 'OPEN',
+                entryTime: new Date().toISOString()
+            };
+
+            // Update portfolio
+            portfolio.availableCapital -= positionSize;
+            portfolio.allocatedCapital += positionSize;
+            portfolio.totalTrades++;
+            savePortfolio(portfolio);
+
+            // Save position
+            const positions = getPositions();
+            positions.unshift(position);
+            savePositions(positions);
+
+            // Update signal status
+            signal.status = 'EXECUTED';
+            saveSignals(signals);
+
+            showToast(`✅ Opened ${signal.protocol} LONG: $${positionSize.toFixed(0)}`);
+            refreshData();
+
+            // Start price simulation
+            simulatePriceMovement(position.id);
+        }
+
+        function closePosition(positionId) {
+            const positions = getPositions();
+            const position = positions.find(p => p.id === positionId);
+            if (!position || position.status !== 'OPEN') return;
+
+            const portfolio = getPortfolio();
+            
+            const realizedPnl = position.unrealizedPnl;
+            const realizedPnlPct = position.unrealizedPnlPct;
+
+            // Update position
+            position.status = 'CLOSED';
+            position.exitPrice = position.currentPrice;
+            position.exitTime = new Date().toISOString();
+            position.realizedPnl = realizedPnl;
+            position.realizedPnlPct = realizedPnlPct;
+            position.exitReason = 'MANUAL';
+
+            // Update portfolio
+            const returnedCapital = position.entryAmount + realizedPnl;
+            portfolio.availableCapital += returnedCapital;
+            portfolio.allocatedCapital -= position.entryAmount;
+            portfolio.realizedPnl += realizedPnl;
+            
+            if (realizedPnl > 0) {
+                portfolio.winningTrades++;
+            } else {
+                portfolio.losingTrades++;
+            }
+
+            savePortfolio(portfolio);
+            savePositions(positions);
+
+            // Record P&L history
+            const history = getPnlHistory();
+            history.push({
+                date: new Date().toISOString(),
+                pnl: realizedPnl,
+                cumulative: portfolio.realizedPnl,
+                protocol: position.protocol
+            });
+            savePnlHistory(history);
+
+            const emoji = realizedPnl >= 0 ? '🟢' : '🔴';
+            showToast(`${emoji} Closed ${position.protocol}: ${realizedPnl >= 0 ? '+' : ''}$${realizedPnl.toFixed(2)}`);
+            refreshData();
+        }
+
+        // Price simulation intervals stored by position ID
+        const priceSimulations = {};
+
+        function simulatePriceMovement(positionId) {
+            // Clear any existing simulation
+            if (priceSimulations[positionId]) {
+                clearInterval(priceSimulations[positionId]);
+            }
+
+            const interval = setInterval(() => {
+                const positions = getPositions();
+                const position = positions.find(p => p.id === positionId);
+                
+                if (!position || position.status !== 'OPEN') {
+                    clearInterval(interval);
+                    delete priceSimulations[positionId];
+                    return;
+                }
+
+                // Realistic price movement
+                const volatility = 0.004;
+                const drift = 0.0003;
+                const change = (Math.random() - 0.47) * volatility + drift;
+                
+                position.currentPrice = position.currentPrice * (1 + change);
+                position.unrealizedPnl = (position.currentPrice - position.entryPrice) * position.quantity;
+                position.unrealizedPnlPct = ((position.currentPrice - position.entryPrice) / position.entryPrice) * 100;
+
+                // Check stop loss
+                if (position.currentPrice <= position.stopLoss) {
+                    clearInterval(interval);
+                    delete priceSimulations[positionId];
+                    position.exitReason = 'STOP_LOSS';
+                    closePositionAuto(position);
+                    showToast(`🛑 Stop loss hit on ${position.protocol}`);
+                    return;
+                }
+
+                // Check take profit
+                if (position.currentPrice >= position.takeProfit) {
+                    clearInterval(interval);
+                    delete priceSimulations[positionId];
+                    position.exitReason = 'TAKE_PROFIT';
+                    closePositionAuto(position);
+                    showToast(`🎯 Take profit hit on ${position.protocol}! 🎉`);
+                    return;
+                }
+
+                savePositions(positions);
+                updatePositionsUI();
+                updateStatsUI();
+            }, 2500);
+
+            priceSimulations[positionId] = interval;
+        }
+
+        function closePositionAuto(position) {
+            const positions = getPositions();
+            const portfolio = getPortfolio();
+            
+            const realizedPnl = position.unrealizedPnl;
+
+            position.status = 'CLOSED';
+            position.exitPrice = position.currentPrice;
+            position.exitTime = new Date().toISOString();
+            position.realizedPnl = realizedPnl;
+            position.realizedPnlPct = position.unrealizedPnlPct;
+
+            const returnedCapital = position.entryAmount + realizedPnl;
+            portfolio.availableCapital += returnedCapital;
+            portfolio.allocatedCapital -= position.entryAmount;
+            portfolio.realizedPnl += realizedPnl;
+            
+            if (realizedPnl > 0) {
+                portfolio.winningTrades++;
+            } else {
+                portfolio.losingTrades++;
+            }
+
+            savePortfolio(portfolio);
+            savePositions(positions);
+
+            const history = getPnlHistory();
+            history.push({
+                date: new Date().toISOString(),
+                pnl: realizedPnl,
+                cumulative: portfolio.realizedPnl,
+                protocol: position.protocol
+            });
+            savePnlHistory(history);
+
+            refreshData();
+        }
+
+        function autoExecuteSignals() {
+            const signals = getSignals().filter(s => s.status === 'ACTIVE' && s.alphaScore >= 65);
+            
+            if (signals.length === 0) {
+                showToast('⚠️ No high-confidence signals to execute');
+                return;
+            }
+
+            let executed = 0;
+            for (const signal of signals.slice(0, 5)) {
+                const portfolio = getPortfolio();
+                if (portfolio.availableCapital > 5000) {
+                    executeSignal(signal.id);
+                    executed++;
+                }
+            }
+
+            showToast(`⚡ Auto-executed ${executed} positions`);
+        }
+
+        // ========================================
+        // UI MANAGEMENT
+        // ========================================
+
         let pnlChart;
         let currentSignalTab = 'active';
         let currentPositionTab = 'open';
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            initSupabase();
-            refreshData();
-            initChart();
+        function refreshData() {
+            updateStatsUI();
+            updateSignalsUI();
+            updatePositionsUI();
+            updateStrategyUI();
+            updateChartUI();
+        }
+
+        function updateStatsUI() {
+            const portfolio = getPortfolio();
+            const positions = getPositions().filter(p => p.status === 'OPEN');
+            const signals = getSignals();
+
+            const unrealizedPnl = positions.reduce((sum, p) => sum + (p.unrealizedPnl || 0), 0);
+            const totalPnl = portfolio.realizedPnl + unrealizedPnl;
+            const totalValue = portfolio.availableCapital + portfolio.allocatedCapital + unrealizedPnl;
+            const pnlPct = (totalPnl / portfolio.totalCapital) * 100;
+
+            const completedTrades = portfolio.winningTrades + portfolio.losingTrades;
+            const winRate = completedTrades > 0 ? (portfolio.winningTrades / completedTrades) * 100 : 0;
+
+            document.getElementById('portfolioValue').textContent = `$${totalValue.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+            document.getElementById('portfolioPnl').textContent = `Started: $${portfolio.totalCapital.toLocaleString()}`;
             
-            // Auto-refresh every 30 seconds
-            setInterval(refreshData, 30000);
-        });
+            const totalPnlEl = document.getElementById('totalPnl');
+            totalPnlEl.textContent = `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`;
+            totalPnlEl.className = `value ${totalPnl >= 0 ? 'positive' : 'negative'}`;
+            document.getElementById('totalPnlPct').textContent = `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%`;
 
-        function initSupabase() {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            document.getElementById('winRate').textContent = `${winRate.toFixed(0)}%`;
+            document.getElementById('winLossCount').textContent = `${portfolio.winningTrades}W / ${portfolio.losingTrades}L`;
+
+            const activeSignals = signals.filter(s => s.status === 'ACTIVE').length;
+            document.getElementById('activeSignals').textContent = activeSignals;
+            document.getElementById('totalSignals').textContent = `${signals.length} total`;
+
+            document.getElementById('openPositions').textContent = positions.length;
+            document.getElementById('unrealizedPnl').textContent = `${unrealizedPnl >= 0 ? '+' : ''}$${unrealizedPnl.toFixed(2)} unrealized`;
+
+            const closedPositions = getPositions().filter(p => p.status === 'CLOSED');
+            const grossWin = closedPositions.filter(p => p.realizedPnl > 0).reduce((s, p) => s + p.realizedPnl, 0);
+            const grossLoss = Math.abs(closedPositions.filter(p => p.realizedPnl < 0).reduce((s, p) => s + p.realizedPnl, 0));
+            const profitFactor = grossLoss > 0 ? grossWin / grossLoss : grossWin > 0 ? '∞' : '0.00';
+            document.getElementById('profitFactor').textContent = typeof profitFactor === 'number' ? profitFactor.toFixed(2) : profitFactor;
         }
 
-        async function refreshData() {
-            await Promise.all([
-                loadStats(),
-                loadSignals(),
-                loadPositions(),
-                loadStrategyPerformance(),
-                loadProtocolPerformance(),
-                loadPnlHistory()
-            ]);
-        }
-
-        // Load statistics
-        async function loadStats() {
-            try {
-                // Get portfolio
-                const { data: portfolio } = await supabase
-                    .from('mock_portfolio')
-                    .select('*')
-                    .limit(1)
-                    .single();
-
-                // Get open positions for unrealized P&L
-                const { data: openPositions } = await supabase
-                    .from('mock_positions')
-                    .select('unrealized_pnl')
-                    .eq('status', 'OPEN');
-
-                // Get closed positions for metrics
-                const { data: closedPositions } = await supabase
-                    .from('mock_positions')
-                    .select('realized_pnl')
-                    .eq('status', 'CLOSED');
-
-                // Get signal counts
-                const { count: activeCount } = await supabase
-                    .from('alpha_signals')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('status', 'ACTIVE');
-
-                const { count: totalSignals } = await supabase
-                    .from('alpha_signals')
-                    .select('*', { count: 'exact', head: true });
-
-                if (portfolio) {
-                    const unrealizedPnl = openPositions?.reduce((sum, p) => sum + parseFloat(p.unrealized_pnl || 0), 0) || 0;
-                    const realizedPnl = parseFloat(portfolio.total_realized_pnl || 0);
-                    const totalPnl = realizedPnl + unrealizedPnl;
-                    const totalValue = parseFloat(portfolio.available_capital || 0) + 
-                                      parseFloat(portfolio.allocated_capital || 0) + 
-                                      unrealizedPnl;
-                    const pnlPct = (totalPnl / parseFloat(portfolio.total_capital)) * 100;
-
-                    // Calculate win rate
-                    const wins = portfolio.winning_trades || 0;
-                    const losses = portfolio.losing_trades || 0;
-                    const winRate = (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0;
-
-                    // Calculate profit factor
-                    const winningPnl = closedPositions?.filter(p => parseFloat(p.realized_pnl) > 0)
-                        .reduce((sum, p) => sum + parseFloat(p.realized_pnl), 0) || 0;
-                    const losingPnl = Math.abs(closedPositions?.filter(p => parseFloat(p.realized_pnl) < 0)
-                        .reduce((sum, p) => sum + parseFloat(p.realized_pnl), 0) || 0);
-                    const profitFactor = losingPnl > 0 ? winningPnl / losingPnl : winningPnl > 0 ? Infinity : 0;
-
-                    // Update UI
-                    document.getElementById('portfolioValue').textContent = `$${totalValue.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-                    document.getElementById('portfolioPnl').textContent = `Started: $${parseFloat(portfolio.total_capital).toLocaleString()}`;
-                    
-                    const totalPnlEl = document.getElementById('totalPnl');
-                    totalPnlEl.textContent = `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-                    totalPnlEl.className = `value ${totalPnl >= 0 ? 'positive' : 'negative'}`;
-                    document.getElementById('totalPnlPct').textContent = `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%`;
-
-                    document.getElementById('winRate').textContent = `${winRate.toFixed(1)}%`;
-                    document.getElementById('winLossCount').textContent = `${wins}W / ${losses}L`;
-
-                    document.getElementById('activeSignals').textContent = activeCount || 0;
-                    document.getElementById('totalSignals').textContent = `${totalSignals || 0} total`;
-
-                    document.getElementById('openPositions').textContent = openPositions?.length || 0;
-                    document.getElementById('unrealizedPnl').textContent = `${unrealizedPnl >= 0 ? '+' : ''}$${unrealizedPnl.toFixed(2)} unrealized`;
-
-                    document.getElementById('profitFactor').textContent = profitFactor === Infinity ? '∞' : profitFactor.toFixed(2);
-                }
-            } catch (err) {
-                console.error('Failed to load stats:', err);
-            }
-        }
-
-        // Load signals
-        async function loadSignals() {
+        function updateSignalsUI() {
             const container = document.getElementById('signalList');
-            
-            try {
-                let query = supabase
-                    .from('alpha_signals')
-                    .select('*')
-                    .order('generated_at', { ascending: false })
-                    .limit(50);
+            let signals = getSignals();
 
-                if (currentSignalTab === 'active') {
-                    query = query.eq('status', 'ACTIVE');
-                } else if (currentSignalTab === 'executed') {
-                    query = query.eq('status', 'EXECUTED');
-                }
-
-                const { data: signals, error } = await query;
-
-                if (error) throw error;
-
-                if (!signals || signals.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                            </svg>
-                            <p>No signals found</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                container.innerHTML = signals.map(signal => {
-                    const scoreClass = signal.alpha_score >= 70 ? 'high-score' : 
-                                      signal.alpha_score >= 50 ? 'medium-score' : 'low-score';
-                    const time = new Date(signal.generated_at).toLocaleString();
-                    
-                    return `
-                        <div class="signal-item ${scoreClass}">
-                            <div class="signal-header">
-                                <span class="signal-protocol">${signal.protocol}</span>
-                                <span class="signal-score">Score: ${signal.alpha_score}</span>
-                            </div>
-                            <div class="signal-meta">
-                                <span>📍 ${signal.chain}</span>
-                                <span>📊 ${signal.signal_type}</span>
-                                <span>🎯 ${signal.action}</span>
-                                <span class="badge ${signal.status.toLowerCase()}">${signal.status}</span>
-                            </div>
-                            <div class="signal-meta" style="margin-top: 0.5rem;">
-                                <span>💰 Entry: $${parseFloat(signal.entry_price || 0).toFixed(6)}</span>
-                                <span>🎯 Target: $${parseFloat(signal.target_price || 0).toFixed(6)}</span>
-                                <span>🛑 Stop: $${parseFloat(signal.stop_loss_price || 0).toFixed(6)}</span>
-                            </div>
-                            <div class="signal-meta" style="margin-top: 0.25rem; color: #666;">
-                                <span>⏰ ${time}</span>
-                                <span>📈 Expected: +${signal.expected_return_pct || 0}%</span>
-                            </div>
-                            ${signal.status === 'ACTIVE' ? `
-                                <div class="signal-actions">
-                                    <button class="btn-primary" onclick="executeSignal('${signal.signal_id}')">Execute</button>
-                                    <button class="btn-secondary" onclick="viewSignalDetails('${signal.signal_id}')">Details</button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                }).join('');
-            } catch (err) {
-                console.error('Failed to load signals:', err);
-                container.innerHTML = '<div class="empty-state">Failed to load signals</div>';
+            if (currentSignalTab === 'active') {
+                signals = signals.filter(s => s.status === 'ACTIVE');
+            } else if (currentSignalTab === 'executed') {
+                signals = signals.filter(s => s.status === 'EXECUTED');
             }
+
+            if (signals.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:48px;height:48px;margin-bottom:1rem;opacity:0.5">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                        <p>${currentSignalTab === 'active' ? 'Click "Fetch Signals" to scan for opportunities' : 'No ' + currentSignalTab + ' signals'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = signals.map(signal => {
+                const scoreClass = signal.alphaScore >= 70 ? 'high-score' : 
+                                  signal.alphaScore >= 50 ? 'medium-score' : 'low-score';
+                const time = new Date(signal.generatedAt).toLocaleString();
+
+                return `
+                    <div class="signal-item ${scoreClass}">
+                        <div class="signal-header">
+                            <span class="signal-protocol">${signal.protocol}</span>
+                            <span class="signal-score">Score: ${signal.alphaScore}</span>
+                        </div>
+                        <div class="signal-meta">
+                            <span>📍 ${signal.chain}</span>
+                            <span>📊 ${signal.type}</span>
+                            <span>🎯 ${signal.action}</span>
+                            <span class="badge ${signal.status.toLowerCase()}">${signal.status}</span>
+                        </div>
+                        <div class="signal-meta" style="margin-top: 0.5rem;">
+                            <span>💰 Entry: $${signal.entryPrice.toFixed(4)}</span>
+                            <span>🎯 Target: +${signal.expectedReturn}%</span>
+                            <span>📈 APY: ${signal.apy}%</span>
+                        </div>
+                        <div class="signal-reasoning">${signal.reasoning}</div>
+                        ${signal.status === 'ACTIVE' ? `
+                            <div class="signal-actions">
+                                <button class="btn-primary" onclick="executeSignal('${signal.id}')">Execute Trade</button>
+                                <button class="btn-secondary" onclick="dismissSignal('${signal.id}')">Dismiss</button>
+                            </div>
+                        ` : ''}
+                        <div class="signal-meta" style="margin-top: 0.5rem; color: #555;">
+                            <span>⏰ ${time}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        // Load positions
-        async function loadPositions() {
+        function updatePositionsUI() {
             const container = document.getElementById('positionList');
-            
-            try {
-                const status = currentPositionTab === 'open' ? 'OPEN' : 'CLOSED';
-                const { data: positions, error } = await supabase
-                    .from('mock_positions')
-                    .select('*')
-                    .eq('status', status)
-                    .order('entry_timestamp', { ascending: false })
-                    .limit(50);
+            let positions = getPositions();
 
-                if (error) throw error;
-
-                if (!positions || positions.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <p>No ${currentPositionTab} positions</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                container.innerHTML = positions.map(pos => {
-                    const pnl = currentPositionTab === 'open' 
-                        ? parseFloat(pos.unrealized_pnl || 0) 
-                        : parseFloat(pos.realized_pnl || 0);
-                    const pnlPct = currentPositionTab === 'open'
-                        ? parseFloat(pos.unrealized_pnl_pct || 0)
-                        : parseFloat(pos.realized_pnl_pct || 0);
-                    const pnlClass = pnl >= 0 ? 'positive' : 'negative';
-
-                    return `
-                        <div class="position-item">
-                            <div class="position-header">
-                                <div>
-                                    <strong>${pos.protocol}</strong>
-                                    <span class="badge ${pos.position_type.toLowerCase()}">${pos.position_type}</span>
-                                </div>
-                                <div class="position-pnl ${pnlClass}">
-                                    ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pnlPct.toFixed(2)}%)
-                                </div>
-                            </div>
-                            <div class="position-details">
-                                <div>
-                                    <label>Entry Price</label>
-                                    $${parseFloat(pos.entry_price).toFixed(6)}
-                                </div>
-                                <div>
-                                    <label>Current/Exit</label>
-                                    $${parseFloat(pos.current_price || pos.exit_price || 0).toFixed(6)}
-                                </div>
-                                <div>
-                                    <label>Size</label>
-                                    $${parseFloat(pos.entry_amount).toFixed(2)}
-                                </div>
-                            </div>
-                            ${currentPositionTab === 'open' ? `
-                                <div class="signal-actions">
-                                    <button class="btn-danger" onclick="closePosition('${pos.position_id}')">Close</button>
-                                </div>
-                            ` : `
-                                <div class="signal-meta" style="margin-top: 0.5rem; color: #666;">
-                                    <span>Exit: ${pos.exit_reason}</span>
-                                    <span>Closed: ${new Date(pos.exit_timestamp).toLocaleString()}</span>
-                                </div>
-                            `}
-                        </div>
-                    `;
-                }).join('');
-            } catch (err) {
-                console.error('Failed to load positions:', err);
-                container.innerHTML = '<div class="empty-state">Failed to load positions</div>';
+            if (currentPositionTab === 'open') {
+                positions = positions.filter(p => p.status === 'OPEN');
+            } else {
+                positions = positions.filter(p => p.status === 'CLOSED');
             }
+
+            if (positions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No ${currentPositionTab} positions</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = positions.map(pos => {
+                const pnl = pos.status === 'OPEN' ? (pos.unrealizedPnl || 0) : (pos.realizedPnl || 0);
+                const pnlPct = pos.status === 'OPEN' ? (pos.unrealizedPnlPct || 0) : (pos.realizedPnlPct || 0);
+                const pnlClass = pnl >= 0 ? 'positive' : 'negative';
+
+                return `
+                    <div class="position-item">
+                        <div class="position-header">
+                            <div>
+                                <strong>${pos.protocol}</strong>
+                                <span class="badge ${pos.positionType.toLowerCase()}">${pos.positionType}</span>
+                            </div>
+                            <div class="position-pnl ${pnlClass}">
+                                ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pnlPct.toFixed(2)}%)
+                            </div>
+                        </div>
+                        <div class="position-details">
+                            <div>
+                                <label>Entry</label>
+                                $${pos.entryPrice.toFixed(4)}
+                            </div>
+                            <div>
+                                <label>Current</label>
+                                $${(pos.currentPrice || pos.exitPrice || 0).toFixed(4)}
+                            </div>
+                            <div>
+                                <label>Size</label>
+                                $${pos.entryAmount.toFixed(0)}
+                            </div>
+                        </div>
+                        ${pos.status === 'OPEN' ? `
+                            <div class="signal-actions">
+                                <button class="btn-danger" onclick="closePosition('${pos.id}')">Close Position</button>
+                            </div>
+                        ` : `
+                            <div class="signal-meta" style="margin-top: 0.5rem; color: #555;">
+                                <span>Exit: ${pos.exitReason || 'MANUAL'}</span>
+                                <span>Closed: ${new Date(pos.exitTime).toLocaleString()}</span>
+                            </div>
+                        `}
+                    </div>
+                `;
+            }).join('');
         }
 
-        // Load strategy performance
-        async function loadStrategyPerformance() {
-            const container = document.getElementById('strategyGrid');
+        function updateStrategyUI() {
+            const positions = getPositions().filter(p => p.status === 'CLOSED');
             
-            try {
-                const { data: strategies, error } = await supabase
-                    .from('strategy_performance')
-                    .select('*')
-                    .order('total_pnl', { ascending: false });
-
-                if (error) throw error;
-
-                if (!strategies || strategies.length === 0) {
-                    container.innerHTML = '<div class="empty-state">No strategy data yet</div>';
-                    return;
+            // Group by type
+            const byType = {};
+            positions.forEach(p => {
+                if (!byType[p.type]) {
+                    byType[p.type] = { trades: 0, wins: 0, pnl: 0 };
                 }
+                byType[p.type].trades++;
+                byType[p.type].pnl += p.realizedPnl || 0;
+                if ((p.realizedPnl || 0) > 0) byType[p.type].wins++;
+            });
 
-                container.innerHTML = strategies.map(s => `
+            const strategyGrid = document.getElementById('strategyGrid');
+            const entries = Object.entries(byType);
+            
+            if (entries.length === 0) {
+                strategyGrid.innerHTML = '<div class="empty-state">Execute trades to see strategy performance</div>';
+            } else {
+                strategyGrid.innerHTML = entries.map(([type, stats]) => `
                     <div class="strategy-item">
-                        <span class="strategy-name">${s.strategy_type}</span>
+                        <span class="strategy-name">${type}</span>
                         <div class="strategy-stats">
-                            <span style="color: ${parseFloat(s.total_pnl) >= 0 ? '#00ff88' : '#ff4444'}">
-                                ${parseFloat(s.total_pnl) >= 0 ? '+' : ''}$${parseFloat(s.total_pnl).toFixed(2)}
+                            <span style="color: ${stats.pnl >= 0 ? '#00ff88' : '#ff4444'}">
+                                ${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}
                             </span>
-                            <span style="color: #888">${s.win_rate}% WR</span>
-                            <span style="color: #666">${s.total_positions} trades</span>
+                            <span style="color: #888">${((stats.wins/stats.trades)*100).toFixed(0)}% WR</span>
+                            <span style="color: #666">${stats.trades} trades</span>
                         </div>
                     </div>
                 `).join('');
-            } catch (err) {
-                console.error('Failed to load strategy performance:', err);
             }
-        }
 
-        // Load protocol performance
-        async function loadProtocolPerformance() {
-            const container = document.getElementById('protocolGrid');
-            
-            try {
-                const { data: protocols, error } = await supabase
-                    .from('protocol_performance')
-                    .select('*')
-                    .order('total_pnl', { ascending: false })
-                    .limit(5);
-
-                if (error) throw error;
-
-                if (!protocols || protocols.length === 0) {
-                    container.innerHTML = '<div class="empty-state">No protocol data yet</div>';
-                    return;
+            // Group by protocol
+            const byProtocol = {};
+            positions.forEach(p => {
+                if (!byProtocol[p.protocol]) {
+                    byProtocol[p.protocol] = { trades: 0, wins: 0, pnl: 0 };
                 }
+                byProtocol[p.protocol].trades++;
+                byProtocol[p.protocol].pnl += p.realizedPnl || 0;
+                if ((p.realizedPnl || 0) > 0) byProtocol[p.protocol].wins++;
+            });
 
-                container.innerHTML = protocols.map(p => `
+            const protocolGrid = document.getElementById('protocolGrid');
+            const protocolEntries = Object.entries(byProtocol).sort((a, b) => b[1].pnl - a[1].pnl);
+            
+            if (protocolEntries.length === 0) {
+                protocolGrid.innerHTML = '<div class="empty-state">Execute trades to see protocol performance</div>';
+            } else {
+                protocolGrid.innerHTML = protocolEntries.slice(0, 5).map(([protocol, stats]) => `
                     <div class="strategy-item">
-                        <span class="strategy-name">${p.protocol}</span>
+                        <span class="strategy-name">${protocol}</span>
                         <div class="strategy-stats">
-                            <span style="color: ${parseFloat(p.total_pnl) >= 0 ? '#00ff88' : '#ff4444'}">
-                                ${parseFloat(p.total_pnl) >= 0 ? '+' : ''}$${parseFloat(p.total_pnl).toFixed(2)}
+                            <span style="color: ${stats.pnl >= 0 ? '#00ff88' : '#ff4444'}">
+                                ${stats.pnl >= 0 ? '+' : ''}$${stats.pnl.toFixed(2)}
                             </span>
-                            <span style="color: #888">${p.win_rate}% WR</span>
+                            <span style="color: #888">${stats.trades} trades</span>
                         </div>
                     </div>
                 `).join('');
-            } catch (err) {
-                console.error('Failed to load protocol performance:', err);
             }
         }
 
-        // Initialize chart
-        function initChart() {
-            const ctx = document.getElementById('pnlChart').getContext('2d');
-            pnlChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Cumulative P&L',
-                        data: [],
-                        borderColor: '#00ff88',
-                        backgroundColor: 'rgba(0, 255, 136, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
+        function updateChartUI() {
+            const history = getPnlHistory();
+            
+            if (!pnlChart) {
+                const ctx = document.getElementById('pnlChart').getContext('2d');
+                pnlChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Cumulative P&L',
+                            data: [],
+                            borderColor: '#00ff88',
+                            backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#00ff88'
+                        }]
                     },
-                    scales: {
-                        x: {
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: { color: '#666' }
-                        },
-                        y: {
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: { 
-                                color: '#666',
-                                callback: value => '$' + value
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: {
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: { color: '#666', maxTicksLimit: 6 }
+                            },
+                            y: {
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: { 
+                                    color: '#666',
+                                    callback: value => '$' + value.toFixed(0)
+                                }
                             }
                         }
                     }
-                }
-            });
-        }
-
-        // Load P&L history for chart
-        async function loadPnlHistory() {
-            try {
-                const { data: positions, error } = await supabase
-                    .from('mock_positions')
-                    .select('exit_timestamp, realized_pnl')
-                    .eq('status', 'CLOSED')
-                    .order('exit_timestamp', { ascending: true })
-                    .limit(100);
-
-                if (error) throw error;
-                if (!positions || positions.length === 0) return;
-
-                let cumulative = 0;
-                const labels = [];
-                const data = [];
-
-                positions.forEach(p => {
-                    cumulative += parseFloat(p.realized_pnl || 0);
-                    labels.push(new Date(p.exit_timestamp).toLocaleDateString());
-                    data.push(cumulative);
                 });
+            }
 
-                pnlChart.data.labels = labels;
-                pnlChart.data.datasets[0].data = data;
+            if (history.length > 0) {
+                pnlChart.data.labels = history.map(h => new Date(h.date).toLocaleDateString());
+                pnlChart.data.datasets[0].data = history.map(h => h.cumulative);
                 pnlChart.update();
-            } catch (err) {
-                console.error('Failed to load P&L history:', err);
             }
         }
 
         // Tab switching
         function switchTab(tab) {
             currentSignalTab = tab;
-            document.querySelectorAll('.tabs button[data-tab]').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.tab === tab);
+            document.querySelectorAll('.card:first-of-type .tabs button').forEach((btn, i) => {
+                btn.classList.toggle('active', ['active', 'executed', 'all'][i] === tab);
             });
-            loadSignals();
+            updateSignalsUI();
         }
 
         function switchPositionTab(tab) {
             currentPositionTab = tab;
-            document.querySelectorAll('.card:nth-child(2) .tabs button').forEach((btn, idx) => {
-                btn.classList.toggle('active', (tab === 'open' && idx === 0) || (tab === 'closed' && idx === 1));
+            document.querySelectorAll('.card:nth-child(2) .tabs button').forEach((btn, i) => {
+                btn.classList.toggle('active', ['open', 'closed'][i] === tab);
             });
-            loadPositions();
+            updatePositionsUI();
         }
 
-        // Actions
-        async function executeSignal(signalId) {
-            if (!confirm('Execute this signal?')) return;
+        function dismissSignal(signalId) {
+            const signals = getSignals();
+            const idx = signals.findIndex(s => s.id === signalId);
+            if (idx !== -1) {
+                signals[idx].status = 'EXPIRED';
+                saveSignals(signals);
+                refreshData();
+                showToast('Signal dismissed');
+            }
+        }
+
+        function resetPortfolio() {
+            if (!confirm('Reset all data? This will clear all signals, positions, and reset portfolio to $100,000.')) return;
             
-            // This would typically call your backend API
-            alert(`Signal ${signalId} queued for execution. Implement backend API to execute.`);
+            localStorage.removeItem(STORAGE_KEYS.SIGNALS);
+            localStorage.removeItem(STORAGE_KEYS.POSITIONS);
+            localStorage.removeItem(STORAGE_KEYS.PORTFOLIO);
+            localStorage.removeItem(STORAGE_KEYS.PNL_HISTORY);
+            
+            // Clear all price simulations
+            Object.values(priceSimulations).forEach(clearInterval);
+            
+            showToast('✅ Portfolio reset to $100,000');
             refreshData();
         }
 
-        async function closePosition(positionId) {
-            if (!confirm('Close this position?')) return;
+        // Utility functions
+        function showStatus(message, type = 'info') {
+            const banner = document.getElementById('statusBanner');
+            if (!banner) return;
+            banner.textContent = message;
+            banner.className = `status-banner ${type}`;
+            banner.style.display = 'flex';
             
-            // This would typically call your backend API
-            alert(`Position ${positionId} queued for closing. Implement backend API to close.`);
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 5000);
+        }
+
+        function showToast(message) {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
             refreshData();
-        }
-
-        function viewSignalDetails(signalId) {
-            // Could open a modal with full signal details
-            alert(`View details for signal: ${signalId}`);
-        }
-
-        async function autoExecuteSignals() {
-            if (!confirm('Auto-execute all signals with alpha score >= 70?')) return;
-            alert('Auto-execution queued. Implement backend API for batch execution.');
-        }
+            
+            // Resume price simulation for open positions
+            getPositions().filter(p => p.status === 'OPEN').forEach(p => {
+                simulatePriceMovement(p.id);
+            });
+        });
     </script>
 </body>
+</html>
 </html>
