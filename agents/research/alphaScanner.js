@@ -94,6 +94,325 @@ const SIGNAL_THRESHOLDS = {
   ECOSYSTEM_GROWTH_MIN: 10         // 10% ecosystem growth (TVL + users)
 };
 
+// ============================================================================
+// ALPHA QUALITY SCORING SYSTEM
+// Score = 0.4×Structural + 0.3×Positioning + 0.2×Timing + 0.1×DataConfidence
+// ============================================================================
+
+const ALPHA_SCORE_WEIGHTS = {
+  STRUCTURAL_EDGE: 0.4,      // Fundamental reason the trade should work
+  POSITIONING_ASYMMETRY: 0.3, // Risk/reward profile
+  TIMING_CLARITY: 0.2,        // How clear is the timing/catalyst?
+  DATA_CONFIDENCE: 0.1        // Quality of underlying data
+};
+
+/**
+ * Calculate Structural Edge Score (0-100)
+ * Measures the fundamental reason why this trade should work
+ */
+function calculateStructuralEdge(signalType, rawData) {
+  let score = 0;
+  
+  switch (signalType) {
+    case 'FADE_TRADE':
+      // Edge from crowded positioning at extremes
+      const persistence = rawData.persistence || 0;
+      const stressScore = rawData.stressScore || 0;
+      const pricePosition = rawData.pricePosition || 0.5;
+      
+      // Persistence of funding direction (max 35)
+      score += Math.min(35, persistence * 5);
+      // Positioning stress (max 35)
+      score += Math.min(35, stressScore * 0.35);
+      // Price at extreme (max 30)
+      const extremity = Math.abs(pricePosition - 0.5) * 2; // 0-1 scale
+      score += extremity * 30;
+      break;
+      
+    case 'SQUEEZE_SETUP':
+      // Edge from trapped positions about to liquidate
+      const divergence = rawData.fundingDiverged ? 30 : 0;
+      const leverageStress = rawData.stressScore || 0;
+      
+      score += divergence;
+      score += Math.min(40, leverageStress * 0.4);
+      score += (rawData.volumeRatio || 0) > 0.1 ? 30 : (rawData.volumeRatio || 0) * 200;
+      break;
+      
+    case 'VOL_EXPANSION':
+      // Edge from volatility compression about to release
+      const volCompression = rawData.volCompression || 1;
+      const buildupStress = rawData.stressScore || 0;
+      
+      // Lower compression = higher edge (max 50)
+      score += Math.max(0, 50 - volCompression * 50);
+      // Position buildup (max 30)
+      score += Math.min(30, buildupStress * 0.3);
+      // Range tightness (max 20)
+      score += rawData.rangeTightness ? rawData.rangeTightness * 20 : 10;
+      break;
+      
+    case 'TVL_LAG':
+      // Edge from TVL growing faster than price
+      const tvlDivergence = Math.abs(rawData.divergence || 0);
+      const tvlGrowth = rawData.tvlChange7d || 0;
+      
+      // Divergence strength (max 50)
+      score += Math.min(50, tvlDivergence * 3);
+      // Absolute TVL growth (max 30)
+      score += Math.min(30, tvlGrowth * 2);
+      // Sustained pattern (max 20)
+      score += rawData.tvlChange30d > rawData.tvlChange7d ? 20 : 10;
+      break;
+      
+    case 'YIELD_SPIKE':
+      // Edge from yield spike without price response
+      const yieldSpike = rawData.yieldChange || 0;
+      const yieldPriceLag = rawData.yieldToPriceDivergence || 0;
+      
+      // Yield spike magnitude (max 40)
+      score += Math.min(40, yieldSpike * 0.4);
+      // Yield-price divergence (max 40)
+      score += Math.min(40, yieldPriceLag * 2);
+      // APY attractiveness (max 20)
+      score += rawData.currentApy > 20 ? 20 : rawData.currentApy > 10 ? 15 : rawData.currentApy > 5 ? 10 : 5;
+      break;
+      
+    case 'TVL_INFLOW_LEAD':
+      // Edge from TVL leading price historically
+      const leadScore = rawData.leadScore || 0;
+      const tvlToMcap = rawData.tvlToMcap || 0;
+      
+      // Lead score (max 50)
+      score += Math.min(50, leadScore);
+      // TVL/MCap ratio (max 30)
+      score += Math.min(30, tvlToMcap * 10);
+      // Acceleration (max 20)
+      score += rawData.tvlAccelerating ? 20 : 5;
+      break;
+      
+    case 'DEV_ACTIVITY_LEAD':
+      // Edge from dev activity without price response
+      const devScore = rawData.devScore || 0;
+      const commitGrowth = rawData.commitGrowth || 0;
+      
+      // Dev activity score (max 40)
+      score += Math.min(40, devScore * 0.4);
+      // Commit growth (max 35)
+      score += Math.min(35, commitGrowth * 0.35);
+      // Activity accelerating (max 25)
+      score += rawData.isAccelerating ? 25 : 10;
+      break;
+      
+    case 'NARRATIVE_LEAD':
+      // Edge from attention/ranking rising without price
+      const narrativeScore = rawData.narrativeScore || 0;
+      const tvlGrowthMonth = rawData.tvlChange1m || 0;
+      
+      // Narrative score (max 45)
+      score += Math.min(45, narrativeScore * 0.45);
+      // TVL growth (max 35)
+      score += Math.min(35, tvlGrowthMonth);
+      // Category leadership (max 20)
+      score += (rawData.categoryRank || 100) <= 3 ? 20 : (rawData.categoryRank || 100) <= 10 ? 12 : 5;
+      break;
+      
+    default:
+      score = 40; // Default moderate edge
+  }
+  
+  return Math.min(100, Math.max(0, score));
+}
+
+/**
+ * Calculate Positioning Asymmetry Score (0-100)
+ * Measures the risk/reward profile of the trade
+ */
+function calculatePositioningAsymmetry(signalType, rawData, direction) {
+  let score = 50; // Base score
+  
+  // Calculate implied risk/reward from the data
+  const priceChange = rawData.priceChange7d || rawData.priceChange30d || 0;
+  const divergence = rawData.divergence || rawData.tvlChange7d - priceChange || 0;
+  
+  // Asymmetry factors based on signal type
+  switch (signalType) {
+    case 'FADE_TRADE':
+    case 'SQUEEZE_SETUP':
+      // High stress = high asymmetry (trapped positions must unwind)
+      const stressBonus = (rawData.stressScore || 0) * 0.4;
+      score += stressBonus;
+      
+      // Funding persistence adds to asymmetry
+      const persistenceBonus = (rawData.persistence || 0) * 3;
+      score += persistenceBonus;
+      break;
+      
+    case 'VOL_EXPANSION':
+      // Compressed vol = explosive move potential
+      const compressionBonus = rawData.volCompression < 0.5 ? 30 : rawData.volCompression < 0.7 ? 20 : 10;
+      score += compressionBonus;
+      break;
+      
+    case 'TVL_LAG':
+    case 'TVL_INFLOW_LEAD':
+      // Larger divergence = better asymmetry
+      score += Math.min(40, Math.abs(divergence) * 2);
+      
+      // TVL/MCap provides downside cushion
+      const tvlCushion = (rawData.tvlToMcap || 0) > 2 ? 15 : (rawData.tvlToMcap || 0) > 1 ? 10 : 5;
+      score += tvlCushion;
+      break;
+      
+    case 'YIELD_SPIKE':
+      // Yield provides downside protection
+      const yieldProtection = Math.min(30, (rawData.currentApy || 0) * 1.5);
+      score += yieldProtection;
+      
+      // Can hedge with perps for even better asymmetry
+      score += rawData.hasPerps ? 15 : 0;
+      break;
+      
+    case 'DEV_ACTIVITY_LEAD':
+    case 'NARRATIVE_LEAD':
+      // Fundamental backing reduces downside risk
+      score += (rawData.devScore || rawData.narrativeScore || 0) * 0.3;
+      
+      // Long time horizon but strong fundamentals
+      score += rawData.isAccelerating || rawData.tvlChange1m > 15 ? 20 : 10;
+      break;
+  }
+  
+  return Math.min(100, Math.max(0, score));
+}
+
+/**
+ * Calculate Timing Clarity Score (0-100)
+ * Measures how clear the entry timing is
+ */
+function calculateTimingClarity(signalType, rawData, timeHorizon) {
+  let score = 50; // Base score
+  
+  // Shorter time horizons = clearer timing
+  const horizonMap = {
+    '4-24 hours': 30,
+    '12-48 hours': 25,
+    '24-72 hours': 20,
+    '3-10 days': 15,
+    '1-2 weeks': 10,
+    '1-3 weeks': 8,
+    '2-6 weeks': 5,
+    '2-8 weeks': 3,
+    '1-3 months': 0
+  };
+  score += horizonMap[timeHorizon] || 10;
+  
+  // Signal-specific timing clarity
+  switch (signalType) {
+    case 'FADE_TRADE':
+      // High stress = imminent reversion
+      score += (rawData.stressScore || 0) > 70 ? 20 : (rawData.stressScore || 0) > 50 ? 12 : 5;
+      break;
+      
+    case 'SQUEEZE_SETUP':
+      // Divergence indicates timing pressure
+      score += rawData.fundingDiverged ? 20 : 5;
+      break;
+      
+    case 'VOL_EXPANSION':
+      // Extreme compression = imminent breakout
+      score += (rawData.volCompression || 1) < 0.5 ? 20 : (rawData.volCompression || 1) < 0.7 ? 12 : 5;
+      break;
+      
+    case 'YIELD_SPIKE':
+      // Fresh spike = better timing
+      score += (rawData.yieldSpikeAge || 48) < 24 ? 20 : (rawData.yieldSpikeAge || 48) < 48 ? 12 : 5;
+      break;
+      
+    case 'TVL_LAG':
+    case 'TVL_INFLOW_LEAD':
+      // Accelerating TVL = clearer timing
+      score += rawData.tvlAccelerating ? 15 : 5;
+      break;
+      
+    case 'DEV_ACTIVITY_LEAD':
+    case 'NARRATIVE_LEAD':
+      // These have longer/uncertain timing
+      score -= 10;
+      score += rawData.isAccelerating ? 10 : 0;
+      break;
+  }
+  
+  return Math.min(100, Math.max(0, score));
+}
+
+/**
+ * Calculate Data Confidence Score (0-100)
+ * Measures the quality and reliability of underlying data
+ */
+function calculateDataConfidence(rawData, dataSources = []) {
+  let score = 40; // Base score
+  
+  // More data sources = higher confidence
+  const sourceCount = dataSources.length || 1;
+  score += Math.min(30, sourceCount * 10);
+  
+  // Check data completeness
+  const dataFields = Object.keys(rawData || {}).length;
+  score += Math.min(20, dataFields * 2);
+  
+  // Penalize if key fields are missing
+  if (!rawData.priceChange7d && !rawData.priceChange30d) score -= 10;
+  if (!rawData.stressScore && !rawData.devScore && !rawData.narrativeScore) score -= 5;
+  
+  // Bonus for verified/cross-referenced data
+  if (rawData.crossVerified) score += 10;
+  
+  return Math.min(100, Math.max(0, score));
+}
+
+/**
+ * Calculate Overall Alpha Quality Score
+ * Alpha Score = 0.4×Structural + 0.3×Positioning + 0.2×Timing + 0.1×DataConfidence
+ */
+function calculateAlphaScore(signalType, rawData, timeHorizon, direction, dataSources = []) {
+  const structural = calculateStructuralEdge(signalType, rawData);
+  const positioning = calculatePositioningAsymmetry(signalType, rawData, direction);
+  const timing = calculateTimingClarity(signalType, rawData, timeHorizon);
+  const dataConf = calculateDataConfidence(rawData, dataSources);
+  
+  const alphaScore = 
+    ALPHA_SCORE_WEIGHTS.STRUCTURAL_EDGE * structural +
+    ALPHA_SCORE_WEIGHTS.POSITIONING_ASYMMETRY * positioning +
+    ALPHA_SCORE_WEIGHTS.TIMING_CLARITY * timing +
+    ALPHA_SCORE_WEIGHTS.DATA_CONFIDENCE * dataConf;
+  
+  return {
+    alphaScore: Math.round(alphaScore),
+    components: {
+      structuralEdge: Math.round(structural),
+      positioningAsymmetry: Math.round(positioning),
+      timingClarity: Math.round(timing),
+      dataConfidence: Math.round(dataConf)
+    },
+    grade: getAlphaGrade(alphaScore)
+  };
+}
+
+/**
+ * Convert alpha score to grade
+ */
+function getAlphaGrade(score) {
+  if (score >= 80) return 'A';
+  if (score >= 70) return 'A-';
+  if (score >= 60) return 'B+';
+  if (score >= 55) return 'B';
+  if (score >= 50) return 'B-';
+  if (score >= 45) return 'C+';
+  if (score >= 40) return 'C';
+  return 'D';
+}
+
 /**
  * Standard output schema for signals
  */
@@ -109,13 +428,19 @@ function formatSignal({
   invalidationLevel,
   confidenceScore,
   asset,
+  direction = 'LONG',
   positioningAnalysis = {},
-  rawData = {}
+  rawData = {},
+  dataSources = []
 }) {
+  // Calculate Alpha Quality Score
+  const alphaQuality = calculateAlphaScore(signalType, rawData, timeHorizon, direction, dataSources);
+  
   return {
     signalType,
-    tradeType, // 'FADE' | 'SQUEEZE' | 'VOL_EXPANSION'
+    tradeType,
     asset,
+    direction,
     marketContext,
     observedAnomaly,
     whyMatters,
@@ -124,9 +449,14 @@ function formatSignal({
     keyRisks,
     invalidationLevel,
     confidenceScore: Math.min(100, Math.max(0, confidenceScore)),
+    // Alpha Quality Scoring
+    alphaScore: alphaQuality.alphaScore,
+    alphaGrade: alphaQuality.grade,
+    alphaComponents: alphaQuality.components,
     positioningAnalysis,
     timestamp: new Date().toISOString(),
-    rawData
+    rawData,
+    dataSources
   };
 }
 
@@ -1238,8 +1568,10 @@ async function scanDevActivityLead() {
           avgWeeklyCommits: githubData.avgWeeklyCommits,
           devScore: devAnalysis.devScore,
           priceChange30d,
-          mismatchType: devAnalysis.mismatchType
-        }
+          mismatchType: devAnalysis.mismatchType,
+          isAccelerating: githubData.isAccelerating
+        },
+        dataSources: ['GitHub API', 'CoinGecko']
       });
       
       signals.push(signal);
@@ -1325,7 +1657,8 @@ async function scanNarrativeLead() {
           narrativeScore: narrativeAnalysis.narrativeScore,
           priceChange30d,
           mismatchType: narrativeAnalysis.mismatchType
-        }
+        },
+        dataSources: ['DeFiLlama', 'CoinGecko']
       });
       
       signals.push(signal);
@@ -1479,8 +1812,11 @@ async function scanYieldSpikes() {
             apyChange: spike.apyChange,
             poolTvl: spike.tvl,
             priceChange7d,
-            yieldTrend: yieldAnalysis.yieldTrend
-          }
+            yieldTrend: yieldAnalysis.yieldTrend,
+            yieldChange: spike.apyChange,
+            yieldToPriceDivergence: spike.apyChange / Math.max(1, Math.abs(priceChange7d))
+          },
+          dataSources: ['DeFiLlama Yields', 'CoinGecko']
         });
         
         signals.push(signal);
@@ -1570,8 +1906,10 @@ async function scanTVLInflowLead() {
           priceChange7d: leadLagAnalysis.priceChange7d,
           divergence: leadLagAnalysis.divergence,
           tvlToMcap: leadLagAnalysis.tvlToMcap,
-          leadScore: leadLagAnalysis.leadScore
-        }
+          leadScore: leadLagAnalysis.leadScore,
+          tvlAccelerating: leadLagAnalysis.tvlAccelerating
+        },
+        dataSources: ['DeFiLlama', 'CoinGecko']
       });
       
       signals.push(signal);
@@ -1786,6 +2124,7 @@ function generatePositioningSignal(asset, price, positioning, tradeSetup, volati
     signalType,
     tradeType,
     asset: asset.symbol,
+    direction,
     marketContext,
     observedAnomaly,
     whyMatters,
@@ -1810,8 +2149,13 @@ function generatePositioningSignal(asset, price, positioning, tradeSetup, volati
       low7d,
       volumeRatio: positioning.volumeRatio,
       volatility,
-      totalReturn7d: positioning.totalReturn7d
-    }
+      volCompression: volatility,
+      totalReturn7d: positioning.totalReturn7d,
+      stressScore: positioning.stressScore,
+      persistence: positioning.persistence,
+      fundingDiverged: positioning.priceDiverges
+    },
+    dataSources: ['CoinGecko']
   });
 }
 
@@ -1897,6 +2241,7 @@ async function scanTVLLag() {
         signalType: 'TVL_LAG',
         tradeType: 'FUNDAMENTAL',
         asset: `${protocol.name} (${priceData.symbol})`,
+        direction: 'LONG',
         marketContext: `${protocol.name} TVL: $${formatNumber(tvlData.currentTvl)}. 7d TVL change: +${tvlGrowth7d.toFixed(2)}%. Token price 7d: ${priceGrowth7d > 0 ? '+' : ''}${priceGrowth7d.toFixed(2)}%. TVL/MCap ratio: ${tvlPerMcap.toFixed(2)}x.`,
         observedAnomaly: `TVL growth (+${tvlGrowth7d.toFixed(2)}%) outpacing token appreciation (${priceGrowth7d.toFixed(2)}%). Divergence: ${divergence.toFixed(2)}%. ${isAccelerating ? 'TVL growth ACCELERATING.' : ''}`,
         whyMatters: `Capital flowing into protocol but token price lagging. Protocol revenue correlates with TVL over medium term. Market hasn't priced in fundamental improvement.`,
@@ -1905,7 +2250,17 @@ async function scanTVLLag() {
         keyRisks: 'Mercenary TVL, token inflation, smart contract risk, market downturn',
         invalidationLevel: `TVL drops >10% or price below $${formatNumber(priceData.price * 0.85)}`,
         confidenceScore: calculateTVLLagConfidence(tvlData, priceData, divergence),
-        rawData: { tvl: tvlData.currentTvl, tvlChange7d, priceChange7d: priceGrowth7d, divergence, tvlPerMcap }
+        rawData: { 
+          tvl: tvlData.currentTvl, 
+          tvlChange7d: tvlGrowth7d, 
+          tvlChange30d: tvlData.tvlChange30d || tvlGrowth7d * 2,
+          priceChange7d: priceGrowth7d, 
+          priceChange30d: priceData.priceChange30d || priceGrowth7d,
+          divergence, 
+          tvlPerMcap,
+          tvlAccelerating: isAccelerating
+        },
+        dataSources: ['DeFiLlama', 'CoinGecko']
       });
       
       signals.push(signal);
