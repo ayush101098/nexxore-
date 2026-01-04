@@ -4,6 +4,7 @@
  * Scans for tradeable anomalies using free public APIs:
  * - CoinGecko (prices, volume, market data)
  * - DeFiLlama (TVL, protocol metrics, yields)
+ * - GitHub API (development activity, commits, contributors)
  * - Coinglass/alternative APIs (funding rates, open interest)
  * 
  * Signal Types:
@@ -13,10 +14,13 @@
  * 4. TVL_LAG: Protocol TVL diverging from token price
  * 5. YIELD_SPIKE: APY/APR spike without price response
  * 6. TVL_INFLOW_LEAD: Historical pattern of TVL preceding appreciation
+ * 7. DEV_ACTIVITY_LEAD: High GitHub/dev activity with lagging price
+ * 8. NARRATIVE_LEAD: Protocol ranking/attention rising, price lagging
  * 
  * Trade Classification:
  * - Directional: Pure long/short based on signal
  * - Yield + Hedge: Capture elevated yield while hedging token exposure
+ * - Accumulation: Gradual position building on dev/narrative lead
  */
 
 const { fetchWithTimeout, AgentLogger } = require('../shared/utils');
@@ -29,7 +33,13 @@ const APIS = {
   DEFILLAMA: 'https://api.llama.fi',
   DEFILLAMA_COINS: 'https://coins.llama.fi',
   DEFILLAMA_YIELDS: 'https://yields.llama.fi',
-  COINGLASS_ALT: 'https://open-api.coinglass.com/public/v2'
+  GITHUB: 'https://api.github.com',
+  COINGLASS_ALT: 'https://open-api.coinglass.com/public/v2',
+  // On-chain data sources
+  GLASSNODE_FREE: 'https://api.glassnode.com/v1/metrics',
+  BLOCKCHAIN_INFO: 'https://blockchain.info',
+  ETHERSCAN_API: 'https://api.etherscan.io/api',
+  DUNE_API: 'https://api.dune.com/api/v1'
 };
 
 // Assets to scan (liquid perps markets)
@@ -44,18 +54,18 @@ const SCAN_ASSETS = [
   { id: 'pepe', symbol: 'PEPE', defillamaId: null, hasPerps: true }
 ];
 
-// DeFi protocols to scan (with yield-bearing products)
+// DeFi protocols to scan (with yield-bearing products and GitHub repos)
 const SCAN_PROTOCOLS = [
-  { slug: 'aave', token: 'aave', name: 'Aave', hasYield: true, yieldType: 'lending' },
-  { slug: 'lido', token: 'lido-dao', name: 'Lido', hasYield: true, yieldType: 'staking' },
-  { slug: 'uniswap', token: 'uniswap', name: 'Uniswap', hasYield: true, yieldType: 'lp' },
-  { slug: 'curve-dex', token: 'curve-dao-token', name: 'Curve', hasYield: true, yieldType: 'lp' },
-  { slug: 'maker', token: 'maker', name: 'Maker', hasYield: true, yieldType: 'lending' },
-  { slug: 'eigenlayer', token: 'eigenlayer', name: 'EigenLayer', hasYield: true, yieldType: 'restaking' },
-  { slug: 'pendle', token: 'pendle', name: 'Pendle', hasYield: true, yieldType: 'yield-trading' },
-  { slug: 'gmx', token: 'gmx', name: 'GMX', hasYield: true, yieldType: 'perps-lp' },
-  { slug: 'morpho', token: 'morpho', name: 'Morpho', hasYield: true, yieldType: 'lending' },
-  { slug: 'ethena', token: 'ethena', name: 'Ethena', hasYield: true, yieldType: 'synthetic' }
+  { slug: 'aave', token: 'aave', name: 'Aave', hasYield: true, yieldType: 'lending', github: 'aave/aave-v3-core' },
+  { slug: 'lido', token: 'lido-dao', name: 'Lido', hasYield: true, yieldType: 'staking', github: 'lidofinance/lido-dao' },
+  { slug: 'uniswap', token: 'uniswap', name: 'Uniswap', hasYield: true, yieldType: 'lp', github: 'Uniswap/v3-core' },
+  { slug: 'curve-dex', token: 'curve-dao-token', name: 'Curve', hasYield: true, yieldType: 'lp', github: 'curvefi/curve-contract' },
+  { slug: 'maker', token: 'maker', name: 'Maker', hasYield: true, yieldType: 'lending', github: 'makerdao/dss' },
+  { slug: 'eigenlayer', token: 'eigenlayer', name: 'EigenLayer', hasYield: true, yieldType: 'restaking', github: 'Layr-Labs/eigenlayer-contracts' },
+  { slug: 'pendle', token: 'pendle', name: 'Pendle', hasYield: true, yieldType: 'yield-trading', github: 'pendle-finance/pendle-core-v2-public' },
+  { slug: 'gmx', token: 'gmx', name: 'GMX', hasYield: true, yieldType: 'perps-lp', github: 'gmx-io/gmx-contracts' },
+  { slug: 'morpho', token: 'morpho', name: 'Morpho', hasYield: true, yieldType: 'lending', github: 'morpho-org/morpho-blue' },
+  { slug: 'ethena', token: 'ethena', name: 'Ethena', hasYield: true, yieldType: 'synthetic', github: 'ethena-labs/ethena' }
 ];
 
 // ============================================================================
@@ -75,7 +85,13 @@ const SIGNAL_THRESHOLDS = {
   MIN_APY_ABSOLUTE: 5,             // Minimum 5% APY to be interesting
   TVL_INFLOW_THRESHOLD: 8,         // 8% weekly TVL inflow
   TVL_LEAD_LOOKBACK: 30,           // Days to analyze TVL-price relationship
-  YIELD_PRICE_LAG_WINDOW: 72       // Hours of yield spike without price response
+  YIELD_PRICE_LAG_WINDOW: 72,      // Hours of yield spike without price response
+  // Dev/Narrative activity thresholds
+  MIN_COMMIT_SPIKE: 50,            // 50% increase in commit activity
+  MIN_CONTRIBUTOR_GROWTH: 20,      // 20% growth in contributors
+  MIN_RANKING_IMPROVEMENT: 5,      // 5 position improvement in rankings
+  DEV_PRICE_LAG_THRESHOLD: 3,      // Price moved <3% despite dev activity
+  ECOSYSTEM_GROWTH_MIN: 10         // 10% ecosystem growth (TVL + users)
 };
 
 /**
@@ -112,6 +128,186 @@ function formatSignal({
     timestamp: new Date().toISOString(),
     rawData
   };
+}
+
+/**
+ * Fetch on-chain metrics from multiple free sources
+ * Returns exchange flows, whale activity, and network metrics
+ */
+async function fetchOnChainMetrics(asset = 'BTC') {
+  const metrics = {
+    exchangeFlows: null,
+    networkActivity: null,
+    whaleActivity: null,
+    source: []
+  };
+  
+  try {
+    // === BLOCKCHAIN.INFO - BTC Exchange Flows (Free) ===
+    if (asset === 'BTC') {
+      const exchangeUrl = `${APIS.BLOCKCHAIN_INFO}/q/24hrbtcsent?cors=true`;
+      const res = await fetchWithTimeout(exchangeUrl, { timeout: 8000 });
+      if (res.ok) {
+        const btcSent = await res.text();
+        metrics.exchangeFlows = {
+          btc24hSent: parseFloat(btcSent) / 100000000, // Convert satoshis to BTC
+          source: 'blockchain.info'
+        };
+        metrics.source.push('blockchain.info');
+      }
+    }
+  } catch (e) {
+    logger.debug('Blockchain.info fetch failed', { error: e.message });
+  }
+  
+  try {
+    // === COINGECKO DEVELOPER DATA - Network Activity ===
+    const cgUrl = `${APIS.COINGECKO}/coins/${asset.toLowerCase()}?localization=false&tickers=false&community_data=true&developer_data=true`;
+    const cgRes = await fetchWithTimeout(cgUrl, { timeout: 10000 });
+    
+    if (cgRes.ok) {
+      const data = await cgRes.json();
+      metrics.networkActivity = {
+        devScore: data.developer_score,
+        communityScore: data.community_score,
+        liquidityScore: data.liquidity_score,
+        publicInterestScore: data.public_interest_score,
+        sentimentUp: data.sentiment_votes_up_percentage,
+        sentimentDown: data.sentiment_votes_down_percentage,
+        twitterFollowers: data.community_data?.twitter_followers,
+        redditSubscribers: data.community_data?.reddit_subscribers,
+        commits4Weeks: data.developer_data?.commit_count_4_weeks,
+        codeAdditions4Weeks: data.developer_data?.code_additions_deletions_4_weeks?.additions,
+        codeDeletions4Weeks: data.developer_data?.code_additions_deletions_4_weeks?.deletions
+      };
+      metrics.source.push('coingecko');
+    }
+  } catch (e) {
+    logger.debug('CoinGecko network data fetch failed', { error: e.message });
+  }
+  
+  try {
+    // === DEFILLAMA STABLECOINS - Whale/Smart Money Flows ===
+    const stableUrl = `${APIS.DEFILLAMA}/stablecoins`;
+    const stableRes = await fetchWithTimeout(stableUrl, { timeout: 10000 });
+    
+    if (stableRes.ok) {
+      const data = await stableRes.json();
+      const totalMcap = data.peggedAssets?.reduce((sum, s) => sum + (s.circulating?.peggedUSD || 0), 0) || 0;
+      const change24h = data.peggedAssets?.reduce((sum, s) => {
+        const current = s.circulating?.peggedUSD || 0;
+        const change = s.circulatingPrevDay?.peggedUSD || current;
+        return sum + (current - change);
+      }, 0) || 0;
+      
+      metrics.whaleActivity = {
+        stablecoinMcap: totalMcap,
+        stablecoinChange24h: change24h,
+        stablecoinChangePercent: totalMcap > 0 ? (change24h / totalMcap) * 100 : 0,
+        interpretation: change24h > 0 ? 'Stablecoin inflows (bullish signal)' : 'Stablecoin outflows (bearish signal)'
+      };
+      metrics.source.push('defillama-stablecoins');
+    }
+  } catch (e) {
+    logger.debug('DeFiLlama stablecoins fetch failed', { error: e.message });
+  }
+  
+  return metrics;
+}
+
+/**
+ * Fetch exchange reserve data (whale accumulation/distribution)
+ */
+async function fetchExchangeReserves() {
+  try {
+    // Use DeFiLlama CEX reserves endpoint
+    const url = `${APIS.DEFILLAMA}/protocols`;
+    const res = await fetchWithTimeout(url, { timeout: 12000 });
+    
+    if (!res.ok) return null;
+    
+    const protocols = await res.json();
+    
+    // Find CEX/Bridge protocols for reserve data
+    const exchanges = protocols.filter(p => 
+      p.category === 'CEX' || p.category === 'Bridge'
+    ).slice(0, 10);
+    
+    return {
+      topExchanges: exchanges.map(e => ({
+        name: e.name,
+        tvl: e.tvl,
+        change1d: e.change_1d,
+        change7d: e.change_7d,
+        chains: e.chains
+      })),
+      totalReserves: exchanges.reduce((sum, e) => sum + (e.tvl || 0), 0)
+    };
+  } catch (e) {
+    logger.debug('Exchange reserves fetch failed', { error: e.message });
+    return null;
+  }
+}
+
+/**
+ * Fetch gas/fee data for network congestion signals
+ */
+async function fetchNetworkFees() {
+  const fees = {};
+  
+  try {
+    // Ethereum gas from EthGasStation alternative (free)
+    const ethUrl = 'https://api.blocknative.com/gasprices/blockprices';
+    const ethRes = await fetchWithTimeout(ethUrl, { 
+      timeout: 8000,
+      headers: { 'Accept': 'application/json' }
+    });
+    
+    if (ethRes.ok) {
+      const data = await ethRes.json();
+      const blockPrices = data.blockPrices?.[0];
+      fees.ethereum = {
+        fast: blockPrices?.estimatedPrices?.find(p => p.confidence === 99)?.price,
+        standard: blockPrices?.estimatedPrices?.find(p => p.confidence === 90)?.price,
+        slow: blockPrices?.estimatedPrices?.find(p => p.confidence === 70)?.price,
+        baseFee: blockPrices?.baseFeePerGas
+      };
+    }
+  } catch (e) {
+    logger.debug('Ethereum gas fetch failed', { error: e.message });
+  }
+  
+  try {
+    // Solana fees from Solana Beach alternative
+    const solUrl = 'https://api.mainnet-beta.solana.com';
+    const solRes = await fetchWithTimeout(solUrl, {
+      method: 'POST',
+      timeout: 8000,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getRecentPrioritizationFees',
+        params: []
+      })
+    });
+    
+    if (solRes.ok) {
+      const data = await solRes.json();
+      const recentFees = data.result || [];
+      const avgFee = recentFees.length > 0
+        ? recentFees.reduce((sum, f) => sum + f.prioritizationFee, 0) / recentFees.length
+        : 0;
+      fees.solana = {
+        avgPriorityFee: avgFee,
+        recentSlots: recentFees.length
+      };
+    }
+  } catch (e) {
+    logger.debug('Solana fees fetch failed', { error: e.message });
+  }
+  
+  return fees;
 }
 
 /**
@@ -617,8 +813,608 @@ function analyzeTVLPriceLeadLag(tvlData, priceData) {
 }
 
 // ============================================================================
+// DEVELOPMENT ACTIVITY & NARRATIVE TRACKING
+// ============================================================================
+
+/**
+ * Fetch GitHub repository activity data
+ * Returns commit activity, contributors, stars, and recent development metrics
+ */
+async function fetchGitHubActivity(repoPath) {
+  if (!repoPath) return null;
+  
+  try {
+    // Fetch repo info (stars, forks, watchers)
+    const repoUrl = `${APIS.GITHUB}/repos/${repoPath}`;
+    const repoRes = await fetchWithTimeout(repoUrl, { 
+      timeout: 10000,
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
+    });
+    
+    if (!repoRes.ok) {
+      logger.debug('GitHub repo fetch failed', { repo: repoPath, status: repoRes.status });
+      return null;
+    }
+    
+    const repoData = await repoRes.json();
+    
+    // Fetch commit activity (last 52 weeks)
+    const commitUrl = `${APIS.GITHUB}/repos/${repoPath}/stats/commit_activity`;
+    const commitRes = await fetchWithTimeout(commitUrl, { 
+      timeout: 10000,
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
+    });
+    
+    let commitActivity = [];
+    if (commitRes.ok) {
+      commitActivity = await commitRes.json();
+    }
+    
+    // Fetch contributors count
+    const contribUrl = `${APIS.GITHUB}/repos/${repoPath}/contributors?per_page=1&anon=true`;
+    const contribRes = await fetchWithTimeout(contribUrl, { 
+      timeout: 10000,
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
+    });
+    
+    let contributorCount = 0;
+    if (contribRes.ok) {
+      // GitHub returns total count in Link header
+      const linkHeader = contribRes.headers.get('Link') || '';
+      const match = linkHeader.match(/page=(\d+)>; rel="last"/);
+      contributorCount = match ? parseInt(match[1]) : 1;
+    }
+    
+    // Calculate recent activity metrics
+    const recentWeeks = commitActivity.slice(-8); // Last 8 weeks
+    const priorWeeks = commitActivity.slice(-16, -8); // Prior 8 weeks
+    
+    const recentCommits = recentWeeks.reduce((sum, w) => sum + (w?.total || 0), 0);
+    const priorCommits = priorWeeks.reduce((sum, w) => sum + (w?.total || 0), 0);
+    
+    const commitGrowth = priorCommits > 0 
+      ? ((recentCommits - priorCommits) / priorCommits) * 100 
+      : recentCommits > 0 ? 100 : 0;
+    
+    // Weekly commit trend (last 4 weeks)
+    const last4Weeks = commitActivity.slice(-4);
+    const weeklyCommits = last4Weeks.map(w => w?.total || 0);
+    const avgWeeklyCommits = weeklyCommits.reduce((a, b) => a + b, 0) / 4;
+    
+    // Check if activity is accelerating
+    const isAccelerating = weeklyCommits.length >= 2 && 
+      weeklyCommits[weeklyCommits.length - 1] > weeklyCommits[weeklyCommits.length - 2];
+    
+    return {
+      stars: repoData.stargazers_count || 0,
+      forks: repoData.forks_count || 0,
+      watchers: repoData.subscribers_count || 0,
+      openIssues: repoData.open_issues_count || 0,
+      contributors: contributorCount,
+      recentCommits,
+      priorCommits,
+      commitGrowth,
+      avgWeeklyCommits,
+      weeklyCommits,
+      isAccelerating,
+      lastPush: repoData.pushed_at,
+      language: repoData.language,
+      repoAge: Math.floor((Date.now() - new Date(repoData.created_at).getTime()) / (1000 * 60 * 60 * 24))
+    };
+  } catch (err) {
+    logger.debug('GitHub activity fetch failed', { repo: repoPath, error: err.message });
+    return null;
+  }
+}
+
+/**
+ * Fetch protocol rankings from DeFiLlama
+ * Returns current rank and historical ranking data
+ */
+async function fetchProtocolRanking(protocolSlug) {
+  try {
+    // Fetch all protocols to get rankings
+    const url = `${APIS.DEFILLAMA}/protocols`;
+    const res = await fetchWithTimeout(url, { timeout: 15000 });
+    if (!res.ok) return null;
+    
+    const protocols = await res.json();
+    
+    // Sort by TVL to get rankings
+    const sortedByTvl = protocols
+      .filter(p => p.tvl > 0)
+      .sort((a, b) => b.tvl - a.tvl);
+    
+    const currentRank = sortedByTvl.findIndex(p => p.slug === protocolSlug) + 1;
+    if (currentRank === 0) return null;
+    
+    const protocol = sortedByTvl.find(p => p.slug === protocolSlug);
+    
+    // Get category ranking
+    const categoryProtocols = sortedByTvl.filter(p => p.category === protocol?.category);
+    const categoryRank = categoryProtocols.findIndex(p => p.slug === protocolSlug) + 1;
+    
+    // Calculate chain distribution
+    const chains = protocol?.chains || [];
+    const chainCount = chains.length;
+    
+    return {
+      currentRank,
+      categoryRank,
+      category: protocol?.category,
+      tvl: protocol?.tvl,
+      tvlChange1d: protocol?.change_1d,
+      tvlChange7d: protocol?.change_7d,
+      tvlChange1m: protocol?.change_1m,
+      chainCount,
+      chains,
+      mcap: protocol?.mcap,
+      totalProtocols: sortedByTvl.length
+    };
+  } catch (err) {
+    logger.debug('Protocol ranking fetch failed', { protocol: protocolSlug, error: err.message });
+    return null;
+  }
+}
+
+/**
+ * Analyze development activity vs price relationship
+ * Identifies protocols with high dev activity but lagging price
+ */
+function analyzeDevActivityMismatch(githubData, priceData, tvlData) {
+  if (!githubData || !priceData) return null;
+  
+  const analysis = {
+    hasDevLead: false,
+    devScore: 0,
+    priceLagging: false,
+    liquidityLagging: false,
+    mismatchType: null,
+    confidence: 0
+  };
+  
+  // Calculate development score (0-100)
+  let devScore = 0;
+  
+  // Commit activity growth
+  if (githubData.commitGrowth > 100) devScore += 30;
+  else if (githubData.commitGrowth > 50) devScore += 20;
+  else if (githubData.commitGrowth > 20) devScore += 10;
+  
+  // Recent commit velocity
+  if (githubData.avgWeeklyCommits > 50) devScore += 20;
+  else if (githubData.avgWeeklyCommits > 20) devScore += 12;
+  else if (githubData.avgWeeklyCommits > 10) devScore += 6;
+  
+  // Activity acceleration
+  if (githubData.isAccelerating) devScore += 15;
+  
+  // Contributor base
+  if (githubData.contributors > 50) devScore += 15;
+  else if (githubData.contributors > 20) devScore += 10;
+  else if (githubData.contributors > 10) devScore += 5;
+  
+  // Community interest (stars)
+  if (githubData.stars > 5000) devScore += 10;
+  else if (githubData.stars > 1000) devScore += 6;
+  else if (githubData.stars > 500) devScore += 3;
+  
+  // Recency bonus
+  const daysSinceLastPush = (Date.now() - new Date(githubData.lastPush).getTime()) / (1000 * 60 * 60 * 24);
+  if (daysSinceLastPush < 7) devScore += 10;
+  else if (daysSinceLastPush < 14) devScore += 5;
+  
+  analysis.devScore = Math.min(100, devScore);
+  
+  // Check if price is lagging dev activity
+  const priceChange30d = priceData.priceChange30d || 0;
+  const priceChange7d = priceData.priceChange7d || 0;
+  
+  // Dev activity is high but price flat/down
+  if (analysis.devScore >= 50 && priceChange30d < SIGNAL_THRESHOLDS.DEV_PRICE_LAG_THRESHOLD) {
+    analysis.priceLagging = true;
+  }
+  
+  // Check liquidity/TVL lag
+  if (tvlData) {
+    const tvlGrowth = tvlData.tvlChange30d || 0;
+    // Strong dev activity but TVL not following
+    if (analysis.devScore >= 50 && tvlGrowth < 5) {
+      analysis.liquidityLagging = true;
+    }
+  }
+  
+  // Determine mismatch type
+  if (analysis.priceLagging && analysis.liquidityLagging) {
+    analysis.mismatchType = 'FULL_DISCONNECT';
+    analysis.hasDevLead = true;
+  } else if (analysis.priceLagging) {
+    analysis.mismatchType = 'PRICE_LAG';
+    analysis.hasDevLead = true;
+  } else if (analysis.liquidityLagging) {
+    analysis.mismatchType = 'LIQUIDITY_LAG';
+    analysis.hasDevLead = analysis.devScore >= 60;
+  }
+  
+  // Calculate confidence based on data quality and signal strength
+  if (analysis.hasDevLead) {
+    analysis.confidence = Math.min(75, 30 + (analysis.devScore / 2));
+    if (analysis.mismatchType === 'FULL_DISCONNECT') analysis.confidence += 10;
+    if (githubData.commitGrowth > 50) analysis.confidence += 8;
+  }
+  
+  return analysis;
+}
+
+/**
+ * Analyze narrative/attention indicators
+ * Tracks ranking improvements, ecosystem growth, and attention metrics
+ */
+function analyzeNarrativeMismatch(rankingData, priceData, tvlData) {
+  if (!rankingData || !priceData) return null;
+  
+  const analysis = {
+    hasNarrativeLead: false,
+    narrativeScore: 0,
+    priceLagging: false,
+    mismatchType: null,
+    rankingImprovement: 0,
+    ecosystemGrowth: 0,
+    failureScenarios: []
+  };
+  
+  // Calculate narrative/attention score
+  let narrativeScore = 0;
+  
+  // TVL growth indicates protocol attention
+  const tvlChange7d = rankingData.tvlChange7d || 0;
+  const tvlChange1m = rankingData.tvlChange1m || 0;
+  
+  if (tvlChange7d > 20) narrativeScore += 25;
+  else if (tvlChange7d > 10) narrativeScore += 15;
+  else if (tvlChange7d > 5) narrativeScore += 8;
+  
+  // Sustained growth (monthly)
+  if (tvlChange1m > 30) narrativeScore += 20;
+  else if (tvlChange1m > 15) narrativeScore += 12;
+  
+  // Multi-chain expansion indicates ecosystem growth
+  if (rankingData.chainCount >= 5) narrativeScore += 15;
+  else if (rankingData.chainCount >= 3) narrativeScore += 10;
+  
+  // Ranking in top tier
+  if (rankingData.currentRank <= 20) narrativeScore += 15;
+  else if (rankingData.currentRank <= 50) narrativeScore += 10;
+  else if (rankingData.currentRank <= 100) narrativeScore += 5;
+  
+  // Category leader bonus
+  if (rankingData.categoryRank <= 3) narrativeScore += 15;
+  else if (rankingData.categoryRank <= 10) narrativeScore += 8;
+  
+  analysis.narrativeScore = Math.min(100, narrativeScore);
+  analysis.ecosystemGrowth = tvlChange1m;
+  
+  // Check if price is lagging narrative/fundamentals
+  const priceChange7d = priceData.priceChange7d || 0;
+  const priceChange30d = priceData.priceChange30d || 0;
+  
+  // Strong narrative metrics but price flat
+  if (analysis.narrativeScore >= 45) {
+    if (tvlChange7d > 10 && priceChange7d < 3) {
+      analysis.priceLagging = true;
+      analysis.mismatchType = 'TVL_ATTENTION_LEADS';
+    }
+    
+    if (tvlChange1m > 20 && priceChange30d < 8) {
+      analysis.priceLagging = true;
+      analysis.mismatchType = 'SUSTAINED_ATTENTION_LEADS';
+    }
+  }
+  
+  // Estimate ranking improvement (would need historical data for accuracy)
+  // Using TVL growth as proxy
+  if (tvlChange1m > 25) {
+    analysis.rankingImprovement = Math.ceil(tvlChange1m / 5);
+  }
+  
+  // Define failure scenarios
+  if (analysis.priceLagging) {
+    analysis.hasNarrativeLead = true;
+    
+    analysis.failureScenarios = [
+      {
+        scenario: 'TVL is mercenary/incentivized',
+        trigger: 'Incentive program ends or yields drop',
+        impact: 'TVL exits rapidly, price dumps',
+        likelihood: tvlChange1m > 50 ? 'HIGH' : 'MEDIUM'
+      },
+      {
+        scenario: 'Market-wide correction',
+        trigger: 'BTC drops >15%, risk-off sentiment',
+        impact: 'All alts sell off, fundamentals ignored',
+        likelihood: 'MEDIUM'
+      },
+      {
+        scenario: 'Competitive threat',
+        trigger: 'New protocol captures market share',
+        impact: 'TVL/users migrate, narrative shifts',
+        likelihood: rankingData.categoryRank > 3 ? 'MEDIUM' : 'LOW'
+      },
+      {
+        scenario: 'Token unlock/inflation',
+        trigger: 'Large token unlock event',
+        impact: 'Supply shock overwhelms demand',
+        likelihood: 'UNKNOWN'
+      }
+    ];
+  }
+  
+  return analysis;
+}
+
+// ============================================================================
 // SCAN FUNCTIONS - Detect & Classify Signals
 // ============================================================================
+
+/**
+ * SCAN: Development Activity Lead
+ * Identifies protocols with high GitHub activity but lagging price/liquidity
+ */
+async function scanDevActivityLead() {
+  logger.info('Scanning for dev activity leading price...');
+  const signals = [];
+  
+  try {
+    const tokenIds = SCAN_PROTOCOLS.map(p => p.token);
+    const marketData = await fetchMarketData(tokenIds);
+    
+    for (const protocol of SCAN_PROTOCOLS) {
+      if (!protocol.github) continue;
+      
+      const [githubData, tvlData, priceData] = await Promise.all([
+        fetchGitHubActivity(protocol.github),
+        fetchTVLData(protocol.slug),
+        Promise.resolve(marketData[protocol.token])
+      ]);
+      
+      if (!githubData || !priceData) continue;
+      
+      const devAnalysis = analyzeDevActivityMismatch(githubData, priceData, tvlData);
+      if (!devAnalysis || !devAnalysis.hasDevLead) continue;
+      
+      const priceChange30d = priceData.priceChange30d || 0;
+      const priceChange7d = priceData.priceChange7d || 0;
+      
+      // Define positioning strategy
+      let positioningStrategy, timeHorizon, entryApproach;
+      
+      if (devAnalysis.mismatchType === 'FULL_DISCONNECT') {
+        positioningStrategy = `Accumulation Strategy: Build position in ${priceData.symbol} over 2-4 weeks using DCA. High dev activity (${githubData.commitGrowth.toFixed(0)}% commit growth) with zero price response suggests market sleeping on fundamentals.`;
+        timeHorizon = '4-8 weeks';
+        entryApproach = 'DCA 25% weekly over 4 weeks';
+      } else if (devAnalysis.mismatchType === 'PRICE_LAG') {
+        positioningStrategy = `Directional Long: ${priceData.symbol} shows ${githubData.avgWeeklyCommits.toFixed(0)} commits/week (+${githubData.commitGrowth.toFixed(0)}% growth) but price flat. Enter 50% now, 50% on any dip >5%.`;
+        timeHorizon = '2-6 weeks';
+        entryApproach = 'Scale in on weakness';
+      } else {
+        positioningStrategy = `Monitor & Accumulate: Dev activity strong but early. Small starter position, add if TVL follows development.`;
+        timeHorizon = '1-3 months';
+        entryApproach = 'Small initial position';
+      }
+      
+      // Define failure scenarios
+      const failureScenarios = [
+        `Dev activity is maintenance, not feature development → Check commit messages for substance`,
+        `Contributors are bots/low-quality → Verify contributor profiles`,
+        `Market knows something negative → Check social sentiment, audits`,
+        `Token has poor tokenomics/high inflation → Verify emission schedule`,
+        `Broader market downturn overwhelms fundamentals`
+      ];
+      
+      const confidence = calculateDevLeadConfidence(devAnalysis, githubData, priceData);
+      if (confidence < SIGNAL_THRESHOLDS.MIN_CONFIDENCE) continue;
+      
+      const signal = formatSignal({
+        signalType: 'DEV_ACTIVITY_LEAD',
+        tradeType: 'ACCUMULATION',
+        asset: `${protocol.name} (${priceData.symbol})`,
+        direction: 'LONG',
+        conviction: confidence >= 65 ? 'HIGH' : confidence >= 50 ? 'MEDIUM' : 'LOW',
+        marketContext: `${protocol.name} GitHub: ${githubData.recentCommits} commits (8wk), +${githubData.commitGrowth.toFixed(0)}% vs prior period. ${githubData.contributors} contributors, ${githubData.stars} stars. Token price 30d: ${priceChange30d > 0 ? '+' : ''}${priceChange30d.toFixed(1)}%.`,
+        observedAnomaly: `Development activity surging (+${githubData.commitGrowth.toFixed(0)}% commit growth, ${githubData.isAccelerating ? 'ACCELERATING' : 'steady'}) but price only moved ${priceChange30d.toFixed(1)}% in 30d. Dev score: ${devAnalysis.devScore}/100. Mismatch type: ${devAnalysis.mismatchType}.`,
+        whyMatters: `High development activity typically precedes product launches, upgrades, or partnerships. Market is slow to price in dev fundamentals - 60-80% of altcoin rallies correlate with prior dev activity spikes. Current disconnect suggests asymmetric opportunity.`,
+        tradeExpression: positioningStrategy,
+        alternativeTrade: `Hedge approach: Long ${priceData.symbol} + short BTC to isolate alpha from market beta.`,
+        timeHorizon,
+        keyRisks: failureScenarios.join(' | '),
+        invalidationLevel: `Commit activity drops >50%, or price falls >20% without recovery, or major negative news`,
+        confidenceScore: confidence,
+        failureScenarios,
+        rawData: {
+          commits8wk: githubData.recentCommits,
+          commitGrowth: githubData.commitGrowth,
+          contributors: githubData.contributors,
+          stars: githubData.stars,
+          avgWeeklyCommits: githubData.avgWeeklyCommits,
+          devScore: devAnalysis.devScore,
+          priceChange30d,
+          mismatchType: devAnalysis.mismatchType
+        }
+      });
+      
+      signals.push(signal);
+    }
+  } catch (err) {
+    logger.error('Dev activity lead scan failed', { error: err.message });
+  }
+  
+  return signals;
+}
+
+/**
+ * SCAN: Narrative/Ranking Lead
+ * Identifies protocols where attention/rankings are rising but price lags
+ */
+async function scanNarrativeLead() {
+  logger.info('Scanning for narrative/ranking leading price...');
+  const signals = [];
+  
+  try {
+    const tokenIds = SCAN_PROTOCOLS.map(p => p.token);
+    const marketData = await fetchMarketData(tokenIds);
+    
+    for (const protocol of SCAN_PROTOCOLS) {
+      const [rankingData, tvlData, priceData] = await Promise.all([
+        fetchProtocolRanking(protocol.slug),
+        fetchTVLData(protocol.slug),
+        Promise.resolve(marketData[protocol.token])
+      ]);
+      
+      if (!rankingData || !priceData) continue;
+      
+      const narrativeAnalysis = analyzeNarrativeMismatch(rankingData, priceData, tvlData);
+      if (!narrativeAnalysis || !narrativeAnalysis.hasNarrativeLead) continue;
+      
+      const priceChange7d = priceData.priceChange7d || 0;
+      const priceChange30d = priceData.priceChange30d || 0;
+      
+      // Define positioning strategy based on mismatch type
+      let positioningStrategy, timeHorizon;
+      
+      if (narrativeAnalysis.mismatchType === 'SUSTAINED_ATTENTION_LEADS') {
+        positioningStrategy = `Conviction Long: ${priceData.symbol} has ${rankingData.tvlChange1m.toFixed(0)}% monthly TVL growth, rank #${rankingData.currentRank} overall (#${rankingData.categoryRank} in ${rankingData.category}). Price hasn't kept pace. Full position with trailing stop.`;
+        timeHorizon = '2-8 weeks';
+      } else {
+        positioningStrategy = `Tactical Long: ${priceData.symbol} showing early narrative momentum (${rankingData.tvlChange7d.toFixed(0)}% 7d TVL). Entry 60% now, 40% on confirmation of sustained inflows.`;
+        timeHorizon = '1-4 weeks';
+      }
+      
+      // Format failure scenarios
+      const failureScenariosText = narrativeAnalysis.failureScenarios
+        .filter(f => f.likelihood !== 'LOW')
+        .map(f => `${f.scenario} (${f.likelihood}): ${f.trigger} → ${f.impact}`)
+        .join(' | ');
+      
+      const confidence = calculateNarrativeLeadConfidence(narrativeAnalysis, rankingData, priceData);
+      if (confidence < SIGNAL_THRESHOLDS.MIN_CONFIDENCE) continue;
+      
+      const signal = formatSignal({
+        signalType: 'NARRATIVE_LEAD',
+        tradeType: 'NARRATIVE_MOMENTUM',
+        asset: `${protocol.name} (${priceData.symbol})`,
+        direction: 'LONG',
+        conviction: confidence >= 65 ? 'HIGH' : confidence >= 50 ? 'MEDIUM' : 'LOW',
+        marketContext: `${protocol.name} rank #${rankingData.currentRank} by TVL ($${formatNumber(rankingData.tvl)}). Category: ${rankingData.category} (#${rankingData.categoryRank}). TVL 7d: ${rankingData.tvlChange7d > 0 ? '+' : ''}${rankingData.tvlChange7d.toFixed(1)}% | 30d: ${rankingData.tvlChange1m > 0 ? '+' : ''}${rankingData.tvlChange1m.toFixed(1)}%. Active on ${rankingData.chainCount} chains.`,
+        observedAnomaly: `Protocol attention rising (TVL +${rankingData.tvlChange1m.toFixed(0)}% monthly, narrative score ${narrativeAnalysis.narrativeScore}/100) but token price only +${priceChange30d.toFixed(1)}% in 30d. ${narrativeAnalysis.mismatchType === 'SUSTAINED_ATTENTION_LEADS' ? 'SUSTAINED pattern detected.' : 'Early signal.'}`,
+        whyMatters: `TVL inflows and ranking improvements are leading indicators. Smart money/LPs entering before retail. Price typically catches up within 2-6 weeks as narrative spreads. Current divergence suggests early positioning opportunity.`,
+        tradeExpression: positioningStrategy,
+        alternativeTrade: protocol.hasYield ? `Yield + Momentum: Deposit into ${protocol.name} pools to earn yield while waiting for price catch-up.` : null,
+        timeHorizon,
+        keyRisks: failureScenariosText || 'Standard DeFi risks: Smart contract, market downturn, competitive threats',
+        invalidationLevel: `TVL drops >15%, ranking falls >10 positions, or price drops >15% without TVL decline`,
+        confidenceScore: confidence,
+        failureScenarios: narrativeAnalysis.failureScenarios,
+        rawData: {
+          currentRank: rankingData.currentRank,
+          categoryRank: rankingData.categoryRank,
+          category: rankingData.category,
+          tvl: rankingData.tvl,
+          tvlChange7d: rankingData.tvlChange7d,
+          tvlChange1m: rankingData.tvlChange1m,
+          chainCount: rankingData.chainCount,
+          narrativeScore: narrativeAnalysis.narrativeScore,
+          priceChange30d,
+          mismatchType: narrativeAnalysis.mismatchType
+        }
+      });
+      
+      signals.push(signal);
+    }
+  } catch (err) {
+    logger.error('Narrative lead scan failed', { error: err.message });
+  }
+  
+  return signals;
+}
+
+/**
+ * Calculate confidence for dev activity lead signals
+ */
+function calculateDevLeadConfidence(devAnalysis, githubData, priceData) {
+  let score = 30; // Base score
+  
+  // Dev score contribution
+  if (devAnalysis.devScore >= 70) score += 20;
+  else if (devAnalysis.devScore >= 50) score += 12;
+  else if (devAnalysis.devScore >= 35) score += 6;
+  
+  // Mismatch severity
+  if (devAnalysis.mismatchType === 'FULL_DISCONNECT') score += 15;
+  else if (devAnalysis.mismatchType === 'PRICE_LAG') score += 10;
+  else score += 5;
+  
+  // Activity acceleration
+  if (githubData.isAccelerating) score += 8;
+  
+  // High commit growth
+  if (githubData.commitGrowth > 100) score += 10;
+  else if (githubData.commitGrowth > 50) score += 6;
+  
+  // Contributor base (more contributors = more legitimate)
+  if (githubData.contributors > 30) score += 8;
+  else if (githubData.contributors > 15) score += 4;
+  
+  // Price really hasn't moved
+  const priceMove = Math.abs(priceData.priceChange30d || 0);
+  if (priceMove < 3) score += 10;
+  else if (priceMove < 8) score += 5;
+  
+  // Discount for uncertainty
+  score -= 12; // Dev activity doesn't always translate to price
+  
+  return Math.min(80, score);
+}
+
+/**
+ * Calculate confidence for narrative lead signals
+ */
+function calculateNarrativeLeadConfidence(narrativeAnalysis, rankingData, priceData) {
+  let score = 30; // Base score
+  
+  // Narrative score contribution
+  if (narrativeAnalysis.narrativeScore >= 70) score += 18;
+  else if (narrativeAnalysis.narrativeScore >= 50) score += 12;
+  else if (narrativeAnalysis.narrativeScore >= 35) score += 6;
+  
+  // TVL growth strength
+  const tvlGrowth = rankingData.tvlChange1m || 0;
+  if (tvlGrowth > 30) score += 15;
+  else if (tvlGrowth > 15) score += 10;
+  else if (tvlGrowth > 8) score += 5;
+  
+  // Ranking quality
+  if (rankingData.currentRank <= 30) score += 10;
+  else if (rankingData.currentRank <= 60) score += 6;
+  
+  if (rankingData.categoryRank <= 5) score += 8;
+  
+  // Sustained vs early
+  if (narrativeAnalysis.mismatchType === 'SUSTAINED_ATTENTION_LEADS') score += 10;
+  
+  // Price divergence (larger = clearer signal)
+  const priceMove = priceData.priceChange30d || 0;
+  const divergence = tvlGrowth - priceMove;
+  if (divergence > 20) score += 10;
+  else if (divergence > 10) score += 6;
+  
+  // Multi-chain presence (more chains = more adoption)
+  if (rankingData.chainCount >= 4) score += 5;
+  
+  // Discount for mercenary capital risk
+  score -= 10;
+  
+  return Math.min(80, score);
+}
 
 /**
  * SCAN: Yield Spike without Price Response
@@ -1204,16 +2000,17 @@ class AlphaScanner {
       minConfidence: SIGNAL_THRESHOLDS.MIN_CONFIDENCE,
       maxSignals: 15,
       includeYieldScans: true,
+      includeDevScans: true,
       ...config
     };
   }
   
   /**
    * Run all scans and return ranked signals
-   * Includes: Positioning, TVL, Yield Spikes, TVL Inflow Lead
+   * Includes: Positioning, TVL, Yield Spikes, TVL Inflow Lead, Dev Activity, Narrative
    */
   async scan() {
-    logger.info('Starting comprehensive alpha scan (including DeFi yield analysis)...');
+    logger.info('Starting comprehensive alpha scan (including DeFi yield + dev activity analysis)...');
     const startTime = Date.now();
     
     const allSignals = [];
@@ -1228,6 +2025,12 @@ class AlphaScanner {
     if (this.config.includeYieldScans) {
       scanPromises.push(scanYieldSpikes());
       scanPromises.push(scanTVLInflowLead());
+    }
+    
+    // Add dev/narrative scans if enabled
+    if (this.config.includeDevScans) {
+      scanPromises.push(scanDevActivityLead());
+      scanPromises.push(scanNarrativeLead());
     }
     
     const results = await Promise.all(scanPromises);
@@ -1276,7 +2079,8 @@ class AlphaScanner {
         timestamp: new Date().toISOString(),
         executionTimeMs: Date.now() - startTime,
         signalTypes: this.countByType(filtered),
-        includesYieldAnalysis: this.config.includeYieldScans
+        includesYieldAnalysis: this.config.includeYieldScans,
+        includesDevAnalysis: this.config.includeDevScans
       }
     };
   }
@@ -1294,6 +2098,10 @@ class AlphaScanner {
         return await scanYieldSpikes();
       case 'tvl_inflow_lead':
         return await scanTVLInflowLead();
+      case 'dev_activity':
+        return await scanDevActivityLead();
+      case 'narrative':
+        return await scanNarrativeLead();
       case 'fade':
         const fadeSignals = await scanPositioningSignals();
         return fadeSignals.filter(s => s.tradeType === 'FADE_TRADE');
@@ -1310,6 +2118,13 @@ class AlphaScanner {
           scanTVLInflowLead()
         ]);
         return [...yieldSpikes, ...tvlLead];
+      case 'fundamentals':
+        // All dev/narrative signals
+        const [devSignals, narrativeSignals] = await Promise.all([
+          scanDevActivityLead(),
+          scanNarrativeLead()
+        ]);
+        return [...devSignals, ...narrativeSignals];
       default:
         return [];
     }
@@ -1338,10 +2153,16 @@ class AlphaScanner {
     const yieldSignals = signals.filter(s => 
       s.signalType === 'YIELD_SPIKE' || s.signalType === 'TVL_INFLOW_LEAD'
     ).length;
+    const devSignals = signals.filter(s => 
+      s.signalType === 'DEV_ACTIVITY_LEAD' || s.signalType === 'NARRATIVE_LEAD'
+    ).length;
     
     let summary = `Found ${signals.length} actionable signals (${highConviction} high conviction).`;
     if (yieldSignals > 0) {
       summary += ` Including ${yieldSignals} DeFi yield opportunities.`;
+    }
+    if (devSignals > 0) {
+      summary += ` Including ${devSignals} dev/narrative lead signals.`;
     }
     summary += ` Top: ${topSignal.asset} ${topSignal.tradeType || topSignal.signalType} (${topSignal.confidenceScore}% confidence). Breakdown: ${typeBreakdown}`;
     
@@ -1356,15 +2177,25 @@ module.exports = {
   scanTVLLag,
   scanYieldSpikes,
   scanTVLInflowLead,
+  scanDevActivityLead,
+  scanNarrativeLead,
   // Analysis functions
   analyzePositioning,
   analyzeYieldDynamics,
   analyzeTVLPriceLeadLag,
+  analyzeDevActivityMismatch,
+  analyzeNarrativeMismatch,
   classifyTradeSetup,
   // Utilities
   formatSignal,
   fetchYieldData,
   fetchTVLData,
+  fetchGitHubActivity,
+  fetchProtocolRanking,
+  // On-chain data
+  fetchOnChainMetrics,
+  fetchExchangeReserves,
+  fetchNetworkFees,
   // Constants
   SCAN_ASSETS,
   SCAN_PROTOCOLS,

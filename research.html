@@ -765,6 +765,31 @@
       border: 1px solid rgba(99, 102, 241, 0.25);
     }
     
+    /* Dev/Narrative Lead signal types */
+    .signal-type-badge.dev_activity_lead {
+      background: rgba(14, 165, 233, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(14, 165, 233, 0.25);
+    }
+    
+    .signal-type-badge.narrative_lead {
+      background: rgba(236, 72, 153, 0.15);
+      color: #f472b6;
+      border: 1px solid rgba(236, 72, 153, 0.25);
+    }
+    
+    .signal-type-badge.accumulation {
+      background: rgba(14, 165, 233, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(14, 165, 233, 0.25);
+    }
+    
+    .signal-type-badge.narrative_momentum {
+      background: rgba(236, 72, 153, 0.15);
+      color: #f472b6;
+      border: 1px solid rgba(236, 72, 153, 0.25);
+    }
+    
     /* Conviction indicator */
     .conviction-badge {
       font-size: 0.65rem;
@@ -1247,6 +1272,8 @@
         <div class="scanner-controls">
           <button class="scanner-btn active" data-type="all" onclick="filterSignals('all')">All</button>
           <button class="scanner-btn" data-type="yield" onclick="filterSignals('yield')">💰 Yield</button>
+          <button class="scanner-btn" data-type="dev" onclick="filterSignals('dev')">🔧 Dev</button>
+          <button class="scanner-btn" data-type="narrative" onclick="filterSignals('narrative')">📢 Narrative</button>
           <button class="scanner-btn" data-type="fade_trade" onclick="filterSignals('fade_trade')">Fade</button>
           <button class="scanner-btn" data-type="squeeze_setup" onclick="filterSignals('squeeze_setup')">Squeeze</button>
           <button class="scanner-btn" data-type="vol_expansion" onclick="filterSignals('vol_expansion')">Vol</button>
@@ -1667,6 +1694,10 @@
         updateFreshnessIndicator('', 'API unavailable, fetching directly from data sources...');
         const signals = await fetchDirectSignals();
         
+        if (signals.length === 0) {
+          throw new Error('No actionable signals found in current market conditions');
+        }
+        
         allAlphaSignals = signals;
         scanSource = 'direct';
         
@@ -1683,18 +1714,30 @@
       } catch (fallbackError) {
         console.error('❌ All data sources failed:', fallbackError);
         
-        // Last resort: Use demo data
-        const demoSignals = generateDemoSignals();
-        allAlphaSignals = demoSignals;
-        scanSource = 'demo';
+        // Show error state - no mock data
+        allAlphaSignals = [];
+        scanSource = 'error';
         
-        countBadge.innerHTML = `${demoSignals.length} signals <span class="data-source-badge">DEMO</span>`;
+        countBadge.innerHTML = `0 signals <span class="data-source-badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">● ERROR</span>`;
         updateFreshnessIndicator('stale', 
-          'Using demo data (live APIs unavailable) • Simulated signals for demonstration'
+          `Data fetch failed: ${fallbackError.message}. Retrying in 60s...`
         );
         
-        renderSignals(demoSignals);
-        startCountdown();
+        container.innerHTML = `
+          <div class="no-signals">
+            <div class="no-signals-icon">⚠️</div>
+            <p>Unable to fetch live market data</p>
+            <p style="font-size: 0.8rem; margin-top: 8px; color: #94a3b8;">
+              ${fallbackError.message}<br>
+              <button onclick="runAlphaScan(true)" style="margin-top: 12px; padding: 8px 16px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 6px; color: #818cf8; cursor: pointer;">
+                🔄 Retry Now
+              </button>
+            </p>
+          </div>
+        `;
+        
+        // Auto-retry in 60 seconds
+        setTimeout(() => runAlphaScan(true), 60000);
       }
     }
 
@@ -2042,110 +2085,6 @@
       return date.toLocaleTimeString();
     }
 
-    // Demo signals (last resort fallback) - showcasing all signal types
-    function generateDemoSignals() {
-      return [
-        {
-          signalType: 'FADE_TRADE',
-          tradeType: 'FADE_TRADE',
-          asset: 'ETH',
-          direction: 'SHORT',
-          conviction: 'HIGH',
-          marketContext: 'ETH at $3,450. 7d: +12.3%. 24h range: $3,380 - $3,470. Vol/MCap: 8.2%. Price at 92% of 24h range.',
-          observedAnomaly: 'Crowded longs at price extreme - mean reversion setup. Positioning stress: 72/100. Funding persistence: 6/8 periods positive.',
-          whyMatters: '[DEMO] Crowded positioning at extremes creates mean-reversion opportunity. Funding costs and liquidation risk force position unwind.',
-          tradeExpression: 'Fade longs: Short ETH with stop above recent high. Target: return to 7d VWAP (~$3,400)',
-          timeHorizon: '4-24 hours',
-          keyRisks: '[DEMO] Trend continuation, news catalyst, funding can remain extreme longer than expected',
-          invalidationLevel: 'New high above $3,540',
-          confidenceScore: 68,
-          timestamp: new Date().toISOString()
-        },
-        {
-          signalType: 'SQUEEZE_SETUP',
-          tradeType: 'SQUEEZE_SETUP',
-          asset: 'SOL',
-          direction: 'LONG',
-          conviction: 'MEDIUM',
-          marketContext: 'SOL at $178. 7d: -4.2%. 24h range: $175 - $182. Vol/MCap: 11.5%. Funding persistently negative despite price holding.',
-          observedAnomaly: 'Shorts offside - funding/price divergence indicates squeeze potential. Positioning stress: 58/100. Funding persistence: 5/8 periods negative.',
-          whyMatters: '[DEMO] Price diverging from positioning suggests trapped traders. Liquidation cascade likely when stops trigger.',
-          tradeExpression: 'Long SOL on short squeeze. Entry: $178. Target: +8-12% as shorts cover.',
-          timeHorizon: '12-48 hours',
-          keyRisks: '[DEMO] False signal, whale positioning unknown, exchange-specific dynamics',
-          invalidationLevel: 'Price drops below $168',
-          confidenceScore: 62,
-          timestamp: new Date().toISOString()
-        },
-        {
-          signalType: 'VOL_EXPANSION',
-          tradeType: 'VOL_EXPANSION',
-          asset: 'BTC',
-          direction: 'LONG',
-          conviction: 'MEDIUM',
-          marketContext: 'BTC at $97,500. 7d: +1.2%. Volatility compression: 0.52x normal. Vol/MCap: 5.8%. Range-bound for 5 days.',
-          observedAnomaly: 'Volatility compression with positioning buildup - breakout imminent. Positioning stress: 55/100. Funding persistence: 4/8 periods positive.',
-          whyMatters: '[DEMO] Volatility compression with position buildup creates explosive breakout potential. Stored energy ready to release.',
-          tradeExpression: 'Long BTC volatility expansion. Buy breakout above $98,200. Target: 5-10% move on vol release.',
-          timeHorizon: '24-72 hours',
-          keyRisks: '[DEMO] False breakout/breakdown, liquidity gaps, market-wide correlation',
-          invalidationLevel: 'False breakout - rejection back below $97,000',
-          confidenceScore: 56,
-          timestamp: new Date().toISOString()
-        },
-        {
-          signalType: 'TVL_LAG',
-          tradeType: 'TVL_LAG',
-          asset: 'Pendle (PENDLE)',
-          direction: 'LONG',
-          conviction: 'HIGH',
-          marketContext: 'Pendle TVL: $4.2B. 7d TVL change: +18.4%. Token price 7d: +3.2%. TVL/MCap ratio: 6.8x.',
-          observedAnomaly: 'TVL growth (+18.4%) significantly outpacing token appreciation (+3.2%). Divergence: 15.2%.',
-          whyMatters: '[DEMO] Capital flowing into protocol but token price lagging. Connect to live API for real signals.',
-          tradeExpression: 'Long PENDLE spot. Entry: current. Target: 12-15% catch-up move.',
-          timeHorizon: '1-2 weeks',
-          keyRisks: '[DEMO] Mercenary TVL, token inflation, smart contract risk',
-          invalidationLevel: 'TVL drops >10%',
-          confidenceScore: 72,
-          timestamp: new Date().toISOString()
-        },
-        {
-          signalType: 'YIELD_SPIKE',
-          tradeType: 'YIELD_OPPORTUNITY',
-          asset: 'Ethena (ENA)',
-          direction: 'LONG',
-          conviction: 'HIGH',
-          marketContext: 'Ethena yield spiked +85% to 28.5% APY. Pool: sUSDe on Ethereum. Pool TVL: $2.8B. Token price 7d: +2.1%.',
-          observedAnomaly: 'Yield spike detected: APY jumped from 15.4% to 28.5% (+85%) but token price only moved +2.1%. This is a 40x yield-to-price divergence.',
-          whyMatters: '[DEMO] Elevated yields attract capital → increased protocol revenue → token value. Token price essentially flat despite yield spike. Yield change too recent for market to fully digest.',
-          tradeExpression: 'Long ENA spot. Entry: $0.92. Target: +12% as market prices in elevated yield. Stop: -8%.',
-          alternativeTrade: 'Yield Capture + Hedge: Deposit into sUSDe pool (28.5% APY). Hedge token exposure by shorting ENA perps. Net yield: ~20% after funding.',
-          timeHorizon: '3-10 days',
-          keyRisks: '[DEMO] Yield could normalize quickly, smart contract risk, broader market selloff',
-          invalidationLevel: 'APY drops below 17% or token price drops >12%',
-          confidenceScore: 68,
-          timestamp: new Date().toISOString()
-        },
-        {
-          signalType: 'TVL_INFLOW_LEAD',
-          tradeType: 'FUNDAMENTAL_LEAD',
-          asset: 'Aave (AAVE)',
-          direction: 'LONG',
-          conviction: 'MEDIUM',
-          marketContext: 'Aave TVL: $12.8B. 7d TVL: +14.2% | 30d TVL: +28.5%. Token 7d: +4.8%. TVL/MCap: 4.2x.',
-          observedAnomaly: 'TVL inflows (+14.2%) significantly outpacing token price (+4.8%). Divergence: 9.4%. TVL growth is ACCELERATING.',
-          whyMatters: '[DEMO] Historically, sustained TVL inflows precede token appreciation by 1-3 weeks. Price (+4.8%) lagging TVL inflow (+14.2%). High TVL/MCap ratio (4.2x) suggests undervaluation.',
-          tradeExpression: 'Long AAVE spot. TVL leading price by 9.4%. Target: +6% catch-up move over 1-2 weeks.',
-          alternativeTrade: 'Yield + Appreciation: Deposit assets into Aave (earn yield while gaining token exposure). Or: Long token + short perps for delta-neutral TVL play.',
-          timeHorizon: '1-3 weeks',
-          keyRisks: '[DEMO] Mercenary capital, token inflation, smart contract exploit',
-          invalidationLevel: 'TVL drops >15% or price falls below $142',
-          confidenceScore: 58,
-          timestamp: new Date().toISOString()
-        }
-      ];
-    }
-
     // Filter signals by type (supports both tradeType and signalType)
     function filterSignals(type) {
       currentFilter = type;
@@ -2167,6 +2106,22 @@
                  signalType === 'tvl_inflow_lead' ||
                  tradeType === 'yield_opportunity' ||
                  tradeType === 'fundamental_lead';
+        });
+      } else if (type === 'dev') {
+        // Filter for dev activity lead signals
+        filtered = allAlphaSignals.filter(s => {
+          const signalType = (s.signalType || '').toLowerCase();
+          const tradeType = (s.tradeType || '').toLowerCase();
+          return signalType === 'dev_activity_lead' ||
+                 tradeType === 'accumulation';
+        });
+      } else if (type === 'narrative') {
+        // Filter for narrative/ranking lead signals
+        filtered = allAlphaSignals.filter(s => {
+          const signalType = (s.signalType || '').toLowerCase();
+          const tradeType = (s.tradeType || '').toLowerCase();
+          return signalType === 'narrative_lead' ||
+                 tradeType === 'narrative_momentum';
         });
       } else {
         filtered = allAlphaSignals.filter(s => {
@@ -2259,9 +2214,38 @@
                 <div class="signal-section-title">Key Risks</div>
                 <div class="signal-section-content meta-value risk">${signal.keyRisks}</div>
               </div>
+              ${signal.failureScenarios && signal.failureScenarios.length > 0 ? `
+              <div class="signal-section">
+                <div class="signal-section-title" style="color: #f97316;">⚠️ Failure Scenarios</div>
+                <div class="signal-section-content" style="font-size: 0.82rem;">
+                  ${formatFailureScenarios(signal.failureScenarios)}
+                </div>
+              </div>
+              ` : ''}
             </div>
           </div>
         `;
+      }).join('');
+    }
+    
+    // Format failure scenarios for display
+    function formatFailureScenarios(scenarios) {
+      if (!scenarios || scenarios.length === 0) return '';
+      
+      return scenarios.map((s, i) => {
+        // Handle both string and object format
+        if (typeof s === 'string') {
+          return `<div style="margin-bottom: 8px; padding: 8px; background: rgba(249, 115, 22, 0.1); border-radius: 6px; border-left: 3px solid #f97316;">
+            <div style="color: #fdba74;">${i + 1}. ${s}</div>
+          </div>`;
+        } else {
+          const likelihoodColor = s.likelihood === 'HIGH' ? '#ef4444' : s.likelihood === 'MEDIUM' ? '#f97316' : '#22c55e';
+          return `<div style="margin-bottom: 8px; padding: 8px; background: rgba(249, 115, 22, 0.1); border-radius: 6px; border-left: 3px solid ${likelihoodColor};">
+            <div style="font-weight: 600; color: #fdba74; margin-bottom: 4px;">${s.scenario} <span style="color: ${likelihoodColor}; font-size: 0.7rem;">[${s.likelihood}]</span></div>
+            <div style="color: #9ca3af; font-size: 0.78rem;">Trigger: ${s.trigger}</div>
+            <div style="color: #ef4444; font-size: 0.78rem;">Impact: ${s.impact}</div>
+          </div>`;
+        }
       }).join('');
     }
 
@@ -2293,7 +2277,12 @@
         'YIELD_SPIKE': '💰 Yield Spike',
         'YIELD_OPPORTUNITY': '💰 Yield Opp',
         'TVL_INFLOW_LEAD': '📊 TVL Lead',
-        'FUNDAMENTAL_LEAD': '📊 Fundamental'
+        'FUNDAMENTAL_LEAD': '📊 Fundamental',
+        // Dev/Narrative signal types
+        'DEV_ACTIVITY_LEAD': '🔧 Dev Lead',
+        'ACCUMULATION': '🔧 Accumulation',
+        'NARRATIVE_LEAD': '📢 Narrative',
+        'NARRATIVE_MOMENTUM': '📢 Momentum'
       };
       return types[type] || type.replace(/_/g, ' ');
     }
