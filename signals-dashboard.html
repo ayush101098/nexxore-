@@ -461,6 +461,15 @@
         /* Position Badge Types */
         .badge.long { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
         .badge.short { background: rgba(255, 136, 0, 0.2); color: #ff8800; }
+        .badge.buy { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
+        .badge.watch { background: rgba(255, 170, 0, 0.2); color: #ffaa00; }
+        .badge.low { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
+        .badge.medium { background: rgba(255, 170, 0, 0.2); color: #ffaa00; }
+        .badge.high { background: rgba(255, 68, 68, 0.2); color: #ff4444; }
+
+        /* P&L colors in text */
+        .positive { color: #00ff88 !important; }
+        .negative { color: #ff4444 !important; }
     </style>
 </head>
 <body>
@@ -643,159 +652,362 @@
         }
 
         // ========================================
-        // LIVE SIGNAL GENERATION (Simulated Real Data)
+        // LIVE DATA PIPELINE - Real API Integration
         // ========================================
         
-        const PROTOCOLS = [
-            { name: 'AAVE', chain: 'ethereum', type: 'lending', tvl: 12500000000, token: 'AAVE' },
-            { name: 'Uniswap', chain: 'ethereum', type: 'dex', tvl: 5800000000, token: 'UNI' },
-            { name: 'Lido', chain: 'ethereum', type: 'liquid-staking', tvl: 28000000000, token: 'LDO' },
-            { name: 'Curve', chain: 'ethereum', type: 'dex', tvl: 2100000000, token: 'CRV' },
-            { name: 'Compound', chain: 'ethereum', type: 'lending', tvl: 2800000000, token: 'COMP' },
-            { name: 'GMX', chain: 'arbitrum', type: 'perps', tvl: 520000000, token: 'GMX' },
-            { name: 'Pendle', chain: 'ethereum', type: 'yield', tvl: 4200000000, token: 'PENDLE' },
-            { name: 'Eigenlayer', chain: 'ethereum', type: 'restaking', tvl: 15000000000, token: 'EIGEN' },
-            { name: 'Morpho', chain: 'ethereum', type: 'lending', tvl: 3200000000, token: 'MORPHO' },
-            { name: 'Ethena', chain: 'ethereum', type: 'stablecoin', tvl: 5500000000, token: 'ENA' },
-            { name: 'Maker', chain: 'ethereum', type: 'cdp', tvl: 8100000000, token: 'MKR' },
-            { name: 'Rocket Pool', chain: 'ethereum', type: 'staking', tvl: 3800000000, token: 'RPL' },
-            { name: 'Jupiter', chain: 'solana', type: 'dex', tvl: 1200000000, token: 'JUP' },
-            { name: 'Raydium', chain: 'solana', type: 'dex', tvl: 680000000, token: 'RAY' },
-            { name: 'dYdX', chain: 'dydx', type: 'perps', tvl: 480000000, token: 'DYDX' }
-        ];
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? '/api/alpha-scanner' 
+            : 'https://api.llama.fi'; // Fallback to direct API
 
-        const YIELD_DATA = {
-            'AAVE': { apy: 4.2, change: 0.3, price: 245.50 },
-            'Uniswap': { apy: 12.5, change: -0.8, price: 11.25 },
-            'Lido': { apy: 3.8, change: 0.1, price: 1.85 },
-            'Curve': { apy: 8.2, change: 1.2, price: 0.42 },
-            'Compound': { apy: 3.5, change: -0.2, price: 52.30 },
-            'GMX': { apy: 18.5, change: 2.1, price: 28.75 },
-            'Pendle': { apy: 25.0, change: 5.5, price: 4.85 },
-            'Eigenlayer': { apy: 6.2, change: 0.8, price: 3.20 },
-            'Morpho': { apy: 5.8, change: 0.4, price: 2.15 },
-            'Ethena': { apy: 27.0, change: -3.2, price: 0.85 },
-            'Maker': { apy: 8.0, change: 0.5, price: 1450.00 },
-            'Rocket Pool': { apy: 3.2, change: 0.05, price: 18.50 },
-            'Jupiter': { apy: 15.0, change: 2.3, price: 0.92 },
-            'Raydium': { apy: 22.0, change: 4.1, price: 1.75 },
-            'dYdX': { apy: 22.0, change: -1.5, price: 1.45 }
+        // DeFiLlama direct endpoints
+        const DEFILLAMA = {
+            protocols: 'https://api.llama.fi/protocols',
+            yields: 'https://yields.llama.fi/pools'
+        };
+
+        // CoinGecko endpoints
+        const COINGECKO = {
+            prices: 'https://api.coingecko.com/api/v3/simple/price',
+            markets: 'https://api.coingecko.com/api/v3/coins/markets'
+        };
+
+        // Protocol to CoinGecko ID mapping
+        const COINGECKO_IDS = {
+            'aave': 'aave', 'uniswap': 'uniswap', 'lido': 'lido-dao',
+            'curve-dex': 'curve-dao-token', 'compound': 'compound-governance-token',
+            'gmx': 'gmx', 'pendle': 'pendle', 'eigenlayer': 'eigenlayer',
+            'maker': 'maker', 'rocket-pool': 'rocket-pool', 'jupiter': 'jupiter-exchange-solana',
+            'raydium': 'raydium', 'dydx': 'dydx-chain', 'pancakeswap': 'pancakeswap-token',
+            'sushiswap': 'sushi', 'balancer': 'balancer'
+        };
+
+        let dataCache = {
+            protocols: null,
+            yields: null,
+            prices: null,
+            lastUpdate: null
         };
 
         async function fetchLiveSignals() {
-            showStatus('🔍 Scanning DeFi protocols for alpha opportunities...', 'info');
-            document.getElementById('signalList').innerHTML = '<div class="loading">Analyzing 15 protocols across 4 chains...</div>';
+            showStatus('🔍 Fetching live data from DeFiLlama & CoinGecko...', 'info');
+            document.getElementById('signalList').innerHTML = '<div class="loading">Scanning 100+ DeFi protocols...</div>';
+            updateDataFreshness('fetching');
 
-            // Simulate API delay
-            await new Promise(r => setTimeout(r, 1800));
+            try {
+                // Fetch all data in parallel from real APIs
+                const [protocolsRes, yieldsRes] = await Promise.all([
+                    fetch(DEFILLAMA.protocols),
+                    fetch(DEFILLAMA.yields)
+                ]);
+
+                if (!protocolsRes.ok || !yieldsRes.ok) {
+                    throw new Error('API request failed');
+                }
+
+                const [protocols, yieldsData] = await Promise.all([
+                    protocolsRes.json(),
+                    yieldsRes.json()
+                ]);
+
+                const yields = yieldsData.data || [];
+
+                // Get price data for top protocols
+                const topProtocols = protocols
+                    .filter(p => p.tvl > 100e6)
+                    .sort((a, b) => b.tvl - a.tvl)
+                    .slice(0, 50);
+
+                const coingeckoIds = Object.values(COINGECKO_IDS).join(',');
+                const pricesRes = await fetch(
+                    `${COINGECKO.prices}?ids=${coingeckoIds}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`
+                );
+                const prices = pricesRes.ok ? await pricesRes.json() : {};
+
+                // Update cache
+                dataCache = {
+                    protocols: topProtocols,
+                    yields,
+                    prices,
+                    lastUpdate: Date.now()
+                };
+
+                // Generate signals from real data
+                const newSignals = [];
+                const existingSignals = getSignals();
+                const existingIds = new Set(existingSignals.map(s => s.id));
+
+                for (const protocol of topProtocols) {
+                    const signal = generateSignalFromLiveData(protocol, yields, prices);
+                    
+                    if (signal && signal.alphaScore >= 50 && !existingIds.has(signal.id)) {
+                        newSignals.push(signal);
+                    }
+                }
+
+                // Sort by score and take top 20
+                newSignals.sort((a, b) => b.alphaScore - a.alphaScore);
+                const topSignals = newSignals.slice(0, 20);
+
+                // Merge with existing, remove old signals (> 24h)
+                const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+                const validExisting = existingSignals.filter(s => 
+                    new Date(s.generatedAt).getTime() > cutoff && s.status !== 'EXPIRED'
+                );
+                
+                const allSignals = [...topSignals, ...validExisting].slice(0, 100);
+                saveSignals(allSignals);
+
+                updateDataFreshness('live');
+                showStatus(`✅ Found ${topSignals.length} alpha opportunities from live data!`, 'success');
+                showToast(`🎯 ${topSignals.length} signals from ${topProtocols.length} protocols`);
+                
+                refreshData();
+
+            } catch (error) {
+                console.error('Failed to fetch live data:', error);
+                showStatus('⚠️ API error - using cached/fallback data', 'error');
+                updateDataFreshness('error');
+                
+                // Fallback to simulated data
+                await fetchFallbackSignals();
+            }
+        }
+
+        function generateSignalFromLiveData(protocol, yields, prices) {
+            // Find matching yield pools
+            const protocolYields = yields.filter(y => 
+                y.project?.toLowerCase() === protocol.slug?.toLowerCase() ||
+                y.project?.toLowerCase().includes(protocol.name?.toLowerCase())
+            );
+
+            const maxApy = protocolYields.length > 0 
+                ? Math.max(...protocolYields.map(y => y.apy || 0))
+                : 0;
+
+            // Find price data
+            const coingeckoId = COINGECKO_IDS[protocol.slug?.toLowerCase()];
+            const priceData = coingeckoId ? prices[coingeckoId] : null;
+            
+            const currentPrice = priceData?.usd || 1;
+            const priceChange24h = priceData?.usd_24h_change || 0;
+
+            // Calculate alpha score
+            let score = 50;
+            const factors = [];
+
+            // TVL analysis (0-25 pts)
+            const tvl = protocol.tvl || 0;
+            const tvlChange24h = protocol.change_1d || 0;
+            const tvlChange7d = protocol.change_7d || 0;
+
+            if (tvl > 10e9) score += 15;
+            else if (tvl > 1e9) score += 10;
+            else if (tvl > 100e6) score += 5;
+
+            if (tvlChange24h > 5) { 
+                score += 12; 
+                factors.push(`🚀 TVL surging +${tvlChange24h.toFixed(1)}% in 24h`); 
+            } else if (tvlChange24h > 2) { 
+                score += 6; 
+                factors.push(`📈 TVL growing +${tvlChange24h.toFixed(1)}% in 24h`); 
+            } else if (tvlChange24h < -5) { 
+                score -= 8; 
+                factors.push(`⚠️ TVL declining ${tvlChange24h.toFixed(1)}% in 24h`); 
+            }
+
+            // Yield analysis (0-20 pts)
+            if (maxApy > 25) { 
+                score += 15; 
+                factors.push(`💰 Exceptional yield: ${maxApy.toFixed(1)}% APY`); 
+            } else if (maxApy > 12) { 
+                score += 10; 
+                factors.push(`💵 Attractive yield: ${maxApy.toFixed(1)}% APY`); 
+            } else if (maxApy > 5) { 
+                score += 5; 
+                factors.push(`💲 Moderate yield: ${maxApy.toFixed(1)}% APY`); 
+            }
+
+            // Price momentum (0-20 pts)
+            if (priceChange24h > 10) { 
+                score += 15; 
+                factors.push(`🔥 Strong momentum +${priceChange24h.toFixed(1)}% 24h`); 
+            } else if (priceChange24h > 5) { 
+                score += 10; 
+                factors.push(`📊 Bullish trend +${priceChange24h.toFixed(1)}% 24h`); 
+            } else if (priceChange24h > 0) { 
+                score += 5; 
+                factors.push(`✅ Positive action +${priceChange24h.toFixed(1)}% 24h`); 
+            } else if (priceChange24h < -10) { 
+                score -= 8; 
+                factors.push(`📉 Bearish pressure ${priceChange24h.toFixed(1)}% 24h`); 
+            }
+
+            // Category bonus (0-10 pts)
+            const category = protocol.category?.toLowerCase();
+            if (category?.includes('liquid staking') || category?.includes('restaking')) {
+                score += 10;
+                factors.push('🔥 Hot sector: Liquid Staking/Restaking');
+            } else if (category?.includes('yield')) {
+                score += 7;
+                factors.push('📈 Yield optimization strategy');
+            } else if (category?.includes('derivatives') || category?.includes('perps')) {
+                score += 5;
+                factors.push('📊 Derivatives volume trending');
+            } else if (category?.includes('lending')) {
+                score += 5;
+                factors.push('🏦 Lending protocol fundamentals');
+            }
+
+            // Reversal detection bonus
+            if (priceChange24h > 5 && tvlChange7d < -10) {
+                score += 8;
+                factors.push(`🔄 Reversal: recovering from -${Math.abs(tvlChange7d).toFixed(1)}% weekly`);
+            }
+
+            // Cap score
+            score = Math.max(0, Math.min(100, Math.round(score)));
+
+            if (score < 50 || !currentPrice) return null;
+
+            // Calculate targets
+            const volatility = Math.abs(priceChange24h) / 100 || 0.05;
+            const targetMultiplier = 1 + (score / 400) + volatility;
+            const stopMultiplier = 1 - (0.04 + volatility * 0.3);
+
+            return {
+                id: `sig_${protocol.slug}_${Date.now()}`,
+                protocol: protocol.name,
+                slug: protocol.slug,
+                chain: protocol.chain || protocol.chains?.[0] || 'multi-chain',
+                chains: protocol.chains || [],
+                type: protocol.category || 'defi',
+                category: protocol.category,
+                token: protocol.symbol || protocol.name?.slice(0, 4).toUpperCase(),
+                
+                action: score >= 65 ? 'BUY' : 'WATCH',
+                alphaScore: score,
+                confidence: Math.round(35 + score * 0.55),
+                riskLevel: score >= 75 ? 'LOW' : score >= 60 ? 'MEDIUM' : 'HIGH',
+                
+                entryPrice: currentPrice,
+                targetPrice: currentPrice * targetMultiplier,
+                stopLoss: currentPrice * stopMultiplier,
+                expectedReturn: ((targetMultiplier - 1) * 100).toFixed(1),
+                
+                tvl: tvl,
+                tvlChange24h: tvlChange24h,
+                tvlChange7d: tvlChange7d,
+                apy: maxApy,
+                priceChange24h: priceChange24h,
+                marketCap: priceData?.usd_market_cap,
+                
+                reasoning: factors.slice(0, 4).join('. ') + '.',
+                factors: factors,
+                
+                status: 'ACTIVE',
+                source: 'LIVE_API',
+                dataFreshness: 'LIVE',
+                generatedAt: new Date().toISOString(),
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+            };
+        }
+
+        // Fallback with simulated fresh data (when APIs fail)
+        async function fetchFallbackSignals() {
+            const FALLBACK_PROTOCOLS = [
+                { name: 'Lido', slug: 'lido', chain: 'ethereum', category: 'Liquid Staking', tvl: 28e9, change_1d: 2.1, change_7d: 5.3 },
+                { name: 'AAVE', slug: 'aave', chain: 'ethereum', category: 'Lending', tvl: 12.5e9, change_1d: 1.5, change_7d: 3.2 },
+                { name: 'Eigenlayer', slug: 'eigenlayer', chain: 'ethereum', category: 'Restaking', tvl: 15e9, change_1d: 4.2, change_7d: 8.1 },
+                { name: 'Maker', slug: 'makerdao', chain: 'ethereum', category: 'CDP', tvl: 8.1e9, change_1d: 0.8, change_7d: 2.1 },
+                { name: 'Uniswap', slug: 'uniswap', chain: 'ethereum', category: 'DEX', tvl: 5.8e9, change_1d: -0.5, change_7d: 1.2 },
+                { name: 'Ethena', slug: 'ethena', chain: 'ethereum', category: 'Stablecoin', tvl: 5.5e9, change_1d: 3.5, change_7d: 12.3 },
+                { name: 'Pendle', slug: 'pendle', chain: 'ethereum', category: 'Yield', tvl: 4.2e9, change_1d: 5.8, change_7d: 15.2 },
+                { name: 'Rocket Pool', slug: 'rocket-pool', chain: 'ethereum', category: 'Liquid Staking', tvl: 3.8e9, change_1d: 1.2, change_7d: 2.8 },
+                { name: 'Morpho', slug: 'morpho', chain: 'ethereum', category: 'Lending', tvl: 3.2e9, change_1d: 2.8, change_7d: 6.5 },
+                { name: 'Compound', slug: 'compound', chain: 'ethereum', category: 'Lending', tvl: 2.8e9, change_1d: 0.3, change_7d: 1.1 },
+                { name: 'GMX', slug: 'gmx', chain: 'arbitrum', category: 'Perps', tvl: 520e6, change_1d: 4.1, change_7d: 9.3 },
+                { name: 'Jupiter', slug: 'jupiter', chain: 'solana', category: 'DEX', tvl: 1.2e9, change_1d: 6.2, change_7d: 18.5 },
+                { name: 'Raydium', slug: 'raydium', chain: 'solana', category: 'DEX', tvl: 680e6, change_1d: 3.8, change_7d: 11.2 },
+                { name: 'dYdX', slug: 'dydx', chain: 'dydx', category: 'Perps', tvl: 480e6, change_1d: 2.5, change_7d: 5.8 }
+            ];
+
+            const FALLBACK_YIELDS = {
+                'lido': 3.8, 'aave': 4.5, 'eigenlayer': 6.2, 'makerdao': 8.0,
+                'uniswap': 12.5, 'ethena': 27.0, 'pendle': 25.0, 'rocket-pool': 3.5,
+                'morpho': 5.8, 'compound': 4.2, 'gmx': 18.5, 'jupiter': 15.0,
+                'raydium': 22.0, 'dydx': 20.0
+            };
+
+            const FALLBACK_PRICES = {
+                'lido': { usd: 1.85, usd_24h_change: 2.3 },
+                'aave': { usd: 245.50, usd_24h_change: 4.1 },
+                'eigenlayer': { usd: 3.20, usd_24h_change: 6.8 },
+                'makerdao': { usd: 1450, usd_24h_change: 1.2 },
+                'uniswap': { usd: 11.25, usd_24h_change: -0.8 },
+                'ethena': { usd: 0.85, usd_24h_change: 8.5 },
+                'pendle': { usd: 4.85, usd_24h_change: 12.3 },
+                'rocket-pool': { usd: 18.50, usd_24h_change: 1.5 },
+                'morpho': { usd: 2.15, usd_24h_change: 5.2 },
+                'compound': { usd: 52.30, usd_24h_change: 0.5 },
+                'gmx': { usd: 28.75, usd_24h_change: 7.8 },
+                'jupiter': { usd: 0.92, usd_24h_change: 15.2 },
+                'raydium': { usd: 1.75, usd_24h_change: 9.3 },
+                'dydx': { usd: 1.45, usd_24h_change: 3.2 }
+            };
+
+            // Generate fallback yields array
+            const yields = Object.entries(FALLBACK_YIELDS).map(([project, apy]) => ({
+                project, apy
+            }));
 
             const newSignals = [];
-            const existingSignals = getSignals();
-            const existingIds = new Set(existingSignals.map(s => s.id));
-
-            for (const protocol of PROTOCOLS) {
-                const signal = generateSignalForProtocol(protocol);
-                
-                if (signal.alphaScore >= 45 && !existingIds.has(signal.id)) {
+            for (const protocol of FALLBACK_PROTOCOLS) {
+                const signal = generateSignalFromLiveData(protocol, yields, FALLBACK_PRICES);
+                if (signal && signal.alphaScore >= 50) {
+                    signal.source = 'FALLBACK';
+                    signal.dataFreshness = 'CACHED';
                     newSignals.push(signal);
                 }
             }
 
-            // Sort by score
             newSignals.sort((a, b) => b.alphaScore - a.alphaScore);
-            const topSignals = newSignals.slice(0, 8);
-
-            // Add to existing signals
-            const allSignals = [...topSignals, ...existingSignals].slice(0, 100);
+            
+            const existingSignals = getSignals();
+            const allSignals = [...newSignals, ...existingSignals].slice(0, 100);
             saveSignals(allSignals);
 
-            showStatus(`✅ Found ${topSignals.length} new alpha opportunities!`, 'success');
-            showToast(`🎯 ${topSignals.length} new signals detected`);
-            
+            updateDataFreshness('cached');
             refreshData();
         }
 
-        function generateSignalForProtocol(protocol) {
-            const yieldInfo = YIELD_DATA[protocol.name] || { apy: 5, change: 0, price: 1 };
-            
-            // Calculate scores based on real metrics
-            const tvlScore = Math.min(protocol.tvl / 10000000000, 1) * 100;
-            const yieldScore = Math.min(yieldInfo.apy / 30, 1) * 100;
-            const momentumScore = yieldInfo.change > 0 ? Math.min(yieldInfo.change / 5, 1) * 100 : 30;
-            const riskScore = ['lending', 'staking', 'liquid-staking'].includes(protocol.type) ? 75 : 60;
-            
-            // Weighted alpha score
-            const alphaScore = Math.round(
-                tvlScore * 0.25 + 
-                yieldScore * 0.30 + 
-                momentumScore * 0.25 + 
-                riskScore * 0.20
-            );
+        function updateDataFreshness(status) {
+            let indicator = document.getElementById('dataFreshness');
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'dataFreshness';
+                indicator.style.cssText = 'position:fixed;top:70px;right:20px;padding:6px 12px;border-radius:20px;font-size:0.75rem;font-weight:600;z-index:100;';
+                document.body.appendChild(indicator);
+            }
 
-            // Generate realistic prices and targets
-            const basePrice = yieldInfo.price * (0.98 + Math.random() * 0.04);
-            const targetMultiplier = 1 + (alphaScore / 500);
-            const stopMultiplier = 1 - (0.03 + Math.random() * 0.05);
-
-            const reasoning = generateReasoning(protocol, yieldInfo, alphaScore);
-
-            return {
-                id: `sig_${protocol.name.toLowerCase()}_${Date.now()}`,
-                protocol: protocol.name,
-                chain: protocol.chain,
-                type: protocol.type,
-                token: protocol.token,
-                action: 'BUY',
-                alphaScore,
-                confidence: Math.round(50 + alphaScore * 0.4),
-                riskLevel: alphaScore >= 70 ? 'LOW' : (alphaScore >= 50 ? 'MEDIUM' : 'HIGH'),
-                entryPrice: basePrice,
-                targetPrice: basePrice * targetMultiplier,
-                stopLoss: basePrice * stopMultiplier,
-                expectedReturn: ((targetMultiplier - 1) * 100).toFixed(1),
-                apy: yieldInfo.apy,
-                tvl: protocol.tvl,
-                reasoning,
-                status: 'ACTIVE',
-                generatedAt: new Date().toISOString(),
-                expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
+            const statuses = {
+                'live': { bg: 'rgba(0,255,136,0.2)', color: '#00ff88', text: '🟢 LIVE DATA' },
+                'cached': { bg: 'rgba(255,170,0,0.2)', color: '#ffaa00', text: '🟡 CACHED' },
+                'fetching': { bg: 'rgba(0,212,255,0.2)', color: '#00d4ff', text: '🔄 FETCHING...' },
+                'error': { bg: 'rgba(255,68,68,0.2)', color: '#ff4444', text: '🔴 API ERROR' }
             };
-        }
 
-        function generateReasoning(protocol, yieldInfo, score) {
-            const reasons = [];
-            
-            if (protocol.tvl > 5000000000) {
-                reasons.push(`High TVL ($${(protocol.tvl/1e9).toFixed(1)}B) indicates strong market trust`);
-            } else if (protocol.tvl > 1000000000) {
-                reasons.push(`Solid TVL ($${(protocol.tvl/1e9).toFixed(1)}B) with growth potential`);
-            }
-            
-            if (yieldInfo.apy > 15) {
-                reasons.push(`Exceptional ${yieldInfo.apy.toFixed(1)}% APY significantly above market`);
-            } else if (yieldInfo.apy > 8) {
-                reasons.push(`Attractive ${yieldInfo.apy.toFixed(1)}% APY above market average`);
-            }
-            
-            if (yieldInfo.change > 2) {
-                reasons.push(`Strong momentum (+${yieldInfo.change.toFixed(1)}% yield increase)`);
-            } else if (yieldInfo.change > 0) {
-                reasons.push(`Positive momentum (+${yieldInfo.change.toFixed(1)}% weekly)`);
-            }
-            
-            if (protocol.type === 'liquid-staking' || protocol.type === 'staking') {
-                reasons.push(`${protocol.type === 'liquid-staking' ? 'Liquid staking' : 'Staking'} sector showing resilience`);
-            } else if (protocol.type === 'yield') {
-                reasons.push(`Yield optimization with auto-compounding benefits`);
-            } else if (protocol.type === 'perps') {
-                reasons.push(`Derivatives volume increasing across DEXs`);
-            }
+            const s = statuses[status] || statuses['cached'];
+            indicator.style.background = s.bg;
+            indicator.style.color = s.color;
+            indicator.style.border = `1px solid ${s.color}`;
+            indicator.textContent = s.text;
 
-            if (score >= 70) {
-                reasons.push(`Strong alpha score of ${score} indicates high conviction`);
+            if (dataCache.lastUpdate) {
+                const age = Math.round((Date.now() - dataCache.lastUpdate) / 1000 / 60);
+                if (age > 0) {
+                    indicator.textContent += ` (${age}m ago)`;
+                }
             }
-
-            return reasons.slice(0, 3).join('. ') + '.';
         }
 
         // ========================================
@@ -831,7 +1043,7 @@
                 signalId: signal.id,
                 protocol: signal.protocol,
                 chain: signal.chain,
-                type: signal.type,
+                type: signal.type || signal.category,
                 token: signal.token,
                 positionType: 'LONG',
                 entryPrice: signal.entryPrice,
@@ -1110,23 +1322,36 @@
                 const scoreClass = signal.alphaScore >= 70 ? 'high-score' : 
                                   signal.alphaScore >= 50 ? 'medium-score' : 'low-score';
                 const time = new Date(signal.generatedAt).toLocaleString();
+                const tvlDisplay = signal.tvl ? (signal.tvl >= 1e9 ? `$${(signal.tvl/1e9).toFixed(1)}B` : `$${(signal.tvl/1e6).toFixed(0)}M`) : 'N/A';
+                const tvlChangeClass = (signal.tvlChange24h || 0) >= 0 ? 'positive' : 'negative';
+                const priceChangeClass = (signal.priceChange24h || 0) >= 0 ? 'positive' : 'negative';
+                const sourceIcon = signal.source === 'LIVE_API' ? '🟢' : signal.source === 'FALLBACK' ? '🟡' : '⚪';
 
                 return `
                     <div class="signal-item ${scoreClass}">
                         <div class="signal-header">
                             <span class="signal-protocol">${signal.protocol}</span>
-                            <span class="signal-score">Score: ${signal.alphaScore}</span>
+                            <div style="display:flex;gap:0.5rem;align-items:center;">
+                                <span class="signal-score">Score: ${signal.alphaScore}</span>
+                                <span title="Data source: ${signal.source || 'Unknown'}">${sourceIcon}</span>
+                            </div>
                         </div>
                         <div class="signal-meta">
                             <span>📍 ${signal.chain}</span>
-                            <span>📊 ${signal.type}</span>
-                            <span>🎯 ${signal.action}</span>
-                            <span class="badge ${signal.status.toLowerCase()}">${signal.status}</span>
+                            <span>📊 ${signal.type || signal.category}</span>
+                            <span class="badge ${signal.action?.toLowerCase()}">${signal.action}</span>
+                            <span class="badge ${signal.riskLevel?.toLowerCase()}">${signal.riskLevel}</span>
                         </div>
                         <div class="signal-meta" style="margin-top: 0.5rem;">
-                            <span>💰 Entry: $${signal.entryPrice.toFixed(4)}</span>
+                            <span>💰 TVL: ${tvlDisplay}</span>
+                            <span class="${tvlChangeClass}">📊 TVL 24h: ${(signal.tvlChange24h || 0) >= 0 ? '+' : ''}${(signal.tvlChange24h || 0).toFixed(1)}%</span>
+                            <span class="${priceChangeClass}">📈 Price 24h: ${(signal.priceChange24h || 0) >= 0 ? '+' : ''}${(signal.priceChange24h || 0).toFixed(1)}%</span>
+                        </div>
+                        <div class="signal-meta" style="margin-top: 0.25rem;">
+                            <span>💵 Entry: $${(signal.entryPrice || 0).toFixed(signal.entryPrice > 100 ? 2 : 4)}</span>
                             <span>🎯 Target: +${signal.expectedReturn}%</span>
-                            <span>📈 APY: ${signal.apy}%</span>
+                            <span>📉 Stop: -${(((signal.entryPrice - signal.stopLoss) / signal.entryPrice) * 100).toFixed(1)}%</span>
+                            ${signal.apy ? `<span>💎 APY: ${signal.apy.toFixed(1)}%</span>` : ''}
                         </div>
                         <div class="signal-reasoning">${signal.reasoning}</div>
                         ${signal.status === 'ACTIVE' ? `
@@ -1135,8 +1360,9 @@
                                 <button class="btn-secondary" onclick="dismissSignal('${signal.id}')">Dismiss</button>
                             </div>
                         ` : ''}
-                        <div class="signal-meta" style="margin-top: 0.5rem; color: #555;">
+                        <div class="signal-meta" style="margin-top: 0.5rem; color: #555; font-size: 0.7rem;">
                             <span>⏰ ${time}</span>
+                            <span>🔗 ${signal.chains?.join(', ') || signal.chain}</span>
                         </div>
                     </div>
                 `;
@@ -1388,16 +1614,69 @@
             setTimeout(() => toast.remove(), 3000);
         }
 
+        // Auto-refresh functionality
+        let autoRefreshInterval = null;
+
+        function startAutoRefresh(intervalMs = 5 * 60 * 1000) { // 5 minutes default
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            
+            autoRefreshInterval = setInterval(() => {
+                console.log('Auto-refreshing signals...');
+                fetchLiveSignals();
+            }, intervalMs);
+            
+            showToast('🔄 Auto-refresh enabled (5 min)');
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                showToast('Auto-refresh disabled');
+            }
+        }
+
+        // Expire old signals
+        function cleanupExpiredSignals() {
+            const signals = getSignals();
+            const now = Date.now();
+            const updated = signals.map(s => {
+                if (s.status === 'ACTIVE' && new Date(s.expiresAt).getTime() < now) {
+                    s.status = 'EXPIRED';
+                }
+                return s;
+            });
+            saveSignals(updated);
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize data freshness indicator
+            updateDataFreshness('cached');
+            
+            // Cleanup expired signals
+            cleanupExpiredSignals();
+            
+            // Refresh UI
             refreshData();
             
             // Resume price simulation for open positions
             getPositions().filter(p => p.status === 'OPEN').forEach(p => {
                 simulatePriceMovement(p.id);
             });
+
+            // Start auto-refresh
+            startAutoRefresh();
+            
+            // Fetch fresh signals on load if no recent data
+            const signals = getSignals();
+            const recentSignal = signals.find(s => 
+                Date.now() - new Date(s.generatedAt).getTime() < 30 * 60 * 1000
+            );
+            if (!recentSignal) {
+                setTimeout(() => fetchLiveSignals(), 1000);
+            }
         });
     </script>
 </body>
-</html>
 </html>
