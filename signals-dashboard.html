@@ -462,6 +462,10 @@
         .badge.long { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
         .badge.short { background: rgba(255, 136, 0, 0.2); color: #ff8800; }
         .badge.buy { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
+        .badge.strong-buy { background: rgba(0, 255, 136, 0.35); color: #00ff88; font-weight: 700; }
+        .badge.sell { background: rgba(255, 68, 68, 0.2); color: #ff4444; }
+        .badge.strong-sell { background: rgba(255, 68, 68, 0.35); color: #ff4444; font-weight: 700; }
+        .badge.hold { background: rgba(255, 170, 0, 0.2); color: #ffaa00; }
         .badge.watch { background: rgba(255, 170, 0, 0.2); color: #ffaa00; }
         .badge.low { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
         .badge.medium { background: rgba(255, 170, 0, 0.2); color: #ffaa00; }
@@ -652,103 +656,353 @@
         }
 
         // ========================================
-        // LIVE DATA PIPELINE - Real API Integration
+        // ML-POWERED DATA PIPELINE - Research Agent
         // ========================================
         
-        const API_BASE = window.location.hostname === 'localhost' 
-            ? '/api/alpha-scanner' 
-            : 'https://api.llama.fi'; // Fallback to direct API
-
-        // DeFiLlama direct endpoints
-        const DEFILLAMA = {
-            protocols: 'https://api.llama.fi/protocols',
-            yields: 'https://yields.llama.fi/pools'
+        // API endpoints
+        const API_ENDPOINTS = {
+            alphaScanner: '/api/alpha-scanner-v2',
+            defillama: {
+                protocols: 'https://api.llama.fi/protocols',
+                yields: 'https://yields.llama.fi/pools',
+                dexVolumes: 'https://api.llama.fi/overview/dexs',
+                fees: 'https://api.llama.fi/overview/fees'
+            },
+            coingecko: {
+                markets: 'https://api.coingecko.com/api/v3/coins/markets'
+            },
+            fearGreed: 'https://api.alternative.me/fng/?limit=30'
         };
 
-        // CoinGecko endpoints
-        const COINGECKO = {
-            prices: 'https://api.coingecko.com/api/v3/simple/price',
-            markets: 'https://api.coingecko.com/api/v3/coins/markets'
+        // Protocol to CoinGecko ID mapping (expanded)
+        const PROTOCOL_MAPPINGS = {
+            'lido': { coingecko: 'lido-dao', symbol: 'LDO', category: 'liquid-staking' },
+            'aave': { coingecko: 'aave', symbol: 'AAVE', category: 'lending' },
+            'uniswap': { coingecko: 'uniswap', symbol: 'UNI', category: 'dex' },
+            'makerdao': { coingecko: 'maker', symbol: 'MKR', category: 'cdp' },
+            'curve-dex': { coingecko: 'curve-dao-token', symbol: 'CRV', category: 'dex' },
+            'compound-finance': { coingecko: 'compound-governance-token', symbol: 'COMP', category: 'lending' },
+            'eigenlayer': { coingecko: 'eigenlayer', symbol: 'EIGEN', category: 'restaking' },
+            'rocket-pool': { coingecko: 'rocket-pool', symbol: 'RPL', category: 'liquid-staking' },
+            'gmx': { coingecko: 'gmx', symbol: 'GMX', category: 'perps' },
+            'pendle': { coingecko: 'pendle', symbol: 'PENDLE', category: 'yield' },
+            'ethena': { coingecko: 'ethena', symbol: 'ENA', category: 'synthetic' },
+            'morpho': { coingecko: 'morpho', symbol: 'MORPHO', category: 'lending' },
+            'jupiter': { coingecko: 'jupiter-exchange-solana', symbol: 'JUP', category: 'dex' },
+            'raydium': { coingecko: 'raydium', symbol: 'RAY', category: 'dex' },
+            'dydx': { coingecko: 'dydx-chain', symbol: 'DYDX', category: 'perps' },
+            'pancakeswap': { coingecko: 'pancakeswap-token', symbol: 'CAKE', category: 'dex' },
+            'sushiswap': { coingecko: 'sushi', symbol: 'SUSHI', category: 'dex' },
+            'balancer-v2': { coingecko: 'balancer', symbol: 'BAL', category: 'dex' },
+            'convex-finance': { coingecko: 'convex-finance', symbol: 'CVX', category: 'yield' },
+            'yearn-finance': { coingecko: 'yearn-finance', symbol: 'YFI', category: 'yield' },
+            'ondo-finance': { coingecko: 'ondo-finance', symbol: 'ONDO', category: 'rwa' },
+            'jito': { coingecko: 'jito-governance-token', symbol: 'JTO', category: 'liquid-staking' },
+            'aerodrome': { coingecko: 'aerodrome-finance', symbol: 'AERO', category: 'dex' },
+            'velodrome': { coingecko: 'velodrome-finance', symbol: 'VELO', category: 'dex' },
+            'hyperliquid': { coingecko: 'hyperliquid', symbol: 'HYPE', category: 'perps' }
         };
 
-        // Protocol to CoinGecko ID mapping
-        const COINGECKO_IDS = {
-            'aave': 'aave', 'uniswap': 'uniswap', 'lido': 'lido-dao',
-            'curve-dex': 'curve-dao-token', 'compound': 'compound-governance-token',
-            'gmx': 'gmx', 'pendle': 'pendle', 'eigenlayer': 'eigenlayer',
-            'maker': 'maker', 'rocket-pool': 'rocket-pool', 'jupiter': 'jupiter-exchange-solana',
-            'raydium': 'raydium', 'dydx': 'dydx-chain', 'pancakeswap': 'pancakeswap-token',
-            'sushiswap': 'sushi', 'balancer': 'balancer'
+        // ML Feature weights for scoring
+        const ML_FEATURE_WEIGHTS = {
+            tvlMomentum: 0.12,
+            tvlAcceleration: 0.08,
+            priceStrength: 0.10,
+            volumeMomentum: 0.08,
+            yieldAttractiveness: 0.10,
+            yieldSustainability: 0.06,
+            revenueGrowth: 0.10,
+            feeEfficiency: 0.06,
+            trendStrength: 0.06,
+            sentimentScore: 0.08,
+            categoryMomentum: 0.06,
+            riskScore: 0.05,
+            liquidityScore: 0.05
+        };
+
+        // Hot categories (narrative multipliers)
+        const CATEGORY_MOMENTUM = {
+            'restaking': 1.25,
+            'liquid-staking': 1.15,
+            'rwa': 1.20,
+            'perps': 1.10,
+            'lending': 1.05,
+            'yield': 1.08,
+            'dex': 1.0,
+            'synthetic': 1.05
         };
 
         let dataCache = {
             protocols: null,
             yields: null,
             prices: null,
+            dexVolumes: null,
+            fees: null,
+            fearGreed: null,
             lastUpdate: null
         };
 
         async function fetchLiveSignals() {
-            showStatus('🔍 Fetching live data from DeFiLlama & CoinGecko...', 'info');
-            document.getElementById('signalList').innerHTML = '<div class="loading">Scanning 100+ DeFi protocols...</div>';
+            showStatus('🔍 Running ML-Powered Alpha Scanner...', 'info');
+            document.getElementById('signalList').innerHTML = '<div class="loading">Analyzing 30+ DeFi protocols with ML features...</div>';
             updateDataFreshness('fetching');
 
             try {
-                // Fetch all data in parallel from real APIs
-                const [protocolsRes, yieldsRes] = await Promise.all([
-                    fetch(DEFILLAMA.protocols),
-                    fetch(DEFILLAMA.yields)
+                // Try the ML-powered API first
+                const apiResponse = await fetch(API_ENDPOINTS.alphaScanner);
+                
+                if (apiResponse.ok) {
+                    const data = await apiResponse.json();
+                    
+                    if (data.success && data.signals?.length > 0) {
+                        // API returned ML-analyzed signals
+                        const newSignals = data.signals.map(s => convertApiSignalToLocal(s));
+                        
+                        // Update cache metadata
+                        dataCache.lastUpdate = Date.now();
+                        
+                        // Merge with existing signals
+                        const existingSignals = getSignals();
+                        const existingIds = new Set(existingSignals.map(s => s.id));
+                        const uniqueNew = newSignals.filter(s => !existingIds.has(s.id));
+                        
+                        const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+                        const validExisting = existingSignals.filter(s => 
+                            new Date(s.generatedAt).getTime() > cutoff && s.status !== 'EXPIRED'
+                        );
+                        
+                        const allSignals = [...uniqueNew, ...validExisting].slice(0, 100);
+                        saveSignals(allSignals);
+
+                        updateDataFreshness('live');
+                        showStatus(`✅ ML Scanner found ${uniqueNew.length} alpha opportunities!`, 'success');
+                        showToast(`🤖 ML Analysis: ${data.summary.strongBuy + data.summary.buy} BUY signals | F&G: ${data.market?.fearGreed}`);
+                        
+                        // Update market sentiment display
+                        updateMarketSentiment(data.market);
+                        
+                        refreshData();
+                        return;
+                    }
+                }
+                
+                // Fallback to direct API fetching if ML API fails
+                await fetchDirectFromAPIs();
+                
+            } catch (error) {
+                console.error('ML API error:', error);
+                showStatus('⚠️ ML API unavailable - fetching directly from data sources...', 'info');
+                await fetchDirectFromAPIs();
+            }
+        }
+
+        function convertApiSignalToLocal(apiSignal) {
+            const currentPrice = apiSignal.price?.current || 1;
+            const volatility = Math.abs(apiSignal.price?.change24h || 5) / 100;
+            const targetMultiplier = 1 + (apiSignal.signal.alphaScore / 400) + volatility;
+            const stopMultiplier = 1 - (0.04 + volatility * 0.3);
+
+            return {
+                id: `sig_${apiSignal.protocol.id}_${Date.now()}`,
+                protocol: apiSignal.protocol.name,
+                slug: apiSignal.protocol.id,
+                chain: apiSignal.protocol.chains?.[0] || 'ethereum',
+                chains: apiSignal.protocol.chains || [],
+                type: apiSignal.protocol.category,
+                category: apiSignal.protocol.category,
+                token: apiSignal.protocol.symbol,
+                
+                action: apiSignal.signal.action.includes('BUY') ? 'BUY' : 
+                        apiSignal.signal.action.includes('SELL') ? 'SELL' : 'WATCH',
+                alphaScore: apiSignal.signal.alphaScore,
+                confidence: apiSignal.signal.confidence,
+                confidenceLevel: apiSignal.signal.confidenceLevel,
+                riskLevel: apiSignal.signal.alphaScore >= 75 ? 'LOW' : 
+                           apiSignal.signal.alphaScore >= 60 ? 'MEDIUM' : 'HIGH',
+                
+                entryPrice: currentPrice,
+                targetPrice: currentPrice * targetMultiplier,
+                stopLoss: currentPrice * stopMultiplier,
+                expectedReturn: ((targetMultiplier - 1) * 100).toFixed(1),
+                
+                tvl: apiSignal.protocol.tvl,
+                tvlChange24h: apiSignal.metrics?.tvlChange1d || 0,
+                tvlChange7d: apiSignal.metrics?.tvlChange7d || 0,
+                apy: apiSignal.metrics?.maxApy || 0,
+                priceChange24h: apiSignal.price?.change24h || 0,
+                marketCap: apiSignal.price?.marketCap || 0,
+                volume24h: apiSignal.metrics?.volume24h || 0,
+                fees24h: apiSignal.metrics?.fees24h || 0,
+                
+                // ML Feature scores
+                mlFeatures: apiSignal.features || {},
+                
+                reasoning: apiSignal.reasoning?.join('. ') || 'ML-generated signal based on multi-factor analysis.',
+                factors: apiSignal.reasoning || [],
+                
+                status: 'ACTIVE',
+                source: 'ML_SCANNER',
+                dataFreshness: 'LIVE',
+                rank: apiSignal.rank,
+                generatedAt: new Date().toISOString(),
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+            };
+        }
+
+        function updateMarketSentiment(marketData) {
+            if (!marketData) return;
+            
+            let sentimentEl = document.getElementById('marketSentiment');
+            if (!sentimentEl) {
+                sentimentEl = document.createElement('div');
+                sentimentEl.id = 'marketSentiment';
+                sentimentEl.style.cssText = 'position:fixed;top:110px;right:20px;padding:8px 14px;border-radius:8px;font-size:0.8rem;z-index:100;background:rgba(0,0,0,0.8);border:1px solid rgba(255,255,255,0.1);';
+                document.body.appendChild(sentimentEl);
+            }
+            
+            const fg = marketData.fearGreed || 50;
+            const sentiment = marketData.sentiment || 'Neutral';
+            const trend = marketData.trend || 0;
+            const trendIcon = trend > 0 ? '📈' : trend < 0 ? '📉' : '➡️';
+            
+            let color = '#ffaa00';
+            if (fg >= 75) color = '#00ff88';
+            else if (fg >= 55) color = '#88ff00';
+            else if (fg <= 25) color = '#ff4444';
+            else if (fg <= 45) color = '#ff8800';
+            
+            sentimentEl.innerHTML = `
+                <div style="color:${color};font-weight:600;">F&G: ${fg} - ${sentiment}</div>
+                <div style="color:#888;font-size:0.7rem;">${trendIcon} ${trend >= 0 ? '+' : ''}${trend} vs last week</div>
+            `;
+        }
+
+        async function fetchDirectFromAPIs() {
+            showStatus('🔍 Fetching live data from multiple sources...', 'info');
+            document.getElementById('signalList').innerHTML = '<div class="loading">Aggregating DeFiLlama, CoinGecko, Alternative.me...</div>';
+
+            try {
+                // Fetch all data sources in parallel
+                const [protocolsRes, yieldsRes, dexVolRes, feesRes, fgRes] = await Promise.all([
+                    fetch(API_ENDPOINTS.defillama.protocols),
+                    fetch(API_ENDPOINTS.defillama.yields),
+                    fetch(API_ENDPOINTS.defillama.dexVolumes).catch(() => null),
+                    fetch(API_ENDPOINTS.defillama.fees).catch(() => null),
+                    fetch(API_ENDPOINTS.fearGreed).catch(() => null)
                 ]);
 
                 if (!protocolsRes.ok || !yieldsRes.ok) {
-                    throw new Error('API request failed');
+                    throw new Error('Core API request failed');
                 }
 
-                const [protocols, yieldsData] = await Promise.all([
+                const [allProtocols, yieldsData] = await Promise.all([
                     protocolsRes.json(),
                     yieldsRes.json()
                 ]);
 
-                const yields = yieldsData.data || [];
+                // Process protocols
+                const protocols = allProtocols
+                    .filter(p => p.tvl > 50_000_000)
+                    .map(p => ({
+                        id: p.slug,
+                        name: p.name,
+                        symbol: p.symbol,
+                        tvl: p.tvl,
+                        tvlChange1d: p.change_1d || 0,
+                        tvlChange7d: p.change_7d || 0,
+                        tvlChange1m: p.change_1m || 0,
+                        chains: p.chains || [],
+                        category: p.category,
+                        audits: p.audits,
+                        listedAt: p.listedAt
+                    }))
+                    .sort((a, b) => b.tvl - a.tvl);
 
-                // Get price data for top protocols
-                const topProtocols = protocols
-                    .filter(p => p.tvl > 100e6)
-                    .sort((a, b) => b.tvl - a.tvl)
-                    .slice(0, 50);
+                const yields = (yieldsData?.data || [])
+                    .filter(y => y.tvlUsd > 1_000_000 && y.apy > 0 && y.apy < 1000);
 
-                const coingeckoIds = Object.values(COINGECKO_IDS).join(',');
-                const pricesRes = await fetch(
-                    `${COINGECKO.prices}?ids=${coingeckoIds}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`
+                // Parse optional data
+                let dexVolumes = [];
+                let fees = [];
+                let fearGreed = { current: 50, classification: 'Neutral', trend: 0 };
+
+                if (dexVolRes?.ok) {
+                    const dv = await dexVolRes.json();
+                    dexVolumes = (dv?.protocols || []).map(d => ({
+                        name: d.name,
+                        volume24h: d.total24h || 0
+                    }));
+                }
+
+                if (feesRes?.ok) {
+                    const f = await feesRes.json();
+                    fees = (f?.protocols || []).map(f => ({
+                        name: f.name,
+                        fees24h: f.total24h || 0,
+                        feesChange: f.change_1d || 0
+                    }));
+                }
+
+                if (fgRes?.ok) {
+                    const fg = await fgRes.json();
+                    fearGreed = {
+                        current: parseInt(fg?.data?.[0]?.value) || 50,
+                        classification: fg?.data?.[0]?.value_classification || 'Neutral',
+                        trend: fg?.data ? parseInt(fg.data[0]?.value) - parseInt(fg.data[7]?.value) : 0
+                    };
+                }
+
+                // Fetch CoinGecko market data
+                const cgIds = Object.values(PROTOCOL_MAPPINGS).map(m => m.coingecko).join(',');
+                const marketRes = await fetch(
+                    `${API_ENDPOINTS.coingecko.markets}?vs_currency=usd&ids=${cgIds}&order=market_cap_desc&sparkline=true&price_change_percentage=1h,24h,7d,30d`
                 );
-                const prices = pricesRes.ok ? await pricesRes.json() : {};
+                
+                let marketData = [];
+                if (marketRes.ok) {
+                    const md = await marketRes.json();
+                    marketData = (md || []).map(c => ({
+                        id: c.id,
+                        symbol: c.symbol?.toUpperCase(),
+                        price: c.current_price,
+                        marketCap: c.market_cap,
+                        volume24h: c.total_volume,
+                        priceChange1h: c.price_change_percentage_1h_in_currency || 0,
+                        priceChange24h: c.price_change_percentage_24h || 0,
+                        priceChange7d: c.price_change_percentage_7d_in_currency || 0,
+                        priceChange30d: c.price_change_percentage_30d_in_currency || 0,
+                        sparkline: c.sparkline_in_7d?.price || []
+                    }));
+                }
 
                 // Update cache
                 dataCache = {
-                    protocols: topProtocols,
+                    protocols,
                     yields,
-                    prices,
+                    marketData,
+                    dexVolumes,
+                    fees,
+                    fearGreed,
                     lastUpdate: Date.now()
                 };
 
-                // Generate signals from real data
+                // Generate ML-scored signals
                 const newSignals = [];
                 const existingSignals = getSignals();
                 const existingIds = new Set(existingSignals.map(s => s.id));
 
-                for (const protocol of topProtocols) {
-                    const signal = generateSignalFromLiveData(protocol, yields, prices);
-                    
-                    if (signal && signal.alphaScore >= 50 && !existingIds.has(signal.id)) {
+                for (const [slug, mapping] of Object.entries(PROTOCOL_MAPPINGS)) {
+                    const signal = generateMLSignal(slug, mapping, dataCache);
+                    if (signal && signal.alphaScore >= 45 && !existingIds.has(signal.id)) {
                         newSignals.push(signal);
                     }
                 }
 
-                // Sort by score and take top 20
+                // Sort by alpha score
                 newSignals.sort((a, b) => b.alphaScore - a.alphaScore);
-                const topSignals = newSignals.slice(0, 20);
+                const topSignals = newSignals.slice(0, 25);
 
-                // Merge with existing, remove old signals (> 24h)
+                // Merge with existing
                 const cutoff = Date.now() - 24 * 60 * 60 * 1000;
                 const validExisting = existingSignals.filter(s => 
                     new Date(s.generatedAt).getTime() > cutoff && s.status !== 'EXPIRED'
@@ -758,158 +1012,225 @@
                 saveSignals(allSignals);
 
                 updateDataFreshness('live');
-                showStatus(`✅ Found ${topSignals.length} alpha opportunities from live data!`, 'success');
-                showToast(`🎯 ${topSignals.length} signals from ${topProtocols.length} protocols`);
+                updateMarketSentiment(fearGreed);
+                showStatus(`✅ ML Analysis complete: ${topSignals.length} alpha signals!`, 'success');
+                showToast(`📊 ${topSignals.length} signals from ${protocols.length} protocols | F&G: ${fearGreed.current}`);
                 
                 refreshData();
 
             } catch (error) {
-                console.error('Failed to fetch live data:', error);
+                console.error('Direct API fetch failed:', error);
                 showStatus('⚠️ API error - using cached/fallback data', 'error');
                 updateDataFreshness('error');
-                
-                // Fallback to simulated data
                 await fetchFallbackSignals();
             }
         }
 
-        function generateSignalFromLiveData(protocol, yields, prices) {
-            // Find matching yield pools
+        // ML Feature Engineering for signal generation
+        function generateMLSignal(slug, mapping, data) {
+            const { protocols, yields, marketData, dexVolumes, fees, fearGreed } = data;
+            
+            const protocol = protocols.find(p => p.id === slug);
+            if (!protocol) return null;
+
+            const market = marketData.find(m => m.id === mapping.coingecko);
             const protocolYields = yields.filter(y => 
-                y.project?.toLowerCase() === protocol.slug?.toLowerCase() ||
-                y.project?.toLowerCase().includes(protocol.name?.toLowerCase())
+                y.project?.toLowerCase() === slug.toLowerCase()
+            );
+            const protocolVolume = dexVolumes.find(d => 
+                d.name?.toLowerCase().includes(slug.split('-')[0])
+            );
+            const protocolFees = fees.find(f => 
+                f.name?.toLowerCase().includes(slug.split('-')[0])
             );
 
-            const maxApy = protocolYields.length > 0 
-                ? Math.max(...protocolYields.map(y => y.apy || 0))
-                : 0;
-
-            // Find price data
-            const coingeckoId = COINGECKO_IDS[protocol.slug?.toLowerCase()];
-            const priceData = coingeckoId ? prices[coingeckoId] : null;
+            // Calculate ML features
+            const features = {};
             
-            const currentPrice = priceData?.usd || 1;
-            const priceChange24h = priceData?.usd_24h_change || 0;
+            // TVL Features
+            const tvlChange1d = protocol.tvlChange1d || 0;
+            const tvlChange7d = protocol.tvlChange7d || 0;
+            features.tvlMomentum = normalize((tvlChange1d * 0.5) + (tvlChange7d * 0.3), -20, 50);
+            features.tvlAcceleration = normalize(tvlChange1d - (tvlChange7d / 7), -5, 10);
+            
+            // Price Features
+            if (market) {
+                const priceScore = (market.priceChange1h || 0) * 0.1 +
+                                   (market.priceChange24h || 0) * 0.3 +
+                                   (market.priceChange7d || 0) * 0.3 +
+                                   (market.priceChange30d || 0) * 0.3;
+                features.priceStrength = normalize(priceScore, -30, 50);
+                features.volumeMomentum = market.marketCap > 0 
+                    ? normalize((market.volume24h / market.marketCap) * 100, 0, 20)
+                    : 0.5;
+                features.liquidityScore = normalize(Math.log10(Math.max(market.volume24h || 1, 1)), 5, 9);
+                
+                // Trend analysis from sparkline
+                if (market.sparkline?.length > 10) {
+                    features.trendStrength = calculateTrendStrength(market.sparkline);
+                } else {
+                    features.trendStrength = 0.5;
+                }
+            } else {
+                features.priceStrength = 0.5;
+                features.volumeMomentum = 0.5;
+                features.liquidityScore = 0.5;
+                features.trendStrength = 0.5;
+            }
+            
+            // Yield Features
+            const maxApy = protocolYields.length > 0 
+                ? Math.max(...protocolYields.map(y => y.apy))
+                : 0;
+            const avgApy = protocolYields.length > 0
+                ? protocolYields.reduce((s, y) => s + y.apy, 0) / protocolYields.length
+                : 0;
+            features.yieldAttractiveness = normalize(avgApy - 5, 0, 50); // vs 5% risk-free
+            features.yieldSustainability = protocolYields.length > 0 ? 0.6 : 0.5; // Conservative estimate
+            
+            // Revenue Features
+            const feesChange = protocolFees?.feesChange || 0;
+            features.revenueGrowth = normalize(feesChange, -30, 50);
+            const feeToTvl = protocol.tvl > 0 && protocolFees?.fees24h 
+                ? (protocolFees.fees24h * 365 / protocol.tvl) * 100 
+                : 0;
+            features.feeEfficiency = normalize(feeToTvl, 0, 30);
+            
+            // Sentiment Features
+            const fg = fearGreed?.current || 50;
+            features.sentimentScore = normalize(fg, 0, 100);
+            features.categoryMomentum = CATEGORY_MOMENTUM[mapping.category] || 1.0;
+            
+            // Risk Features
+            const hasAudit = protocol.audits && protocol.audits > 0;
+            const ageMonths = protocol.listedAt 
+                ? (Date.now() / 1000 - protocol.listedAt) / (30 * 24 * 3600)
+                : 12;
+            features.riskScore = (hasAudit ? 0.35 : 0) + 
+                                 (Math.min(ageMonths / 24, 1) * 0.35) +
+                                 (Math.min((protocol.chains?.length || 1) / 5, 1) * 0.3);
 
-            // Calculate alpha score
-            let score = 50;
-            const factors = [];
+            // Calculate weighted alpha score
+            let alphaScore = 0;
+            let totalWeight = 0;
+            
+            for (const [feature, weight] of Object.entries(ML_FEATURE_WEIGHTS)) {
+                const value = features[feature];
+                if (typeof value === 'number' && !isNaN(value)) {
+                    if (feature === 'categoryMomentum') {
+                        alphaScore += normalize(value, 0.9, 1.3) * weight;
+                    } else {
+                        alphaScore += value * weight;
+                    }
+                    totalWeight += weight;
+                }
+            }
+            
+            alphaScore = totalWeight > 0 ? (alphaScore / totalWeight) * 100 : 50;
+            alphaScore = Math.max(0, Math.min(100, Math.round(alphaScore)));
 
-            // TVL analysis (0-25 pts)
-            const tvl = protocol.tvl || 0;
-            const tvlChange24h = protocol.change_1d || 0;
-            const tvlChange7d = protocol.change_7d || 0;
-
-            if (tvl > 10e9) score += 15;
-            else if (tvl > 1e9) score += 10;
-            else if (tvl > 100e6) score += 5;
-
-            if (tvlChange24h > 5) { 
-                score += 12; 
-                factors.push(`🚀 TVL surging +${tvlChange24h.toFixed(1)}% in 24h`); 
-            } else if (tvlChange24h > 2) { 
-                score += 6; 
-                factors.push(`📈 TVL growing +${tvlChange24h.toFixed(1)}% in 24h`); 
-            } else if (tvlChange24h < -5) { 
-                score -= 8; 
-                factors.push(`⚠️ TVL declining ${tvlChange24h.toFixed(1)}% in 24h`); 
+            // Generate reasoning
+            const reasoning = [];
+            if (features.tvlMomentum > 0.7) reasoning.push(`🚀 Strong TVL momentum (+${tvlChange1d.toFixed(1)}% 24h)`);
+            if (features.priceStrength > 0.7) reasoning.push(`📈 Strong price action`);
+            if (features.yieldAttractiveness > 0.7) reasoning.push(`💰 Attractive yields (${avgApy.toFixed(1)}% APY)`);
+            if (features.categoryMomentum > 1.1) reasoning.push(`🔥 Hot sector: ${mapping.category}`);
+            if (features.revenueGrowth > 0.7) reasoning.push(`📊 Revenue growing`);
+            if (features.riskScore < 0.4) reasoning.push(`⚠️ Elevated risk factors`);
+            
+            if (reasoning.length === 0) {
+                reasoning.push('Mixed signals - ML analysis suggests caution');
             }
 
-            // Yield analysis (0-20 pts)
-            if (maxApy > 25) { 
-                score += 15; 
-                factors.push(`💰 Exceptional yield: ${maxApy.toFixed(1)}% APY`); 
-            } else if (maxApy > 12) { 
-                score += 10; 
-                factors.push(`💵 Attractive yield: ${maxApy.toFixed(1)}% APY`); 
-            } else if (maxApy > 5) { 
-                score += 5; 
-                factors.push(`💲 Moderate yield: ${maxApy.toFixed(1)}% APY`); 
-            }
-
-            // Price momentum (0-20 pts)
-            if (priceChange24h > 10) { 
-                score += 15; 
-                factors.push(`🔥 Strong momentum +${priceChange24h.toFixed(1)}% 24h`); 
-            } else if (priceChange24h > 5) { 
-                score += 10; 
-                factors.push(`📊 Bullish trend +${priceChange24h.toFixed(1)}% 24h`); 
-            } else if (priceChange24h > 0) { 
-                score += 5; 
-                factors.push(`✅ Positive action +${priceChange24h.toFixed(1)}% 24h`); 
-            } else if (priceChange24h < -10) { 
-                score -= 8; 
-                factors.push(`📉 Bearish pressure ${priceChange24h.toFixed(1)}% 24h`); 
-            }
-
-            // Category bonus (0-10 pts)
-            const category = protocol.category?.toLowerCase();
-            if (category?.includes('liquid staking') || category?.includes('restaking')) {
-                score += 10;
-                factors.push('🔥 Hot sector: Liquid Staking/Restaking');
-            } else if (category?.includes('yield')) {
-                score += 7;
-                factors.push('📈 Yield optimization strategy');
-            } else if (category?.includes('derivatives') || category?.includes('perps')) {
-                score += 5;
-                factors.push('📊 Derivatives volume trending');
-            } else if (category?.includes('lending')) {
-                score += 5;
-                factors.push('🏦 Lending protocol fundamentals');
-            }
-
-            // Reversal detection bonus
-            if (priceChange24h > 5 && tvlChange7d < -10) {
-                score += 8;
-                factors.push(`🔄 Reversal: recovering from -${Math.abs(tvlChange7d).toFixed(1)}% weekly`);
-            }
-
-            // Cap score
-            score = Math.max(0, Math.min(100, Math.round(score)));
-
-            if (score < 50 || !currentPrice) return null;
+            // Determine signal action
+            let action = 'WATCH';
+            if (alphaScore >= 75) action = 'STRONG BUY';
+            else if (alphaScore >= 60) action = 'BUY';
+            else if (alphaScore >= 40) action = 'HOLD';
+            else if (alphaScore >= 25) action = 'SELL';
 
             // Calculate targets
-            const volatility = Math.abs(priceChange24h) / 100 || 0.05;
-            const targetMultiplier = 1 + (score / 400) + volatility;
+            const currentPrice = market?.price || 1;
+            const volatility = Math.abs(market?.priceChange24h || 5) / 100;
+            const targetMultiplier = 1 + (alphaScore / 400) + volatility;
             const stopMultiplier = 1 - (0.04 + volatility * 0.3);
 
+            // Calculate confidence
+            const dataPoints = [protocol?.tvl > 0, market?.price > 0, protocolYields.length > 0, 
+                               protocolVolume?.volume24h > 0, protocolFees?.fees24h > 0];
+            const confidence = Math.min(95, 50 + (dataPoints.filter(Boolean).length * 10));
+
             return {
-                id: `sig_${protocol.slug}_${Date.now()}`,
+                id: `sig_${slug}_${Date.now()}`,
                 protocol: protocol.name,
-                slug: protocol.slug,
-                chain: protocol.chain || protocol.chains?.[0] || 'multi-chain',
+                slug: slug,
+                chain: protocol.chains?.[0] || 'ethereum',
                 chains: protocol.chains || [],
-                type: protocol.category || 'defi',
-                category: protocol.category,
-                token: protocol.symbol || protocol.name?.slice(0, 4).toUpperCase(),
+                type: mapping.category,
+                category: mapping.category,
+                token: mapping.symbol,
                 
-                action: score >= 65 ? 'BUY' : 'WATCH',
-                alphaScore: score,
-                confidence: Math.round(35 + score * 0.55),
-                riskLevel: score >= 75 ? 'LOW' : score >= 60 ? 'MEDIUM' : 'HIGH',
+                action: action,
+                alphaScore: alphaScore,
+                confidence: confidence,
+                confidenceLevel: confidence >= 75 ? 'HIGH' : confidence >= 50 ? 'MEDIUM' : 'LOW',
+                riskLevel: alphaScore >= 75 ? 'LOW' : alphaScore >= 60 ? 'MEDIUM' : 'HIGH',
                 
                 entryPrice: currentPrice,
                 targetPrice: currentPrice * targetMultiplier,
                 stopLoss: currentPrice * stopMultiplier,
                 expectedReturn: ((targetMultiplier - 1) * 100).toFixed(1),
                 
-                tvl: tvl,
-                tvlChange24h: tvlChange24h,
+                tvl: protocol.tvl,
+                tvlChange24h: tvlChange1d,
                 tvlChange7d: tvlChange7d,
                 apy: maxApy,
-                priceChange24h: priceChange24h,
-                marketCap: priceData?.usd_market_cap,
+                priceChange24h: market?.priceChange24h || 0,
+                marketCap: market?.marketCap || 0,
+                volume24h: market?.volume24h || 0,
+                fees24h: protocolFees?.fees24h || 0,
                 
-                reasoning: factors.slice(0, 4).join('. ') + '.',
-                factors: factors,
+                mlFeatures: {
+                    tvlMomentum: Math.round(features.tvlMomentum * 100),
+                    priceStrength: Math.round(features.priceStrength * 100),
+                    yieldScore: Math.round(features.yieldAttractiveness * 100),
+                    revenueScore: Math.round(features.revenueGrowth * 100),
+                    riskScore: Math.round(features.riskScore * 100),
+                    sentiment: Math.round(features.sentimentScore * 100)
+                },
+                
+                reasoning: reasoning.slice(0, 4).join('. ') + '.',
+                factors: reasoning,
                 
                 status: 'ACTIVE',
-                source: 'LIVE_API',
+                source: 'ML_DIRECT',
                 dataFreshness: 'LIVE',
                 generatedAt: new Date().toISOString(),
                 expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
             };
+        }
+
+        // Helper functions
+        function normalize(value, min, max) {
+            if (max === min) return 0.5;
+            return Math.max(0, Math.min(1, (value - min) / (max - min)));
+        }
+
+        function calculateTrendStrength(sparkline) {
+            if (!sparkline || sparkline.length < 7) return 0.5;
+            
+            const n = sparkline.length;
+            const x = Array.from({length: n}, (_, i) => i);
+            const sumX = x.reduce((s, v) => s + v, 0);
+            const sumY = sparkline.reduce((s, v) => s + v, 0);
+            const sumXY = x.reduce((s, v, i) => s + v * sparkline[i], 0);
+            const sumX2 = x.reduce((s, v) => s + v * v, 0);
+            
+            const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            const avgPrice = sumY / n;
+            const normalizedSlope = avgPrice !== 0 ? (slope / avgPrice) * 100 : 0;
+            
+            return normalize(normalizedSlope, -5, 5);
         }
 
         // Fallback with simulated fresh data (when APIs fail)
@@ -960,10 +1281,38 @@
                 project, apy
             }));
 
+            // Create fallback data cache
+            const fallbackData = {
+                protocols: FALLBACK_PROTOCOLS.map(p => ({
+                    id: p.slug,
+                    name: p.name,
+                    tvl: p.tvl,
+                    tvlChange1d: p.change_1d,
+                    tvlChange7d: p.change_7d,
+                    chains: [p.chain],
+                    category: p.category,
+                    audits: 1,
+                    listedAt: Date.now()/1000 - 365*24*3600 // 1 year ago
+                })),
+                yields: Object.entries(FALLBACK_YIELDS).map(([project, apy]) => ({
+                    project, apy, tvlUsd: 100e6
+                })),
+                marketData: Object.entries(FALLBACK_PRICES).map(([id, data]) => ({
+                    id: PROTOCOL_MAPPINGS[id]?.coingecko || id,
+                    price: data.usd,
+                    priceChange24h: data.usd_24h_change,
+                    volume24h: 1e6,
+                    marketCap: 1e9
+                })),
+                dexVolumes: [],
+                fees: [],
+                fearGreed: { current: 50, classification: 'Neutral', trend: 0 }
+            };
+
             const newSignals = [];
-            for (const protocol of FALLBACK_PROTOCOLS) {
-                const signal = generateSignalFromLiveData(protocol, yields, FALLBACK_PRICES);
-                if (signal && signal.alphaScore >= 50) {
+            for (const [slug, mapping] of Object.entries(PROTOCOL_MAPPINGS)) {
+                const signal = generateMLSignal(slug, mapping, fallbackData);
+                if (signal && signal.alphaScore >= 45) {
                     signal.source = 'FALLBACK';
                     signal.dataFreshness = 'CACHED';
                     newSignals.push(signal);
@@ -1325,34 +1674,57 @@
                 const tvlDisplay = signal.tvl ? (signal.tvl >= 1e9 ? `$${(signal.tvl/1e9).toFixed(1)}B` : `$${(signal.tvl/1e6).toFixed(0)}M`) : 'N/A';
                 const tvlChangeClass = (signal.tvlChange24h || 0) >= 0 ? 'positive' : 'negative';
                 const priceChangeClass = (signal.priceChange24h || 0) >= 0 ? 'positive' : 'negative';
-                const sourceIcon = signal.source === 'LIVE_API' ? '🟢' : signal.source === 'FALLBACK' ? '🟡' : '⚪';
+                const sourceIcon = signal.source === 'ML_SCANNER' ? '🤖' : 
+                                   signal.source === 'ML_DIRECT' ? '🧠' :
+                                   signal.source === 'LIVE_API' ? '🟢' : 
+                                   signal.source === 'FALLBACK' ? '🟡' : '⚪';
+                const sourceTitle = signal.source === 'ML_SCANNER' ? 'ML-Powered API' :
+                                    signal.source === 'ML_DIRECT' ? 'ML Feature Analysis' :
+                                    'Direct API';
+
+                // ML Features display
+                const mlFeatures = signal.mlFeatures || {};
+                const mlFeaturesHtml = Object.keys(mlFeatures).length > 0 ? `
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:0.5rem;font-size:0.7rem;">
+                        <span style="background:rgba(0,255,136,${mlFeatures.tvlMomentum/100 * 0.5 + 0.1});padding:2px 6px;border-radius:4px;">TVL: ${mlFeatures.tvlMomentum || 0}%</span>
+                        <span style="background:rgba(0,212,255,${(mlFeatures.priceStrength || 50)/100 * 0.5 + 0.1});padding:2px 6px;border-radius:4px;">Price: ${mlFeatures.priceStrength || 0}%</span>
+                        <span style="background:rgba(255,170,0,${(mlFeatures.yieldScore || 50)/100 * 0.5 + 0.1});padding:2px 6px;border-radius:4px;">Yield: ${mlFeatures.yieldScore || 0}%</span>
+                        <span style="background:rgba(136,136,255,${(mlFeatures.revenueScore || 50)/100 * 0.5 + 0.1});padding:2px 6px;border-radius:4px;">Revenue: ${mlFeatures.revenueScore || 0}%</span>
+                        <span style="background:rgba(${100 - (mlFeatures.riskScore || 50)},${mlFeatures.riskScore || 50},100,0.3);padding:2px 6px;border-radius:4px;">Risk: ${mlFeatures.riskScore || 0}%</span>
+                        <span style="background:rgba(255,136,255,${(mlFeatures.sentiment || 50)/100 * 0.5 + 0.1});padding:2px 6px;border-radius:4px;">Sentiment: ${mlFeatures.sentiment || 0}%</span>
+                    </div>
+                ` : '';
 
                 return `
                     <div class="signal-item ${scoreClass}">
                         <div class="signal-header">
-                            <span class="signal-protocol">${signal.protocol}</span>
+                            <span class="signal-protocol">${signal.protocol} <span style="color:#888;font-size:0.8rem;">${signal.token || ''}</span></span>
                             <div style="display:flex;gap:0.5rem;align-items:center;">
-                                <span class="signal-score">Score: ${signal.alphaScore}</span>
-                                <span title="Data source: ${signal.source || 'Unknown'}">${sourceIcon}</span>
+                                <span class="signal-score" style="background:${signal.alphaScore >= 70 ? 'rgba(0,255,136,0.3)' : signal.alphaScore >= 50 ? 'rgba(255,170,0,0.3)' : 'rgba(255,68,68,0.3)'}">
+                                    α ${signal.alphaScore} | ${signal.confidence}% conf
+                                </span>
+                                <span title="${sourceTitle}" style="cursor:help;">${sourceIcon}</span>
                             </div>
                         </div>
                         <div class="signal-meta">
                             <span>📍 ${signal.chain}</span>
                             <span>📊 ${signal.type || signal.category}</span>
-                            <span class="badge ${signal.action?.toLowerCase()}">${signal.action}</span>
-                            <span class="badge ${signal.riskLevel?.toLowerCase()}">${signal.riskLevel}</span>
+                            <span class="badge ${signal.action?.toLowerCase().replace(' ', '-')}">${signal.action}</span>
+                            <span class="badge ${signal.confidenceLevel?.toLowerCase() || signal.riskLevel?.toLowerCase()}">${signal.confidenceLevel || signal.riskLevel}</span>
+                            ${signal.rank ? `<span style="color:#00d4ff;">#${signal.rank}</span>` : ''}
                         </div>
                         <div class="signal-meta" style="margin-top: 0.5rem;">
                             <span>💰 TVL: ${tvlDisplay}</span>
-                            <span class="${tvlChangeClass}">📊 TVL 24h: ${(signal.tvlChange24h || 0) >= 0 ? '+' : ''}${(signal.tvlChange24h || 0).toFixed(1)}%</span>
-                            <span class="${priceChangeClass}">📈 Price 24h: ${(signal.priceChange24h || 0) >= 0 ? '+' : ''}${(signal.priceChange24h || 0).toFixed(1)}%</span>
+                            <span class="${tvlChangeClass}">📊 24h: ${(signal.tvlChange24h || 0) >= 0 ? '+' : ''}${(signal.tvlChange24h || 0).toFixed(1)}%</span>
+                            <span class="${priceChangeClass}">📈 Price: ${(signal.priceChange24h || 0) >= 0 ? '+' : ''}${(signal.priceChange24h || 0).toFixed(1)}%</span>
+                            ${signal.apy ? `<span>💎 APY: ${signal.apy.toFixed(1)}%</span>` : ''}
                         </div>
                         <div class="signal-meta" style="margin-top: 0.25rem;">
                             <span>💵 Entry: $${(signal.entryPrice || 0).toFixed(signal.entryPrice > 100 ? 2 : 4)}</span>
                             <span>🎯 Target: +${signal.expectedReturn}%</span>
                             <span>📉 Stop: -${(((signal.entryPrice - signal.stopLoss) / signal.entryPrice) * 100).toFixed(1)}%</span>
-                            ${signal.apy ? `<span>💎 APY: ${signal.apy.toFixed(1)}%</span>` : ''}
                         </div>
+                        ${mlFeaturesHtml}
                         <div class="signal-reasoning">${signal.reasoning}</div>
                         ${signal.status === 'ACTIVE' ? `
                             <div class="signal-actions">
@@ -1362,7 +1734,8 @@
                         ` : ''}
                         <div class="signal-meta" style="margin-top: 0.5rem; color: #555; font-size: 0.7rem;">
                             <span>⏰ ${time}</span>
-                            <span>🔗 ${signal.chains?.join(', ') || signal.chain}</span>
+                            <span>🔗 ${signal.chains?.slice(0,3).join(', ') || signal.chain}</span>
+                            <span style="color:#666;">via ${signal.source?.replace('_', ' ') || 'API'}</span>
                         </div>
                     </div>
                 `;
