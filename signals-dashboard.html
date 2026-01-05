@@ -606,6 +606,203 @@
             PNL_HISTORY: 'nexxore_pnl_history'
         };
 
+        // Research Bot API
+        const RESEARCH_BOT_API = 'http://localhost:8081';
+
+        // ========================================
+        // LIVE DATA FROM RESEARCH BOT
+        // ========================================
+        async function loadResearchBotData() {
+            console.log('🤖 Loading data from Research Bot...');
+            try {
+                const response = await fetch(`${RESEARCH_BOT_API}/api/all`);
+                if (!response.ok) throw new Error('Research Bot unavailable');
+                
+                const data = await response.json();
+                console.log('✅ Research Bot data loaded:', data);
+                
+                // Update stats with real market data
+                if (data.market_data && data.market_data.data) {
+                    updateMarketStats(data.market_data.data, data.futures_data?.data || []);
+                }
+                
+                // Update sentiment indicator
+                if (data.sentiment) {
+                    updateSentimentDisplay(data.sentiment);
+                }
+                
+                // Generate signals from market data
+                if (data.market_data && data.market_data.data) {
+                    generateBotSignals(data.market_data.data, data.futures_data?.data || [], data.sentiment, data.news_data?.data || []);
+                }
+                
+                return data;
+            } catch (error) {
+                console.warn('⚠️ Research Bot unavailable:', error.message);
+                return null;
+            }
+        }
+
+        function updateMarketStats(marketData, futuresData) {
+            // Update the stats grid with live market data
+            const totalVolume = marketData.reduce((sum, coin) => sum + coin.volume_24h, 0);
+            const avgChange = marketData.reduce((sum, coin) => sum + coin.change_24h, 0) / marketData.length;
+            
+            // Update UI elements if they exist
+            const portfolioValue = document.getElementById('portfolioValue');
+            const totalPnl = document.getElementById('totalPnl');
+            
+            // Show market overview in a toast
+            const btc = marketData.find(c => c.symbol === 'BTCUSDT');
+            const eth = marketData.find(c => c.symbol === 'ETHUSDT');
+            
+            if (btc && eth) {
+                showToast(`📊 BTC: $${btc.price.toLocaleString()} (${btc.change_24h >= 0 ? '+' : ''}${btc.change_24h.toFixed(2)}%) | ETH: $${eth.price.toLocaleString()}`);
+            }
+        }
+
+        function updateSentimentDisplay(sentiment) {
+            let sentimentEl = document.getElementById('marketSentiment');
+            if (!sentimentEl) {
+                sentimentEl = document.createElement('div');
+                sentimentEl.id = 'marketSentiment';
+                sentimentEl.style.cssText = 'position:fixed;top:110px;right:20px;padding:12px 16px;border-radius:12px;font-size:0.85rem;z-index:100;background:rgba(0,0,0,0.9);border:1px solid rgba(255,255,255,0.15);backdrop-filter:blur(10px);';
+                document.body.appendChild(sentimentEl);
+            }
+            
+            const fg = sentiment.fear_greed_value;
+            const label = sentiment.fear_greed_label;
+            
+            let color = '#ffaa00';
+            let bgColor = 'rgba(255, 170, 0, 0.1)';
+            if (fg >= 75) { color = '#00ff88'; bgColor = 'rgba(0, 255, 136, 0.1)'; }
+            else if (fg >= 55) { color = '#88ff00'; bgColor = 'rgba(136, 255, 0, 0.1)'; }
+            else if (fg <= 25) { color = '#ff4444'; bgColor = 'rgba(255, 68, 68, 0.1)'; }
+            else if (fg <= 45) { color = '#ff8800'; bgColor = 'rgba(255, 136, 0, 0.1)'; }
+            
+            sentimentEl.style.background = bgColor;
+            sentimentEl.style.border = `1px solid ${color}40`;
+            sentimentEl.innerHTML = `
+                <div style="color:${color};font-weight:700;font-size:1rem;">😱 ${fg}</div>
+                <div style="color:${color};font-size:0.75rem;opacity:0.9;">${label}</div>
+            `;
+        }
+
+        function generateBotSignals(marketData, futuresData, sentiment, newsData) {
+            const futuresLookup = {};
+            futuresData.forEach(f => { futuresLookup[f.symbol] = f; });
+            
+            const botSignals = [];
+            const fg = sentiment?.fear_greed_value || 50;
+            
+            marketData.forEach(coin => {
+                const futures = futuresLookup[coin.symbol];
+                const factors = [];
+                let score = 50;
+                
+                // Factor 1: Price momentum
+                if (coin.change_24h > 5) {
+                    factors.push(`Strong momentum: +${coin.change_24h.toFixed(1)}%`);
+                    score += 15;
+                } else if (coin.change_24h < -5) {
+                    factors.push(`Weakness: ${coin.change_24h.toFixed(1)}%`);
+                    score -= 15;
+                }
+                
+                // Factor 2: Fear/Greed contrarian
+                if (fg < 25 && coin.change_24h < 0) {
+                    factors.push(`Extreme fear (${fg}) - contrarian buy`);
+                    score += 10;
+                } else if (fg > 75 && coin.change_24h > 3) {
+                    factors.push(`Extreme greed (${fg}) - caution`);
+                    score -= 10;
+                }
+                
+                // Factor 3: Funding rate (if available)
+                if (futures) {
+                    if (futures.funding_rate > 0.03) {
+                        factors.push(`High funding: ${(futures.funding_rate * 100).toFixed(3)}%`);
+                        score -= 5;
+                    } else if (futures.funding_rate < -0.01) {
+                        factors.push(`Negative funding: ${(futures.funding_rate * 100).toFixed(3)}%`);
+                        score += 5;
+                    }
+                    
+                    // Long/short ratio
+                    if (futures.long_short_ratio > 2.5) {
+                        factors.push(`Crowded long: ${futures.long_short_ratio.toFixed(2)}`);
+                        score -= 5;
+                    } else if (futures.long_short_ratio < 0.7) {
+                        factors.push(`Crowded short: ${futures.long_short_ratio.toFixed(2)}`);
+                        score += 5;
+                    }
+                }
+                
+                // Factor 4: Volume
+                if (coin.volume_24h > 1e9) {
+                    factors.push('High volume (>$1B)');
+                    score += 3;
+                }
+                
+                // Generate signal if significant
+                if (Math.abs(score - 50) >= 10 && factors.length >= 2) {
+                    const action = score > 55 ? 'BUY' : score < 45 ? 'SELL' : 'WATCH';
+                    const confidence = Math.min(Math.abs(score - 50) / 50 * 100, 90);
+                    const atr = (coin.high_24h - coin.low_24h) / coin.price;
+                    
+                    botSignals.push({
+                        id: `bot_${coin.symbol}_${Date.now()}`,
+                        protocol: coin.symbol.replace('USDT', ''),
+                        slug: coin.symbol.toLowerCase(),
+                        chain: 'multi',
+                        type: 'crypto',
+                        category: 'spot',
+                        token: coin.symbol.replace('USDT', ''),
+                        
+                        action: action,
+                        alphaScore: Math.round(score),
+                        confidence: confidence,
+                        confidenceLevel: confidence >= 70 ? 'HIGH' : confidence >= 50 ? 'MEDIUM' : 'LOW',
+                        riskLevel: confidence >= 70 ? 'LOW' : confidence >= 50 ? 'MEDIUM' : 'HIGH',
+                        
+                        entryPrice: coin.price,
+                        targetPrice: action === 'BUY' ? coin.price * (1 + atr * 1.5) : coin.price * (1 - atr * 1.5),
+                        stopLoss: action === 'BUY' ? coin.price * (1 - atr * 1.2) : coin.price * (1 + atr * 1.2),
+                        expectedReturn: (atr * 150).toFixed(1),
+                        
+                        tvl: 0,
+                        tvlChange24h: 0,
+                        priceChange24h: coin.change_24h,
+                        volume24h: coin.volume_24h,
+                        
+                        reasoning: factors.join('. '),
+                        factors: factors,
+                        
+                        status: 'ACTIVE',
+                        source: 'RESEARCH_BOT',
+                        dataFreshness: 'LIVE',
+                        rank: score,
+                        generatedAt: new Date().toISOString(),
+                        expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString()
+                    });
+                }
+            });
+            
+            // Sort by score and merge with existing signals
+            botSignals.sort((a, b) => b.alphaScore - a.alphaScore);
+            
+            if (botSignals.length > 0) {
+                const existingSignals = getSignals();
+                // Remove old bot signals
+                const nonBotSignals = existingSignals.filter(s => s.source !== 'RESEARCH_BOT');
+                const allSignals = [...botSignals.slice(0, 10), ...nonBotSignals].slice(0, 50);
+                saveSignals(allSignals);
+                
+                showStatus(`🤖 Research Bot found ${botSignals.length} signals from live market data!`, 'success');
+                refreshData();
+            }
+        }
+
         // Portfolio management
         function getPortfolio() {
             const stored = localStorage.getItem(STORAGE_KEYS.PORTFOLIO);
@@ -2023,7 +2220,7 @@
         }
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             // Initialize data freshness indicator
             updateDataFreshness('cached');
             
@@ -2041,14 +2238,26 @@
             // Start auto-refresh
             startAutoRefresh();
             
-            // Fetch fresh signals on load if no recent data
-            const signals = getSignals();
-            const recentSignal = signals.find(s => 
-                Date.now() - new Date(s.generatedAt).getTime() < 30 * 60 * 1000
-            );
-            if (!recentSignal) {
-                setTimeout(() => fetchLiveSignals(), 1000);
+            // Try to load from Research Bot first
+            console.log('🚀 Loading Research Bot data...');
+            const botData = await loadResearchBotData();
+            
+            if (!botData) {
+                // Fallback to regular signals if bot unavailable
+                const signals = getSignals();
+                const recentSignal = signals.find(s => 
+                    Date.now() - new Date(s.generatedAt).getTime() < 30 * 60 * 1000
+                );
+                if (!recentSignal) {
+                    setTimeout(() => fetchLiveSignals(), 1000);
+                }
             }
+            
+            // Set up Research Bot auto-refresh (every 60 seconds)
+            setInterval(async () => {
+                console.log('🔄 Auto-refreshing from Research Bot...');
+                await loadResearchBotData();
+            }, 60000);
         });
     </script>
 </body>

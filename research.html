@@ -1248,6 +1248,11 @@
       </div>
     </div>
     <div class="header-right">
+      <!-- Live Data Status -->
+      <div id="liveDataStatus" style="display: flex; align-items: center; gap: 8px; margin-right: 20px; padding: 8px 16px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; font-size: 0.85rem;">
+        <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite;"></span>
+        <span style="color: #22c55e; font-weight: 600;">🤖 Live Data</span>
+      </div>
       <div id="portfolioHealth" style="display: none; margin-right: 20px; padding: 8px 16px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; font-size: 0.9rem;">
         <span style="color: #9ca3af;">Health Score:</span>
         <span id="healthScore" style="color: #22c55e; font-weight: 600; margin-left: 8px;">--</span>
@@ -1374,8 +1379,211 @@
       ? 'http://localhost:3000/api' 
       : '/api';
     
+    // Research Bot API (local Python server)
+    const RESEARCH_BOT_API = 'http://localhost:8081';
+    
     console.log('🚀 Research Dashboard Initialized');
     console.log('📡 API Base URL:', API_BASE);
+    console.log('🤖 Research Bot API:', RESEARCH_BOT_API);
+
+    // ====== LIVE DATA FROM RESEARCH BOT ======
+    async function loadLiveMarketData() {
+      console.log('📊 Loading live market data from Research Bot...');
+      const statusEl = document.getElementById('liveDataStatus');
+      
+      try {
+        const response = await fetch(`${RESEARCH_BOT_API}/api/all`);
+        if (!response.ok) throw new Error('Research Bot API unavailable');
+        
+        const data = await response.json();
+        console.log('✅ Research Bot data:', data);
+        
+        // Update status indicator
+        if (statusEl) {
+          statusEl.style.background = 'rgba(34, 197, 94, 0.1)';
+          statusEl.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+          statusEl.innerHTML = `
+            <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite;"></span>
+            <span style="color: #22c55e; font-weight: 600;">🤖 Live Data</span>
+            <span style="color: #64748b; font-size: 0.75rem;">Updated ${new Date().toLocaleTimeString()}</span>
+          `;
+        }
+        
+        // Update Market Data in Insights Panel
+        if (data.market_data && data.market_data.data) {
+          updateMarketInsights(data.market_data.data, data.sentiment);
+        }
+        
+        // Update News Panel with live signals
+        if (data.news_data && data.news_data.data) {
+          updateLiveNews(data.news_data.data);
+        }
+        
+        // Update Trending with live coins
+        if (data.market_data && data.market_data.data) {
+          updateLiveTrending(data.market_data.data, data.futures_data?.data || []);
+        }
+        
+        return data;
+      } catch (error) {
+        console.warn('⚠️ Research Bot unavailable:', error.message);
+        
+        // Update status indicator to show offline
+        if (statusEl) {
+          statusEl.style.background = 'rgba(239, 68, 68, 0.1)';
+          statusEl.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+          statusEl.innerHTML = `
+            <span style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></span>
+            <span style="color: #ef4444; font-weight: 600;">⚠️ Bot Offline</span>
+          `;
+        }
+        
+        return null;
+      }
+    }
+
+    function updateMarketInsights(marketData, sentiment) {
+      const insightsList = document.getElementById('insightsList');
+      const insightsCount = document.getElementById('insightsCount');
+      
+      // Create insights from market data
+      const insights = marketData.slice(0, 5).map(coin => {
+        const change = parseFloat(coin.change_24h);
+        const confidence = Math.min(Math.abs(change) / 10, 0.9);
+        const confidenceClass = confidence >= 0.6 ? 'high' : confidence >= 0.3 ? 'medium' : 'low';
+        const sentiment_text = change > 2 ? 'Bullish momentum' : change < -2 ? 'Bearish pressure' : 'Consolidating';
+        
+        return `
+          <div class="insight-item">
+            <div class="insight-header">
+              <div class="insight-protocol">${coin.symbol.replace('USDT', '')}</div>
+              <div class="insight-confidence confidence-${confidenceClass}">
+                ${(confidence * 100).toFixed(0)}%
+              </div>
+            </div>
+            <div class="insight-summary">${sentiment_text} - Price at $${coin.price.toLocaleString()}</div>
+            <div class="insight-metrics">
+              <div class="metric-item">
+                <span class="metric-label">24h Change</span>
+                <span class="metric-value ${change >= 0 ? 'positive' : 'negative'}">
+                  ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
+                </span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Volume</span>
+                <span class="metric-value">$${(coin.volume_24h / 1e9).toFixed(2)}B</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">24h High</span>
+                <span class="metric-value">$${coin.high_24h.toLocaleString()}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">24h Low</span>
+                <span class="metric-value">$${coin.low_24h.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      // Add Fear & Greed sentiment if available
+      if (sentiment) {
+        const fgClass = sentiment.fear_greed_value <= 25 ? 'negative' : 
+                       sentiment.fear_greed_value >= 75 ? 'positive' : '';
+        insights.unshift(`
+          <div class="insight-item" style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(139, 92, 246, 0.05));">
+            <div class="insight-header">
+              <div class="insight-protocol">😱 Market Sentiment</div>
+              <div class="insight-confidence confidence-${sentiment.fear_greed_value >= 50 ? 'high' : 'low'}">
+                ${sentiment.fear_greed_label}
+              </div>
+            </div>
+            <div class="insight-summary">Fear & Greed Index at ${sentiment.fear_greed_value}/100</div>
+            <div class="insight-metrics">
+              <div class="metric-item">
+                <span class="metric-label">Index</span>
+                <span class="metric-value ${fgClass}">${sentiment.fear_greed_value}</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Status</span>
+                <span class="metric-value">${sentiment.fear_greed_label}</span>
+              </div>
+            </div>
+          </div>
+        `);
+      }
+      
+      insightsList.innerHTML = insights.join('');
+      insightsCount.textContent = insights.length;
+    }
+
+    function updateLiveNews(newsData) {
+      const newsList = document.getElementById('newsList');
+      const newsCount = document.getElementById('newsCount');
+      
+      if (newsData.length === 0) {
+        return; // Keep existing news if no live data
+      }
+      
+      const newsHtml = newsData.map(item => {
+        const sentimentClass = item.sentiment === 'bullish' ? 'bullish' : 
+                              item.sentiment === 'bearish' ? 'bearish' : 'neutral';
+        return `
+          <div class="news-item" onclick="window.open('${item.url}', '_blank')">
+            <div class="news-source">${item.source}</div>
+            <div class="news-title">${item.title}</div>
+            <div class="news-meta">
+              <span class="news-sentiment sentiment-${sentimentClass}">${item.sentiment}</span>
+              ${item.currencies && item.currencies.length > 0 ? 
+                `<span style="color: #64748b; font-size: 0.75rem;">${item.currencies.join(', ')}</span>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      newsList.innerHTML = newsHtml;
+      newsCount.textContent = newsData.length;
+    }
+
+    function updateLiveTrending(marketData, futuresData) {
+      const trendingList = document.getElementById('trendingList');
+      const trendingCount = document.getElementById('trendingCount');
+      
+      // Sort by volume and price change
+      const sorted = [...marketData].sort((a, b) => {
+        const scoreA = Math.abs(a.change_24h) * (a.volume_24h / 1e9);
+        const scoreB = Math.abs(b.change_24h) * (b.volume_24h / 1e9);
+        return scoreB - scoreA;
+      });
+      
+      // Get futures data lookup
+      const futuresLookup = {};
+      futuresData.forEach(f => { futuresLookup[f.symbol] = f; });
+      
+      const trendingHtml = sorted.slice(0, 8).map((coin, index) => {
+        const futures = futuresLookup[coin.symbol];
+        const fundingRate = futures ? (futures.funding_rate * 100).toFixed(4) : 'N/A';
+        const lsRatio = futures ? futures.long_short_ratio.toFixed(2) : 'N/A';
+        
+        return `
+          <div class="trending-item">
+            <div class="trending-header">
+              <div class="trending-symbol">${coin.symbol.replace('USDT', '')}</div>
+              <div class="trending-rank">#${index + 1}</div>
+            </div>
+            <div class="trending-name">$${coin.price.toLocaleString()}</div>
+            <div class="trending-stats">
+              <div class="stat-item">24h: <span class="stat-value" style="color: ${coin.change_24h >= 0 ? '#4ade80' : '#f87171'}">${coin.change_24h >= 0 ? '+' : ''}${coin.change_24h.toFixed(2)}%</span></div>
+              <div class="stat-item">Vol: <span class="stat-value">$${(coin.volume_24h / 1e9).toFixed(2)}B</span></div>
+              ${futures ? `<div class="stat-item">Fund: <span class="stat-value">${fundingRate}%</span></div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      trendingList.innerHTML = trendingHtml;
+      trendingCount.textContent = sorted.length;
+    }
 
     // Fetch and display research insights
     async function loadInsights() {
@@ -1589,11 +1797,33 @@
       if (e.key === 'Enter') sendMessage();
     });
 
-    // Initial load
-    loadInsights();
-    loadNews();
-    loadTrending();
-    runAlphaScan();
+    // Initial load - Try Research Bot first, then fallback to original APIs
+    async function initializeDashboard() {
+      console.log('🚀 Initializing dashboard...');
+      
+      // Try to load from Research Bot first
+      const botData = await loadLiveMarketData();
+      
+      if (!botData) {
+        // Fallback to original APIs if Research Bot is unavailable
+        console.log('📡 Research Bot unavailable, using fallback APIs...');
+        loadInsights();
+        loadNews();
+        loadTrending();
+      }
+      
+      // Always run alpha scan
+      runAlphaScan();
+      
+      // Set up auto-refresh for Research Bot data (every 30 seconds)
+      setInterval(async () => {
+        console.log('🔄 Auto-refreshing Research Bot data...');
+        await loadLiveMarketData();
+      }, 30000);
+    }
+    
+    // Start initialization
+    initializeDashboard();
 
     // ===============================
     // ALPHA SCANNER FUNCTIONALITY

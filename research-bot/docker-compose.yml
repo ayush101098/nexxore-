@@ -1,0 +1,168 @@
+version: '3.8'
+
+services:
+  # TimescaleDB for time-series data
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: research_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-research}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-research_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-crypto_research}
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U research"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and rate limiting
+  redis:
+    image: redis:7-alpine
+    container_name: research_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Main application
+  research-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: research_bot
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://research:research_secret@timescaledb:5432/crypto_research
+      - REDIS_URL=redis://redis:6379
+      - BINANCE_API_KEY=${BINANCE_API_KEY}
+      - BINANCE_SECRET=${BINANCE_SECRET}
+      - COINGLASS_API_KEY=${COINGLASS_API_KEY}
+      - GLASSNODE_API_KEY=${GLASSNODE_API_KEY}
+      - DEFILLAMA_API_KEY=${DEFILLAMA_API_KEY}
+      - TWITTER_BEARER_TOKEN=${TWITTER_BEARER_TOKEN}
+      - CRYPTOPANIC_API_KEY=${CRYPTOPANIC_API_KEY}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+      - ./models:/app/models
+      - ./data:/app/data
+    command: python -m src.main
+
+  # Data collectors (separate service for scaling)
+  data-collectors:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: data_collectors
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://research:research_secret@timescaledb:5432/crypto_research
+      - REDIS_URL=redis://redis:6379
+      - BINANCE_API_KEY=${BINANCE_API_KEY}
+      - BINANCE_SECRET=${BINANCE_SECRET}
+      - COINGLASS_API_KEY=${COINGLASS_API_KEY}
+      - GLASSNODE_API_KEY=${GLASSNODE_API_KEY}
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+    command: python -m src.data_ingestion.runner
+
+  # Feature engine
+  feature-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: feature_engine
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://research:research_secret@timescaledb:5432/crypto_research
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./src:/app/src
+      - ./models:/app/models
+    command: python -m src.features.runner
+
+  # ML model service
+  ml-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ml_service
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://research:research_secret@timescaledb:5432/crypto_research
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./src:/app/src
+      - ./models:/app/models
+    command: python -m src.models.runner
+
+  # API Server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: research_api
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://research:research_secret@timescaledb:5432/crypto_research
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./src:/app/src
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8001 --reload
+
+  # Monitoring with Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: research_grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+
+volumes:
+  timescale_data:
+  redis_data:
+  grafana_data:
+
+networks:
+  default:
+    name: research_network
