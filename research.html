@@ -1404,24 +1404,31 @@
           statusEl.style.borderColor = 'rgba(34, 197, 94, 0.3)';
           statusEl.innerHTML = `
             <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite;"></span>
-            <span style="color: #22c55e; font-weight: 600;">🤖 Live Data</span>
-            <span style="color: #64748b; font-size: 0.75rem;">Updated ${new Date().toLocaleTimeString()}</span>
+            <span style="color: #22c55e; font-weight: 600;">🤖 Live</span>
+            <span style="color: #64748b; font-size: 0.75rem;">${new Date().toLocaleTimeString()}</span>
           `;
         }
         
-        // Update Market Data in Insights Panel
-        if (data.market_data && data.market_data.data) {
-          updateMarketInsights(data.market_data.data, data.sentiment);
+        // Update Protocol Insights with on-chain TVL data
+        if (data.onchain_data && data.onchain_data.data) {
+          updateProtocolInsights(data.onchain_data.data, data.sentiment);
         }
         
-        // Update News Panel with live signals
+        // Update News Panel with ONLY trending coins (not gainers/losers)
         if (data.news_data && data.news_data.data) {
-          updateLiveNews(data.news_data.data);
+          const trendingOnly = data.news_data.data.filter(item => item.source === 'CoinGecko Trending');
+          updateLiveNews(trendingOnly);
         }
         
-        // Update Trending with live coins
+        // Update Trending Panel with top movers (gainers & losers)
+        if (data.news_data && data.news_data.data && data.market_data && data.market_data.data) {
+          const movers = data.news_data.data.filter(item => item.source === 'Binance 24h');
+          updateLiveTrending(movers, data.market_data.data, data.futures_data?.data || []);
+        }
+        
+        // Update Alpha Scanner with signals from market analysis
         if (data.market_data && data.market_data.data) {
-          updateLiveTrending(data.market_data.data, data.futures_data?.data || []);
+          generateAlphaSignals(data.market_data.data, data.futures_data?.data || [], data.sentiment, data.news_data?.data || []);
         }
         
         return data;
@@ -1434,7 +1441,7 @@
           statusEl.style.borderColor = 'rgba(239, 68, 68, 0.3)';
           statusEl.innerHTML = `
             <span style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></span>
-            <span style="color: #ef4444; font-weight: 600;">⚠️ Bot Offline</span>
+            <span style="color: #ef4444; font-weight: 600;">⚠️ Offline</span>
           `;
         }
         
@@ -1442,312 +1449,303 @@
       }
     }
 
-    function updateMarketInsights(marketData, sentiment) {
+    // Protocol Insights - Show TVL data by chain
+    function updateProtocolInsights(onchainData, sentiment) {
       const insightsList = document.getElementById('insightsList');
       const insightsCount = document.getElementById('insightsCount');
       
-      // Create insights from market data
-      const insights = marketData.slice(0, 5).map(coin => {
-        const change = parseFloat(coin.change_24h);
-        const confidence = Math.min(Math.abs(change) / 10, 0.9);
-        const confidenceClass = confidence >= 0.6 ? 'high' : confidence >= 0.3 ? 'medium' : 'low';
-        const sentiment_text = change > 2 ? 'Bullish momentum' : change < -2 ? 'Bearish pressure' : 'Consolidating';
-        
-        return `
-          <div class="insight-item">
-            <div class="insight-header">
-              <div class="insight-protocol">${coin.symbol.replace('USDT', '')}</div>
-              <div class="insight-confidence confidence-${confidenceClass}">
-                ${(confidence * 100).toFixed(0)}%
-              </div>
-            </div>
-            <div class="insight-summary">${sentiment_text} - Price at $${coin.price.toLocaleString()}</div>
-            <div class="insight-metrics">
-              <div class="metric-item">
-                <span class="metric-label">24h Change</span>
-                <span class="metric-value ${change >= 0 ? 'positive' : 'negative'}">
-                  ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
-                </span>
-              </div>
-              <div class="metric-item">
-                <span class="metric-label">Volume</span>
-                <span class="metric-value">$${(coin.volume_24h / 1e9).toFixed(2)}B</span>
-              </div>
-              <div class="metric-item">
-                <span class="metric-label">24h High</span>
-                <span class="metric-value">$${coin.high_24h.toLocaleString()}</span>
-              </div>
-              <div class="metric-item">
-                <span class="metric-label">24h Low</span>
-                <span class="metric-value">$${coin.low_24h.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-        `;
-      });
+      const insights = [];
       
-      // Add Fear & Greed sentiment if available
+      // Add Fear & Greed sentiment first
       if (sentiment) {
-        const fgClass = sentiment.fear_greed_value <= 25 ? 'negative' : 
-                       sentiment.fear_greed_value >= 75 ? 'positive' : '';
-        insights.unshift(`
-          <div class="insight-item" style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(139, 92, 246, 0.05));">
+        const fgValue = sentiment.fear_greed_value;
+        const fgColor = fgValue <= 25 ? '#ef4444' : fgValue >= 75 ? '#22c55e' : '#fbbf24';
+        insights.push(`
+          <div class="insight-item" style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(139, 92, 246, 0.08)); border-color: rgba(0, 212, 255, 0.2);">
             <div class="insight-header">
               <div class="insight-protocol">😱 Market Sentiment</div>
-              <div class="insight-confidence confidence-${sentiment.fear_greed_value >= 50 ? 'high' : 'low'}">
+              <div class="insight-confidence" style="background: ${fgColor}20; color: ${fgColor}; border-color: ${fgColor}40;">
                 ${sentiment.fear_greed_label}
               </div>
             </div>
-            <div class="insight-summary">Fear & Greed Index at ${sentiment.fear_greed_value}/100</div>
+            <div class="insight-summary">Fear & Greed Index indicates ${fgValue <= 30 ? 'extreme fear - potential buying opportunity' : fgValue >= 70 ? 'extreme greed - exercise caution' : 'neutral market conditions'}</div>
             <div class="insight-metrics">
               <div class="metric-item">
                 <span class="metric-label">Index</span>
-                <span class="metric-value ${fgClass}">${sentiment.fear_greed_value}</span>
+                <span class="metric-value" style="color: ${fgColor}">${fgValue}/100</span>
               </div>
               <div class="metric-item">
-                <span class="metric-label">Status</span>
-                <span class="metric-value">${sentiment.fear_greed_label}</span>
+                <span class="metric-label">Signal</span>
+                <span class="metric-value">${fgValue <= 30 ? '🟢 BUY' : fgValue >= 70 ? '🔴 SELL' : '🟡 HOLD'}</span>
               </div>
             </div>
           </div>
         `);
       }
       
+      // Add chain TVL data
+      onchainData.forEach(chain => {
+        const tvlB = (chain.tvl / 1e9).toFixed(2);
+        const changeColor = chain.tvl_change_24h >= 0 ? '#4ade80' : '#f87171';
+        insights.push(`
+          <div class="insight-item">
+            <div class="insight-header">
+              <div class="insight-protocol">⛓️ ${chain.chain}</div>
+              <div class="insight-confidence confidence-high">TVL</div>
+            </div>
+            <div class="insight-summary">Total Value Locked across ${chain.chain} ecosystem</div>
+            <div class="insight-metrics">
+              <div class="metric-item">
+                <span class="metric-label">TVL</span>
+                <span class="metric-value">$${tvlB}B</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">24h</span>
+                <span class="metric-value" style="color: ${changeColor}">${chain.tvl_change_24h >= 0 ? '+' : ''}${chain.tvl_change_24h.toFixed(2)}%</span>
+              </div>
+            </div>
+          </div>
+        `);
+      });
+      
       insightsList.innerHTML = insights.join('');
       insightsCount.textContent = insights.length;
     }
 
-    function updateLiveNews(newsData) {
+    // News Panel - Show ONLY trending tokens from CoinGecko
+    function updateLiveNews(trendingData) {
       const newsList = document.getElementById('newsList');
       const newsCount = document.getElementById('newsCount');
       
-      if (newsData.length === 0) {
-        return; // Keep existing news if no live data
+      if (trendingData.length === 0) {
+        newsList.innerHTML = '<div class="loading">No trending data available</div>';
+        return;
       }
       
-      const newsHtml = newsData.map(item => {
-        const sentimentClass = item.sentiment === 'bullish' ? 'bullish' : 
-                              item.sentiment === 'bearish' ? 'bearish' : 'neutral';
-        return `
-          <div class="news-item" onclick="window.open('${item.url}', '_blank')">
-            <div class="news-source">${item.source}</div>
-            <div class="news-title">${item.title}</div>
-            <div class="news-meta">
-              <span class="news-sentiment sentiment-${sentimentClass}">${item.sentiment}</span>
-              ${item.currencies && item.currencies.length > 0 ? 
-                `<span style="color: #64748b; font-size: 0.75rem;">${item.currencies.join(', ')}</span>` : ''}
-            </div>
+      const newsHtml = trendingData.map(item => `
+        <div class="news-item" onclick="window.open('${item.url}', '_blank')">
+          <div class="news-source">🔥 ${item.source}</div>
+          <div class="news-title">${item.title}</div>
+          <div class="news-meta">
+            <span class="news-sentiment sentiment-bullish">TRENDING</span>
+            ${item.currencies && item.currencies.length > 0 ? 
+              `<span style="color: #00d4ff; font-size: 0.8rem; font-weight: 600;">${item.currencies.join(', ')}</span>` : ''}
           </div>
-        `;
-      }).join('');
+        </div>
+      `).join('');
       
       newsList.innerHTML = newsHtml;
-      newsCount.textContent = newsData.length;
+      newsCount.textContent = trendingData.length;
     }
 
-    function updateLiveTrending(marketData, futuresData) {
+    // Trending Panel - Show top gainers and losers
+    function updateLiveTrending(moversData, marketData, futuresData) {
       const trendingList = document.getElementById('trendingList');
       const trendingCount = document.getElementById('trendingCount');
-      
-      // Sort by volume and price change
-      const sorted = [...marketData].sort((a, b) => {
-        const scoreA = Math.abs(a.change_24h) * (a.volume_24h / 1e9);
-        const scoreB = Math.abs(b.change_24h) * (b.volume_24h / 1e9);
-        return scoreB - scoreA;
-      });
       
       // Get futures data lookup
       const futuresLookup = {};
       futuresData.forEach(f => { futuresLookup[f.symbol] = f; });
       
-      const trendingHtml = sorted.slice(0, 8).map((coin, index) => {
-        const futures = futuresLookup[coin.symbol];
-        const fundingRate = futures ? (futures.funding_rate * 100).toFixed(4) : 'N/A';
-        const lsRatio = futures ? futures.long_short_ratio.toFixed(2) : 'N/A';
+      // Get market data lookup for prices
+      const marketLookup = {};
+      marketData.forEach(m => { marketLookup[m.symbol.replace('USDT', '')] = m; });
+      
+      const trendingHtml = moversData.map((item, index) => {
+        const symbol = item.currencies[0] || '';
+        const market = marketLookup[symbol];
+        const isBullish = item.sentiment === 'bullish';
+        const emoji = isBullish ? '🚀' : '📉';
+        const color = isBullish ? '#4ade80' : '#f87171';
         
         return `
-          <div class="trending-item">
+          <div class="trending-item" onclick="window.open('${item.url}', '_blank')" style="cursor: pointer; border-left: 3px solid ${color};">
             <div class="trending-header">
-              <div class="trending-symbol">${coin.symbol.replace('USDT', '')}</div>
-              <div class="trending-rank">#${index + 1}</div>
+              <div class="trending-symbol">${emoji} ${symbol}</div>
+              <div class="trending-rank" style="background: ${color}20; color: ${color}; border-color: ${color}40;">${isBullish ? 'GAINER' : 'LOSER'}</div>
             </div>
-            <div class="trending-name">$${coin.price.toLocaleString()}</div>
+            <div class="trending-name" style="color: ${color};">${item.title.match(/[+-]?\d+\.?\d*%/)?.[0] || ''}</div>
             <div class="trending-stats">
-              <div class="stat-item">24h: <span class="stat-value" style="color: ${coin.change_24h >= 0 ? '#4ade80' : '#f87171'}">${coin.change_24h >= 0 ? '+' : ''}${coin.change_24h.toFixed(2)}%</span></div>
-              <div class="stat-item">Vol: <span class="stat-value">$${(coin.volume_24h / 1e9).toFixed(2)}B</span></div>
-              ${futures ? `<div class="stat-item">Fund: <span class="stat-value">${fundingRate}%</span></div>` : ''}
+              ${market ? `<div class="stat-item">Price: <span class="stat-value">$${market.price.toLocaleString()}</span></div>` : ''}
+              ${market ? `<div class="stat-item">Vol: <span class="stat-value">$${(market.volume_24h / 1e6).toFixed(1)}M</span></div>` : ''}
             </div>
           </div>
         `;
       }).join('');
       
       trendingList.innerHTML = trendingHtml;
-      trendingCount.textContent = sorted.length;
+      trendingCount.textContent = moversData.length;
+    }
+
+    // Alpha Scanner - Generate signals from market data
+    function generateAlphaSignals(marketData, futuresData, sentiment, newsData) {
+      const container = document.getElementById('alphaSignals');
+      const countBadge = document.getElementById('signalCount');
+      
+      const futuresLookup = {};
+      futuresData.forEach(f => { futuresLookup[f.symbol] = f; });
+      
+      const fg = sentiment?.fear_greed_value || 50;
+      const signals = [];
+      
+      // Find trending coins
+      const trendingCoins = new Set(
+        newsData
+          .filter(n => n.source === 'CoinGecko Trending')
+          .flatMap(n => n.currencies || [])
+      );
+      
+      marketData.forEach(coin => {
+        const symbol = coin.symbol.replace('USDT', '');
+        const futures = futuresLookup[coin.symbol];
+        const factors = [];
+        let score = 50;
+        let signalType = 'momentum';
+        
+        // Factor 1: Strong price movement
+        if (coin.change_24h > 5) {
+          factors.push(`🚀 Strong pump +${coin.change_24h.toFixed(1)}%`);
+          score += 20;
+          signalType = 'momentum';
+        } else if (coin.change_24h < -5) {
+          factors.push(`📉 Major dump ${coin.change_24h.toFixed(1)}%`);
+          score -= 15;
+          signalType = 'fade_trade';
+        }
+        
+        // Factor 2: Trending on CoinGecko
+        if (trendingCoins.has(symbol)) {
+          factors.push('🔥 Trending on CoinGecko');
+          score += 10;
+          signalType = 'narrative_momentum';
+        }
+        
+        // Factor 3: Fear/Greed contrarian
+        if (fg < 25 && coin.change_24h < -3) {
+          factors.push(`😱 Extreme fear (${fg}) - contrarian opportunity`);
+          score += 15;
+          signalType = 'accumulation';
+        } else if (fg > 75 && coin.change_24h > 5) {
+          factors.push(`🤑 Extreme greed (${fg}) - risk of reversal`);
+          score -= 10;
+          signalType = 'fade_trade';
+        }
+        
+        // Factor 4: Funding rate divergence
+        if (futures) {
+          if (futures.funding_rate > 0.05) {
+            factors.push(`💰 High funding ${(futures.funding_rate * 100).toFixed(3)}% - crowded long`);
+            score -= 8;
+            signalType = 'funding_divergence';
+          } else if (futures.funding_rate < -0.02) {
+            factors.push(`💰 Negative funding ${(futures.funding_rate * 100).toFixed(3)}% - shorts paying`);
+            score += 8;
+            signalType = 'squeeze_setup';
+          }
+          
+          // Long/short ratio
+          if (futures.long_short_ratio > 2.5) {
+            factors.push(`📊 Crowded long L/S: ${futures.long_short_ratio.toFixed(2)}`);
+            score -= 5;
+          } else if (futures.long_short_ratio < 0.8) {
+            factors.push(`📊 Crowded short L/S: ${futures.long_short_ratio.toFixed(2)}`);
+            score += 5;
+          }
+        }
+        
+        // Factor 5: High volume
+        if (coin.volume_24h > 500e6) {
+          factors.push(`📈 High volume $${(coin.volume_24h / 1e9).toFixed(2)}B`);
+          score += 5;
+        }
+        
+        // Only create signal if there are meaningful factors
+        if (factors.length >= 2 && Math.abs(score - 50) >= 10) {
+          const direction = score > 55 ? 'LONG' : score < 45 ? 'SHORT' : 'WATCH';
+          const confidence = Math.min(Math.abs(score - 50) * 2, 90);
+          const atr = (coin.high_24h - coin.low_24h) / coin.price;
+          
+          signals.push({
+            symbol: symbol,
+            direction: direction,
+            confidence: confidence,
+            signalType: signalType,
+            price: coin.price,
+            change24h: coin.change_24h,
+            entry: coin.price,
+            stopLoss: direction === 'LONG' ? coin.price * (1 - atr * 1.5) : coin.price * (1 + atr * 1.5),
+            target: direction === 'LONG' ? coin.price * (1 + atr * 2) : coin.price * (1 - atr * 2),
+            factors: factors,
+            riskReward: (atr * 2) / (atr * 1.5),
+            volume: coin.volume_24h
+          });
+        }
+      });
+      
+      // Sort by confidence
+      signals.sort((a, b) => b.confidence - a.confidence);
+      
+      if (signals.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: #64748b;">
+            <div style="font-size: 2rem; margin-bottom: 10px;">🔍</div>
+            <div>No high-confidence signals at this time</div>
+            <div style="font-size: 0.8rem; margin-top: 5px;">Market conditions are relatively neutral</div>
+          </div>
+        `;
+        countBadge.innerHTML = '0 signals';
+        return;
+      }
+      
+      // Render signals
+      const signalsHtml = signals.slice(0, 6).map(signal => {
+        const dirColor = signal.direction === 'LONG' ? '#22c55e' : signal.direction === 'SHORT' ? '#ef4444' : '#fbbf24';
+        const confidenceClass = signal.confidence >= 70 ? 'high' : signal.confidence >= 50 ? 'medium' : 'low';
+        
+        return `
+          <div class="signal-card">
+            <div class="signal-header">
+              <div>
+                <span class="signal-type-badge ${signal.signalType}">${signal.signalType.replace('_', ' ')}</span>
+                <span class="conviction-badge" style="margin-left: 8px; background: ${dirColor}20; color: ${dirColor};">${signal.direction}</span>
+              </div>
+              <div class="signal-confidence confidence-${confidenceClass}">${signal.confidence.toFixed(0)}%</div>
+            </div>
+            <div class="signal-symbol">${signal.symbol}</div>
+            <div class="signal-price">$${signal.price.toLocaleString()}</div>
+            <div class="signal-change" style="color: ${signal.change24h >= 0 ? '#4ade80' : '#f87171'}">
+              ${signal.change24h >= 0 ? '+' : ''}${signal.change24h.toFixed(2)}% (24h)
+            </div>
+            <div class="signal-meta">
+              <div class="signal-meta-item">
+                <span class="meta-label">Entry</span>
+                <span class="meta-value">$${signal.entry.toLocaleString()}</span>
+              </div>
+              <div class="signal-meta-item">
+                <span class="meta-label">Stop</span>
+                <span class="meta-value" style="color: #ef4444;">$${signal.stopLoss.toFixed(2)}</span>
+              </div>
+              <div class="signal-meta-item">
+                <span class="meta-label">Target</span>
+                <span class="meta-value" style="color: #22c55e;">$${signal.target.toFixed(2)}</span>
+              </div>
+              <div class="signal-meta-item">
+                <span class="meta-label">R:R</span>
+                <span class="meta-value">${signal.riskReward.toFixed(1)}</span>
+              </div>
+            </div>
+            <div class="signal-factors">
+              ${signal.factors.map(f => `<div class="factor-item">${f}</div>`).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      container.innerHTML = signalsHtml;
+      countBadge.innerHTML = `${signals.length} signals <span class="data-source-badge live">● LIVE</span>`;
     }
 
     // Fetch and display research insights
-    async function loadInsights() {
-      console.log('🎯 Loading research insights...');
-      try {
-        const response = await fetch(`${API_BASE}/research/insights?protocols=aave,curve,uniswap,compound`);
-        console.log('📥 Insights response status:', response.status);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('✅ Insights data loaded:', data);
-        
-        const insightsList = document.getElementById('insightsList');
-        const insightsCount = document.getElementById('insightsCount');
-        
-        if (data.error) {
-          insightsList.innerHTML = `<div class="error">${data.error}</div>`;
-          console.error('❌ API returned error:', data.error);
-        } else if (data.insights && data.insights.length > 0) {
-          insightsCount.textContent = data.insights.length;
-          insightsList.innerHTML = data.insights.map(insight => {
-            const confidenceClass = insight.confidence >= 0.6 ? 'high' : 
-                                   insight.confidence >= 0.3 ? 'medium' : 'low';
-            const confidenceLabel = insight.confidence >= 0.6 ? 'High' : 
-                                   insight.confidence >= 0.3 ? 'Medium' : 'Low';
-            
-            return `
-              <div class="insight-item">
-                <div class="insight-header">
-                  <div class="insight-protocol">${insight.protocol}</div>
-                  <div class="insight-confidence confidence-${confidenceClass}">
-                    ${confidenceLabel} ${(insight.confidence * 100).toFixed(0)}%
-                  </div>
-                </div>
-                <div class="insight-summary">${insight.summary || 'No summary available'}</div>
-                <div class="insight-metrics">
-                  ${insight.signals && insight.signals.defi && insight.signals.defi.length > 0 ? `
-                    <div class="metric-item">
-                      <span class="metric-label">TVL</span>
-                      <span class="metric-value">$${(insight.signals.defi[0].tvl / 1e9).toFixed(2)}B</span>
-                    </div>
-                    <div class="metric-item">
-                      <span class="metric-label">7d Change</span>
-                      <span class="metric-value ${insight.signals.defi[0].tvlChange7d >= 0 ? 'positive' : 'negative'}">
-                        ${insight.signals.defi[0].tvlChange7d >= 0 ? '+' : ''}${insight.signals.defi[0].tvlChange7d.toFixed(2)}%
-                      </span>
-                    </div>
-                  ` : `
-                    <div class="metric-item">
-                      <span class="metric-label">Status</span>
-                      <span class="metric-value">Analyzing...</span>
-                    </div>
-                  `}
-                  <div class="metric-item">
-                    <span class="metric-label">Signals</span>
-                    <span class="metric-value">${Object.values(insight.signals || {}).flat().length}</span>
-                  </div>
-                  <div class="metric-item">
-                    <span class="metric-label">Insights</span>
-                    <span class="metric-value">${insight.insights?.length || 0}</span>
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('');
-          console.log('✅ Insights rendered:', data.insights.length, 'items');
-        } else {
-          insightsList.innerHTML = '<div class="error">No insights available</div>';
-          console.warn('⚠️ No insights data found');
-        }
-      } catch (error) {
-        console.error('❌ Error loading insights:', error);
-        document.getElementById('insightsList').innerHTML = `<div class="error">Failed to load insights: ${error.message}</div>`;
-      }
-    }
-
-    // Fetch and display news
-    async function loadNews() {
-      console.log('📰 Loading news...');
-      try {
-        const response = await fetch(`${API_BASE}/news`);
-        console.log('📥 News response status:', response.status);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('✅ News data loaded:', data);
-        
-        const newsList = document.getElementById('newsList');
-        const newsCount = document.getElementById('newsCount');
-        
-        if (data.error) {
-          newsList.innerHTML = `<div class="error">${data.error}</div>`;
-          console.error('❌ API returned error:', data.error);
-        } else if (data.news && data.news.length > 0) {
-          newsCount.textContent = data.news.length;
-          newsList.innerHTML = data.news.map(item => `
-            <div class="news-item" onclick="window.open('${item.url}', '_blank')">
-              <div class="news-source">${item.source}</div>
-              <div class="news-title">${item.title}</div>
-              <span class="news-sentiment sentiment-${item.sentiment || 'neutral'}">${item.sentiment || 'neutral'}</span>
-            </div>
-          `).join('');
-          console.log('✅ News rendered:', data.news.length, 'items');
-        } else {
-          newsList.innerHTML = '<div class="error">No news available</div>';
-          console.warn('⚠️ No news data found');
-        }
-      } catch (error) {
-        console.error('❌ Error loading news:', error);
-        document.getElementById('newsList').innerHTML = `<div class="error">Failed to load news: ${error.message}</div>`;
-      }
-    }
-
-    // Fetch and display trending tokens
-    async function loadTrending() {
-      console.log('🔥 Loading trending tokens...');
-      try {
-        const response = await fetch(`${API_BASE}/trending`);
-        console.log('📥 Trending response status:', response.status);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('✅ Trending data loaded:', data);
-        
-        const trendingList = document.getElementById('trendingList');
-        const trendingCount = document.getElementById('trendingCount');
-        
-        if (data.error) {
-          trendingList.innerHTML = `<div class="error">${data.error}</div>`;
-          console.error('❌ API returned error:', data.error);
-        } else if (data.trending && data.trending.length > 0) {
-          trendingCount.textContent = data.trending.length;
-          trendingList.innerHTML = data.trending.map((token, index) => `
-            <div class="trending-item">
-              <div class="trending-header">
-                <div class="trending-symbol">${token.symbol}</div>
-                <div class="trending-rank">#${index + 1}</div>
-              </div>
-              <div class="trending-name">${token.name}</div>
-              <div class="trending-stats">
-                <div class="stat-item">Rank: <span class="stat-value">${token.market_cap_rank || 'N/A'}</span></div>
-              </div>
-            </div>
-          `).join('');
-          console.log('✅ Trending rendered:', data.trending.length, 'tokens');
-        } else {
-          trendingList.innerHTML = '<div class="error">No trending data available</div>';
-          console.warn('⚠️ No trending data found');
-        }
-      } catch (error) {
-        console.error('❌ Error loading trending:', error);
-        document.getElementById('trendingList').innerHTML = `<div class="error">Failed to load trending: ${error.message}</div>`;
-      }
-    }
-
     // Chat functionality
     async function sendMessage() {
       const input = document.getElementById('chatInput');
@@ -1797,29 +1795,39 @@
       if (e.key === 'Enter') sendMessage();
     });
 
-    // Initial load - Try Research Bot first, then fallback to original APIs
+    // Initial load - Research Bot handles all data
     async function initializeDashboard() {
-      console.log('🚀 Initializing dashboard...');
+      console.log('🚀 Initializing Research Dashboard...');
+      console.log('📡 Research Bot API:', RESEARCH_BOT_API);
       
-      // Try to load from Research Bot first
+      // Try to load from Research Bot
       const botData = await loadLiveMarketData();
       
       if (!botData) {
-        // Fallback to original APIs if Research Bot is unavailable
-        console.log('📡 Research Bot unavailable, using fallback APIs...');
-        loadInsights();
-        loadNews();
-        loadTrending();
+        // Show offline state with fallback data
+        console.log('⚠️ Research Bot unavailable - starting bot...');
+        document.getElementById('insightsList').innerHTML = '<div class="error">Research Bot offline. Start with: cd research-bot && python3 api_server.py</div>';
+        document.getElementById('newsList').innerHTML = '<div class="error">Waiting for Research Bot...</div>';
+        document.getElementById('trendingList').innerHTML = '<div class="error">Waiting for Research Bot...</div>';
+        document.getElementById('alphaSignals').innerHTML = `
+          <div style="text-align: center; padding: 40px; color: #64748b;">
+            <div style="font-size: 2rem; margin-bottom: 10px;">🤖</div>
+            <div>Research Bot Offline</div>
+            <div style="font-size: 0.8rem; margin-top: 10px; color: #94a3b8;">
+              Start the bot to see live signals:<br>
+              <code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; margin-top: 8px; display: inline-block;">
+                cd research-bot && python3 run_simple.py
+              </code>
+            </div>
+          </div>
+        `;
       }
       
-      // Always run alpha scan
-      runAlphaScan();
-      
-      // Set up auto-refresh for Research Bot data (every 30 seconds)
+      // Set up auto-refresh (every 60 seconds for live data)
       setInterval(async () => {
-        console.log('🔄 Auto-refreshing Research Bot data...');
+        console.log('🔄 Auto-refreshing data...');
         await loadLiveMarketData();
-      }, 30000);
+      }, 60000); // 1 minute refresh
     }
     
     // Start initialization
