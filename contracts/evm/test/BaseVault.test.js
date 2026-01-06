@@ -12,30 +12,25 @@ describe("BaseVault", function () {
   let strategist;
   let guardian;
 
-  const DEPOSIT_AMOUNT = ethers.parseUnits("1000", 6); // 1000 USDC
-  const STRATEGY_ALLOCATION = ethers.parseUnits("500", 6); // 500 USDC
+  const DEPOSIT_AMOUNT = ethers.parseUnits("1000", 18); // 1000 tokens
+  const STRATEGY_ALLOCATION = ethers.parseUnits("500", 18); // 500 tokens
 
   beforeEach(async function () {
     [owner, user1, user2, strategist, guardian] = await ethers.getSigners();
 
-    // Deploy mock ERC20 token
+    // Deploy mock ERC20 token (18 decimals by default)
     const MockERC20 = await ethers.getContractFactory("MockERC20");
-    mockToken = await MockERC20.deploy("Mock USDC", "USDC", 6);
+    mockToken = await MockERC20.deploy("Mock USDC", "USDC");
     await mockToken.waitForDeployment();
 
     // Mint tokens to users
-    await mockToken.mint(owner.address, ethers.parseUnits("10000", 6));
-    await mockToken.mint(user1.address, ethers.parseUnits("10000", 6));
-    await mockToken.mint(user2.address, ethers.parseUnits("10000", 6));
-
-    // Deploy vault implementation
-    const BaseVault = await ethers.getContractFactory("BaseVault");
-    vaultImplementation = await BaseVault.deploy();
-    await vaultImplementation.waitForDeployment();
+    await mockToken.mint(owner.address, ethers.parseUnits("10000", 18));
+    await mockToken.mint(user1.address, ethers.parseUnits("10000", 18));
+    await mockToken.mint(user2.address, ethers.parseUnits("10000", 18));
 
     // Deploy factory
     const VaultFactory = await ethers.getContractFactory("VaultFactory");
-    factory = await VaultFactory.deploy(await vaultImplementation.getAddress());
+    factory = await VaultFactory.deploy();
     await factory.waitForDeployment();
 
     // Create vault through factory
@@ -124,7 +119,7 @@ describe("BaseVault", function () {
     });
 
     it("Should mint shares successfully", async function () {
-      const sharesToMint = ethers.parseUnits("500", 6);
+      const sharesToMint = ethers.parseUnits("500", 18);
       
       await vault.connect(user1).mint(sharesToMint, user1.address);
 
@@ -254,9 +249,11 @@ describe("BaseVault", function () {
 
   describe("Capital Allocation", function () {
     let mockStrategy;
+    let strategyBalanceBefore;
 
     beforeEach(async function () {
-      mockStrategy = user2.address;
+      // Create a fresh address for the strategy (not an existing user)
+      mockStrategy = ethers.Wallet.createRandom().address;
 
       const STRATEGIST_ROLE = await vault.STRATEGIST_ROLE();
       await vault.grantRole(STRATEGIST_ROLE, strategist.address);
@@ -267,6 +264,9 @@ describe("BaseVault", function () {
       // Deposit funds
       await mockToken.connect(user1).approve(await vault.getAddress(), DEPOSIT_AMOUNT);
       await vault.connect(user1).deposit(DEPOSIT_AMOUNT, user1.address);
+      
+      // Record balance before allocation
+      strategyBalanceBefore = await mockToken.balanceOf(mockStrategy);
     });
 
     it("Should allocate capital to strategy", async function () {
@@ -277,7 +277,8 @@ describe("BaseVault", function () {
         .withArgs(mockStrategy, STRATEGY_ALLOCATION);
 
       expect(await vault.strategyAllocations(mockStrategy)).to.equal(STRATEGY_ALLOCATION);
-      expect(await mockToken.balanceOf(mockStrategy)).to.equal(STRATEGY_ALLOCATION);
+      // Check that the strategy received the allocated amount
+      expect(await mockToken.balanceOf(mockStrategy)).to.equal(strategyBalanceBefore + STRATEGY_ALLOCATION);
     });
 
     it("Should revert allocation with insufficient balance", async function () {
@@ -315,15 +316,16 @@ describe("BaseVault", function () {
     let strategy1, strategy2;
 
     beforeEach(async function () {
-      strategy1 = user2.address;
-      strategy2 = guardian.address;
+      // Use fresh addresses for strategies
+      strategy1 = ethers.Wallet.createRandom().address;
+      strategy2 = ethers.Wallet.createRandom().address;
 
       const STRATEGIST_ROLE = await vault.STRATEGIST_ROLE();
       await vault.grantRole(STRATEGIST_ROLE, strategist.address);
 
-      // Add strategies with weights (60/40 split)
-      await vault.connect(strategist).addStrategy(strategy1, 6000);
-      await vault.connect(strategist).addStrategy(strategy2, 4000);
+      // Add strategies with weights (50/30 split, each within MAX_STRATEGY_WEIGHT of 50%)
+      await vault.connect(strategist).addStrategy(strategy1, 5000); // 50%
+      await vault.connect(strategist).addStrategy(strategy2, 3000); // 30%
 
       // Deposit funds
       await mockToken.connect(user1).approve(await vault.getAddress(), DEPOSIT_AMOUNT);
@@ -331,32 +333,45 @@ describe("BaseVault", function () {
     });
 
     it("Should rebalance capital across strategies", async function () {
+      // Advance time to allow rebalancing (MIN_REBALANCE_INTERVAL = 1 hour)
+      await ethers.provider.send("evm_increaseTime", [3600]);
+      await ethers.provider.send("evm_mine");
+
       await expect(vault.connect(strategist).rebalance())
         .to.emit(vault, "Rebalanced");
 
       const allocation1 = await vault.strategyAllocations(strategy1);
       const allocation2 = await vault.strategyAllocations(strategy2);
 
-      // Check allocations match weights (60/40)
-      const expectedAllocation1 = (DEPOSIT_AMOUNT * 6000n) / 10000n;
-      const expectedAllocation2 = (DEPOSIT_AMOUNT * 4000n) / 10000n;
+      // Check allocations match weights (50/30 split)
+      const expectedAllocation1 = (DEPOSIT_AMOUNT * 5000n) / 10000n;
+      const expectedAllocation2 = (DEPOSIT_AMOUNT * 3000n) / 10000n;
 
       expect(allocation1).to.be.closeTo(expectedAllocation1, 10);
       expect(allocation2).to.be.closeTo(expectedAllocation2, 10);
     });
 
     it("Should revert rebalance if called too soon", async function () {
+      // Advance time to allow first rebalance
+      await ethers.provider.send("evm_increaseTime", [3600]);
+      await ethers.provider.send("evm_mine");
+
       await vault.connect(strategist).rebalance();
 
+      // Try to rebalance again immediately (should fail)
       await expect(
         vault.connect(strategist).rebalance()
       ).to.be.revertedWithCustomError(vault, "RebalanceTooSoon");
     });
 
     it("Should allow rebalance after interval", async function () {
+      // Advance time to allow first rebalance
+      await ethers.provider.send("evm_increaseTime", [3600]);
+      await ethers.provider.send("evm_mine");
+
       await vault.connect(strategist).rebalance();
 
-      // Advance time by MIN_REBALANCE_INTERVAL (1 hour)
+      // Advance time by MIN_REBALANCE_INTERVAL (1 hour) again
       await ethers.provider.send("evm_increaseTime", [3600]);
       await ethers.provider.send("evm_mine");
 

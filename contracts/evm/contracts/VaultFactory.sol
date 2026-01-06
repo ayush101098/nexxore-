@@ -1,22 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/proxy/Clones.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./BaseVault.sol";
 
 /**
  * @title VaultFactory
- * @notice Factory contract for deploying vault instances using minimal proxy pattern (EIP-1167)
- * @dev Uses OpenZeppelin's Clones library for gas-efficient vault deployment
+ * @notice Factory contract for deploying vault instances
+ * @dev Deploys full BaseVault contracts (not proxies)
  */
 contract VaultFactory is Ownable {
-    using Clones for address;
-
     // ============ State Variables ============
-
-    /// @notice Implementation contract address for vault clones
-    address public immutable vaultImplementation;
 
     /// @notice Array of all deployed vault addresses
     address[] public allVaults;
@@ -54,25 +49,20 @@ contract VaultFactory is Ownable {
     // ============ Errors ============
 
     error InvalidAsset();
-    error InvalidImplementation();
     error VaultNotFound();
     error VaultAlreadyDeactivated();
 
     // ============ Constructor ============
 
     /**
-     * @notice Initializes the factory with a vault implementation
-     * @param _implementation Address of the BaseVault implementation contract
+     * @notice Initializes the factory
      */
-    constructor(address _implementation) Ownable(msg.sender) {
-        if (_implementation == address(0)) revert InvalidImplementation();
-        vaultImplementation = _implementation;
-    }
+    constructor() Ownable(msg.sender) {}
 
     // ============ External Functions ============
 
     /**
-     * @notice Deploys a new vault using minimal proxy pattern
+     * @notice Deploys a new vault
      * @param asset The underlying asset token address
      * @param name Vault share token name
      * @param symbol Vault share token symbol
@@ -89,18 +79,17 @@ contract VaultFactory is Ownable {
     ) external returns (address vault) {
         if (asset == address(0)) revert InvalidAsset();
 
-        // Deploy minimal proxy clone
-        vault = vaultImplementation.clone();
-
-        // Initialize the vault
-        BaseVault(vault).initialize(
-            asset,
+        // Deploy new BaseVault instance
+        BaseVault newVault = new BaseVault(
+            IERC20(asset),
             name,
             symbol,
             msg.sender,
             strategies,
             weights
         );
+
+        vault = address(newVault);
 
         // Store vault metadata
         vaultMetadata[vault] = VaultMetadata({

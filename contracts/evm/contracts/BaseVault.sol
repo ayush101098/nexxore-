@@ -8,14 +8,13 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 /**
  * @title BaseVault
  * @notice ERC-4626 compliant vault with multi-strategy support
  * @dev Supports multiple strategies with configurable capital allocation weights
  */
-contract BaseVault is ERC4626, AccessControl, ReentrancyGuard, Pausable, Initializable {
+contract BaseVault is ERC4626, AccessControl, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
     // ============ Roles ============
@@ -85,66 +84,50 @@ contract BaseVault is ERC4626, AccessControl, ReentrancyGuard, Pausable, Initial
     error RebalanceTooSoon();
     error InvalidFee();
     error ZeroAddress();
-    error AlreadyInitialized();
 
     // ============ Constructor ============
 
     /**
-     * @notice Constructor disabled for proxy pattern
-     * @dev Use initialize() instead
+     * @notice Constructor that initializes the vault
+     * @param asset_ Underlying asset token
+     * @param name_ Vault share token name
+     * @param symbol_ Vault share token symbol
+     * @param owner_ Vault owner address
+     * @param strategies_ Initial strategies
+     * @param weights_ Initial weights (must sum to 10000 or 0)
      */
-    constructor() ERC4626(IERC20(address(0))) ERC20("", "") {
-        _disableInitializers();
-    }
-
-    // ============ Initialization ============
-
-    /**
-     * @notice Initializes the vault (called by factory)
-     * @param _asset Underlying asset token
-     * @param _name Vault share token name
-     * @param _symbol Vault share token symbol
-     * @param _owner Vault owner address
-     * @param _strategies Initial strategies
-     * @param _weights Initial weights (must sum to 10000 or 0)
-     */
-    function initialize(
-        address _asset,
-        string memory _name,
-        string memory _symbol,
-        address _owner,
-        address[] memory _strategies,
-        uint256[] memory _weights
-    ) external initializer {
-        if (_asset == address(0)) revert ZeroAddress();
-        if (_owner == address(0)) revert ZeroAddress();
-        if (_strategies.length != _weights.length) revert InvalidWeight();
-        if (_strategies.length > MAX_STRATEGIES) revert MaxStrategiesExceeded();
-
-        // Initialize ERC4626
-        __ERC4626_init(IERC20(_asset));
-        __ERC20_init(_name, _symbol);
+    constructor(
+        IERC20 asset_,
+        string memory name_,
+        string memory symbol_,
+        address owner_,
+        address[] memory strategies_,
+        uint256[] memory weights_
+    ) ERC4626(asset_) ERC20(name_, symbol_) {
+        if (owner_ == address(0)) revert ZeroAddress();
+        if (strategies_.length != weights_.length) revert InvalidWeight();
+        if (strategies_.length > MAX_STRATEGIES) revert MaxStrategiesExceeded();
 
         // Setup roles
-        _grantRole(DEFAULT_ADMIN_ROLE, _owner);
-        _grantRole(STRATEGIST_ROLE, _owner);
-        _grantRole(GUARDIAN_ROLE, _owner);
+        _grantRole(DEFAULT_ADMIN_ROLE, owner_);
+        _grantRole(STRATEGIST_ROLE, owner_);
+        _grantRole(GUARDIAN_ROLE, owner_);
 
         // Set fee recipient to owner initially
-        feeRecipient = _owner;
+        feeRecipient = owner_;
 
         // Add initial strategies
-        if (_strategies.length > 0) {
+        if (strategies_.length > 0) {
             uint256 weightSum = 0;
-            for (uint256 i = 0; i < _strategies.length; i++) {
-                if (_strategies[i] == address(0)) revert ZeroAddress();
-                if (_weights[i] > MAX_STRATEGY_WEIGHT) revert InvalidWeight();
+            for (uint256 i = 0; i < strategies_.length; i++) {
+                if (strategies_[i] == address(0)) revert ZeroAddress();
+                if (weights_[i] > MAX_STRATEGY_WEIGHT) revert InvalidWeight();
                 
-                strategies.push(_strategies[i]);
-                strategyWeights[_strategies[i]] = _weights[i];
-                weightSum += _weights[i];
+                strategies.push(strategies_[i]);
+                strategyWeights[strategies_[i]] = weights_[i];
+                weightSum += weights_[i];
 
-                emit StrategyAdded(_strategies[i], _weights[i]);
+                emit StrategyAdded(strategies_[i], weights_[i]);
             }
 
             if (weightSum != BPS_DENOMINATOR && weightSum != 0) revert InvalidWeight();
@@ -171,7 +154,6 @@ contract BaseVault is ERC4626, AccessControl, ReentrancyGuard, Pausable, Initial
         returns (uint256 shares)
     {
         shares = super.deposit(assets, receiver);
-        emit Deposit(msg.sender, receiver, assets, shares);
     }
 
     /**
@@ -189,7 +171,6 @@ contract BaseVault is ERC4626, AccessControl, ReentrancyGuard, Pausable, Initial
         returns (uint256 assets)
     {
         assets = super.mint(shares, receiver);
-        emit Deposit(msg.sender, receiver, assets, shares);
     }
 
     /**
@@ -207,7 +188,6 @@ contract BaseVault is ERC4626, AccessControl, ReentrancyGuard, Pausable, Initial
         returns (uint256 shares)
     {
         shares = super.withdraw(assets, receiver, owner);
-        emit Withdraw(msg.sender, receiver, owner, assets, shares);
     }
 
     /**
@@ -225,7 +205,6 @@ contract BaseVault is ERC4626, AccessControl, ReentrancyGuard, Pausable, Initial
         returns (uint256 assets)
     {
         assets = super.redeem(shares, receiver, owner);
-        emit Withdraw(msg.sender, receiver, owner, assets, shares);
     }
 
     /**
