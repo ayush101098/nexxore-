@@ -103,23 +103,219 @@
   </nav>
 
   <!-- Hero -->
-  <section id="hero" class="hero-section">
-    <div class="container">
-      <div class="hero-content">
-        <h1 class="hero-headline">Autonomous capital execution onchain. Yield, optimized.</h1>
-        <p class="hero-subheadline">Mint nUSD, deploy yield and trading strategies, and let agents manage your portfolio 24/7.</p>
-        <div class="hero-cta">
-          <a href="deposit-new.html" class="btn btn-primary">Start Depositing</a>
-          <a href="vault-new.html" class="btn btn-outline">View Vault</a>
+  <section id="hero" class="hero-section" style="position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden; background: #000;">
+    <!-- Animated Network Background -->
+    <canvas id="networkCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;"></canvas>
+    
+    <!-- Geometric Patterns -->
+    <div style="position: absolute; top: 20%; right: 10%; width: 400px; height: 400px; background: linear-gradient(135deg, rgba(14, 165, 233, 0.05), rgba(139, 92, 246, 0.05)); transform: rotate(45deg); border: 1px solid rgba(14, 165, 233, 0.1); z-index: 1;"></div>
+    <div style="position: absolute; bottom: 15%; left: 5%; width: 300px; height: 300px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(14, 165, 233, 0.05)); transform: rotate(-30deg); border: 1px solid rgba(139, 92, 246, 0.1); z-index: 1;"></div>
+    
+    <!-- Floating Grid Lines -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 50px 50px; z-index: 0; opacity: 0.5;"></div>
+    
+    <div class="container" style="position: relative; z-index: 10;">
+      <div class="hero-content" style="max-width: 900px; margin: 0 auto; text-align: center;">
+        <!-- Main Logo/Title -->
+        <div style="margin-bottom: 40px; animation: fadeInUp 1s ease-out;">
+          <h1 style="font-size: 5rem; font-weight: 800; letter-spacing: 0.1em; margin-bottom: 20px; background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase;">
+            NEXXORE
+          </h1>
+          <div style="height: 2px; width: 200px; margin: 0 auto; background: linear-gradient(90deg, transparent, #0EA5E9, #8B5CF6, transparent);"></div>
+        </div>
+
+        <!-- Tagline -->
+        <p style="font-size: 1.5rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 32px; font-weight: 300; letter-spacing: 0.05em; animation: fadeInUp 1s ease-out 0.2s backwards;">
+          DECENTRALIZED FINANCE ECOSYSTEM
+        </p>
+
+        <!-- Main Description -->
+        <h2 style="font-size: 2.5rem; font-weight: 700; line-height: 1.3; margin-bottom: 24px; color: white; animation: fadeInUp 1s ease-out 0.3s backwards;">
+          Autonomous Capital Execution<br>
+          <span style="background: linear-gradient(135deg, #0EA5E9, #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">On-Chain Intelligence</span>
+        </h2>
+
+        <p style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 48px; line-height: 1.6; max-width: 700px; margin-left: auto; margin-right: auto; animation: fadeInUp 1s ease-out 0.4s backwards;">
+          Trade perpetuals, manage vaults, access institutional-grade research. Built on modular architecture with complete transparency.
+        </p>
+
+        <!-- Feature Pills -->
+        <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 48px; animation: fadeInUp 1s ease-out 0.5s backwards;">
+          <div style="padding: 8px 20px; background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 20px; font-size: 0.85rem; color: #0EA5E9; font-weight: 600;">
+            ⚡ Perpetuals Trading
+          </div>
+          <div style="padding: 8px 20px; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 20px; font-size: 0.85rem; color: #8B5CF6; font-weight: 600;">
+            🏦 Yield Vaults
+          </div>
+          <div style="padding: 8px 20px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 20px; font-size: 0.85rem; color: #22c55e; font-weight: 600;">
+            🔬 AI Research
+          </div>
+          <div style="padding: 8px 20px; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.3); border-radius: 20px; font-size: 0.85rem; color: #f97316; font-weight: 600;">
+            📊 Live Signals
+          </div>
+        </div>
+
+        <!-- CTA Buttons -->
+        <div style="display: flex; gap: 20px; justify-content: center; animation: fadeInUp 1s ease-out 0.6s backwards;">
+          <a href="perps.html" style="padding: 18px 40px; background: linear-gradient(135deg, #0EA5E9, #8B5CF6); border: none; border-radius: 12px; color: white; font-weight: 700; font-size: 1.1rem; text-decoration: none; transition: all 0.3s; box-shadow: 0 8px 32px rgba(14, 165, 233, 0.4); display: inline-block;">
+            Launch Perps →
+          </a>
+          <a href="vault-new.html" style="padding: 18px 40px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: white; font-weight: 700; font-size: 1.1rem; text-decoration: none; transition: all 0.3s; backdrop-filter: blur(10px); display: inline-block;">
+            Explore Vaults
+          </a>
+        </div>
+
+        <!-- Live Stats -->
+        <div style="margin-top: 80px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 24px; max-width: 800px; margin-left: auto; margin-right: auto; animation: fadeInUp 1s ease-out 0.7s backwards;">
+          <div style="text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; backdrop-filter: blur(10px);">
+            <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Total TVL</div>
+            <div style="font-size: 2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg, #0EA5E9, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">$0.00</div>
+          </div>
+          <div style="text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; backdrop-filter: blur(10px);">
+            <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">24h Volume</div>
+            <div style="font-size: 2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg, #8B5CF6, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">$0.00</div>
+          </div>
+          <div style="text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; backdrop-filter: blur(10px);">
+            <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Active Users</div>
+            <div style="font-size: 2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg, #22c55e, #16a34a); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+          </div>
+          <div style="text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; backdrop-filter: blur(10px);">
+            <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Markets</div>
+            <div style="font-size: 2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg, #f97316, #ea580c); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">3</div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="hero-background">
-      <div class="gradient-orb gradient-orb-1"></div>
-      <div class="gradient-orb gradient-orb-2"></div>
-      <div class="gradient-orb gradient-orb-3"></div>
+
+    <!-- Scroll Indicator -->
+    <div style="position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 10; animation: bounce 2s infinite;">
+      <div style="width: 30px; height: 50px; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 20px; position: relative;">
+        <div style="width: 6px; height: 10px; background: white; border-radius: 3px; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); animation: scrollDot 2s infinite;"></div>
+      </div>
     </div>
   </section>
+
+  <style>
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {
+        transform: translateX(-50%) translateY(0);
+      }
+      40% {
+        transform: translateX(-50%) translateY(-10px);
+      }
+      60% {
+        transform: translateX(-50%) translateY(-5px);
+      }
+    }
+
+    @keyframes scrollDot {
+      0% {
+        opacity: 0;
+        top: 8px;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        top: 32px;
+      }
+    }
+  </style>
+
+  <script>
+    // Network Animation Canvas
+    const canvas = document.getElementById('networkCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = [];
+    const particleCount = 100;
+    const connectionDistance = 150;
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.radius = Math.random() * 2 + 1;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fill();
+      }
+    }
+
+    // Initialize particles
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
+
+    function connectParticles() {
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < connectionDistance) {
+            const opacity = (1 - distance / connectionDistance) * 0.3;
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(14, 165, 233, ${opacity})`;
+            ctx.lineWidth = 1;
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      particles.forEach(particle => {
+        particle.update();
+        particle.draw();
+      });
+
+      connectParticles();
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Resize canvas on window resize
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
 
   <!-- NX-Perps CTA Section -->
   <section id="nx-perps-cta" style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); padding: 64px 0; position: relative; overflow: hidden; border-top: 1px solid rgba(14, 165, 233, 0.2); border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
