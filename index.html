@@ -62,6 +62,36 @@
   
   <!-- Web3 Libraries -->
   <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+  
+  <!-- Global Page Styles -->
+  <style>
+    body {
+      background: #000;
+      position: relative;
+    }
+    
+    /* Global Network Background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), 
+                        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 50px 50px;
+      opacity: 0.5;
+      z-index: 0;
+      pointer-events: none;
+    }
+    
+    /* All sections should have relative positioning to appear above background */
+    section {
+      position: relative;
+      z-index: 1;
+    }
+  </style>
 </head>
 <body>
   <nav class="navbar" style="backdrop-filter: blur(20px); background: rgba(0, 0, 0, 0.7); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
@@ -76,7 +106,7 @@
             <span>Perps</span>
             <span style="position: absolute; top: -6px; right: -6px; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 10px; font-weight: 700; letter-spacing: 0.5px;">LIVE</span>
           </a>
-          <a href="vault-new.html" class="nav-link" style="display: flex; align-items: center; gap: 6px; padding: 10px 18px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; color: rgba(255, 255, 255, 0.9); text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;">
+          <a href="vaults.html" class="nav-link" style="display: flex; align-items: center; gap: 6px; padding: 10px 18px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; color: rgba(255, 255, 255, 0.9); text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;">
             <span style="font-size: 1.1rem;">🏦</span>
             <span>Vaults</span>
           </a>
@@ -115,22 +145,9 @@
     <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 50px 50px; z-index: 0; opacity: 0.5;"></div>
     
     <div class="container" style="position: relative; z-index: 10;">
-      <div class="hero-content" style="max-width: 900px; margin: 0 auto; text-align: center;">
-        <!-- Main Logo/Title -->
-        <div style="margin-bottom: 40px; animation: fadeInUp 1s ease-out;">
-          <h1 style="font-size: 5rem; font-weight: 800; letter-spacing: 0.1em; margin-bottom: 20px; background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase;">
-            NEXXORE
-          </h1>
-          <div style="height: 2px; width: 200px; margin: 0 auto; background: linear-gradient(90deg, transparent, #0EA5E9, #8B5CF6, transparent);"></div>
-        </div>
-
-        <!-- Tagline -->
-        <p style="font-size: 1.5rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 32px; font-weight: 300; letter-spacing: 0.05em; animation: fadeInUp 1s ease-out 0.2s backwards;">
-          DECENTRALIZED FINANCE ECOSYSTEM
-        </p>
-
+      <div class="hero-content" style="max-width: 900px; margin: 0 auto; text-align: center; padding-top: 80px;">
         <!-- Main Description -->
-        <h2 style="font-size: 2.5rem; font-weight: 700; line-height: 1.3; margin-bottom: 24px; color: white; animation: fadeInUp 1s ease-out 0.3s backwards;">
+        <h1 style="font-size: 3.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 32px; color: white; animation: fadeInUp 1s ease-out 0.1s backwards;">
           Autonomous Capital Execution<br>
           <span style="background: linear-gradient(135deg, #0EA5E9, #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">On-Chain Intelligence</span>
         </h2>
@@ -160,7 +177,7 @@
           <a href="perps.html" style="padding: 18px 40px; background: linear-gradient(135deg, #0EA5E9, #8B5CF6); border: none; border-radius: 12px; color: white; font-weight: 700; font-size: 1.1rem; text-decoration: none; transition: all 0.3s; box-shadow: 0 8px 32px rgba(14, 165, 233, 0.4); display: inline-block;">
             Launch Perps →
           </a>
-          <a href="vault-new.html" style="padding: 18px 40px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: white; font-weight: 700; font-size: 1.1rem; text-decoration: none; transition: all 0.3s; backdrop-filter: blur(10px); display: inline-block;">
+          <a href="vaults.html" style="padding: 18px 40px; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: white; font-weight: 700; font-size: 1.1rem; text-decoration: none; transition: all 0.3s; backdrop-filter: blur(10px); display: inline-block;">
             Explore Vaults
           </a>
         </div>
@@ -318,7 +335,10 @@
   </script>
 
   <!-- NX-Perps CTA Section -->
-  <section id="nx-perps-cta" style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); padding: 64px 0; position: relative; overflow: hidden; border-top: 1px solid rgba(14, 165, 233, 0.2); border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
+  <section id="nx-perps-cta" style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); padding: 80px 0; position: relative; overflow: hidden; border-top: 1px solid rgba(14, 165, 233, 0.2); border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
+    <!-- Background Graphics -->
+    <div style="position: absolute; top: 10%; left: 5%; width: 250px; height: 250px; background: linear-gradient(135deg, rgba(14, 165, 233, 0.05), transparent); transform: rotate(25deg); border: 1px solid rgba(14, 165, 233, 0.1); z-index: 0;"></div>
+    <div style="position: absolute; bottom: 10%; right: 5%; width: 300px; height: 300px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), transparent); transform: rotate(-35deg); border: 1px solid rgba(139, 92, 246, 0.1); z-index: 0;"></div>
     <div class="container">
       <div style="max-width: 1200px; margin: 0 auto;">
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 48px; align-items: center;">
@@ -447,8 +467,12 @@
   </style>
 
   <!-- Workflow Section -->
-  <section id="workflow" class="workflow-section">
-    <div class="container">
+  <section id="workflow" class="workflow-section" style="position: relative; padding: 100px 0; background: rgba(0, 0, 0, 0.5); overflow: hidden;">
+    <!-- Background Geometric Elements -->
+    <div style="position: absolute; top: 15%; right: 8%; width: 200px; height: 200px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), transparent); transform: rotate(30deg); border: 1px solid rgba(139, 92, 246, 0.15); z-index: 0;"></div>
+    <div style="position: absolute; bottom: 20%; left: 5%; width: 180px; height: 180px; background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), transparent); transform: rotate(-20deg); border: 1px solid rgba(14, 165, 233, 0.15); z-index: 0;"></div>
+    
+    <div class="container" style="position: relative; z-index: 1;">
       <div class="workflow-diagram">
         <div class="workflow-card">
           <div class="workflow-icon" style="background:linear-gradient(135deg,#9333ea,#c084fc)">
