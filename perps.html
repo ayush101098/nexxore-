@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NX-Perps — Decentralized Perpetuals Trading | Nexxore</title>
+  <meta name="description" content="Trade perpetuals with on-chain transparency. No CEX risk. Modular architecture. Funding-based pricing.">
+  
+  <!-- Google Fonts: Space Grotesk, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/wallet.css">
+  
+  <!-- Web3 Libraries -->
+  <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+  
+  <style>
+    .perps-hero {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+      border-radius: 16px;
+      padding: 48px 32px;
+      margin-bottom: 32px;
+      border: 1px solid rgba(14, 165, 233, 0.2);
+    }
+
+    .perps-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 32px 0;
+    }
+
+    .perps-stat-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .perps-stat-label {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .perps-stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      background: linear-gradient(135deg, #0EA5E9, #8B5CF6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .market-selector {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .market-btn {
+      padding: 12px 24px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .market-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #0EA5E9;
+    }
+
+    .market-btn.active {
+      background: linear-gradient(135deg, #0EA5E9, #8B5CF6);
+      border-color: transparent;
+    }
+
+    .trading-interface {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 1024px) {
+      .trading-interface {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chart-panel {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 24px;
+      min-height: 500px;
+    }
+
+    .order-panel {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .position-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 12px;
+    }
+
+    .position-tab {
+      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+      border-radius: 6px;
+    }
+
+    .position-tab:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .position-tab.active {
+      color: #0EA5E9;
+      background: rgba(14, 165, 233, 0.1);
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: #0EA5E9;
+    }
+
+    .leverage-slider {
+      width: 100%;
+      margin: 12px 0;
+    }
+
+    .order-summary {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .summary-label {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .summary-value {
+      color: white;
+      font-weight: 500;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .btn-long {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border: none;
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+    }
+
+    .btn-long:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
+    }
+
+    .btn-short {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border: none;
+      color: white;
+      padding: 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+    }
+
+    .btn-short:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+    }
+
+    .positions-table {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+
+    .positions-table h3 {
+      margin-bottom: 20px;
+      color: white;
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      padding: 12px;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.6);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 16px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+    }
+
+    .position-long {
+      color: #22c55e;
+      font-weight: 600;
+    }
+
+    .position-short {
+      color: #ef4444;
+      font-weight: 600;
+    }
+
+    .health-bar {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .health-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, #86efac);
+      transition: width 0.3s;
+    }
+
+    .lp-vaults {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .vault-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 24px;
+      transition: all 0.3s;
+    }
+
+    .vault-card:hover {
+      border-color: #0EA5E9;
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(14, 165, 233, 0.2);
+    }
+
+    .vault-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .vault-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .vault-apr {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      background: linear-gradient(135deg, #22c55e, #86efac);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .vault-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .vault-stat {
+      font-size: 0.85rem;
+    }
+
+    .vault-stat-label {
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 4px;
+    }
+
+    .vault-stat-value {
+      color: white;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .funding-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .funding-positive {
+      background: rgba(34, 197, 94, 0.1);
+      color: #22c55e;
+    }
+
+    .funding-negative {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+    }
+
+    .info-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin: 32px 0;
+    }
+
+    .info-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .info-card h4 {
+      color: #0EA5E9;
+      margin-bottom: 12px;
+      font-size: 1rem;
+    }
+
+    .info-card p {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .architecture-section {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 16px;
+      padding: 48px 32px;
+      margin: 48px 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .component-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 32px;
+    }
+
+    .component-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      border-radius: 12px;
+      padding: 24px;
+      transition: all 0.3s;
+    }
+
+    .component-card:hover {
+      border-color: #0EA5E9;
+      background: rgba(14, 165, 233, 0.05);
+    }
+
+    .component-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #0EA5E9;
+      margin-bottom: 12px;
+    }
+
+    .component-description {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-brand">
+        <a href="/" class="brand-link">
+          <svg class="site-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160">
+            <defs>
+              <linearGradient id="logoGrad" x1="0" x2="1">
+                <stop offset="0" stop-color="#0EA5E9"/>
+                <stop offset="1" stop-color="#8B5CF6"/>
+              </linearGradient>
+            </defs>
+            <g transform="translate(40,40) scale(0.9)">
+              <circle cx="50" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.95"/>
+              <circle cx="78" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/>
+              <circle cx="64" cy="64" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/>
+            </g>
+            <g transform="translate(150,110)">
+              <text x="0" y="0" font-family="Space Grotesk, Inter, system-ui, sans-serif" font-weight="700" font-size="56" fill="currentColor">nexxore</text>
+            </g>
+          </svg>
+        </a>
+      </div>
+      <div class="nav-links">
+        <a href="index.html" class="btn btn-outline" style="margin-right: 10px;">Home</a>
+        <a href="research.html" class="btn btn-outline" style="margin-right: 10px;">Research</a>
+        <a href="vault-new.html" class="btn btn-outline" style="margin-right: 10px;">Vault</a>
+        <button id="connectWalletBtn" class="btn btn-primary">Connect Wallet</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section style="padding-top: 120px;">
+    <div class="container">
+      <div class="perps-hero">
+        <h1 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 16px; background: linear-gradient(135deg, #0EA5E9, #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+          NX-Perps — Decentralized Perpetuals
+        </h1>
+        <p style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 24px; max-width: 800px;">
+          Trade perpetuals with complete on-chain transparency. No CEX risk. Modular architecture. Funding-based price discovery.
+        </p>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <span style="padding: 6px 12px; background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 6px; font-size: 0.85rem; color: #0EA5E9;">✓ On-Chain Settlement</span>
+          <span style="padding: 6px 12px; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 6px; font-size: 0.85rem; color: #8B5CF6;">✓ Modular Contracts</span>
+          <span style="padding: 6px 12px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 6px; font-size: 0.85rem; color: #22c55e;">✓ LP Backstop</span>
+          <span style="padding: 6px 12px; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.3); border-radius: 6px; font-size: 0.85rem; color: #f97316;">✓ No Protocol Risk</span>
+        </div>
+      </div>
+
+      <!-- Market Stats -->
+      <div class="perps-stats">
+        <div class="perps-stat-card">
+          <div class="perps-stat-label">Total OI</div>
+          <div class="perps-stat-value" id="totalOI">$0.00</div>
+        </div>
+        <div class="perps-stat-card">
+          <div class="perps-stat-label">24h Volume</div>
+          <div class="perps-stat-value" id="volume24h">$0.00</div>
+        </div>
+        <div class="perps-stat-card">
+          <div class="perps-stat-label">Long/Short Ratio</div>
+          <div class="perps-stat-value" id="longShortRatio">0.00</div>
+        </div>
+        <div class="perps-stat-card">
+          <div class="perps-stat-label">LP TVL</div>
+          <div class="perps-stat-value" id="lpTVL">$0.00</div>
+        </div>
+      </div>
+
+      <!-- Market Selector -->
+      <div class="market-selector">
+        <button class="market-btn active" data-market="ETH-USD">
+          ETH-USD
+          <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-top: 4px;">
+            <span class="funding-positive">+0.01%</span>
+          </div>
+        </button>
+        <button class="market-btn" data-market="BTC-USD">
+          BTC-USD
+          <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-top: 4px;">
+            <span class="funding-negative">-0.005%</span>
+          </div>
+        </button>
+        <button class="market-btn" data-market="SOL-USD">
+          SOL-USD
+          <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin-top: 4px;">
+            <span class="funding-positive">+0.02%</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Trading Interface -->
+      <div class="trading-interface">
+        <!-- Chart Panel -->
+        <div class="chart-panel">
+          <h3 style="margin-bottom: 20px; color: white;">ETH-USD Price Chart</h3>
+          <div style="text-align: center; padding: 100px 0; color: rgba(255,255,255,0.4);">
+            <div style="font-size: 3rem; margin-bottom: 16px;">📊</div>
+            <p>Trading view integration coming soon</p>
+            <p style="font-size: 0.85rem; margin-top: 8px;">Oracle: Chainlink • Update Frequency: 1s</p>
+          </div>
+        </div>
+
+        <!-- Order Panel -->
+        <div class="order-panel">
+          <div class="position-tabs">
+            <button class="position-tab active" data-side="long">Long</button>
+            <button class="position-tab" data-side="short">Short</button>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">Collateral (USD)</label>
+            <input type="number" class="input-field" id="collateralInput" placeholder="0.00" value="1000">
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">Leverage: <span id="leverageValue">10</span>x</label>
+            <input type="range" class="leverage-slider" id="leverageSlider" min="1" max="50" value="10">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 4px;">
+              <span>1x</span>
+              <span>50x</span>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">Notional Size (USD)</label>
+            <input type="number" class="input-field" id="notionalInput" placeholder="0.00" value="10000" readonly>
+          </div>
+
+          <div class="order-summary">
+            <div class="summary-row">
+              <span class="summary-label">Entry Price</span>
+              <span class="summary-value" id="entryPrice">$3,450.00</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Liquidation Price</span>
+              <span class="summary-value" id="liqPrice">$3,105.00</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Funding Rate (8h)</span>
+              <span class="summary-value funding-positive" id="fundingRate">+0.01%</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Max Loss</span>
+              <span class="summary-value" id="maxLoss">$1,000.00</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Trading Fee</span>
+              <span class="summary-value" id="tradingFee">$5.00 (0.05%)</span>
+            </div>
+          </div>
+
+          <button class="btn-long" id="openPositionBtn">
+            Open Long Position
+          </button>
+
+          <div style="margin-top: 16px; padding: 12px; background: rgba(14, 165, 233, 0.1); border-radius: 8px; border: 1px solid rgba(14, 165, 233, 0.3);">
+            <div style="font-size: 0.85rem; color: rgba(255,255,255,0.7);">
+              <strong style="color: #0EA5E9;">Risk Notice:</strong> Collateral caps maximum loss. Your position will be liquidated if health drops below 1.0.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Positions -->
+      <div class="positions-table">
+        <h3>Your Active Positions</h3>
+        <div class="table-container">
+          <table id="positionsTable">
+            <thead>
+              <tr>
+                <th>Market</th>
+                <th>Side</th>
+                <th>Notional</th>
+                <th>Collateral</th>
+                <th>Entry Price</th>
+                <th>Mark Price</th>
+                <th>PnL</th>
+                <th>Funding</th>
+                <th>Health</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="10" class="empty-state">
+                  <div class="empty-state-icon">📊</div>
+                  <p>No active positions. Open a position to get started.</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- LP Vaults Section -->
+      <section style="margin: 64px 0;">
+        <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 16px; text-align: center;">Liquidity Provider Vaults</h2>
+        <p style="text-align: center; color: rgba(255,255,255,0.7); margin-bottom: 32px; max-width: 700px; margin-left: auto; margin-right: auto;">
+          Provide liquidity backstop and earn yield from trading fees, funding rates, and liquidation penalties. Each vault is market-specific with defined risk parameters.
+        </p>
+
+        <div class="lp-vaults">
+          <div class="vault-card">
+            <div class="vault-header">
+              <div class="vault-name">ETH-USD Vault</div>
+              <div class="vault-apr">12.5%</div>
+            </div>
+            <div class="vault-stats">
+              <div class="vault-stat">
+                <div class="vault-stat-label">TVL</div>
+                <div class="vault-stat-value">$2.4M</div>
+              </div>
+              <div class="vault-stat">
+                <div class="vault-stat-label">Utilization</div>
+                <div class="vault-stat-value">68%</div>
+              </div>
+              <div class="vault-stat">
+                <div class="vault-stat-label">Max Drawdown</div>
+                <div class="vault-stat-value">-15%</div>
+              </div>
+              <div class="vault-stat">
+                <div class="vault-stat-label">Withdrawal</div>
+                <div class="vault-stat-value">24h delay</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 16px;">Deposit to Vault</button>
+          </div>
+
+          <div class="vault-card">
+            <div class="vault-header">
+              <div class="vault-name">BTC-USD Vault</div>
+              <div class="vault-apr">10.8%</div>
+            </div>
+            <div class="vault-stats">
+              <div class="vault-stat">
+                <div class="vault-stat-label">TVL</div>
+                <div class="vault-stat-value">$5.1M</div>
+              </div>
+              <div class="vault-stat">
+                <div class="vault-stat-label">Utilization</div>
+                <div class="vault-stat-value">54%</div>
+              </div>
+              <div class="vault-stat">
+                <div class="vault-stat-label">Max Drawdown</div>
+                <div class="vault-stat-value">-12%</div>
+              </div>
+              <div class="vault-stat">
+                <div class="vault-stat-label">Withdrawal</div>
+                <div class="vault-stat-value">24h delay</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 16px;">Deposit to Vault</button>
+          </div>
+
+          <div class="vault-card">
+            <div class="vault-header">
+              <div class="vault-name">SOL-USD Vault</div>
+              <div class="vault-apr">15.2%</div>
+            </div>
+            <div class="vault-stats">
+              <div class="vault-stat">
+                <div class="vault-stat-label">TVL</div>
+                <div class="vault-stat-value">$890K</div>
+              </div>
+              <div class="vault-stat">
+                <div class="vault-stat-label">Utilization</div>
+                <div class="vault-stat-value">72%</div>
+              </div>
+              <div class="vault-stat">
+                <div class="vault-stat-label">Max Drawdown</div>
+                <div class="vault-stat-value">-20%</div>
+              </div>
+              <div class="vault-stat">
+                <div class="vault-stat-label">Withdrawal</div>
+                <div class="vault-stat-value">48h delay</div>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 16px;">Deposit to Vault</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Info Cards -->
+      <div class="info-cards">
+        <div class="info-card">
+          <h4>How Funding Works</h4>
+          <p>Funding keeps prices aligned. When too many longs exist, longs pay shorts. When too many shorts exist, shorts pay longs. This creates a self-balancing system without protocol risk.</p>
+        </div>
+
+        <div class="info-card">
+          <h4>Collateral Protection</h4>
+          <p>Your collateral caps your maximum loss. Positions are automatically liquidated when health factor drops to 1.0, protecting both you and the LP vault from bad debt.</p>
+        </div>
+
+        <div class="info-card">
+          <h4>LP Yield Sources</h4>
+          <p>LPs earn from three sources: trading fees (0.05%), funding rate imbalances, and liquidation penalties. Yields are variable and market-dependent.</p>
+        </div>
+
+        <div class="info-card">
+          <h4>Modular Architecture</h4>
+          <p>Every component is a separate contract: PerpMarket, FundingEngine, MarginVault, LiquidationEngine. This ensures security, upgradability, and auditability.</p>
+        </div>
+      </div>
+
+      <!-- Architecture Section -->
+      <div class="architecture-section">
+        <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 16px; text-align: center;">System Architecture</h2>
+        <p style="text-align: center; color: rgba(255,255,255,0.7); margin-bottom: 32px; max-width: 800px; margin-left: auto; margin-right: auto;">
+          NX-Perps is built with a fully modular, on-chain architecture. No CEX-style matching engine. Every position is deterministic and verifiable.
+        </p>
+
+        <div class="component-grid">
+          <div class="component-card">
+            <div class="component-title">PerpMarket</div>
+            <div class="component-description">
+              Manages positions, tracks open interest, and coordinates trading. One contract per market pair (ETH-USD, BTC-USD, etc.).
+            </div>
+          </div>
+
+          <div class="component-card">
+            <div class="component-title">FundingEngine</div>
+            <div class="component-description">
+              Stateless calculator that computes funding rates based on OI imbalance. Updates funding index which positions accumulate against.
+            </div>
+          </div>
+
+          <div class="component-card">
+            <div class="component-title">MarginVault</div>
+            <div class="component-description">
+              Holds all collateral tokens. Enforces balances and margin requirements. Completely isolated from directional risk.
+            </div>
+          </div>
+
+          <div class="component-card">
+            <div class="component-title">LiquidationEngine</div>
+            <div class="component-description">
+              Monitors health factors and executes partial/full liquidations. Pays incentives to liquidator bots to ensure system safety.
+            </div>
+          </div>
+
+          <div class="component-card">
+            <div class="component-title">LP Vaults</div>
+            <div class="component-description">
+              Market-specific liquidity pools that provide capital backstop. Earn fees and funding, absorb extreme PnL events.
+            </div>
+          </div>
+
+          <div class="component-card">
+            <div class="component-title">Factory</div>
+            <div class="component-description">
+              Deploys new markets, sets risk parameters, registers vaults. Ensures consistent deployment and configuration.
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 48px; text-align: center;">
+          <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 16px;">Core Principles</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; max-width: 900px; margin: 0 auto;">
+            <div style="padding: 16px; background: rgba(14, 165, 233, 0.1); border-radius: 8px; border: 1px solid rgba(14, 165, 233, 0.3);">
+              <div style="font-weight: 700; color: #0EA5E9; margin-bottom: 8px;">On-Chain Settlement</div>
+              <div style="font-size: 0.85rem; color: rgba(255,255,255,0.7);">Everything is deterministic and verifiable</div>
+            </div>
+            <div style="padding: 16px; background: rgba(139, 92, 246, 0.1); border-radius: 8px; border: 1px solid rgba(139, 92, 246, 0.3);">
+              <div style="font-weight: 700; color: #8B5CF6; margin-bottom: 8px;">No Protocol Risk</div>
+              <div style="font-size: 0.85rem; color: rgba(255,255,255,0.7);">Protocol never takes directional positions</div>
+            </div>
+            <div style="padding: 16px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.3);">
+              <div style="font-weight: 700; color: #22c55e; margin-bottom: 8px;">Peer-to-Peer Funding</div>
+              <div style="font-size: 0.85rem; color: rgba(255,255,255,0.7);">Traders pay each other, not the protocol</div>
+            </div>
+            <div style="padding: 16px; background: rgba(249, 115, 22, 0.1); border-radius: 8px; border: 1px solid rgba(249, 115, 22, 0.3);">
+              <div style="font-weight: 700; color: #f97316; margin-bottom: 8px;">Modular Contracts</div>
+              <div style="font-size: 0.85rem; color: rgba(255,255,255,0.7);">Each component has one responsibility</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer style="background: rgba(0,0,0,0.5); padding: 48px 0; margin-top: 64px; border-top: 1px solid rgba(255,255,255,0.1);">
+    <div class="container">
+      <div style="text-align: center; color: rgba(255,255,255,0.6);">
+        <p style="margin-bottom: 8px;">&copy; 2026 Nexxore. Building the future of DeFi.</p>
+        <p style="font-size: 0.85rem;">NX-Perps: Decentralized perpetuals with complete on-chain transparency.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/wallet.js"></script>
+  <script>
+    // Market selection
+    document.querySelectorAll('.market-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelector('.market-btn.active').classList.remove('active');
+        btn.classList.add('active');
+        
+        const market = btn.dataset.market;
+        console.log('Switched to market:', market);
+        // TODO: Load market data
+      });
+    });
+
+    // Position tabs
+    document.querySelectorAll('.position-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelector('.position-tab.active').classList.remove('active');
+        tab.classList.add('active');
+        
+        const side = tab.dataset.side;
+        const openBtn = document.getElementById('openPositionBtn');
+        
+        if (side === 'long') {
+          openBtn.className = 'btn-long';
+          openBtn.textContent = 'Open Long Position';
+        } else {
+          openBtn.className = 'btn-short';
+          openBtn.textContent = 'Open Short Position';
+        }
+      });
+    });
+
+    // Leverage slider
+    const leverageSlider = document.getElementById('leverageSlider');
+    const leverageValue = document.getElementById('leverageValue');
+    const collateralInput = document.getElementById('collateralInput');
+    const notionalInput = document.getElementById('notionalInput');
+
+    leverageSlider.addEventListener('input', () => {
+      const leverage = leverageSlider.value;
+      leverageValue.textContent = leverage;
+      updateNotional();
+    });
+
+    collateralInput.addEventListener('input', updateNotional);
+
+    function updateNotional() {
+      const collateral = parseFloat(collateralInput.value) || 0;
+      const leverage = parseFloat(leverageSlider.value);
+      const notional = collateral * leverage;
+      notionalInput.value = notional.toFixed(2);
+      updateOrderSummary(collateral, notional, leverage);
+    }
+
+    function updateOrderSummary(collateral, notional, leverage) {
+      const entryPrice = 3450.00;
+      const liqPrice = entryPrice * (1 - 1/leverage) * 0.95; // Simplified liquidation price
+      const maxLoss = collateral;
+      const tradingFee = notional * 0.0005;
+
+      document.getElementById('entryPrice').textContent = `$${entryPrice.toFixed(2)}`;
+      document.getElementById('liqPrice').textContent = `$${liqPrice.toFixed(2)}`;
+      document.getElementById('maxLoss').textContent = `$${maxLoss.toFixed(2)}`;
+      document.getElementById('tradingFee').textContent = `$${tradingFee.toFixed(2)} (0.05%)`;
+    }
+
+    // Open position button
+    document.getElementById('openPositionBtn').addEventListener('click', async () => {
+      const side = document.querySelector('.position-tab.active').dataset.side;
+      const collateral = collateralInput.value;
+      const notional = notionalInput.value;
+      const leverage = leverageSlider.value;
+
+      console.log('Opening position:', { side, collateral, notional, leverage });
+      
+      // TODO: Connect to smart contracts
+      alert(`Opening ${side} position with ${leverage}x leverage.\n\nCollateral: $${collateral}\nNotional: $${notional}\n\nSmart contract integration coming soon!`);
+    });
+
+    // Initialize
+    updateNotional();
+  </script>
+</body>
+</html>
