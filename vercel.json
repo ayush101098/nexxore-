@@ -2,7 +2,15 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.js",
+      "src": "api/index.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/research.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/safe-yield.js",
       "use": "@vercel/node"
     },
     {
@@ -24,40 +32,16 @@
   ],
   "routes": [
     {
-      "src": "/api/news",
-      "dest": "/api/news.js"
+      "src": "/api/(news|trending|chat|health|signals|alpha-scanner|alpha-scanner-v2)",
+      "dest": "/api/index.js"
     },
     {
-      "src": "/api/trending",
-      "dest": "/api/trending.js"
+      "src": "/api/research/(insights|alpha-scan)",
+      "dest": "/api/research.js"
     },
     {
-      "src": "/api/chat",
-      "dest": "/api/chat.js"
-    },
-    {
-      "src": "/api/health",
-      "dest": "/api/health.js"
-    },
-    {
-      "src": "/api/research/insights",
-      "dest": "/api/research/insights.js"
-    },
-    {
-      "src": "/api/safe-yield/status",
-      "dest": "/api/safe-yield/status.js"
-    },
-    {
-      "src": "/api/safe-yield/strategies",
-      "dest": "/api/safe-yield/strategies.js"
-    },
-    {
-      "src": "/api/safe-yield/simulate",
-      "dest": "/api/safe-yield/simulate.js"
-    },
-    {
-      "src": "/api/safe-yield/risk",
-      "dest": "/api/safe-yield/risk.js"
+      "src": "/api/safe-yield/(status|strategies|simulate|risk)",
+      "dest": "/api/safe-yield.js"
     },
     {
       "src": "/(.*)",
