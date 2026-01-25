@@ -2219,6 +2219,64 @@
             saveSignals(updated);
         }
 
+        // Fallback: Load from Refined Research API
+        async function loadRefinedResearchSignals() {
+            console.log('🧠 Loading from Refined Research API...');
+            const API_BASE = window.location.hostname === 'localhost' 
+                ? 'http://localhost:3000/api' 
+                : '/api';
+            
+            try {
+                const response = await fetch(`${API_BASE}/research/signals?type=DIRECTIONAL_ALPHA&limit=15`);
+                if (!response.ok) throw new Error('Refined Research API unavailable');
+                
+                const data = await response.json();
+                console.log('✅ Refined Research signals:', data);
+                
+                if (data.signals && data.signals.length > 0) {
+                    // Convert to signal format expected by the page
+                    const convertedSignals = data.signals.map(sig => ({
+                        id: `refined-${sig.asset}-${Date.now()}`,
+                        type: sig.signal.includes('LONG') ? 'DIRECTIONAL' : 
+                              sig.signal.includes('SHORT') ? 'DIRECTIONAL' : 'LEVERAGE_STRESS',
+                        protocol: sig.asset,
+                        positionType: sig.signal.includes('LONG') ? 'LONG' : 
+                                     sig.signal.includes('SHORT') ? 'SHORT' : 'MONITOR',
+                        conviction: sig.confidenceLevel,
+                        entryPrice: 1.0,
+                        targetPrice: sig.signal.includes('LONG') ? 1.1 : 0.9,
+                        stopLoss: sig.signal.includes('LONG') ? 0.95 : 1.05,
+                        timeHorizon: sig.timeHorizon || '7d',
+                        riskReward: 2.0,
+                        confidence: sig.confidence,
+                        marketContext: (sig.drivers && sig.drivers[0]) || 'Signal from refined research agent',
+                        reasoning: (sig.drivers || []).join(' | '),
+                        keyRisks: (sig.risks || []).join(' | '),
+                        status: 'ACTIVE',
+                        generatedAt: new Date().toISOString(),
+                        regime: data.regime?.state || 'RISK_ON'
+                    }));
+                    
+                    // Update UI with signals
+                    const signalsList = document.getElementById('signalsList');
+                    if (signalsList && convertedSignals.length > 0) {
+                        updateDataFreshness('live');
+                        showToast(`🧠 Loaded ${convertedSignals.length} signals from Refined Research API`);
+                        
+                        // Merge with existing signals
+                        const existing = getSignals().filter(s => !s.id.startsWith('refined-'));
+                        saveSignals([...convertedSignals, ...existing].slice(0, 30));
+                        refreshData();
+                    }
+                }
+                
+                return data;
+            } catch (error) {
+                console.warn('⚠️ Refined Research API unavailable:', error.message);
+                return null;
+            }
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
             // Initialize data freshness indicator
@@ -2243,20 +2301,29 @@
             const botData = await loadResearchBotData();
             
             if (!botData) {
-                // Fallback to regular signals if bot unavailable
-                const signals = getSignals();
-                const recentSignal = signals.find(s => 
-                    Date.now() - new Date(s.generatedAt).getTime() < 30 * 60 * 1000
-                );
-                if (!recentSignal) {
-                    setTimeout(() => fetchLiveSignals(), 1000);
+                // Fallback to Refined Research API
+                console.log('⚠️ Research Bot unavailable - trying Refined Research API...');
+                const refinedData = await loadRefinedResearchSignals();
+                
+                if (!refinedData) {
+                    // Fallback to regular signals if both unavailable
+                    const signals = getSignals();
+                    const recentSignal = signals.find(s => 
+                        Date.now() - new Date(s.generatedAt).getTime() < 30 * 60 * 1000
+                    );
+                    if (!recentSignal) {
+                        setTimeout(() => fetchLiveSignals(), 1000);
+                    }
                 }
             }
             
-            // Set up Research Bot auto-refresh (every 60 seconds)
+            // Set up auto-refresh (every 60 seconds)
             setInterval(async () => {
-                console.log('🔄 Auto-refreshing from Research Bot...');
-                await loadResearchBotData();
+                console.log('🔄 Auto-refreshing data...');
+                const botData = await loadResearchBotData();
+                if (!botData) {
+                    await loadRefinedResearchSignals();
+                }
             }, 60000);
         });
     </script>

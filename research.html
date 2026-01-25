@@ -1795,6 +1795,118 @@
       if (e.key === 'Enter') sendMessage();
     });
 
+    // Fallback: Load from Refined Research API
+    async function loadRefinedResearchData() {
+      console.log('🧠 Loading from Refined Research API...');
+      try {
+        const response = await fetch(`${API_BASE}/research/signals?type=DIRECTIONAL_ALPHA&limit=10`);
+        if (!response.ok) throw new Error('Refined Research API unavailable');
+        
+        const data = await response.json();
+        console.log('✅ Refined Research data:', data);
+        
+        // Update regime banner
+        if (data.regime) {
+          const regimeColor = data.regime.state === 'RISK_ON' ? '#22c55e' : 
+                              data.regime.state === 'RISK_OFF' ? '#ef4444' : '#fbbf24';
+          document.getElementById('insightsList').innerHTML = `
+            <div class="insight-item" style="background: linear-gradient(135deg, ${regimeColor}10, ${regimeColor}05); border-color: ${regimeColor}40;">
+              <div class="insight-header">
+                <div class="insight-protocol">📊 Market Regime</div>
+                <div class="insight-confidence" style="background: ${regimeColor}20; color: ${regimeColor}; border-color: ${regimeColor}40;">
+                  ${data.regime.state.replace('_', ' ')}
+                </div>
+              </div>
+              <div class="insight-summary">${data.regime.impact || 'Market environment detected'}</div>
+              <div class="insight-metrics">
+                <div class="metric-item">
+                  <span class="metric-label">Confidence</span>
+                  <span class="metric-value">${Math.round(data.regime.confidence * 100)}%</span>
+                </div>
+              </div>
+            </div>
+            ${data.signals.map(sig => `
+              <div class="insight-item">
+                <div class="insight-header">
+                  <div class="insight-protocol">${sig.asset}</div>
+                  <div class="insight-confidence ${sig.confidenceLevel === 'HIGH' ? 'confidence-high' : sig.confidenceLevel === 'MEDIUM' ? 'confidence-medium' : 'confidence-low'}">
+                    ${sig.signal}
+                  </div>
+                </div>
+                <div class="insight-summary">${(sig.drivers && sig.drivers[0]) || 'Signal detected'}</div>
+                <div class="insight-metrics">
+                  <div class="metric-item">
+                    <span class="metric-label">Confidence</span>
+                    <span class="metric-value">${Math.round(sig.confidence * 100)}%</span>
+                  </div>
+                  <div class="metric-item">
+                    <span class="metric-label">Horizon</span>
+                    <span class="metric-value">${sig.timeHorizon || '7d'}</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          `;
+          document.getElementById('insightsCount').textContent = data.signals.length;
+        }
+        
+        // Update alpha signals
+        if (data.signals && data.signals.length > 0) {
+          renderRefinedAlphaSignals(data.signals);
+        }
+        
+        return data;
+      } catch (error) {
+        console.warn('⚠️ Refined Research API unavailable:', error.message);
+        return null;
+      }
+    }
+    
+    // Render refined alpha signals
+    function renderRefinedAlphaSignals(signals) {
+      const container = document.getElementById('alphaSignals');
+      const countBadge = document.getElementById('signalCount');
+      
+      if (!signals || signals.length === 0) {
+        container.innerHTML = '<div class="no-signals">No signals available</div>';
+        countBadge.innerHTML = '0 signals';
+        return;
+      }
+      
+      countBadge.innerHTML = `${signals.length} signals <span class="data-source-badge live">● LIVE</span>`;
+      
+      container.innerHTML = signals.map(signal => {
+        const confidenceColor = signal.confidenceLevel === 'HIGH' ? '#22c55e' : 
+                               signal.confidenceLevel === 'MEDIUM' ? '#fbbf24' : '#ef4444';
+        const signalColor = signal.signal.includes('LONG') ? '#22c55e' : 
+                           signal.signal.includes('SHORT') ? '#ef4444' : '#64748b';
+        
+        return `
+          <div class="signal-card" style="border-left: 3px solid ${signalColor};">
+            <div class="signal-header">
+              <div class="signal-asset">${signal.asset}</div>
+              <div class="signal-confidence" style="color: ${confidenceColor}">
+                ${Math.round(signal.confidence * 100)}% ${signal.confidenceLevel}
+              </div>
+            </div>
+            <div class="signal-action" style="color: ${signalColor}; font-weight: 700;">
+              ${signal.signal}
+            </div>
+            <div class="signal-drivers">
+              ${(signal.drivers || []).slice(0, 2).map(d => `<div class="driver">✅ ${d}</div>`).join('')}
+            </div>
+            <div class="signal-risks">
+              ${(signal.risks || []).slice(0, 2).map(r => `<div class="risk">⚠️ ${r}</div>`).join('')}
+            </div>
+            <div class="signal-meta">
+              <span>Horizon: ${signal.timeHorizon}</span>
+              <span>Regime: ${signal.marketRegime?.state || 'N/A'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     // Initial load - Research Bot handles all data
     async function initializeDashboard() {
       console.log('🚀 Initializing Research Dashboard...');
@@ -1804,29 +1916,34 @@
       const botData = await loadLiveMarketData();
       
       if (!botData) {
-        // Show offline state with fallback data
-        console.log('⚠️ Research Bot unavailable - starting bot...');
-        document.getElementById('insightsList').innerHTML = '<div class="error">Research Bot offline. Start with: cd research-bot && python3 api_server.py</div>';
-        document.getElementById('newsList').innerHTML = '<div class="error">Waiting for Research Bot...</div>';
-        document.getElementById('trendingList').innerHTML = '<div class="error">Waiting for Research Bot...</div>';
-        document.getElementById('alphaSignals').innerHTML = `
-          <div style="text-align: center; padding: 40px; color: #64748b;">
-            <div style="font-size: 2rem; margin-bottom: 10px;">🤖</div>
-            <div>Research Bot Offline</div>
-            <div style="font-size: 0.8rem; margin-top: 10px; color: #94a3b8;">
-              Start the bot to see live signals:<br>
-              <code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; margin-top: 8px; display: inline-block;">
-                cd research-bot && python3 run_simple.py
-              </code>
+        // Fallback to Refined Research API
+        console.log('⚠️ Research Bot unavailable - trying Refined Research API...');
+        const refinedData = await loadRefinedResearchData();
+        
+        if (!refinedData) {
+          // Both APIs unavailable - try direct CoinGecko/DeFiLlama
+          console.log('⚠️ APIs unavailable - trying direct data sources...');
+          runAlphaScan(true);
+          
+          document.getElementById('insightsList').innerHTML = `
+            <div class="insight-item">
+              <div class="insight-header">
+                <div class="insight-protocol">⚠️ Limited Data Mode</div>
+              </div>
+              <div class="insight-summary">Using direct CoinGecko & DeFiLlama feeds. Start Research Bot for full features.</div>
             </div>
-          </div>
-        `;
+          `;
+        }
       }
       
       // Set up auto-refresh (every 60 seconds for live data)
       setInterval(async () => {
         console.log('🔄 Auto-refreshing data...');
-        await loadLiveMarketData();
+        const botData = await loadLiveMarketData();
+        if (!botData) {
+          await loadRefinedResearchData();
+        }
+      }, 60000); // 1 minute refresh
       }, 60000); // 1 minute refresh
     }
     
