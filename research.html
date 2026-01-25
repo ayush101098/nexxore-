@@ -1392,7 +1392,14 @@
       const statusEl = document.getElementById('liveDataStatus');
       
       try {
-        const response = await fetch(`${RESEARCH_BOT_API}/api/all`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout for local bot
+        
+        const response = await fetch(`${RESEARCH_BOT_API}/api/all`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
         if (!response.ok) throw new Error('Research Bot API unavailable');
         
         const data = await response.json();
@@ -1799,7 +1806,14 @@
     async function loadRefinedResearchData() {
       console.log('🧠 Loading from Refined Research API...');
       try {
-        const response = await fetch(`${API_BASE}/research/signals?type=DIRECTIONAL_ALPHA&limit=10`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+        
+        const response = await fetch(`${API_BASE}/research/signals?type=DIRECTIONAL_ALPHA&limit=10`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
         if (!response.ok) throw new Error('Refined Research API unavailable');
         
         const data = await response.json();
@@ -1911,6 +1925,22 @@
     async function initializeDashboard() {
       console.log('🚀 Initializing Research Dashboard...');
       console.log('📡 Research Bot API:', RESEARCH_BOT_API);
+      console.log('🌐 API Base:', API_BASE);
+      
+      // Show loading state immediately
+      document.getElementById('insightsList').innerHTML = `
+        <div class="insight-item">
+          <div class="insight-header">
+            <div class="insight-protocol">🔄 Loading...</div>
+          </div>
+          <div class="insight-summary">Fetching market data and signals...</div>
+        </div>
+      `;
+      
+      const alphaContainer = document.getElementById('alphaSignals');
+      if (alphaContainer) {
+        alphaContainer.innerHTML = '<div class="loading">Scanning markets for anomalies...</div>';
+      }
       
       // Try to load from Research Bot
       const botData = await loadLiveMarketData();
@@ -1923,16 +1953,18 @@
         if (!refinedData) {
           // Both APIs unavailable - try direct CoinGecko/DeFiLlama
           console.log('⚠️ APIs unavailable - trying direct data sources...');
-          runAlphaScan(true);
           
           document.getElementById('insightsList').innerHTML = `
             <div class="insight-item">
               <div class="insight-header">
-                <div class="insight-protocol">⚠️ Limited Data Mode</div>
+                <div class="insight-protocol">📡 Direct Mode</div>
               </div>
-              <div class="insight-summary">Using direct CoinGecko & DeFiLlama feeds. Start Research Bot for full features.</div>
+              <div class="insight-summary">Loading from CoinGecko & DeFiLlama...</div>
             </div>
           `;
+          
+          // Run alpha scan which fetches directly from CoinGecko/DeFiLlama
+          await runAlphaScan(true);
         }
       }
       
@@ -1941,9 +1973,11 @@
         console.log('🔄 Auto-refreshing data...');
         const botData = await loadLiveMarketData();
         if (!botData) {
-          await loadRefinedResearchData();
+          const refinedData = await loadRefinedResearchData();
+          if (!refinedData) {
+            await runAlphaScan(true);
+          }
         }
-      }, 60000); // 1 minute refresh
       }, 60000); // 1 minute refresh
     }
     

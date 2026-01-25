@@ -1,4 +1,4 @@
-# Quick Start: Refined Research Agent Integration
+Page → Python Bot (8081) → Refined Research API → Direct APIs# Quick Start: Refined Research Agent Integration
 
 ## What We Built
 
