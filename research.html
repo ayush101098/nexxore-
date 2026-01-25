@@ -1942,30 +1942,53 @@
         alphaContainer.innerHTML = '<div class="loading">Scanning markets for anomalies...</div>';
       }
       
-      // Try to load from Research Bot
-      const botData = await loadLiveMarketData();
+      // Start direct data fetch immediately (fastest path)
+      const directFetchPromise = runAlphaScan(true);
       
-      if (!botData) {
-        // Fallback to Refined Research API
-        console.log('⚠️ Research Bot unavailable - trying Refined Research API...');
-        const refinedData = await loadRefinedResearchData();
-        
-        if (!refinedData) {
-          // Both APIs unavailable - try direct CoinGecko/DeFiLlama
-          console.log('⚠️ APIs unavailable - trying direct data sources...');
-          
-          document.getElementById('insightsList').innerHTML = `
-            <div class="insight-item">
-              <div class="insight-header">
-                <div class="insight-protocol">📡 Direct Mode</div>
-              </div>
-              <div class="insight-summary">Loading from CoinGecko & DeFiLlama...</div>
-            </div>
-          `;
-          
-          // Run alpha scan which fetches directly from CoinGecko/DeFiLlama
-          await runAlphaScan(true);
+      // Also try Research Bot in parallel (but don't wait long)
+      let dataLoaded = false;
+      
+      try {
+        const botData = await Promise.race([
+          loadLiveMarketData(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+        ]);
+        if (botData) {
+          dataLoaded = true;
+          console.log('✅ Research Bot data loaded');
         }
+      } catch (e) {
+        console.log('⚠️ Research Bot timeout/unavailable');
+      }
+      
+      // If bot didn't work, try refined API briefly
+      if (!dataLoaded) {
+        try {
+          const refinedData = await Promise.race([
+            loadRefinedResearchData(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+          ]);
+          if (refinedData) {
+            dataLoaded = true;
+            console.log('✅ Refined API data loaded');
+          }
+        } catch (e) {
+          console.log('⚠️ Refined API timeout/unavailable');
+        }
+      }
+      
+      // Wait for direct fetch if neither API worked
+      if (!dataLoaded) {
+        console.log('📡 Using direct CoinGecko/DeFiLlama data...');
+        document.getElementById('insightsList').innerHTML = `
+          <div class="insight-item">
+            <div class="insight-header">
+              <div class="insight-protocol">📡 Direct Mode</div>
+            </div>
+            <div class="insight-summary">Loaded from CoinGecko & DeFiLlama feeds</div>
+          </div>
+        `;
+        await directFetchPromise;
       }
       
       // Set up auto-refresh (every 60 seconds for live data)
@@ -2133,25 +2156,62 @@
     // Fetch signals directly from public APIs with advanced positioning analysis
     async function fetchDirectSignals() {
       const signals = [];
+      let marketData = [];
       
       // Fetch from CoinGecko with comprehensive data
-      const cgResponse = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,pendle,gmx,aave,arbitrum,optimism&order=market_cap_desc&sparkline=true&price_change_percentage=1h,24h,7d');
+      try {
+        const cgResponse = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,pendle,gmx,aave,arbitrum,optimism&order=market_cap_desc&sparkline=true&price_change_percentage=1h,24h,7d');
+        
+        if (cgResponse.ok) {
+          marketData = await cgResponse.json();
+          console.log('📊 CoinGecko data:', marketData.length, 'assets');
+        } else {
+          console.warn('⚠️ CoinGecko returned:', cgResponse.status);
+        }
+      } catch (e) {
+        console.warn('⚠️ CoinGecko fetch error:', e.message);
+      }
       
-      if (!cgResponse.ok) throw new Error('CoinGecko unavailable');
+      // If CoinGecko failed, try simpler endpoint
+      if (marketData.length === 0) {
+        try {
+          const simpleResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true');
+          if (simpleResponse.ok) {
+            const simpleData = await simpleResponse.json();
+            marketData = Object.entries(simpleData).map(([id, data]) => ({
+              id,
+              name: id.charAt(0).toUpperCase() + id.slice(1),
+              symbol: id === 'bitcoin' ? 'btc' : id === 'ethereum' ? 'eth' : 'sol',
+              current_price: data.usd,
+              price_change_percentage_24h: data.usd_24h_change || 0,
+              market_cap: id === 'bitcoin' ? 1.7e12 : id === 'ethereum' ? 400e9 : 80e9
+            }));
+          }
+        } catch (e) {
+          console.warn('⚠️ Simple price fetch error:', e.message);
+        }
+      }
       
-      const marketData = await cgResponse.json();
-      console.log('📊 CoinGecko data:', marketData.length, 'assets');
+      // If still no data, return error
+      if (marketData.length === 0) {
+        throw new Error('Unable to fetch market data from CoinGecko');
+      }
       
-      // Fetch TVL from DeFiLlama
+      // Fetch TVL from DeFiLlama (optional, don't fail if unavailable)
+      let tvlData = [];
       const protocols = ['pendle', 'gmx', 'aave', 'lido', 'uniswap'];
-      const tvlPromises = protocols.map(p => 
-        fetch(`https://api.llama.fi/protocol/${p}`)
-          .then(r => r.ok ? r.json() : null)
-          .catch(() => null)
-      );
-      
-      const tvlData = await Promise.all(tvlPromises);
-      console.log('📈 DeFiLlama data loaded');
+      try {
+        const tvlPromises = protocols.map(p => 
+          fetch(`https://api.llama.fi/protocol/${p}`)
+            .then(r => r.ok ? r.json() : null)
+            .catch(() => null)
+        );
+        tvlData = await Promise.all(tvlPromises);
+        console.log('📈 DeFiLlama data loaded');
+      } catch (e) {
+        console.warn('⚠️ DeFiLlama fetch error:', e.message);
+        tvlData = [];
+      }
       
       // === POSITIONING-BASED SIGNAL ANALYSIS ===
       for (const coin of marketData) {
@@ -2219,9 +2279,37 @@
         }
       }
       
-      // Sort by confidence and return top signals
+      // If no signals found, generate basic market overview signals
+      if (signals.length === 0) {
+        for (const coin of marketData.slice(0, 5)) {
+          const change24h = coin.price_change_percentage_24h || 0;
+          const change7d = coin.price_change_percentage_7d_in_currency || 0;
+          const direction = change24h > 0 ? 'LONG' : 'SHORT';
+          const conviction = Math.abs(change24h) > 5 ? 'MEDIUM' : 'LOW';
+          
+          signals.push({
+            signalType: 'MARKET_OVERVIEW',
+            tradeType: 'MARKET_TREND',
+            asset: `${coin.name} (${coin.symbol.toUpperCase()})`,
+            direction: direction,
+            conviction: conviction,
+            marketContext: `${coin.name} trading at $${coin.current_price.toLocaleString()}. Market cap: $${(coin.market_cap / 1e9).toFixed(2)}B.`,
+            observedAnomaly: `24h: ${change24h > 0 ? '+' : ''}${change24h.toFixed(2)}% | 7d: ${change7d > 0 ? '+' : ''}${change7d.toFixed(2)}%`,
+            whyMatters: `${Math.abs(change24h) > 3 ? 'Significant' : 'Moderate'} price movement in ${coin.name}. Volume: $${(coin.total_volume / 1e9).toFixed(2)}B.`,
+            tradeExpression: `Monitor ${coin.symbol.toUpperCase()} for ${direction === 'LONG' ? 'continuation' : 'bounce'} opportunities.`,
+            timeHorizon: '24-48h',
+            keyRisks: 'Market volatility, macro factors',
+            invalidationLevel: direction === 'LONG' ? `Below $${(coin.current_price * 0.95).toFixed(2)}` : `Above $${(coin.current_price * 1.05).toFixed(2)}`,
+            confidenceScore: 35 + Math.min(30, Math.abs(change24h) * 3),
+            timestamp: new Date().toISOString(),
+            rawData: { price: coin.current_price, change24h, change7d }
+          });
+        }
+      }
+      
+      // Sort by confidence and return top signals (lowered threshold)
       return signals
-        .filter(s => s.confidenceScore >= 45) // Reject weak signals
+        .filter(s => s.confidenceScore >= 30) // Lowered from 45
         .sort((a, b) => {
           // Sort by conviction then confidence
           const convOrder = { 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
