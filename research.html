@@ -1980,14 +1980,11 @@
       // Wait for direct fetch if neither API worked
       if (!dataLoaded) {
         console.log('📡 Using direct CoinGecko/DeFiLlama data...');
-        document.getElementById('insightsList').innerHTML = `
-          <div class="insight-item">
-            <div class="insight-header">
-              <div class="insight-protocol">📡 Direct Mode</div>
-            </div>
-            <div class="insight-summary">Loaded from CoinGecko & DeFiLlama feeds</div>
-          </div>
-        `;
+        
+        // Populate insights with direct market data
+        await populateDirectInsights();
+        
+        // Also run alpha scan for signals
         await directFetchPromise;
       }
       
@@ -1998,10 +1995,100 @@
         if (!botData) {
           const refinedData = await loadRefinedResearchData();
           if (!refinedData) {
+            await populateDirectInsights();
             await runAlphaScan(true);
           }
         }
       }, 60000); // 1 minute refresh
+    }
+    
+    // Populate insights panel with direct CoinGecko data
+    async function populateDirectInsights() {
+      const insightsList = document.getElementById('insightsList');
+      const insightsCount = document.getElementById('insightsCount');
+      
+      try {
+        // Fetch Fear & Greed Index
+        let fgData = null;
+        try {
+          const fgResponse = await fetch('https://api.alternative.me/fng/?limit=1');
+          if (fgResponse.ok) {
+            const fgJson = await fgResponse.json();
+            fgData = fgJson.data?.[0];
+          }
+        } catch (e) { console.warn('Fear & Greed fetch failed'); }
+        
+        // Fetch top coins
+        const priceResponse = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,aave,uniswap&order=market_cap_desc&sparkline=false');
+        const priceData = priceResponse.ok ? await priceResponse.json() : [];
+        
+        const insights = [];
+        
+        // Fear & Greed insight
+        if (fgData) {
+          const fgValue = parseInt(fgData.value);
+          const fgColor = fgValue <= 25 ? '#ef4444' : fgValue >= 75 ? '#22c55e' : '#fbbf24';
+          insights.push(`
+            <div class="insight-item" style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(139, 92, 246, 0.08)); border-color: rgba(0, 212, 255, 0.2);">
+              <div class="insight-header">
+                <div class="insight-protocol">😱 Market Sentiment</div>
+                <div class="insight-confidence" style="background: ${fgColor}20; color: ${fgColor}; border-color: ${fgColor}40;">
+                  ${fgData.value_classification}
+                </div>
+              </div>
+              <div class="insight-summary">Fear & Greed Index at ${fgValue} - ${fgValue <= 30 ? 'potential buying opportunity' : fgValue >= 70 ? 'exercise caution' : 'neutral conditions'}</div>
+              <div class="insight-metrics">
+                <div class="metric-item">
+                  <span class="metric-label">Index</span>
+                  <span class="metric-value" style="color: ${fgColor}">${fgValue}/100</span>
+                </div>
+              </div>
+            </div>
+          `);
+        }
+        
+        // Price insights for each coin
+        for (const coin of priceData) {
+          const change = coin.price_change_percentage_24h || 0;
+          const changeColor = change >= 0 ? '#4ade80' : '#f87171';
+          insights.push(`
+            <div class="insight-item">
+              <div class="insight-header">
+                <div class="insight-protocol">💰 ${coin.name}</div>
+                <div class="insight-confidence" style="background: ${changeColor}20; color: ${changeColor}; border-color: ${changeColor}40;">
+                  ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
+                </div>
+              </div>
+              <div class="insight-summary">Trading at $${coin.current_price.toLocaleString()} with $${(coin.total_volume / 1e9).toFixed(2)}B 24h volume</div>
+              <div class="insight-metrics">
+                <div class="metric-item">
+                  <span class="metric-label">Market Cap</span>
+                  <span class="metric-value">$${(coin.market_cap / 1e9).toFixed(1)}B</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Rank</span>
+                  <span class="metric-value">#${coin.market_cap_rank}</span>
+                </div>
+              </div>
+            </div>
+          `);
+        }
+        
+        insightsList.innerHTML = insights.join('');
+        insightsCount.textContent = insights.length;
+        console.log('✅ Direct insights loaded:', insights.length);
+        
+      } catch (error) {
+        console.error('❌ Failed to load direct insights:', error);
+        insightsList.innerHTML = `
+          <div class="insight-item">
+            <div class="insight-header">
+              <div class="insight-protocol">⚠️ Limited Data</div>
+            </div>
+            <div class="insight-summary">Unable to fetch market data. Check console for details.</div>
+          </div>
+        `;
+      }
     }
     
     // Start initialization
