@@ -1,6 +1,8 @@
 /**
  * Refined Research API Endpoint
  * Serves institutional-grade signals to the frontend
+ * 
+ * Compatible with both Vercel serverless and native http server
  */
 
 const { RefinedResearchAgent } = require('../agents/research/refinedResearchAgent');
@@ -19,13 +21,45 @@ const TOP_PROTOCOLS = [
     'jupiter', 'raydium', 'jito', 'aerodrome', 'hyperliquid'
 ];
 
+// Helper to get query params (works with both Express and Vercel)
+function getQuery(req) {
+    if (req.query) return req.query;
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    return Object.fromEntries(url.searchParams);
+}
+
+// Helper to send JSON response
+function sendJson(res, data, status = 200) {
+    if (res.json) {
+        if (status !== 200) res.status(status);
+        return res.json(data);
+    }
+    res.writeHead(status, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(data));
+}
+
+// Helper to parse body
+async function parseBody(req) {
+    if (req.body) return req.body;
+    return new Promise((resolve) => {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try { resolve(JSON.parse(body || '{}')); }
+            catch { resolve({}); }
+        });
+    });
+}
+
 /**
  * GET /api/research/signals
  * Get signals for a specific signal type
  */
 async function getSignals(req, res) {
     try {
-        const { type = 'DIRECTIONAL_ALPHA', limit = 10 } = req.query;
+        const query = getQuery(req);
+        const type = query.type || 'DIRECTIONAL_ALPHA';
+        const limit = parseInt(query.limit || '10');
 
         // Analyze top protocols
         const result = await researchAgent.analyzeBatch(
@@ -41,7 +75,7 @@ async function getSignals(req, res) {
             impact: 'Supportive for risk assets'
         };
 
-        res.json({
+        sendJson(res, {
             success: true,
             timestamp: Date.now(),
             signalType: type,
@@ -53,10 +87,7 @@ async function getSignals(req, res) {
 
     } catch (error) {
         console.error('Error fetching signals:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+        sendJson(res, { success: false, error: error.message }, 500);
     }
 }
 
@@ -66,7 +97,8 @@ async function getSignals(req, res) {
  */
 async function scanMarkets(req, res) {
     try {
-        const { signalType = 'DIRECTIONAL_ALPHA', protocols = TOP_PROTOCOLS } = req.body;
+        const body = await parseBody(req);
+        const { signalType = 'DIRECTIONAL_ALPHA', protocols = TOP_PROTOCOLS } = body;
 
         // Run full scan
         const result = await researchAgent.analyzeBatch(
@@ -83,7 +115,7 @@ async function scanMarkets(req, res) {
             impact: 'Supportive for risk assets'
         };
 
-        res.json({
+        sendJson(res, {
             success: true,
             timestamp: Date.now(),
             signalType,
@@ -103,10 +135,7 @@ async function scanMarkets(req, res) {
 
     } catch (error) {
         console.error('Error scanning markets:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+        sendJson(res, { success: false, error: error.message }, 500);
     }
 }
 
@@ -116,23 +145,23 @@ async function scanMarkets(req, res) {
  */
 async function getProtocolSignal(req, res) {
     try {
-        const { protocol } = req.params;
-        const { type = 'DIRECTIONAL_ALPHA', timeHorizon = '7d' } = req.query;
+        // Get protocol from params or URL
+        const protocol = req.params?.protocol || req.url.split('/').pop().split('?')[0];
+        const query = getQuery(req);
+        const type = query.type || 'DIRECTIONAL_ALPHA';
+        const timeHorizon = query.timeHorizon || '7d';
 
         const signal = await researchAgent.analyzeAsset(protocol, type, timeHorizon);
 
-        res.json({
+        sendJson(res, {
             success: true,
             timestamp: Date.now(),
             signal
         });
 
     } catch (error) {
-        console.error(`Error fetching signal for ${req.params.protocol}:`, error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+        console.error(`Error fetching signal:`, error);
+        sendJson(res, { success: false, error: error.message }, 500);
     }
 }
 
@@ -142,9 +171,10 @@ async function getProtocolSignal(req, res) {
  */
 async function getMarketRegime(req, res) {
     try {
-        // In a real implementation, this would analyze market-wide data
-        // For now, return a sample regime
-        const regime = {
+        // Analyze one protocol to get regime
+        const signal = await researchAgent.analyzeAsset('aave', 'DIRECTIONAL_ALPHA', '7d');
+        
+        const regime = signal.marketRegime || {
             state: 'RISK_ON',
             confidence: 0.75,
             indicators: {
@@ -156,17 +186,14 @@ async function getMarketRegime(req, res) {
             timestamp: Date.now()
         };
 
-        res.json({
+        sendJson(res, {
             success: true,
             regime
         });
 
     } catch (error) {
         console.error('Error fetching market regime:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+        sendJson(res, { success: false, error: error.message }, 500);
     }
 }
 
@@ -176,13 +203,14 @@ async function getMarketRegime(req, res) {
  */
 function getAnalysisHistory(req, res) {
     try {
-        const { limit = 50 } = req.query;
+        const query = getQuery(req);
+        const limit = parseInt(query.limit || '50');
 
         const history = researchAgent.analysisHistory
             .slice(-limit)
             .reverse();
 
-        res.json({
+        sendJson(res, {
             success: true,
             count: history.length,
             history
@@ -190,10 +218,7 @@ function getAnalysisHistory(req, res) {
 
     } catch (error) {
         console.error('Error fetching history:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+        sendJson(res, { success: false, error: error.message }, 500);
     }
 }
 

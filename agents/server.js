@@ -22,6 +22,9 @@ const Web3IntelligenceAgent = require('./web3-intelligence/agent');
 const RealNewsFetcher = require('./shared/newsFetcher');
 const LLMEngine = require('./shared/llmEngine');
 
+// Refined Research Agent (institutional-grade signals)
+const { RefinedResearchAgent } = require('./research/refinedResearchAgent');
+
 // Alert system
 const AlertSystem = require('./shared/alertSystem');
 const { createTelegramHandler } = require('./shared/telegramHandler');
@@ -137,6 +140,23 @@ async function handleRequest(req, res) {
     }
     if (pathname === '/api/research/insights' && method === 'GET') {
       return getResearchInsights(req, res, reqUrl);
+    }
+    
+    // Refined Research Agent routes (institutional signals)
+    if (pathname === '/api/research/signals' && method === 'GET') {
+      return getRefinedSignals(req, res, reqUrl);
+    }
+    if (pathname === '/api/research/scan' && method === 'POST') {
+      return scanMarkets(req, res);
+    }
+    if (pathname.startsWith('/api/research/signal/') && method === 'GET') {
+      return getProtocolSignal(req, res, pathname);
+    }
+    if (pathname === '/api/research/regime' && method === 'GET') {
+      return getMarketRegime(req, res);
+    }
+    if (pathname === '/api/research/history' && method === 'GET') {
+      return getAnalysisHistory(req, res, reqUrl);
     }
     
     // Alpha detection agent
@@ -568,6 +588,173 @@ async function analyzeAllNews(req, res) {
   }
 }
 
+// =====================================
+// REFINED RESEARCH AGENT HANDLERS
+// =====================================
+
+// Initialize refined research agent
+const refinedResearchAgent = new RefinedResearchAgent({
+  minConfidence: 0.50,
+  defaultTimeHorizon: '7d',
+  riskSuppressionEnabled: true
+});
+
+// Top protocols to monitor
+const TOP_PROTOCOLS = [
+  'aave', 'uniswap', 'lido', 'makerdao', 'curve-dex',
+  'eigenlayer', 'pendle', 'gmx', 'morpho', 'ethena',
+  'jupiter', 'raydium', 'jito', 'aerodrome', 'hyperliquid'
+];
+
+async function getRefinedSignals(req, res, reqUrl) {
+  try {
+    const type = reqUrl.searchParams.get('type') || 'DIRECTIONAL_ALPHA';
+    const limit = parseInt(reqUrl.searchParams.get('limit') || '10');
+
+    const result = await refinedResearchAgent.analyzeBatch(
+      TOP_PROTOCOLS,
+      type,
+      { timeHorizon: '7d' }
+    );
+
+    const regime = result.signals[0]?.marketRegime || {
+      state: 'RISK_ON',
+      confidence: 0.7,
+      impact: 'Supportive for risk assets'
+    };
+
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      success: true,
+      timestamp: Date.now(),
+      signalType: type,
+      totalAnalyzed: result.totalAnalyzed,
+      qualified: result.qualified,
+      signals: result.signals.slice(0, limit),
+      regime
+    }));
+  } catch (err) {
+    console.error('Error fetching refined signals:', err);
+    res.writeHead(500);
+    res.end(JSON.stringify({ success: false, error: err.message }));
+  }
+}
+
+async function scanMarkets(req, res) {
+  let body = '';
+  req.on('data', chunk => { body += chunk; });
+
+  req.on('end', async () => {
+    try {
+      const { signalType = 'DIRECTIONAL_ALPHA', protocols = TOP_PROTOCOLS } = JSON.parse(body || '{}');
+
+      const result = await refinedResearchAgent.analyzeBatch(
+        protocols,
+        signalType,
+        { timeHorizon: '7d' }
+      );
+
+      const regime = result.signals[0]?.marketRegime || {
+        state: 'RISK_ON',
+        confidence: 0.7,
+        indicators: {},
+        impact: 'Supportive for risk assets'
+      };
+
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        success: true,
+        timestamp: Date.now(),
+        signalType,
+        scanDuration: Date.now() - result.timestamp,
+        totalAnalyzed: result.totalAnalyzed,
+        qualified: result.qualified,
+        signals: result.signals,
+        regime,
+        summary: {
+          strongLongs: result.signals.filter(s => s.signal === 'STRONG LONG').length,
+          cautiousLongs: result.signals.filter(s => s.signal === 'CAUTIOUS LONG').length,
+          strongShorts: result.signals.filter(s => s.signal === 'STRONG SHORT').length,
+          cautiousShorts: result.signals.filter(s => s.signal === 'CAUTIOUS SHORT').length,
+          monitors: result.signals.filter(s => s.signal === 'MONITOR').length
+        }
+      }));
+    } catch (err) {
+      console.error('Error scanning markets:', err);
+      res.writeHead(500);
+      res.end(JSON.stringify({ success: false, error: err.message }));
+    }
+  });
+}
+
+async function getProtocolSignal(req, res, pathname) {
+  try {
+    const protocol = pathname.split('/').pop();
+    const signal = await refinedResearchAgent.analyzeAsset(protocol, 'DIRECTIONAL_ALPHA', '7d');
+
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      success: true,
+      timestamp: Date.now(),
+      signal
+    }));
+  } catch (err) {
+    console.error(`Error fetching signal for protocol:`, err);
+    res.writeHead(500);
+    res.end(JSON.stringify({ success: false, error: err.message }));
+  }
+}
+
+async function getMarketRegime(req, res) {
+  try {
+    // Analyze a sample protocol to get current regime
+    const signal = await refinedResearchAgent.analyzeAsset('aave', 'DIRECTIONAL_ALPHA', '7d');
+    
+    const regime = signal.marketRegime || {
+      state: 'RISK_ON',
+      confidence: 0.75,
+      indicators: {
+        volatility: 'normalized',
+        correlation: 'low',
+        environment: 'constructive'
+      },
+      impact: 'Supportive for risk assets'
+    };
+
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      success: true,
+      regime,
+      timestamp: Date.now()
+    }));
+  } catch (err) {
+    console.error('Error fetching market regime:', err);
+    res.writeHead(500);
+    res.end(JSON.stringify({ success: false, error: err.message }));
+  }
+}
+
+async function getAnalysisHistory(req, res, reqUrl) {
+  try {
+    const limit = parseInt(reqUrl.searchParams.get('limit') || '50');
+
+    const history = refinedResearchAgent.analysisHistory
+      .slice(-limit)
+      .reverse();
+
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      success: true,
+      count: history.length,
+      history
+    }));
+  } catch (err) {
+    console.error('Error fetching history:', err);
+    res.writeHead(500);
+    res.end(JSON.stringify({ success: false, error: err.message }));
+  }
+}
+
 // Start server
 const server = http.createServer(handleRequest);
 
@@ -585,6 +772,13 @@ server.listen(PORT, () => {
   GET  http://localhost:${PORT}/api/news             - Latest news
   POST http://localhost:${PORT}/api/chat             - Chat with AI
   GET  http://localhost:${PORT}/api/trending         - Trending tokens
+
+🧠 Refined Research (Institutional Signals):
+  GET  http://localhost:${PORT}/api/research/signals - Get signals by type
+  POST http://localhost:${PORT}/api/research/scan    - Scan all markets
+  GET  http://localhost:${PORT}/api/research/signal/:protocol - Protocol detail
+  GET  http://localhost:${PORT}/api/research/regime  - Market regime
+  GET  http://localhost:${PORT}/api/research/history - Analysis history
 
 🎯 Alpha Detection:
   POST http://localhost:${PORT}/api/agents/alpha     - Scan DeFi for alpha
