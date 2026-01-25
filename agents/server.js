@@ -25,11 +25,21 @@ const LLMEngine = require('./shared/llmEngine');
 // Refined Research Agent (institutional-grade signals)
 const { RefinedResearchAgent } = require('./research/refinedResearchAgent');
 
+// On-Chain Analyst modules
+const { EcosystemIntelligence } = require('./research/ecosystemIntelligence');
+const { AirdropTracker } = require('./research/airdropTracker');
+const { MacroIntelligence } = require('./research/macroIntelligence');
+
 // Alert system
 const AlertSystem = require('./shared/alertSystem');
 const { createTelegramHandler } = require('./shared/telegramHandler');
 const XAutomationHandler = require('./shared/xAutomation');
 const Web3TokenHub = require('./web3-intelligence/tokenHub');
+
+// Initialize On-Chain Analyst modules
+const ecosystemIntel = new EcosystemIntelligence();
+const airdropTracker = new AirdropTracker();
+const macroIntel = new MacroIntelligence();
 
 const PORT = process.env.PORT || 3000;
 
@@ -157,6 +167,32 @@ async function handleRequest(req, res) {
     }
     if (pathname === '/api/research/history' && method === 'GET') {
       return getAnalysisHistory(req, res, reqUrl);
+    }
+    
+    // On-Chain Analyst routes
+    if (pathname === '/api/analyst/ecosystem' && method === 'GET') {
+      return getEcosystemOverview(req, res);
+    }
+    if (pathname === '/api/analyst/narratives' && method === 'GET') {
+      return getNarratives(req, res);
+    }
+    if (pathname.startsWith('/api/analyst/narrative/') && method === 'GET') {
+      return getNarrativeDetail(req, res, pathname);
+    }
+    if (pathname === '/api/analyst/airdrops' && method === 'GET') {
+      return getAirdrops(req, res, reqUrl);
+    }
+    if (pathname === '/api/analyst/airdrops/farming' && method === 'GET') {
+      return getFarmingOpportunities(req, res);
+    }
+    if (pathname === '/api/analyst/macro' && method === 'GET') {
+      return getMacroOverview(req, res);
+    }
+    if (pathname === '/api/analyst/sentiment' && method === 'GET') {
+      return getSentiment(req, res);
+    }
+    if (pathname === '/api/analyst/full' && method === 'GET') {
+      return getFullAnalysis(req, res);
     }
     
     // Alpha detection agent
@@ -755,6 +791,138 @@ async function getAnalysisHistory(req, res, reqUrl) {
   }
 }
 
+// =====================================
+// ON-CHAIN ANALYST HANDLERS
+// =====================================
+
+async function getEcosystemOverview(req, res) {
+  try {
+    const data = await ecosystemIntel.getEcosystemOverview();
+    res.writeHead(200);
+    res.end(JSON.stringify({ success: true, ...data }));
+  } catch (err) {
+    console.error('Ecosystem overview error:', err);
+    res.writeHead(500);
+    res.end(JSON.stringify({ success: false, error: err.message }));
+  }
+}
+
+async function getNarratives(req, res) {
+  try {
+    const overview = await ecosystemIntel.getEcosystemOverview();
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      success: true,
+      timestamp: Date.now(),
+      narratives: overview.narratives
+    }));
+  } catch (err) {
+    console.error('Narratives error:', err);
+    res.writeHead(500);
+    res.end(JSON.stringify({ success: false, error: err.message }));
+  }
+}
+
+async function getNarrativeDetail(req, res, pathname) {
+  try {
+    const key = pathname.split('/').pop();
+    const data = await ecosystemIntel.getNarrativeProtocols(key.toUpperCase());
+    
+    if (!data) {
+      res.writeHead(404);
+      return res.end(JSON.stringify({ success: false, error: 'Narrative not found' }));
+    }
+    
+    res.writeHead(200);
+    res.end(JSON.stringify({ success: true, timestamp: Date.now(), ...data }));
+  } catch (err) {
+    console.error('Narrative detail error:', err);
+    res.writeHead(500);
+    res.end(JSON.stringify({ success: false, error: err.message }));
+  }
+}
+
+async function getAirdrops(req, res, reqUrl) {
+  try {
+    const status = reqUrl?.searchParams?.get('status');
+    let data = await airdropTracker.getAllAirdrops();
+    
+    if (status) {
+      data = {
+        ...data,
+        highConfidence: data.highConfidence.filter(a => a.status === status.toUpperCase()),
+        mediumConfidence: data.mediumConfidence.filter(a => a.status === status.toUpperCase())
+      };
+    }
+    
+    res.writeHead(200);
+    res.end(JSON.stringify({ success: true, ...data }));
+  } catch (err) {
+    console.error('Airdrops error:', err);
+    res.writeHead(500);
+    res.end(JSON.stringify({ success: false, error: err.message }));
+  }
+}
+
+async function getFarmingOpportunities(req, res) {
+  try {
+    const data = airdropTracker.getFarmingOpportunities();
+    res.writeHead(200);
+    res.end(JSON.stringify({ success: true, timestamp: Date.now(), ...data }));
+  } catch (err) {
+    console.error('Farming opportunities error:', err);
+    res.writeHead(500);
+    res.end(JSON.stringify({ success: false, error: err.message }));
+  }
+}
+
+async function getMacroOverview(req, res) {
+  try {
+    const data = await macroIntel.getMacroOverview();
+    res.writeHead(200);
+    res.end(JSON.stringify({ success: true, ...data }));
+  } catch (err) {
+    console.error('Macro overview error:', err);
+    res.writeHead(500);
+    res.end(JSON.stringify({ success: false, error: err.message }));
+  }
+}
+
+async function getSentiment(req, res) {
+  try {
+    const sentiment = await macroIntel.getSentiment();
+    res.writeHead(200);
+    res.end(JSON.stringify({ success: true, timestamp: Date.now(), ...sentiment }));
+  } catch (err) {
+    console.error('Sentiment error:', err);
+    res.writeHead(500);
+    res.end(JSON.stringify({ success: false, error: err.message }));
+  }
+}
+
+async function getFullAnalysis(req, res) {
+  try {
+    const [ecosystemData, airdropData, macroData] = await Promise.all([
+      ecosystemIntel.getEcosystemOverview(),
+      airdropTracker.getAllAirdrops(),
+      macroIntel.getMacroOverview()
+    ]);
+    
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      success: true,
+      timestamp: Date.now(),
+      ecosystem: ecosystemData,
+      airdrops: airdropData,
+      macro: macroData
+    }));
+  } catch (err) {
+    console.error('Full analysis error:', err);
+    res.writeHead(500);
+    res.end(JSON.stringify({ success: false, error: err.message }));
+  }
+}
+
 // Start server
 const server = http.createServer(handleRequest);
 
@@ -773,12 +941,13 @@ server.listen(PORT, () => {
   POST http://localhost:${PORT}/api/chat             - Chat with AI
   GET  http://localhost:${PORT}/api/trending         - Trending tokens
 
-🧠 Refined Research (Institutional Signals):
-  GET  http://localhost:${PORT}/api/research/signals - Get signals by type
-  POST http://localhost:${PORT}/api/research/scan    - Scan all markets
-  GET  http://localhost:${PORT}/api/research/signal/:protocol - Protocol detail
-  GET  http://localhost:${PORT}/api/research/regime  - Market regime
-  GET  http://localhost:${PORT}/api/research/history - Analysis history
+🧠 On-Chain Analyst:
+  GET  http://localhost:${PORT}/api/analyst/ecosystem   - Ecosystem overview
+  GET  http://localhost:${PORT}/api/analyst/narratives  - Trending narratives
+  GET  http://localhost:${PORT}/api/analyst/narrative/:key - Narrative deep dive
+  GET  http://localhost:${PORT}/api/analyst/airdrops    - Airdrop opportunities
+  GET  http://localhost:${PORT}/api/analyst/macro       - Macro overview
+  GET  http://localhost:${PORT}/api/analyst/full        - Full analysis
 
 🎯 Alpha Detection:
   POST http://localhost:${PORT}/api/agents/alpha     - Scan DeFi for alpha

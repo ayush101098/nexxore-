@@ -1,0 +1,2994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Info Edge - Research Intelligence | nexxore</title>
+  <meta name="description" content="Real-time crypto research, sentiment analysis, and alpha signals powered by autonomous agents.">
+  
+  <!-- Google Fonts: Space Grotesk, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Web3 Libraries -->
+  <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+  
+  <style>
+    :root {
+      --font-heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --bg-primary: #0A0E27;
+      --bg-secondary: #0F172A;
+      --accent-cyan: #0EA5E9;
+      --accent-purple: #8B5CF6;
+      --text-primary: #F8FAFC;
+      --text-secondary: #CBD5E1;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+      color: var(--text-secondary);
+      min-height: 100vh;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 32px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+    }
+
+    .btn {
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #00d4ff, #0099ff);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+    }
+
+    .btn-primary.connected {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+    }
+
+    .back-link {
+      color: #00d4ff;
+      text-decoration: none;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.3s;
+    }
+
+    .back-link:hover {
+      opacity: 0.7;
+    }
+
+    .header-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #00d4ff, #0099ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-subtitle {
+      display: none;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      padding: 28px 40px;
+      max-width: 1920px;
+      margin: 0 auto;
+      min-height: calc(100vh - 90px);
+    }
+
+    .panels-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      width: 100%;
+    }
+
+    .chat-row {
+      width: 100%;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
+    }
+
+    .panel:hover {
+      border-color: rgba(0, 212, 255, 0.15);
+      box-shadow: 0 8px 32px rgba(0, 212, 255, 0.08);
+    }
+
+    .panel.scanner-panel {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%);
+      border-color: rgba(0, 212, 255, 0.12);
+    }
+
+    .panel.chat-panel {
+      min-height: 400px;
+    }
+
+    .panel.data-panel {
+      min-height: 480px;
+      max-height: 520px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-title-icon {
+      font-size: 1.3rem;
+    }
+
+    .panel-title-text {
+      background: linear-gradient(135deg, #00d4ff, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-family: var(--font-heading);
+    }
+
+    .panel-badge {
+      font-size: 0.8rem;
+      padding: 6px 14px;
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(139, 92, 246, 0.15));
+      border-radius: 20px;
+      color: #00d4ff;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+    }
+
+    /* Scrollable Content Area */
+    .scrollable-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 8px;
+      margin-right: -8px;
+      scroll-behavior: smooth;
+    }
+
+    .scrollable-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .scrollable-content::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+    }
+
+    .scrollable-content::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(0, 212, 255, 0.4), rgba(139, 92, 246, 0.4));
+      border-radius: 10px;
+    }
+
+    .scrollable-content::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, rgba(0, 212, 255, 0.6), rgba(139, 92, 246, 0.6));
+    }
+
+    /* News Panel */
+    .news-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .news-item {
+      background: rgba(255, 255, 255, 0.02);
+      padding: 16px 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .news-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, #00d4ff, #8b5cf6);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .news-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(0, 212, 255, 0.2);
+      transform: translateX(6px);
+    }
+
+    .news-item:hover::before {
+      opacity: 1;
+    }
+
+    .news-source {
+      font-size: 0.7rem;
+      color: #00d4ff;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .news-source::before {
+      content: '●';
+      font-size: 0.5rem;
+      color: #22c55e;
+      animation: pulse 2s infinite;
+    }
+
+    .news-title {
+      font-size: 0.92rem;
+      font-weight: 500;
+      margin-bottom: 10px;
+      line-height: 1.5;
+      color: #f1f5f9;
+    }
+
+    .news-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .news-sentiment {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .sentiment-bullish {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+
+    .sentiment-bearish {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .sentiment-neutral {
+      background: rgba(156, 163, 175, 0.2);
+      color: #9ca3af;
+    }
+
+    /* Chat Panel */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding-right: 10px;
+      min-height: 250px;
+      scroll-behavior: smooth;
+    }
+
+    .chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(147, 51, 234, 0.4), rgba(0, 212, 255, 0.4));
+      border-radius: 10px;
+    }
+
+    .message {
+      padding: 14px 18px;
+      border-radius: 16px;
+      max-width: 80%;
+      line-height: 1.6;
+      font-size: 0.92rem;
+      animation: messageSlide 0.3s ease;
+    }
+
+    @keyframes messageSlide {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.user {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(0, 212, 255, 0.08));
+      border: 1px solid rgba(0, 212, 255, 0.25);
+      align-self: flex-end;
+      margin-left: auto;
+      border-radius: 16px 16px 4px 16px;
+    }
+
+    .message.ai {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(147, 51, 234, 0.08));
+      border: 1px solid rgba(147, 51, 234, 0.25);
+      align-self: flex-start;
+      border-radius: 16px 16px 16px 4px;
+    }
+
+    .message.ai strong {
+      color: #a78bfa;
+      font-weight: 600;
+    }
+
+    .chat-input-container {
+      display: flex;
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      flex-shrink: 0;
+    }
+
+    .chat-input {
+      flex: 1;
+      padding: 14px 20px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      color: #f1f5f9;
+      font-size: 0.95rem;
+      font-family: var(--font-body);
+      transition: all 0.3s ease;
+    }
+
+    .chat-input::placeholder {
+      color: #64748b;
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: rgba(0, 212, 255, 0.4);
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
+    }
+
+    .chat-send {
+      padding: 14px 28px;
+      background: linear-gradient(135deg, #00d4ff, #8b5cf6);
+      border: none;
+      border-radius: 14px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 212, 255, 0.2);
+    }
+
+    .chat-send:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 212, 255, 0.3);
+    }
+
+    .chat-send:active {
+      transform: translateY(0);
+    }
+
+    /* Trending Panel */
+    .trending-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .trending-item {
+      background: rgba(255, 255, 255, 0.02);
+      padding: 16px 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .trending-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(139, 92, 246, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.1);
+    }
+
+    .trending-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .trending-symbol {
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-family: var(--font-heading);
+      background: linear-gradient(135deg, #00d4ff, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .trending-rank {
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: #fbbf24;
+      background: rgba(251, 191, 36, 0.1);
+      padding: 4px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(251, 191, 36, 0.2);
+    }
+
+    .trending-name {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-bottom: 12px;
+      font-weight: 400;
+    }
+
+    .trending-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 0.8rem;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .stat-item {
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-value {
+      color: #e2e8f0;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: #64748b;
+      font-size: 0.95rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .loading::before {
+      content: '';
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(0, 212, 255, 0.15);
+      border-top-color: #00d4ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin: 10px 0;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .error::before {
+      content: '⚠️';
+    }
+
+    /* Alpha Scanner Styles */
+    .scanner-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .scanner-controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .scanner-btn {
+      padding: 10px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      color: #94a3b8;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: var(--font-body);
+    }
+
+    .scanner-btn:hover {
+      background: rgba(0, 212, 255, 0.08);
+      border-color: rgba(0, 212, 255, 0.25);
+      color: #00d4ff;
+      transform: translateY(-1px);
+    }
+
+    .scanner-btn.active {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(139, 92, 246, 0.15));
+      border-color: #00d4ff;
+      color: #00d4ff;
+      box-shadow: 0 4px 15px rgba(0, 212, 255, 0.15);
+    }
+
+    .scanner-btn.refresh-btn {
+      background: rgba(34, 197, 94, 0.08);
+      border-color: rgba(34, 197, 94, 0.25);
+      color: #22c55e;
+    }
+
+    .scanner-btn.refresh-btn:hover {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+    }
+
+    .signal-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 18px;
+      padding: 22px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .signal-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #00d4ff, #8b5cf6, #00d4ff);
+      background-size: 200% 100%;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .signal-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(0, 212, 255, 0.2);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .signal-card:hover::before {
+      opacity: 1;
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .signal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .signal-type-badge {
+      font-size: 0.72rem;
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-family: var(--font-mono);
+    }
+
+    .signal-type-badge.oi_divergence {
+      background: rgba(139, 92, 246, 0.15);
+      color: #a78bfa;
+      border: 1px solid rgba(139, 92, 246, 0.25);
+    }
+
+    .signal-type-badge.tvl_lag {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.25);
+    }
+
+    .signal-type-badge.funding_divergence {
+      background: rgba(251, 191, 36, 0.15);
+      color: #fcd34d;
+      border: 1px solid rgba(251, 191, 36, 0.25);
+    }
+    
+    /* New positioning-based trade types */
+    .signal-type-badge.fade_trade {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    
+    .signal-type-badge.squeeze_setup {
+      background: rgba(14, 165, 233, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(14, 165, 233, 0.25);
+    }
+    
+    .signal-type-badge.vol_expansion {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.25);
+    }
+    
+    /* DeFi Yield signal types */
+    .signal-type-badge.yield_spike {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    
+    .signal-type-badge.yield_opportunity {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    
+    .signal-type-badge.tvl_inflow_lead {
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+    }
+    
+    .signal-type-badge.fundamental_lead {
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+    }
+    
+    /* Dev/Narrative Lead signal types */
+    .signal-type-badge.dev_activity_lead {
+      background: rgba(14, 165, 233, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(14, 165, 233, 0.25);
+    }
+    
+    .signal-type-badge.narrative_lead {
+      background: rgba(236, 72, 153, 0.15);
+      color: #f472b6;
+      border: 1px solid rgba(236, 72, 153, 0.25);
+    }
+    
+    .signal-type-badge.accumulation {
+      background: rgba(14, 165, 233, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(14, 165, 233, 0.25);
+    }
+    
+    .signal-type-badge.narrative_momentum {
+      background: rgba(236, 72, 153, 0.15);
+      color: #f472b6;
+      border: 1px solid rgba(236, 72, 153, 0.25);
+    }
+    
+    /* Conviction indicator */
+    .conviction-badge {
+      font-size: 0.65rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 6px;
+    }
+    
+    .conviction-badge.high {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
+    
+    .conviction-badge.medium {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fcd34d;
+    }
+    
+    .conviction-badge.low {
+      background: rgba(148, 163, 184, 0.2);
+      color: #94a3b8;
+    }
+
+    .signal-asset {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-top: 8px;
+    }
+
+    .confidence-meter {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
+    .confidence-bar {
+      width: 70px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    .confidence-fill.high { background: linear-gradient(90deg, #22c55e, #4ade80); }
+    .confidence-fill.medium { background: linear-gradient(90deg, #fbbf24, #fcd34d); }
+    .confidence-fill.low { background: linear-gradient(90deg, #64748b, #94a3b8); }
+
+    .confidence-score {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .signal-context {
+      font-size: 0.88rem;
+      color: #94a3b8;
+      line-height: 1.7;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 12px;
+      border-left: 4px solid rgba(0, 212, 255, 0.4);
+    }
+
+    .signal-section {
+      margin-bottom: 14px;
+    }
+
+    .signal-section-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #00d4ff;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+      font-family: var(--font-heading);
+    }
+
+    .signal-section-content {
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    .trade-expression {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(34, 197, 94, 0.04));
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 14px 0;
+    }
+
+    .trade-expression .signal-section-title {
+      color: #4ade80;
+    }
+
+    .trade-expression .signal-section-content {
+      font-family: var(--font-mono);
+      color: #4ade80;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .signal-meta {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .meta-label {
+      font-size: 0.7rem;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+    }
+
+    .meta-value {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      font-family: var(--font-mono);
+    }
+
+    .meta-value.risk { color: #f87171; }
+    .meta-value.invalidation { color: #fbbf24; }
+
+    .signal-expand-btn {
+      width: 100%;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 10px;
+      color: #475569;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 14px;
+      font-weight: 500;
+    }
+
+    .signal-expand-btn:hover {
+      background: rgba(0, 212, 255, 0.06);
+      border-color: rgba(0, 212, 255, 0.15);
+      color: #00d4ff;
+    }
+
+    .signal-details {
+      display: none;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .signal-details.expanded {
+      display: block;
+    }
+
+    .no-signals {
+      text-align: center;
+      padding: 60px 30px;
+      color: #475569;
+      grid-column: 1 / -1;
+    }
+
+    .no-signals-icon {
+      font-size: 3.5rem;
+      margin-bottom: 16px;
+      opacity: 0.4;
+    }
+
+    .no-signals p {
+      margin: 0;
+    }
+
+    .no-signals p:first-of-type {
+      font-size: 1.1rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    /* Data Freshness Indicator */
+    .data-freshness {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      margin-top: 16px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 0.8rem;
+      color: #64748b;
+      flex-shrink: 0;
+    }
+
+    .freshness-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #64748b;
+      transition: background 0.3s;
+    }
+
+    .freshness-dot.live {
+      background: #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+      animation: pulse 2s infinite;
+    }
+
+    .freshness-dot.stale {
+      background: #fbbf24;
+    }
+
+    .freshness-dot.error {
+      background: #ef4444;
+    }
+
+    .freshness-text {
+      flex: 1;
+    }
+
+    .freshness-countdown {
+      font-family: var(--font-mono);
+      color: #475569;
+      font-size: 0.75rem;
+    }
+
+    .data-source-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.65rem;
+      padding: 3px 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      color: #475569;
+      margin-left: 8px;
+    }
+
+    .data-source-badge.live {
+      background: rgba(34, 197, 94, 0.1);
+      color: #22c55e;
+    }
+
+    @media (max-width: 1400px) {
+      .panels-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .panels-row .panel:last-child {
+        grid-column: 1 / -1;
+      }
+      .container {
+        padding: 24px 28px;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .panels-row {
+        grid-template-columns: 1fr;
+      }
+      .alpha-signals-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .scanner-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 16px;
+        gap: 16px;
+      }
+      .header {
+        padding: 14px 16px;
+      }
+      .header-title {
+        font-size: 1.2rem;
+      }
+      .signal-meta {
+        grid-template-columns: 1fr;
+      }
+      .panel {
+        padding: 18px;
+        border-radius: 16px;
+      }
+      .panel.data-panel {
+        min-height: 400px;
+        max-height: 450px;
+      }
+    }
+
+    /* Insights specific styles */
+    .insights-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .insight-item {
+      background: rgba(255, 255, 255, 0.02);
+      padding: 18px 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .insight-item::after {
+      content: '';
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 60%;
+      background: linear-gradient(180deg, #00d4ff, #8b5cf6);
+      border-radius: 2px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .insight-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(0, 212, 255, 0.2);
+      transform: translateX(4px);
+    }
+
+    .insight-item:hover::after {
+      opacity: 1;
+    }
+
+    .insight-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .insight-protocol {
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-family: var(--font-heading);
+      background: linear-gradient(135deg, #00d4ff, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .insight-confidence {
+      font-size: 0.8rem;
+      padding: 5px 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+
+    .confidence-high {
+      background: rgba(34, 197, 94, 0.12);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .confidence-medium {
+      background: rgba(251, 191, 36, 0.12);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.2);
+    }
+
+    .confidence-low {
+      background: rgba(156, 163, 175, 0.12);
+      color: #9ca3af;
+      border: 1px solid rgba(156, 163, 175, 0.2);
+    }
+
+    .insight-summary {
+      font-size: 0.88rem;
+      color: #94a3b8;
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+
+    .insight-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      font-size: 0.8rem;
+    }
+
+    .metric-item {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 10px 14px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .metric-label {
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .metric-value {
+      color: #e2e8f0;
+      font-weight: 600;
+      font-family: var(--font-mono);
+    }
+
+    .metric-value.positive {
+      color: #4ade80;
+    }
+
+    .metric-value.negative {
+      color: #f87171;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <div>
+        <span class="header-title">Info Edge</span>
+        <span class="header-subtitle">Research Intelligence Dashboard</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <!-- Live Data Status -->
+      <div id="liveDataStatus" style="display: flex; align-items: center; gap: 8px; margin-right: 20px; padding: 8px 16px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; font-size: 0.85rem;">
+        <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite;"></span>
+        <span style="color: #22c55e; font-weight: 600;">🤖 Live Data</span>
+      </div>
+      <div id="portfolioHealth" style="display: none; margin-right: 20px; padding: 8px 16px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; font-size: 0.9rem;">
+        <span style="color: #9ca3af;">Health Score:</span>
+        <span id="healthScore" style="color: #22c55e; font-weight: 600; margin-left: 8px;">--</span>
+      </div>
+      <button id="connectWalletBtn" class="btn btn-primary" style="padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #00d4ff, #0099ff); color: white; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+        Connect Wallet
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Alpha Scanner Panel - Full Width -->
+    <div class="panel scanner-panel">
+      <div class="panel-header">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div class="panel-title">
+            <span class="panel-title-icon">🎯</span>
+            <span class="panel-title-text">Alpha Scanner</span>
+          </div>
+          <div class="panel-badge" id="signalCount">0 signals</div>
+        </div>
+        <div class="scanner-controls">
+          <button class="scanner-btn active" data-type="all" onclick="filterSignals('all')">All</button>
+          <button class="scanner-btn" data-type="yield" onclick="filterSignals('yield')">💰 Yield</button>
+          <button class="scanner-btn" data-type="dev" onclick="filterSignals('dev')">🔧 Dev</button>
+          <button class="scanner-btn" data-type="narrative" onclick="filterSignals('narrative')">📢 Narrative</button>
+          <button class="scanner-btn" data-type="fade_trade" onclick="filterSignals('fade_trade')">Fade</button>
+          <button class="scanner-btn" data-type="squeeze_setup" onclick="filterSignals('squeeze_setup')">Squeeze</button>
+          <button class="scanner-btn" data-type="vol_expansion" onclick="filterSignals('vol_expansion')">Vol</button>
+          <button class="scanner-btn" data-type="tvl_lag" onclick="filterSignals('tvl_lag')">TVL</button>
+          <button class="scanner-btn refresh-btn" onclick="runAlphaScan(true)">↻ Refresh</button>
+        </div>
+      </div>
+      <div class="scrollable-content" style="max-height: 520px;">
+        <div id="alphaSignals" class="alpha-signals-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 20px;">
+          <div class="loading">Scanning for alpha signals...</div>
+        </div>
+      </div>
+      <!-- Data Freshness Indicator -->
+      <div class="data-freshness" id="scannerFreshness">
+        <span class="freshness-dot"></span>
+        <span class="freshness-text">Initializing...</span>
+        <span class="freshness-countdown" id="refreshCountdown"></span>
+      </div>
+    </div>
+
+    <!-- Three Column Data Panels -->
+    <div class="panels-row">
+      <!-- Research Insights Panel -->
+      <div class="panel data-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span class="panel-title-icon">📊</span>
+            <span class="panel-title-text">Protocol Insights</span>
+          </div>
+          <div class="panel-badge" id="insightsCount">0</div>
+        </div>
+        <div class="scrollable-content">
+          <div class="insights-list" id="insightsList">
+            <div class="loading">Analyzing protocols...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- News Panel -->
+      <div class="panel data-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span class="panel-title-icon">📰</span>
+            <span class="panel-title-text">Latest News</span>
+          </div>
+          <div class="panel-badge" id="newsCount">0</div>
+        </div>
+        <div class="scrollable-content">
+          <div class="news-list" id="newsList">
+            <div class="loading">Loading news...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trending Panel -->
+      <div class="panel data-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span class="panel-title-icon">🔥</span>
+            <span class="panel-title-text">Trending</span>
+          </div>
+          <div class="panel-badge" id="trendingCount">0</div>
+        </div>
+        <div class="scrollable-content">
+          <div class="trending-list" id="trendingList">
+            <div class="loading">Loading trending tokens...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Panel - Full Width -->
+    <div class="chat-row">
+      <div class="panel chat-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span class="panel-title-icon">💬</span>
+            <span class="panel-title-text">AI Research Assistant</span>
+          </div>
+          <div class="panel-badge" style="background: rgba(34, 197, 94, 0.15); color: #22c55e; border-color: rgba(34, 197, 94, 0.2);">Online</div>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="message ai">
+            <strong>Info Edge:</strong> Hello! I'm your research agent. Ask me about crypto trends, tokens, or market sentiment. I have access to real-time news and data.
+          </div>
+        </div>
+        <div class="chat-input-container">
+          <input type="text" class="chat-input" id="chatInput" placeholder="Ask about crypto trends, sentiment, or specific tokens..." />
+          <button class="chat-send" id="chatSend">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Use relative path for API in production, localhost in development
+    const API_BASE = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000/api' 
+      : '/api';
+    
+    // Research Bot API (local Python server)
+    const RESEARCH_BOT_API = 'http://localhost:8081';
+    
+    console.log('🚀 Research Dashboard Initialized');
+    console.log('📡 API Base URL:', API_BASE);
+    console.log('🤖 Research Bot API:', RESEARCH_BOT_API);
+
+    // ====== LIVE DATA FROM RESEARCH BOT ======
+    async function loadLiveMarketData() {
+      console.log('📊 Loading live market data from Research Bot...');
+      const statusEl = document.getElementById('liveDataStatus');
+      
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout for local bot
+        
+        const response = await fetch(`${RESEARCH_BOT_API}/api/all`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) throw new Error('Research Bot API unavailable');
+        
+        const data = await response.json();
+        console.log('✅ Research Bot data:', data);
+        
+        // Update status indicator
+        if (statusEl) {
+          statusEl.style.background = 'rgba(34, 197, 94, 0.1)';
+          statusEl.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+          statusEl.innerHTML = `
+            <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite;"></span>
+            <span style="color: #22c55e; font-weight: 600;">🤖 Live</span>
+            <span style="color: #64748b; font-size: 0.75rem;">${new Date().toLocaleTimeString()}</span>
+          `;
+        }
+        
+        // Update Protocol Insights with on-chain TVL data
+        if (data.onchain_data && data.onchain_data.data) {
+          updateProtocolInsights(data.onchain_data.data, data.sentiment);
+        }
+        
+        // Update News Panel with ONLY trending coins (not gainers/losers)
+        if (data.news_data && data.news_data.data) {
+          const trendingOnly = data.news_data.data.filter(item => item.source === 'CoinGecko Trending');
+          updateLiveNews(trendingOnly);
+        }
+        
+        // Update Trending Panel with top movers (gainers & losers)
+        if (data.news_data && data.news_data.data && data.market_data && data.market_data.data) {
+          const movers = data.news_data.data.filter(item => item.source === 'Binance 24h');
+          updateLiveTrending(movers, data.market_data.data, data.futures_data?.data || []);
+        }
+        
+        // Update Alpha Scanner with signals from market analysis
+        if (data.market_data && data.market_data.data) {
+          generateAlphaSignals(data.market_data.data, data.futures_data?.data || [], data.sentiment, data.news_data?.data || []);
+        }
+        
+        return data;
+      } catch (error) {
+        console.warn('⚠️ Research Bot unavailable:', error.message);
+        
+        // Update status indicator to show offline
+        if (statusEl) {
+          statusEl.style.background = 'rgba(239, 68, 68, 0.1)';
+          statusEl.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+          statusEl.innerHTML = `
+            <span style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></span>
+            <span style="color: #ef4444; font-weight: 600;">⚠️ Offline</span>
+          `;
+        }
+        
+        return null;
+      }
+    }
+
+    // Protocol Insights - Show TVL data by chain
+    function updateProtocolInsights(onchainData, sentiment) {
+      const insightsList = document.getElementById('insightsList');
+      const insightsCount = document.getElementById('insightsCount');
+      
+      const insights = [];
+      
+      // Add Fear & Greed sentiment first
+      if (sentiment) {
+        const fgValue = sentiment.fear_greed_value;
+        const fgColor = fgValue <= 25 ? '#ef4444' : fgValue >= 75 ? '#22c55e' : '#fbbf24';
+        insights.push(`
+          <div class="insight-item" style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(139, 92, 246, 0.08)); border-color: rgba(0, 212, 255, 0.2);">
+            <div class="insight-header">
+              <div class="insight-protocol">😱 Market Sentiment</div>
+              <div class="insight-confidence" style="background: ${fgColor}20; color: ${fgColor}; border-color: ${fgColor}40;">
+                ${sentiment.fear_greed_label}
+              </div>
+            </div>
+            <div class="insight-summary">Fear & Greed Index indicates ${fgValue <= 30 ? 'extreme fear - potential buying opportunity' : fgValue >= 70 ? 'extreme greed - exercise caution' : 'neutral market conditions'}</div>
+            <div class="insight-metrics">
+              <div class="metric-item">
+                <span class="metric-label">Index</span>
+                <span class="metric-value" style="color: ${fgColor}">${fgValue}/100</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">Signal</span>
+                <span class="metric-value">${fgValue <= 30 ? '🟢 BUY' : fgValue >= 70 ? '🔴 SELL' : '🟡 HOLD'}</span>
+              </div>
+            </div>
+          </div>
+        `);
+      }
+      
+      // Add chain TVL data
+      onchainData.forEach(chain => {
+        const tvlB = (chain.tvl / 1e9).toFixed(2);
+        const changeColor = chain.tvl_change_24h >= 0 ? '#4ade80' : '#f87171';
+        insights.push(`
+          <div class="insight-item">
+            <div class="insight-header">
+              <div class="insight-protocol">⛓️ ${chain.chain}</div>
+              <div class="insight-confidence confidence-high">TVL</div>
+            </div>
+            <div class="insight-summary">Total Value Locked across ${chain.chain} ecosystem</div>
+            <div class="insight-metrics">
+              <div class="metric-item">
+                <span class="metric-label">TVL</span>
+                <span class="metric-value">$${tvlB}B</span>
+              </div>
+              <div class="metric-item">
+                <span class="metric-label">24h</span>
+                <span class="metric-value" style="color: ${changeColor}">${chain.tvl_change_24h >= 0 ? '+' : ''}${chain.tvl_change_24h.toFixed(2)}%</span>
+              </div>
+            </div>
+          </div>
+        `);
+      });
+      
+      insightsList.innerHTML = insights.join('');
+      insightsCount.textContent = insights.length;
+    }
+
+    // News Panel - Show ONLY trending tokens from CoinGecko
+    function updateLiveNews(trendingData) {
+      const newsList = document.getElementById('newsList');
+      const newsCount = document.getElementById('newsCount');
+      
+      if (trendingData.length === 0) {
+        newsList.innerHTML = '<div class="loading">No trending data available</div>';
+        return;
+      }
+      
+      const newsHtml = trendingData.map(item => `
+        <div class="news-item" onclick="window.open('${item.url}', '_blank')">
+          <div class="news-source">🔥 ${item.source}</div>
+          <div class="news-title">${item.title}</div>
+          <div class="news-meta">
+            <span class="news-sentiment sentiment-bullish">TRENDING</span>
+            ${item.currencies && item.currencies.length > 0 ? 
+              `<span style="color: #00d4ff; font-size: 0.8rem; font-weight: 600;">${item.currencies.join(', ')}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+      
+      newsList.innerHTML = newsHtml;
+      newsCount.textContent = trendingData.length;
+    }
+
+    // Trending Panel - Show top gainers and losers
+    function updateLiveTrending(moversData, marketData, futuresData) {
+      const trendingList = document.getElementById('trendingList');
+      const trendingCount = document.getElementById('trendingCount');
+      
+      // Get futures data lookup
+      const futuresLookup = {};
+      futuresData.forEach(f => { futuresLookup[f.symbol] = f; });
+      
+      // Get market data lookup for prices
+      const marketLookup = {};
+      marketData.forEach(m => { marketLookup[m.symbol.replace('USDT', '')] = m; });
+      
+      const trendingHtml = moversData.map((item, index) => {
+        const symbol = item.currencies[0] || '';
+        const market = marketLookup[symbol];
+        const isBullish = item.sentiment === 'bullish';
+        const emoji = isBullish ? '🚀' : '📉';
+        const color = isBullish ? '#4ade80' : '#f87171';
+        
+        return `
+          <div class="trending-item" onclick="window.open('${item.url}', '_blank')" style="cursor: pointer; border-left: 3px solid ${color};">
+            <div class="trending-header">
+              <div class="trending-symbol">${emoji} ${symbol}</div>
+              <div class="trending-rank" style="background: ${color}20; color: ${color}; border-color: ${color}40;">${isBullish ? 'GAINER' : 'LOSER'}</div>
+            </div>
+            <div class="trending-name" style="color: ${color};">${item.title.match(/[+-]?\d+\.?\d*%/)?.[0] || ''}</div>
+            <div class="trending-stats">
+              ${market ? `<div class="stat-item">Price: <span class="stat-value">$${market.price.toLocaleString()}</span></div>` : ''}
+              ${market ? `<div class="stat-item">Vol: <span class="stat-value">$${(market.volume_24h / 1e6).toFixed(1)}M</span></div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      trendingList.innerHTML = trendingHtml;
+      trendingCount.textContent = moversData.length;
+    }
+
+    // Alpha Scanner - Generate signals from market data
+    function generateAlphaSignals(marketData, futuresData, sentiment, newsData) {
+      const container = document.getElementById('alphaSignals');
+      const countBadge = document.getElementById('signalCount');
+      
+      const futuresLookup = {};
+      futuresData.forEach(f => { futuresLookup[f.symbol] = f; });
+      
+      const fg = sentiment?.fear_greed_value || 50;
+      const signals = [];
+      
+      // Find trending coins
+      const trendingCoins = new Set(
+        newsData
+          .filter(n => n.source === 'CoinGecko Trending')
+          .flatMap(n => n.currencies || [])
+      );
+      
+      marketData.forEach(coin => {
+        const symbol = coin.symbol.replace('USDT', '');
+        const futures = futuresLookup[coin.symbol];
+        const factors = [];
+        let score = 50;
+        let signalType = 'momentum';
+        
+        // Factor 1: Strong price movement
+        if (coin.change_24h > 5) {
+          factors.push(`🚀 Strong pump +${coin.change_24h.toFixed(1)}%`);
+          score += 20;
+          signalType = 'momentum';
+        } else if (coin.change_24h < -5) {
+          factors.push(`📉 Major dump ${coin.change_24h.toFixed(1)}%`);
+          score -= 15;
+          signalType = 'fade_trade';
+        }
+        
+        // Factor 2: Trending on CoinGecko
+        if (trendingCoins.has(symbol)) {
+          factors.push('🔥 Trending on CoinGecko');
+          score += 10;
+          signalType = 'narrative_momentum';
+        }
+        
+        // Factor 3: Fear/Greed contrarian
+        if (fg < 25 && coin.change_24h < -3) {
+          factors.push(`😱 Extreme fear (${fg}) - contrarian opportunity`);
+          score += 15;
+          signalType = 'accumulation';
+        } else if (fg > 75 && coin.change_24h > 5) {
+          factors.push(`🤑 Extreme greed (${fg}) - risk of reversal`);
+          score -= 10;
+          signalType = 'fade_trade';
+        }
+        
+        // Factor 4: Funding rate divergence
+        if (futures) {
+          if (futures.funding_rate > 0.05) {
+            factors.push(`💰 High funding ${(futures.funding_rate * 100).toFixed(3)}% - crowded long`);
+            score -= 8;
+            signalType = 'funding_divergence';
+          } else if (futures.funding_rate < -0.02) {
+            factors.push(`💰 Negative funding ${(futures.funding_rate * 100).toFixed(3)}% - shorts paying`);
+            score += 8;
+            signalType = 'squeeze_setup';
+          }
+          
+          // Long/short ratio
+          if (futures.long_short_ratio > 2.5) {
+            factors.push(`📊 Crowded long L/S: ${futures.long_short_ratio.toFixed(2)}`);
+            score -= 5;
+          } else if (futures.long_short_ratio < 0.8) {
+            factors.push(`📊 Crowded short L/S: ${futures.long_short_ratio.toFixed(2)}`);
+            score += 5;
+          }
+        }
+        
+        // Factor 5: High volume
+        if (coin.volume_24h > 500e6) {
+          factors.push(`📈 High volume $${(coin.volume_24h / 1e9).toFixed(2)}B`);
+          score += 5;
+        }
+        
+        // Only create signal if there are meaningful factors
+        if (factors.length >= 2 && Math.abs(score - 50) >= 10) {
+          const direction = score > 55 ? 'LONG' : score < 45 ? 'SHORT' : 'WATCH';
+          const confidence = Math.min(Math.abs(score - 50) * 2, 90);
+          const atr = (coin.high_24h - coin.low_24h) / coin.price;
+          
+          signals.push({
+            symbol: symbol,
+            direction: direction,
+            confidence: confidence,
+            signalType: signalType,
+            price: coin.price,
+            change24h: coin.change_24h,
+            entry: coin.price,
+            stopLoss: direction === 'LONG' ? coin.price * (1 - atr * 1.5) : coin.price * (1 + atr * 1.5),
+            target: direction === 'LONG' ? coin.price * (1 + atr * 2) : coin.price * (1 - atr * 2),
+            factors: factors,
+            riskReward: (atr * 2) / (atr * 1.5),
+            volume: coin.volume_24h
+          });
+        }
+      });
+      
+      // Sort by confidence
+      signals.sort((a, b) => b.confidence - a.confidence);
+      
+      if (signals.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: #64748b;">
+            <div style="font-size: 2rem; margin-bottom: 10px;">🔍</div>
+            <div>No high-confidence signals at this time</div>
+            <div style="font-size: 0.8rem; margin-top: 5px;">Market conditions are relatively neutral</div>
+          </div>
+        `;
+        countBadge.innerHTML = '0 signals';
+        return;
+      }
+      
+      // Render signals
+      const signalsHtml = signals.slice(0, 6).map(signal => {
+        const dirColor = signal.direction === 'LONG' ? '#22c55e' : signal.direction === 'SHORT' ? '#ef4444' : '#fbbf24';
+        const confidenceClass = signal.confidence >= 70 ? 'high' : signal.confidence >= 50 ? 'medium' : 'low';
+        
+        return `
+          <div class="signal-card">
+            <div class="signal-header">
+              <div>
+                <span class="signal-type-badge ${signal.signalType}">${signal.signalType.replace('_', ' ')}</span>
+                <span class="conviction-badge" style="margin-left: 8px; background: ${dirColor}20; color: ${dirColor};">${signal.direction}</span>
+              </div>
+              <div class="signal-confidence confidence-${confidenceClass}">${signal.confidence.toFixed(0)}%</div>
+            </div>
+            <div class="signal-symbol">${signal.symbol}</div>
+            <div class="signal-price">$${signal.price.toLocaleString()}</div>
+            <div class="signal-change" style="color: ${signal.change24h >= 0 ? '#4ade80' : '#f87171'}">
+              ${signal.change24h >= 0 ? '+' : ''}${signal.change24h.toFixed(2)}% (24h)
+            </div>
+            <div class="signal-meta">
+              <div class="signal-meta-item">
+                <span class="meta-label">Entry</span>
+                <span class="meta-value">$${signal.entry.toLocaleString()}</span>
+              </div>
+              <div class="signal-meta-item">
+                <span class="meta-label">Stop</span>
+                <span class="meta-value" style="color: #ef4444;">$${signal.stopLoss.toFixed(2)}</span>
+              </div>
+              <div class="signal-meta-item">
+                <span class="meta-label">Target</span>
+                <span class="meta-value" style="color: #22c55e;">$${signal.target.toFixed(2)}</span>
+              </div>
+              <div class="signal-meta-item">
+                <span class="meta-label">R:R</span>
+                <span class="meta-value">${signal.riskReward.toFixed(1)}</span>
+              </div>
+            </div>
+            <div class="signal-factors">
+              ${signal.factors.map(f => `<div class="factor-item">${f}</div>`).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      container.innerHTML = signalsHtml;
+      countBadge.innerHTML = `${signals.length} signals <span class="data-source-badge live">● LIVE</span>`;
+    }
+
+    // Fetch and display research insights
+    // Chat functionality
+    async function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const messages = document.getElementById('chatMessages');
+      const message = input.value.trim();
+      
+      if (!message) return;
+      
+      // Add user message
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message user';
+      userMsg.textContent = message;
+      messages.appendChild(userMsg);
+      
+      input.value = '';
+      messages.scrollTop = messages.scrollHeight;
+      
+      // Send to AI
+      try {
+        const response = await fetch(`${API_BASE}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        
+        const data = await response.json();
+        
+        // Add AI response
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'message ai';
+        aiMsg.innerHTML = `<strong>Info Edge:</strong> ${data.response}`;
+        messages.appendChild(aiMsg);
+        
+        messages.scrollTop = messages.scrollHeight;
+      } catch (error) {
+        console.error('Error sending message:', error);
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'message ai error';
+        errorMsg.innerHTML = '<strong>Error:</strong> Failed to get response';
+        messages.appendChild(errorMsg);
+      }
+    }
+
+    // Event listeners
+    document.getElementById('chatSend').addEventListener('click', sendMessage);
+    document.getElementById('chatInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // Fallback: Load from Refined Research API
+    async function loadRefinedResearchData() {
+      console.log('🧠 Loading from Refined Research API...');
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+        
+        const response = await fetch(`${API_BASE}/research/signals?type=DIRECTIONAL_ALPHA&limit=10`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) throw new Error('Refined Research API unavailable');
+        
+        const data = await response.json();
+        console.log('✅ Refined Research data:', data);
+        
+        // Update regime banner
+        if (data.regime) {
+          const regimeColor = data.regime.state === 'RISK_ON' ? '#22c55e' : 
+                              data.regime.state === 'RISK_OFF' ? '#ef4444' : '#fbbf24';
+          document.getElementById('insightsList').innerHTML = `
+            <div class="insight-item" style="background: linear-gradient(135deg, ${regimeColor}10, ${regimeColor}05); border-color: ${regimeColor}40;">
+              <div class="insight-header">
+                <div class="insight-protocol">📊 Market Regime</div>
+                <div class="insight-confidence" style="background: ${regimeColor}20; color: ${regimeColor}; border-color: ${regimeColor}40;">
+                  ${data.regime.state.replace('_', ' ')}
+                </div>
+              </div>
+              <div class="insight-summary">${data.regime.impact || 'Market environment detected'}</div>
+              <div class="insight-metrics">
+                <div class="metric-item">
+                  <span class="metric-label">Confidence</span>
+                  <span class="metric-value">${Math.round(data.regime.confidence * 100)}%</span>
+                </div>
+              </div>
+            </div>
+            ${data.signals.map(sig => `
+              <div class="insight-item">
+                <div class="insight-header">
+                  <div class="insight-protocol">${sig.asset}</div>
+                  <div class="insight-confidence ${sig.confidenceLevel === 'HIGH' ? 'confidence-high' : sig.confidenceLevel === 'MEDIUM' ? 'confidence-medium' : 'confidence-low'}">
+                    ${sig.signal}
+                  </div>
+                </div>
+                <div class="insight-summary">${(sig.drivers && sig.drivers[0]) || 'Signal detected'}</div>
+                <div class="insight-metrics">
+                  <div class="metric-item">
+                    <span class="metric-label">Confidence</span>
+                    <span class="metric-value">${Math.round(sig.confidence * 100)}%</span>
+                  </div>
+                  <div class="metric-item">
+                    <span class="metric-label">Horizon</span>
+                    <span class="metric-value">${sig.timeHorizon || '7d'}</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          `;
+          document.getElementById('insightsCount').textContent = data.signals.length;
+        }
+        
+        // Update alpha signals
+        if (data.signals && data.signals.length > 0) {
+          renderRefinedAlphaSignals(data.signals);
+        }
+        
+        return data;
+      } catch (error) {
+        console.warn('⚠️ Refined Research API unavailable:', error.message);
+        return null;
+      }
+    }
+    
+    // Render refined alpha signals
+    function renderRefinedAlphaSignals(signals) {
+      const container = document.getElementById('alphaSignals');
+      const countBadge = document.getElementById('signalCount');
+      
+      if (!signals || signals.length === 0) {
+        container.innerHTML = '<div class="no-signals">No signals available</div>';
+        countBadge.innerHTML = '0 signals';
+        return;
+      }
+      
+      countBadge.innerHTML = `${signals.length} signals <span class="data-source-badge live">● LIVE</span>`;
+      
+      container.innerHTML = signals.map(signal => {
+        const confidenceColor = signal.confidenceLevel === 'HIGH' ? '#22c55e' : 
+                               signal.confidenceLevel === 'MEDIUM' ? '#fbbf24' : '#ef4444';
+        const signalColor = signal.signal.includes('LONG') ? '#22c55e' : 
+                           signal.signal.includes('SHORT') ? '#ef4444' : '#64748b';
+        
+        return `
+          <div class="signal-card" style="border-left: 3px solid ${signalColor};">
+            <div class="signal-header">
+              <div class="signal-asset">${signal.asset}</div>
+              <div class="signal-confidence" style="color: ${confidenceColor}">
+                ${Math.round(signal.confidence * 100)}% ${signal.confidenceLevel}
+              </div>
+            </div>
+            <div class="signal-action" style="color: ${signalColor}; font-weight: 700;">
+              ${signal.signal}
+            </div>
+            <div class="signal-drivers">
+              ${(signal.drivers || []).slice(0, 2).map(d => `<div class="driver">✅ ${d}</div>`).join('')}
+            </div>
+            <div class="signal-risks">
+              ${(signal.risks || []).slice(0, 2).map(r => `<div class="risk">⚠️ ${r}</div>`).join('')}
+            </div>
+            <div class="signal-meta">
+              <span>Horizon: ${signal.timeHorizon}</span>
+              <span>Regime: ${signal.marketRegime?.state || 'N/A'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Initial load - Research Bot handles all data
+    async function initializeDashboard() {
+      console.log('🚀 Initializing Research Dashboard...');
+      console.log('📡 Research Bot API:', RESEARCH_BOT_API);
+      console.log('🌐 API Base:', API_BASE);
+      
+      // Show loading state immediately
+      document.getElementById('insightsList').innerHTML = `
+        <div class="insight-item">
+          <div class="insight-header">
+            <div class="insight-protocol">🔄 Loading...</div>
+          </div>
+          <div class="insight-summary">Fetching market data and signals...</div>
+        </div>
+      `;
+      
+      const alphaContainer = document.getElementById('alphaSignals');
+      if (alphaContainer) {
+        alphaContainer.innerHTML = '<div class="loading">Scanning markets for anomalies...</div>';
+      }
+      
+      // Start direct data fetch immediately (fastest path)
+      const directFetchPromise = runAlphaScan(true);
+      
+      // Also try Research Bot in parallel (but don't wait long)
+      let dataLoaded = false;
+      
+      try {
+        const botData = await Promise.race([
+          loadLiveMarketData(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+        ]);
+        if (botData) {
+          dataLoaded = true;
+          console.log('✅ Research Bot data loaded');
+        }
+      } catch (e) {
+        console.log('⚠️ Research Bot timeout/unavailable');
+      }
+      
+      // If bot didn't work, try refined API briefly
+      if (!dataLoaded) {
+        try {
+          const refinedData = await Promise.race([
+            loadRefinedResearchData(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+          ]);
+          if (refinedData) {
+            dataLoaded = true;
+            console.log('✅ Refined API data loaded');
+          }
+        } catch (e) {
+          console.log('⚠️ Refined API timeout/unavailable');
+        }
+      }
+      
+      // Wait for direct fetch if neither API worked
+      if (!dataLoaded) {
+        console.log('📡 Using direct CoinGecko/DeFiLlama data...');
+        
+        // Populate insights with direct market data
+        await populateDirectInsights();
+        
+        // Also run alpha scan for signals
+        await directFetchPromise;
+      }
+      
+      // Set up auto-refresh (every 60 seconds for live data)
+      setInterval(async () => {
+        console.log('🔄 Auto-refreshing data...');
+        const botData = await loadLiveMarketData();
+        if (!botData) {
+          const refinedData = await loadRefinedResearchData();
+          if (!refinedData) {
+            await populateDirectInsights();
+            await runAlphaScan(true);
+          }
+        }
+      }, 60000); // 1 minute refresh
+    }
+    
+    // Populate insights panel with direct CoinGecko data
+    async function populateDirectInsights() {
+      const insightsList = document.getElementById('insightsList');
+      const insightsCount = document.getElementById('insightsCount');
+      
+      try {
+        // Fetch Fear & Greed Index
+        let fgData = null;
+        try {
+          const fgResponse = await fetch('https://api.alternative.me/fng/?limit=1');
+          if (fgResponse.ok) {
+            const fgJson = await fgResponse.json();
+            fgData = fgJson.data?.[0];
+          }
+        } catch (e) { console.warn('Fear & Greed fetch failed'); }
+        
+        // Fetch top coins
+        const priceResponse = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,aave,uniswap&order=market_cap_desc&sparkline=false');
+        const priceData = priceResponse.ok ? await priceResponse.json() : [];
+        
+        const insights = [];
+        
+        // Fear & Greed insight
+        if (fgData) {
+          const fgValue = parseInt(fgData.value);
+          const fgColor = fgValue <= 25 ? '#ef4444' : fgValue >= 75 ? '#22c55e' : '#fbbf24';
+          insights.push(`
+            <div class="insight-item" style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(139, 92, 246, 0.08)); border-color: rgba(0, 212, 255, 0.2);">
+              <div class="insight-header">
+                <div class="insight-protocol">😱 Market Sentiment</div>
+                <div class="insight-confidence" style="background: ${fgColor}20; color: ${fgColor}; border-color: ${fgColor}40;">
+                  ${fgData.value_classification}
+                </div>
+              </div>
+              <div class="insight-summary">Fear & Greed Index at ${fgValue} - ${fgValue <= 30 ? 'potential buying opportunity' : fgValue >= 70 ? 'exercise caution' : 'neutral conditions'}</div>
+              <div class="insight-metrics">
+                <div class="metric-item">
+                  <span class="metric-label">Index</span>
+                  <span class="metric-value" style="color: ${fgColor}">${fgValue}/100</span>
+                </div>
+              </div>
+            </div>
+          `);
+        }
+        
+        // Price insights for each coin
+        for (const coin of priceData) {
+          const change = coin.price_change_percentage_24h || 0;
+          const changeColor = change >= 0 ? '#4ade80' : '#f87171';
+          insights.push(`
+            <div class="insight-item">
+              <div class="insight-header">
+                <div class="insight-protocol">💰 ${coin.name}</div>
+                <div class="insight-confidence" style="background: ${changeColor}20; color: ${changeColor}; border-color: ${changeColor}40;">
+                  ${change >= 0 ? '+' : ''}${change.toFixed(2)}%
+                </div>
+              </div>
+              <div class="insight-summary">Trading at $${coin.current_price.toLocaleString()} with $${(coin.total_volume / 1e9).toFixed(2)}B 24h volume</div>
+              <div class="insight-metrics">
+                <div class="metric-item">
+                  <span class="metric-label">Market Cap</span>
+                  <span class="metric-value">$${(coin.market_cap / 1e9).toFixed(1)}B</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Rank</span>
+                  <span class="metric-value">#${coin.market_cap_rank}</span>
+                </div>
+              </div>
+            </div>
+          `);
+        }
+        
+        insightsList.innerHTML = insights.join('');
+        insightsCount.textContent = insights.length;
+        console.log('✅ Direct insights loaded:', insights.length);
+        
+      } catch (error) {
+        console.error('❌ Failed to load direct insights:', error);
+        insightsList.innerHTML = `
+          <div class="insight-item">
+            <div class="insight-header">
+              <div class="insight-protocol">⚠️ Limited Data</div>
+            </div>
+            <div class="insight-summary">Unable to fetch market data. Check console for details.</div>
+          </div>
+        `;
+      }
+    }
+    
+    // Start initialization
+    initializeDashboard();
+
+    // ===============================
+    // ALPHA SCANNER FUNCTIONALITY
+    // ===============================
+    
+    let allAlphaSignals = [];
+    let currentFilter = 'all';
+    let lastScanTimestamp = null;
+    let scanSource = 'initializing';
+    let refreshInterval = null;
+    let countdownInterval = null;
+    const AUTO_REFRESH_MS = 2 * 60 * 1000; // 2 minutes for real-time feel
+
+    // Update freshness indicator
+    function updateFreshnessIndicator(status, message, timestamp = null) {
+      const freshness = document.getElementById('scannerFreshness');
+      const dot = freshness.querySelector('.freshness-dot');
+      const text = freshness.querySelector('.freshness-text');
+      
+      dot.className = 'freshness-dot ' + status;
+      text.innerHTML = message;
+      
+      if (timestamp) {
+        lastScanTimestamp = timestamp;
+      }
+    }
+
+    // Start countdown timer
+    function startCountdown() {
+      if (countdownInterval) clearInterval(countdownInterval);
+      
+      let secondsLeft = AUTO_REFRESH_MS / 1000;
+      const countdownEl = document.getElementById('refreshCountdown');
+      
+      countdownInterval = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft <= 0) {
+          countdownEl.textContent = 'Refreshing...';
+          return;
+        }
+        const mins = Math.floor(secondsLeft / 60);
+        const secs = secondsLeft % 60;
+        countdownEl.textContent = `Next refresh: ${mins}:${secs.toString().padStart(2, '0')}`;
+      }, 1000);
+    }
+
+    // Run alpha scan with real API
+    async function runAlphaScan(refresh = false) {
+      console.log('🎯 Running alpha scan...');
+      const container = document.getElementById('alphaSignals');
+      const countBadge = document.getElementById('signalCount');
+      
+      container.innerHTML = '<div class="loading">Scanning markets for anomalies...</div>';
+      updateFreshnessIndicator('', 'Fetching live data from CoinGecko & DeFiLlama...');
+      
+      try {
+        // Try real API first
+        const apiUrl = `${API_BASE}/research/alpha-scan${refresh ? '?refresh=true' : ''}`;
+        console.log('📡 Calling API:', apiUrl);
+        
+        const response = await fetch(apiUrl, { 
+          timeout: 15000,
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ API response:', data);
+        
+        if (data.signals && data.signals.length >= 0) {
+          allAlphaSignals = data.signals;
+          scanSource = 'live';
+          
+          const cached = data.cached ? ' (cached)' : '';
+          const timestamp = data.metadata?.timestamp || new Date().toISOString();
+          
+          countBadge.innerHTML = `${data.signals.length} signals <span class="data-source-badge live">● LIVE</span>`;
+          updateFreshnessIndicator('live', 
+            `Live data from CoinGecko & DeFiLlama${cached} • Updated ${formatTimestamp(timestamp)}`,
+            timestamp
+          );
+          
+          renderSignals(data.signals);
+          startCountdown();
+          
+          console.log('✅ Alpha scan complete (LIVE):', data.signals.length, 'signals');
+          return;
+        }
+      } catch (apiError) {
+        console.warn('⚠️ API unavailable, using real-time fallback:', apiError.message);
+      }
+      
+      // Fallback: Direct API calls to CoinGecko & DeFiLlama
+      try {
+        updateFreshnessIndicator('', 'API unavailable, fetching directly from data sources...');
+        const signals = await fetchDirectSignals();
+        
+        if (signals.length === 0) {
+          throw new Error('No actionable signals found in current market conditions');
+        }
+        
+        allAlphaSignals = signals;
+        scanSource = 'direct';
+        
+        countBadge.innerHTML = `${signals.length} signals <span class="data-source-badge live">● DIRECT</span>`;
+        updateFreshnessIndicator('live', 
+          `Direct feed from CoinGecko & DeFiLlama • Updated ${formatTimestamp(new Date().toISOString())}`,
+          new Date().toISOString()
+        );
+        
+        renderSignals(signals);
+        startCountdown();
+        
+        console.log('✅ Alpha scan complete (DIRECT):', signals.length, 'signals');
+      } catch (fallbackError) {
+        console.error('❌ All data sources failed:', fallbackError);
+        
+        // Show error state - no mock data
+        allAlphaSignals = [];
+        scanSource = 'error';
+        
+        countBadge.innerHTML = `0 signals <span class="data-source-badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">● ERROR</span>`;
+        updateFreshnessIndicator('stale', 
+          `Data fetch failed: ${fallbackError.message}. Retrying in 60s...`
+        );
+        
+        container.innerHTML = `
+          <div class="no-signals">
+            <div class="no-signals-icon">⚠️</div>
+            <p>Unable to fetch live market data</p>
+            <p style="font-size: 0.8rem; margin-top: 8px; color: #94a3b8;">
+              ${fallbackError.message}<br>
+              <button onclick="runAlphaScan(true)" style="margin-top: 12px; padding: 8px 16px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 6px; color: #818cf8; cursor: pointer;">
+                🔄 Retry Now
+              </button>
+            </p>
+          </div>
+        `;
+        
+        // Auto-retry in 60 seconds
+        setTimeout(() => runAlphaScan(true), 60000);
+      }
+    }
+
+    // Fetch signals directly from public APIs with advanced positioning analysis
+    async function fetchDirectSignals() {
+      const signals = [];
+      let marketData = [];
+      
+      // Fetch from CoinGecko with comprehensive data
+      try {
+        const cgResponse = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,pendle,gmx,aave,arbitrum,optimism&order=market_cap_desc&sparkline=true&price_change_percentage=1h,24h,7d');
+        
+        if (cgResponse.ok) {
+          marketData = await cgResponse.json();
+          console.log('📊 CoinGecko data:', marketData.length, 'assets');
+        } else {
+          console.warn('⚠️ CoinGecko returned:', cgResponse.status);
+        }
+      } catch (e) {
+        console.warn('⚠️ CoinGecko fetch error:', e.message);
+      }
+      
+      // If CoinGecko failed, try simpler endpoint
+      if (marketData.length === 0) {
+        try {
+          const simpleResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true');
+          if (simpleResponse.ok) {
+            const simpleData = await simpleResponse.json();
+            marketData = Object.entries(simpleData).map(([id, data]) => ({
+              id,
+              name: id.charAt(0).toUpperCase() + id.slice(1),
+              symbol: id === 'bitcoin' ? 'btc' : id === 'ethereum' ? 'eth' : 'sol',
+              current_price: data.usd,
+              price_change_percentage_24h: data.usd_24h_change || 0,
+              market_cap: id === 'bitcoin' ? 1.7e12 : id === 'ethereum' ? 400e9 : 80e9
+            }));
+          }
+        } catch (e) {
+          console.warn('⚠️ Simple price fetch error:', e.message);
+        }
+      }
+      
+      // If still no data, return error
+      if (marketData.length === 0) {
+        throw new Error('Unable to fetch market data from CoinGecko');
+      }
+      
+      // Fetch TVL from DeFiLlama (optional, don't fail if unavailable)
+      let tvlData = [];
+      const protocols = ['pendle', 'gmx', 'aave', 'lido', 'uniswap'];
+      try {
+        const tvlPromises = protocols.map(p => 
+          fetch(`https://api.llama.fi/protocol/${p}`)
+            .then(r => r.ok ? r.json() : null)
+            .catch(() => null)
+        );
+        tvlData = await Promise.all(tvlPromises);
+        console.log('📈 DeFiLlama data loaded');
+      } catch (e) {
+        console.warn('⚠️ DeFiLlama fetch error:', e.message);
+        tvlData = [];
+      }
+      
+      // === POSITIONING-BASED SIGNAL ANALYSIS ===
+      for (const coin of marketData) {
+        const sparkline = coin.sparkline_in_7d?.price || [];
+        if (sparkline.length < 24) continue;
+        
+        // Multi-period funding proxy analysis
+        const positioning = analyzePositioningFromSparkline(sparkline, coin);
+        if (!positioning) continue;
+        
+        // Calculate volatility metrics
+        const volatility = calculateSparklineVolatility(sparkline);
+        const recentVol = calculateSparklineVolatility(sparkline.slice(-24));
+        const volCompression = volatility > 0 ? recentVol / volatility : 1;
+        
+        // Classify trade setup
+        const tradeSetup = classifyTradeSetupFrontend(positioning, {
+          current: recentVol,
+          historical: volatility,
+          compression: volCompression
+        }, coin);
+        
+        if (tradeSetup.valid && tradeSetup.conviction !== 'LOW') {
+          const signal = generatePositioningSignalFrontend(coin, positioning, tradeSetup, sparkline);
+          signals.push(signal);
+        }
+      }
+      
+      // === TVL LAG ANALYSIS ===
+      for (let i = 0; i < protocols.length; i++) {
+        const protocol = protocols[i];
+        const tvl = tvlData[i];
+        const price = marketData.find(m => m.id === protocol || m.symbol.toLowerCase() === protocol);
+        
+        if (!tvl || !price) continue;
+        
+        const tvlHistory = tvl.tvl || [];
+        if (tvlHistory.length < 8) continue;
+        
+        const currentTvl = tvlHistory[tvlHistory.length - 1]?.totalLiquidityUSD || 0;
+        const tvl7dAgo = tvlHistory[tvlHistory.length - 8]?.totalLiquidityUSD || currentTvl;
+        const tvlChange7d = tvl7dAgo > 0 ? ((currentTvl - tvl7dAgo) / tvl7dAgo) * 100 : 0;
+        const priceChange7d = price.price_change_percentage_7d_in_currency || 0;
+        const divergence = tvlChange7d - priceChange7d;
+        
+        // REJECT: Weak divergence
+        if (divergence > 8 && tvlChange7d > 5) {
+          signals.push({
+            signalType: 'TVL_LAG',
+            tradeType: 'TVL_LAG',
+            asset: `${tvl.name} (${price.symbol.toUpperCase()})`,
+            direction: 'LONG',
+            conviction: divergence > 15 ? 'HIGH' : 'MEDIUM',
+            marketContext: `${tvl.name} TVL: $${formatNumber(currentTvl)}. 7d TVL change: ${tvlChange7d > 0 ? '+' : ''}${tvlChange7d.toFixed(1)}%. Token price 7d: ${priceChange7d > 0 ? '+' : ''}${priceChange7d.toFixed(1)}%.`,
+            observedAnomaly: `TVL growth (${tvlChange7d > 0 ? '+' : ''}${tvlChange7d.toFixed(1)}%) outpacing token price (${priceChange7d.toFixed(1)}%). Divergence: ${divergence.toFixed(1)}%.`,
+            whyMatters: 'Capital flowing into protocol but token price lagging. Protocol fundamentals improving faster than market recognition.',
+            tradeExpression: `Long ${price.symbol.toUpperCase()} spot. Target: ${(divergence * 0.5).toFixed(1)}% catch-up move.`,
+            timeHorizon: '1-2 weeks',
+            keyRisks: 'Mercenary TVL, token inflation, smart contract risk',
+            invalidationLevel: `TVL drops >10% or price below $${(price.current_price * 0.9).toFixed(2)}`,
+            confidenceScore: Math.min(75, 35 + Math.floor(divergence * 2)),
+            timestamp: new Date().toISOString(),
+            rawData: { tvl: currentTvl, tvlChange7d, priceChange7d, divergence }
+          });
+        }
+      }
+      
+      // If no signals found, generate basic market overview signals
+      if (signals.length === 0) {
+        for (const coin of marketData.slice(0, 5)) {
+          const change24h = coin.price_change_percentage_24h || 0;
+          const change7d = coin.price_change_percentage_7d_in_currency || 0;
+          const direction = change24h > 0 ? 'LONG' : 'SHORT';
+          const conviction = Math.abs(change24h) > 5 ? 'MEDIUM' : 'LOW';
+          
+          signals.push({
+            signalType: 'MARKET_OVERVIEW',
+            tradeType: 'MARKET_TREND',
+            asset: `${coin.name} (${coin.symbol.toUpperCase()})`,
+            direction: direction,
+            conviction: conviction,
+            marketContext: `${coin.name} trading at $${coin.current_price.toLocaleString()}. Market cap: $${(coin.market_cap / 1e9).toFixed(2)}B.`,
+            observedAnomaly: `24h: ${change24h > 0 ? '+' : ''}${change24h.toFixed(2)}% | 7d: ${change7d > 0 ? '+' : ''}${change7d.toFixed(2)}%`,
+            whyMatters: `${Math.abs(change24h) > 3 ? 'Significant' : 'Moderate'} price movement in ${coin.name}. Volume: $${(coin.total_volume / 1e9).toFixed(2)}B.`,
+            tradeExpression: `Monitor ${coin.symbol.toUpperCase()} for ${direction === 'LONG' ? 'continuation' : 'bounce'} opportunities.`,
+            timeHorizon: '24-48h',
+            keyRisks: 'Market volatility, macro factors',
+            invalidationLevel: direction === 'LONG' ? `Below $${(coin.current_price * 0.95).toFixed(2)}` : `Above $${(coin.current_price * 1.05).toFixed(2)}`,
+            confidenceScore: 35 + Math.min(30, Math.abs(change24h) * 3),
+            timestamp: new Date().toISOString(),
+            rawData: { price: coin.current_price, change24h, change7d }
+          });
+        }
+      }
+      
+      // Sort by confidence and return top signals (lowered threshold)
+      return signals
+        .filter(s => s.confidenceScore >= 30) // Lowered from 45
+        .sort((a, b) => {
+          // Sort by conviction then confidence
+          const convOrder = { 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+          const aConv = convOrder[a.conviction] || 2;
+          const bConv = convOrder[b.conviction] || 2;
+          if (bConv !== aConv) return bConv - aConv;
+          return b.confidenceScore - a.confidenceScore;
+        })
+        .slice(0, 10);
+    }
+    
+    // Analyze positioning from sparkline (multi-period funding proxy)
+    function analyzePositioningFromSparkline(sparkline, coin) {
+      if (!sparkline || sparkline.length < 24) return null;
+      
+      // Split into 8 periods for funding analysis
+      const periods = [];
+      const periodSize = Math.floor(sparkline.length / 8);
+      
+      for (let i = 0; i < 8; i++) {
+        const start = i * periodSize;
+        const end = i === 7 ? sparkline.length : (i + 1) * periodSize;
+        const periodPrices = sparkline.slice(start, end);
+        const avgPrice = periodPrices.reduce((a, b) => a + b, 0) / periodPrices.length;
+        const endPrice = periodPrices[periodPrices.length - 1];
+        const fundingProxy = ((endPrice - avgPrice) / avgPrice) * 100;
+        periods.push({ avgPrice, endPrice, fundingProxy });
+      }
+      
+      // Count persistent positive/negative funding
+      const positiveFunding = periods.filter(p => p.fundingProxy > 0.5).length;
+      const negativeFunding = periods.filter(p => p.fundingProxy < -0.5).length;
+      
+      // Calculate persistence
+      const persistence = Math.max(positiveFunding, negativeFunding);
+      const fundingDirection = positiveFunding > negativeFunding ? 'positive' : 'negative';
+      
+      // Calculate price movement over period
+      const startPrice = sparkline[0];
+      const endPrice = sparkline[sparkline.length - 1];
+      const priceChange = ((endPrice - startPrice) / startPrice) * 100;
+      
+      // Check for divergence (funding vs price)
+      const fundingAligned = (fundingDirection === 'positive' && priceChange > 3) || 
+                            (fundingDirection === 'negative' && priceChange < -3);
+      const fundingDiverged = (fundingDirection === 'positive' && priceChange < -2) || 
+                             (fundingDirection === 'negative' && priceChange > 2);
+      
+      // Calculate stress score (0-100)
+      let stressScore = 0;
+      stressScore += persistence * 8; // Up to 64
+      if (fundingDiverged) stressScore += 20;
+      
+      // Volume ratio adds to stress
+      const volumeRatio = coin.total_volume / coin.market_cap;
+      if (volumeRatio > 0.1) stressScore += 15;
+      else if (volumeRatio > 0.05) stressScore += 8;
+      
+      // 24h price position extremity
+      const pricePosition = coin.high_24h && coin.low_24h 
+        ? (coin.current_price - coin.low_24h) / (coin.high_24h - coin.low_24h)
+        : 0.5;
+      
+      if (pricePosition > 0.9 || pricePosition < 0.1) stressScore += 12;
+      else if (pricePosition > 0.8 || pricePosition < 0.2) stressScore += 6;
+      
+      return {
+        fundingDirection,
+        persistence,
+        priceChange,
+        fundingAligned,
+        fundingDiverged,
+        stressScore: Math.min(100, stressScore),
+        pricePosition,
+        volumeRatio,
+        avgFunding: periods.reduce((a, p) => a + p.fundingProxy, 0) / periods.length
+      };
+    }
+    
+    // Classify trade setup (FADE, SQUEEZE, VOL_EXPANSION)
+    function classifyTradeSetupFrontend(positioning, volatility, coin) {
+      const { persistence, stressScore, fundingDiverged, fundingDirection, pricePosition, priceChange } = positioning;
+      
+      // REJECT: Insufficient data
+      if (persistence < 3) {
+        return { valid: false, reason: 'Insufficient persistence' };
+      }
+      
+      // REJECT: Low stress
+      if (stressScore < 30) {
+        return { valid: false, reason: 'Low positioning stress' };
+      }
+      
+      // VOL_EXPANSION: Compressed volatility with position buildup
+      if (volatility.compression < 0.6 && stressScore > 45) {
+        return {
+          valid: true,
+          tradeType: 'VOL_EXPANSION',
+          direction: fundingDirection === 'positive' ? 'LONG' : 'SHORT',
+          conviction: stressScore > 65 ? 'HIGH' : 'MEDIUM',
+          rationale: 'Volatility compression with positioning buildup - breakout imminent'
+        };
+      }
+      
+      // FADE_TRADE: Crowded positioning at price extreme
+      if (persistence >= 5 && (pricePosition > 0.85 || pricePosition < 0.15)) {
+        const fadeLong = pricePosition < 0.15 && fundingDirection === 'negative';
+        const fadeShort = pricePosition > 0.85 && fundingDirection === 'positive';
+        
+        if (fadeLong || fadeShort) {
+          return {
+            valid: true,
+            tradeType: 'FADE_TRADE',
+            direction: fadeLong ? 'LONG' : 'SHORT',
+            conviction: persistence >= 6 && stressScore > 55 ? 'HIGH' : 'MEDIUM',
+            rationale: `Crowded ${fadeLong ? 'shorts' : 'longs'} at price extreme - mean reversion setup`
+          };
+        }
+      }
+      
+      // SQUEEZE_SETUP: High leverage with divergent price action
+      if (fundingDiverged && stressScore > 50) {
+        const squeezeDirection = fundingDirection === 'positive' ? 'SHORT' : 'LONG';
+        return {
+          valid: true,
+          tradeType: 'SQUEEZE_SETUP',
+          direction: squeezeDirection,
+          conviction: stressScore > 70 ? 'HIGH' : 'MEDIUM',
+          rationale: `${fundingDirection === 'positive' ? 'Longs' : 'Shorts'} offside - funding/price divergence indicates squeeze potential`
+        };
+      }
+      
+      return { valid: false, reason: 'No clear trade setup' };
+    }
+    
+    // Generate positioning-based signal
+    function generatePositioningSignalFrontend(coin, positioning, tradeSetup, sparkline) {
+      const { tradeType, direction, conviction, rationale } = tradeSetup;
+      const symbol = coin.symbol.toUpperCase();
+      
+      const min7d = Math.min(...sparkline.slice(-24));
+      const max7d = Math.max(...sparkline.slice(-24));
+      
+      let tradeExpression, invalidation, timeHorizon;
+      
+      switch (tradeType) {
+        case 'FADE_TRADE':
+          tradeExpression = direction === 'LONG'
+            ? `Fade shorts: Long ${symbol} with stop below recent low. Target: return to 7d VWAP (~$${formatNumber((max7d + min7d) / 2)})`
+            : `Fade longs: Short ${symbol} with stop above recent high. Target: return to 7d VWAP (~$${formatNumber((max7d + min7d) / 2)})`;
+          invalidation = direction === 'LONG'
+            ? `New low below $${formatNumber(min7d * 0.98)}`
+            : `New high above $${formatNumber(max7d * 1.02)}`;
+          timeHorizon = '4-24 hours';
+          break;
+          
+        case 'SQUEEZE_SETUP':
+          tradeExpression = direction === 'LONG'
+            ? `Long ${symbol} on short squeeze. Entry: $${formatNumber(coin.current_price)}. Target: +8-12% as shorts cover.`
+            : `Short ${symbol} on long liquidation cascade. Target: -8-12% as longs capitulate.`;
+          invalidation = direction === 'LONG'
+            ? `Price drops below $${formatNumber(min7d * 0.95)}`
+            : `Price breaks above $${formatNumber(max7d * 1.05)}`;
+          timeHorizon = '12-48 hours';
+          break;
+          
+        case 'VOL_EXPANSION':
+          tradeExpression = direction === 'LONG'
+            ? `Long ${symbol} volatility expansion. Buy breakout above $${formatNumber(max7d)}. Target: 5-10% move on vol release.`
+            : `Short ${symbol} on breakdown below $${formatNumber(min7d)}. Target: 5-10% downside on vol release.`;
+          invalidation = direction === 'LONG'
+            ? `False breakout - rejection back below $${formatNumber(max7d * 0.98)}`
+            : `False breakdown - recovery above $${formatNumber(min7d * 1.02)}`;
+          timeHorizon = '24-72 hours';
+          break;
+      }
+      
+      // Calculate confidence
+      let confidence = 40;
+      confidence += Math.min(20, positioning.persistence * 3);
+      confidence += Math.min(15, positioning.stressScore / 5);
+      if (positioning.fundingDiverged) confidence += 10;
+      if (conviction === 'HIGH') confidence += 5;
+      
+      return {
+        signalType: tradeType,
+        tradeType: tradeType,
+        asset: symbol,
+        direction,
+        conviction,
+        marketContext: `${symbol} at $${formatNumber(coin.current_price)}. 7d: ${positioning.priceChange > 0 ? '+' : ''}${positioning.priceChange.toFixed(1)}%. 24h range: $${formatNumber(coin.low_24h)} - $${formatNumber(coin.high_24h)}. Vol/MCap: ${(positioning.volumeRatio * 100).toFixed(1)}%.`,
+        observedAnomaly: `${rationale}. Positioning stress: ${positioning.stressScore}/100. Funding persistence: ${positioning.persistence}/8 periods ${positioning.fundingDirection}.`,
+        whyMatters: tradeType === 'FADE_TRADE' 
+          ? 'Crowded positioning at extremes creates mean-reversion opportunity. Funding costs and liquidation risk force position unwind.'
+          : tradeType === 'SQUEEZE_SETUP'
+            ? 'Price diverging from positioning suggests trapped traders. Liquidation cascade likely when stops trigger.'
+            : 'Volatility compression with position buildup creates explosive breakout potential. Stored energy ready to release.',
+        tradeExpression,
+        timeHorizon,
+        keyRisks: tradeType === 'FADE_TRADE'
+          ? 'Trend continuation, news catalyst, funding can remain extreme longer than expected'
+          : tradeType === 'SQUEEZE_SETUP'
+            ? 'False signal, whale positioning unknown, exchange-specific dynamics'
+            : 'False breakout/breakdown, liquidity gaps, market-wide correlation',
+        invalidationLevel: invalidation,
+        confidenceScore: Math.min(80, confidence),
+        timestamp: new Date().toISOString(),
+        rawData: {
+          price: coin.current_price,
+          priceChange7d: positioning.priceChange,
+          stressScore: positioning.stressScore,
+          persistence: positioning.persistence,
+          fundingDirection: positioning.fundingDirection
+        }
+      };
+    }
+
+    // Calculate volatility from sparkline
+    function calculateSparklineVolatility(prices) {
+      if (!prices || prices.length < 2) return 0;
+      const returns = [];
+      for (let i = 1; i < prices.length; i++) {
+        returns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
+      }
+      const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+      const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
+      return Math.sqrt(variance);
+    }
+
+    // Format numbers for display
+    function formatNumber(num) {
+      if (!num) return '0';
+      if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+      if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+      if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+      if (num < 1) return num.toFixed(6);
+      return num.toFixed(2);
+    }
+
+    // Format timestamp for display
+    function formatTimestamp(isoString) {
+      const date = new Date(isoString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffSecs = Math.floor(diffMs / 1000);
+      const diffMins = Math.floor(diffSecs / 60);
+      
+      if (diffSecs < 60) return 'just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      return date.toLocaleTimeString();
+    }
+
+    // Filter signals by type (supports both tradeType and signalType)
+    function filterSignals(type) {
+      currentFilter = type;
+      
+      // Update button states
+      document.querySelectorAll('.scanner-btn[data-type]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === type);
+      });
+      
+      let filtered;
+      if (type === 'all') {
+        filtered = allAlphaSignals;
+      } else if (type === 'yield') {
+        // Special filter for all yield-related signals
+        filtered = allAlphaSignals.filter(s => {
+          const signalType = (s.signalType || '').toLowerCase();
+          const tradeType = (s.tradeType || '').toLowerCase();
+          return signalType.includes('yield') || 
+                 signalType === 'tvl_inflow_lead' ||
+                 tradeType === 'yield_opportunity' ||
+                 tradeType === 'fundamental_lead';
+        });
+      } else if (type === 'dev') {
+        // Filter for dev activity lead signals
+        filtered = allAlphaSignals.filter(s => {
+          const signalType = (s.signalType || '').toLowerCase();
+          const tradeType = (s.tradeType || '').toLowerCase();
+          return signalType === 'dev_activity_lead' ||
+                 tradeType === 'accumulation';
+        });
+      } else if (type === 'narrative') {
+        // Filter for narrative/ranking lead signals
+        filtered = allAlphaSignals.filter(s => {
+          const signalType = (s.signalType || '').toLowerCase();
+          const tradeType = (s.tradeType || '').toLowerCase();
+          return signalType === 'narrative_lead' ||
+                 tradeType === 'narrative_momentum';
+        });
+      } else {
+        filtered = allAlphaSignals.filter(s => {
+          const tradeType = (s.tradeType || '').toLowerCase();
+          const signalType = (s.signalType || '').toLowerCase();
+          return tradeType === type || signalType === type;
+        });
+      }
+      
+      renderSignals(filtered);
+    }
+
+    // Render signal cards
+    function renderSignals(signals) {
+      const container = document.getElementById('alphaSignals');
+      
+      if (signals.length === 0) {
+        container.innerHTML = `
+          <div class="no-signals">
+            <div class="no-signals-icon">🔍</div>
+            <p>No actionable signals detected</p>
+            <p style="font-size: 0.8rem; margin-top: 8px;">Markets appear range-bound with no significant anomalies</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = signals.map((signal, idx) => {
+        const confClass = signal.confidenceScore >= 60 ? 'high' : signal.confidenceScore >= 40 ? 'medium' : 'low';
+        const typeClass = getTradeTypeClass(signal);
+        const signalTime = signal.timestamp ? formatTimestamp(signal.timestamp) : 'just now';
+        const displayType = signal.tradeType || signal.signalType;
+        const convictionBadge = getConvictionBadge(signal.conviction);
+        const directionIcon = signal.direction === 'LONG' ? '📈' : signal.direction === 'SHORT' ? '📉' : '';
+        
+        return `
+          <div class="signal-card" data-signal-id="${idx}">
+            <div class="signal-header">
+              <div>
+                <span class="signal-type-badge ${typeClass}">${formatSignalType(displayType)}</span>
+                ${convictionBadge}
+                <div class="signal-asset" style="margin-top: 6px;">${directionIcon} ${signal.asset}</div>
+              </div>
+              <div class="confidence-meter">
+                <span class="signal-timestamp" style="font-size: 0.7rem; color: #475569; margin-right: 8px;">${signalTime}</span>
+                <div class="confidence-bar">
+                  <div class="confidence-fill ${confClass}" style="width: ${signal.confidenceScore}%;"></div>
+                </div>
+                <span class="confidence-score">${signal.confidenceScore}%</span>
+              </div>
+            </div>
+            
+            <div class="signal-context">${signal.marketContext}</div>
+            
+            <div class="signal-section">
+              <div class="signal-section-title">Observed Anomaly</div>
+              <div class="signal-section-content">${signal.observedAnomaly}</div>
+            </div>
+            
+            <div class="trade-expression">
+              <div class="signal-section-title">Trade Expression</div>
+              <div class="signal-section-content">${signal.tradeExpression}</div>
+              ${signal.alternativeTrade ? `
+              <div class="signal-section-title" style="margin-top: 12px; color: #34d399;">Alternative: Yield + Hedge</div>
+              <div class="signal-section-content" style="font-size: 0.82rem; color: #9ca3af;">${signal.alternativeTrade}</div>
+              ` : ''}
+            </div>
+            
+            <div class="signal-meta">
+              <div class="meta-item">
+                <span class="meta-label">Time Horizon</span>
+                <span class="meta-value">${signal.timeHorizon}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Invalidation</span>
+                <span class="meta-value invalidation">${signal.invalidationLevel}</span>
+              </div>
+            </div>
+            
+            <button class="signal-expand-btn" onclick="toggleSignalDetails(${idx})">
+              Show full analysis ▼
+            </button>
+            
+            <div class="signal-details" id="signal-details-${idx}">
+              <div class="signal-section">
+                <div class="signal-section-title">Why This Matters</div>
+                <div class="signal-section-content">${signal.whyMatters}</div>
+              </div>
+              <div class="signal-section">
+                <div class="signal-section-title">Key Risks</div>
+                <div class="signal-section-content meta-value risk">${signal.keyRisks}</div>
+              </div>
+              ${signal.failureScenarios && signal.failureScenarios.length > 0 ? `
+              <div class="signal-section">
+                <div class="signal-section-title" style="color: #f97316;">⚠️ Failure Scenarios</div>
+                <div class="signal-section-content" style="font-size: 0.82rem;">
+                  ${formatFailureScenarios(signal.failureScenarios)}
+                </div>
+              </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    // Format failure scenarios for display
+    function formatFailureScenarios(scenarios) {
+      if (!scenarios || scenarios.length === 0) return '';
+      
+      return scenarios.map((s, i) => {
+        // Handle both string and object format
+        if (typeof s === 'string') {
+          return `<div style="margin-bottom: 8px; padding: 8px; background: rgba(249, 115, 22, 0.1); border-radius: 6px; border-left: 3px solid #f97316;">
+            <div style="color: #fdba74;">${i + 1}. ${s}</div>
+          </div>`;
+        } else {
+          const likelihoodColor = s.likelihood === 'HIGH' ? '#ef4444' : s.likelihood === 'MEDIUM' ? '#f97316' : '#22c55e';
+          return `<div style="margin-bottom: 8px; padding: 8px; background: rgba(249, 115, 22, 0.1); border-radius: 6px; border-left: 3px solid ${likelihoodColor};">
+            <div style="font-weight: 600; color: #fdba74; margin-bottom: 4px;">${s.scenario} <span style="color: ${likelihoodColor}; font-size: 0.7rem;">[${s.likelihood}]</span></div>
+            <div style="color: #9ca3af; font-size: 0.78rem;">Trigger: ${s.trigger}</div>
+            <div style="color: #ef4444; font-size: 0.78rem;">Impact: ${s.impact}</div>
+          </div>`;
+        }
+      }).join('');
+    }
+
+    // Toggle signal details
+    function toggleSignalDetails(idx) {
+      const details = document.getElementById(`signal-details-${idx}`);
+      const btn = details.previousElementSibling;
+      
+      if (details.classList.contains('expanded')) {
+        details.classList.remove('expanded');
+        btn.textContent = 'Show full analysis ▼';
+      } else {
+        details.classList.add('expanded');
+        btn.textContent = 'Hide analysis ▲';
+      }
+    }
+
+    // Format signal type for display
+    function formatSignalType(type) {
+      const types = {
+        'OI_DIVERGENCE': 'OI Divergence',
+        'TVL_LAG': 'TVL Lag',
+        'FUNDING_DIVERGENCE': 'Funding',
+        'FADE_TRADE': 'Fade Trade',
+        'SQUEEZE_SETUP': 'Squeeze Setup',
+        'VOL_EXPANSION': 'Vol Expansion',
+        'POSITIONING': 'Positioning',
+        // Yield signal types
+        'YIELD_SPIKE': '💰 Yield Spike',
+        'YIELD_OPPORTUNITY': '💰 Yield Opp',
+        'TVL_INFLOW_LEAD': '📊 TVL Lead',
+        'FUNDAMENTAL_LEAD': '📊 Fundamental',
+        // Dev/Narrative signal types
+        'DEV_ACTIVITY_LEAD': '🔧 Dev Lead',
+        'ACCUMULATION': '🔧 Accumulation',
+        'NARRATIVE_LEAD': '📢 Narrative',
+        'NARRATIVE_MOMENTUM': '📢 Momentum'
+      };
+      return types[type] || type.replace(/_/g, ' ');
+    }
+    
+    // Get trade type class for styling
+    function getTradeTypeClass(signal) {
+      // Prefer tradeType if available, otherwise use signalType
+      const type = signal.tradeType || signal.signalType;
+      return type.toLowerCase();
+    }
+    
+    // Get conviction badge HTML
+    function getConvictionBadge(conviction) {
+      if (!conviction) return '';
+      const level = conviction.toLowerCase();
+      return `<span class="conviction-badge ${level}">${conviction}</span>`;
+    }
+
+    // Setup auto-refresh
+    function setupAutoRefresh() {
+      if (refreshInterval) clearInterval(refreshInterval);
+      
+      refreshInterval = setInterval(() => {
+        runAlphaScan();
+        loadInsights();
+        loadNews();
+        loadTrending();
+      }, AUTO_REFRESH_MS);
+    }
+
+    // Initialize on load
+    setupAutoRefresh();
+  </script>
+  
+  <!-- Wallet Connection Module -->
+  <script src="js/walletConnect.js"></script>
+  
+  <script>
+    // Portfolio Health Score Integration
+    let userAssets = [];
+
+    // Calculate portfolio health score
+    function calculateHealthScore(assets) {
+      if (!assets || assets.length === 0) return 0;
+
+      let score = 30; // Base score
+      
+      const hasStables = assets.some(a => ['USDT', 'USDC', 'DAI', 'BUSD'].includes(a.symbol));
+      const hasEth = assets.some(a => a.symbol === 'ETH');
+      
+      // Diversity bonus
+      if (assets.length >= 2) score += 20;
+      if (assets.length >= 3) score += 10;
+      if (assets.length >= 4) score += 10;
+      
+      // Stablecoin presence
+      if (hasStables) score += 15;
+      
+      // ETH presence
+      if (hasEth) score += 15;
+
+      return Math.min(100, score);
+    }
+
+    // Update portfolio health UI
+    function updatePortfolioHealth() {
+      const healthScore = calculateHealthScore(userAssets);
+      const healthScoreEl = document.getElementById('healthScore');
+      const portfolioHealthEl = document.getElementById('portfolioHealth');
+      const walletState = window.WalletConnect ? window.WalletConnect.getState() : null;
+
+      if (healthScoreEl && portfolioHealthEl && walletState) {
+        healthScoreEl.textContent = healthScore + '/100';
+        
+        if (healthScore >= 70) {
+          healthScoreEl.style.color = '#22c55e';
+        } else if (healthScore >= 40) {
+          healthScoreEl.style.color = '#fbbf24';
+        } else {
+          healthScoreEl.style.color = '#ef4444';
+        }
+        
+        portfolioHealthEl.style.display = walletState.address ? 'block' : 'none';
+      }
+    }
+
+    // Load wallet assets for health score
+    async function loadWalletAssetsForHealth() {
+      const walletState = window.WalletConnect ? window.WalletConnect.getState() : null;
+      if (!walletState || !walletState.provider || !walletState.address) return;
+
+      try {
+        userAssets = [];
+
+        // Get ETH balance
+        const ethBalance = await walletState.provider.getBalance(walletState.address);
+        const ethAmount = parseFloat(ethers.utils.formatEther(ethBalance));
+        
+        if (ethAmount > 0) {
+          userAssets.push({ symbol: 'ETH', balance: ethAmount });
+        }
+
+        // Check common tokens
+        const tokens = [
+          { address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', symbol: 'USDT', decimals: 6 },
+          { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', symbol: 'USDC', decimals: 6 },
+          { address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', symbol: 'DAI', decimals: 18 },
+        ];
+
+        for (const token of tokens) {
+          try {
+            const contract = new ethers.Contract(
+              token.address,
+              ['function balanceOf(address) view returns (uint256)'],
+              walletState.provider
+            );
+            const balance = await contract.balanceOf(walletState.address);
+            const amount = parseFloat(ethers.utils.formatUnits(balance, token.decimals));
+            if (amount > 0.01) {
+              userAssets.push({ symbol: token.symbol, balance: amount });
+            }
+          } catch (err) {
+            console.warn(`Failed to load ${token.symbol}`);
+          }
+        }
+
+        updatePortfolioHealth();
+      } catch (error) {
+        console.error('Error loading assets:', error);
+      }
+    }
+
+    // Listen for wallet state changes
+    window.addEventListener('walletStateChanged', (e) => {
+      const state = e.detail;
+      if (state.status === 'connected') {
+        loadWalletAssetsForHealth();
+      } else {
+        userAssets = [];
+        updatePortfolioHealth();
+      }
+    });
+  </script>
+</body>
+</html>
