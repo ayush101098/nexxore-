@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics Dashboard | nexxore</title>
+  <meta name="description" content="Multi-source DeFi analytics: TVL, yields, protocols, chains, and market signals">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --font-heading: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --bg-primary: #0A0E17;
+      --bg-secondary: #0F1629;
+      --bg-card: rgba(255, 255, 255, 0.025);
+      --bg-card-hover: rgba(255, 255, 255, 0.05);
+      --accent-cyan: #0EA5E9;
+      --accent-purple: #8B5CF6;
+      --accent-green: #22c55e;
+      --accent-red: #ef4444;
+      --accent-yellow: #fbbf24;
+      --accent-orange: #f97316;
+      --accent-pink: #ec4899;
+      --text-primary: #F8FAFC;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.15);
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: var(--font-body);
+      background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+      color: var(--text-secondary);
+      min-height: 100vh;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(20px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .back-link {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.2s;
+    }
+    .back-link:hover { opacity: 0.8; }
+
+    .header-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: var(--font-heading);
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .market-signal {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .market-signal.bullish { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); border: 1px solid rgba(34, 197, 94, 0.3); }
+    .market-signal.bearish { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .market-signal.neutral { background: rgba(251, 191, 36, 0.15); color: var(--accent-yellow); border: 1px solid rgba(251, 191, 36, 0.3); }
+
+    .refresh-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .refresh-btn:hover { background: var(--bg-card-hover); border-color: var(--border-hover); }
+
+    .tabs-container {
+      padding: 16px 32px;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      border-radius: 8px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab:hover {
+      background: var(--bg-card);
+      border-color: var(--border-color);
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(139, 92, 246, 0.15));
+      border-color: var(--accent-cyan);
+      color: var(--text-primary);
+    }
+
+    .main-content {
+      padding: 24px 32px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.2s;
+    }
+    .stat-card:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-card-hover);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      font-family: var(--font-heading);
+      color: var(--text-primary);
+    }
+
+    .section {
+      margin-bottom: 32px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      font-family: var(--font-heading);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 14px 16px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 600;
+    }
+
+    .data-table td {
+      padding: 14px 16px;
+      font-size: 0.9rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .protocol-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .protocol-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--bg-secondary);
+    }
+
+    .protocol-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .protocol-title {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .protocol-symbol {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .chain-badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(139, 92, 246, 0.15);
+      color: var(--accent-purple);
+      font-weight: 500;
+    }
+
+    .signal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .signal-badge.bullish { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
+    .signal-badge.bearish { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+    .signal-badge.neutral { background: rgba(251, 191, 36, 0.15); color: var(--accent-yellow); }
+
+    .change-value {
+      font-weight: 500;
+      font-family: var(--font-mono);
+    }
+    .change-value.positive { color: var(--accent-green); }
+    .change-value.negative { color: var(--accent-red); }
+
+    .tvl-value, .volume-value {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.2s;
+    }
+    .info-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .card-badge {
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .card-stats {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .card-stat {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .card-stat-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+
+    .card-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .card-tag {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(14, 165, 233, 0.15);
+      color: var(--accent-cyan);
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+    .progress-fill.cyan { background: var(--accent-cyan); }
+    .progress-fill.purple { background: var(--accent-purple); }
+    .progress-fill.green { background: var(--accent-green); }
+
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--accent-cyan);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1200px) {
+      .two-column {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .quality-score {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .quality-bar {
+      width: 60px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .quality-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .quality-fill.high { background: var(--accent-green); }
+    .quality-fill.medium { background: var(--accent-yellow); }
+    .quality-fill.low { background: var(--accent-red); }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .main-content {
+        padding: 16px;
+      }
+      .tabs-container {
+        padding: 12px 16px;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .chain-badges {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-left">
+      <a href="/" class="back-link">← Home</a>
+      <h1 class="header-title">📊 Analytics Dashboard</h1>
+    </div>
+    <div class="header-right">
+      <div class="market-signal neutral" id="marketSignal">
+        <span>●</span>
+        <span id="marketSignalText">Loading...</span>
+      </div>
+      <button class="refresh-btn" onclick="refreshData()">
+        <span>↻</span> Refresh
+      </button>
+    </div>
+  </header>
+
+  <div class="tabs-container">
+    <div class="tabs">
+      <button class="tab active" data-tab="overview">📈 Overview</button>
+      <button class="tab" data-tab="protocols">🏛️ Protocols</button>
+      <button class="tab" data-tab="chains">⛓️ Chains</button>
+      <button class="tab" data-tab="yields">💰 Yields</button>
+      <button class="tab" data-tab="stablecoins">💵 Stablecoins</button>
+      <button class="tab" data-tab="raises">🚀 Fundraising</button>
+      <button class="tab" data-tab="trending">🔥 Trending</button>
+    </div>
+  </div>
+
+  <main class="main-content">
+    <!-- Overview Tab -->
+    <div class="tab-content active" id="tab-overview">
+      <div class="loading-container" id="overview-loading">
+        <div class="loading-spinner"></div>
+        <p>Loading market overview...</p>
+      </div>
+      <div id="overview-content" style="display: none;">
+        <div class="stats-grid" id="overview-stats"></div>
+        
+        <div class="two-column">
+          <div class="section">
+            <div class="section-header">
+              <h3 class="section-title">🏆 Top Protocols by TVL</h3>
+            </div>
+            <div style="overflow-x: auto;">
+              <table class="data-table" id="top-protocols-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Protocol</th>
+                    <th>TVL</th>
+                    <th>24h</th>
+                    <th>7d</th>
+                    <th>Signal</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div class="section">
+            <div class="section-header">
+              <h3 class="section-title">📊 Category Breakdown</h3>
+            </div>
+            <div id="category-breakdown"></div>
+          </div>
+        </div>
+
+        <div class="two-column">
+          <div class="section">
+            <div class="section-header">
+              <h3 class="section-title">🔄 Top DEXes by Volume</h3>
+            </div>
+            <table class="data-table" id="top-dex-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>DEX</th>
+                  <th>Volume 24h</th>
+                  <th>Change</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <h3 class="section-title">📈 Top Perps by Volume</h3>
+            </div>
+            <table class="data-table" id="top-perps-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Protocol</th>
+                  <th>Volume 24h</th>
+                  <th>Change</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Protocols Tab -->
+    <div class="tab-content" id="tab-protocols">
+      <div class="loading-container" id="protocols-loading">
+        <div class="loading-spinner"></div>
+        <p>Loading protocols...</p>
+      </div>
+      <div id="protocols-content" style="display: none;">
+        <div class="section">
+          <div class="section-header">
+            <h3 class="section-title">🏛️ Tradeable Protocols with Signals</h3>
+            <span class="section-subtitle">Bullish/Bearish indicators based on TVL, fees, and momentum</span>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="data-table" id="protocols-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Protocol</th>
+                  <th>Category</th>
+                  <th>TVL</th>
+                  <th>7d Change</th>
+                  <th>30d Change</th>
+                  <th>Signal</th>
+                  <th>Chains</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chains Tab -->
+    <div class="tab-content" id="tab-chains">
+      <div class="loading-container" id="chains-loading">
+        <div class="loading-spinner"></div>
+        <p>Loading chains...</p>
+      </div>
+      <div id="chains-content" style="display: none;">
+        <div class="section">
+          <div class="section-header">
+            <h3 class="section-title">⛓️ Chain Analytics</h3>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="data-table" id="chains-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Chain</th>
+                  <th>TVL</th>
+                  <th>Dominance</th>
+                  <th>Protocols</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Yields Tab -->
+    <div class="tab-content" id="tab-yields">
+      <div class="loading-container" id="yields-loading">
+        <div class="loading-spinner"></div>
+        <p>Loading yield opportunities...</p>
+      </div>
+      <div id="yields-content" style="display: none;">
+        <div class="stats-grid" id="yields-stats"></div>
+        <div class="section">
+          <div class="section-header">
+            <h3 class="section-title">💰 Top Yield Opportunities</h3>
+            <span class="section-subtitle">Filtered: TVL > $100k, APY < 1000%</span>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="data-table" id="yields-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Pool</th>
+                  <th>Project</th>
+                  <th>Chain</th>
+                  <th>APY</th>
+                  <th>TVL</th>
+                  <th>Quality</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stablecoins Tab -->
+    <div class="tab-content" id="tab-stablecoins">
+      <div class="loading-container" id="stablecoins-loading">
+        <div class="loading-spinner"></div>
+        <p>Loading stablecoin data...</p>
+      </div>
+      <div id="stablecoins-content" style="display: none;">
+        <div class="stats-grid" id="stablecoins-stats"></div>
+        <div class="two-column">
+          <div class="section">
+            <div class="section-header">
+              <h3 class="section-title">💵 Top Stablecoins</h3>
+            </div>
+            <table class="data-table" id="stablecoins-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Stablecoin</th>
+                  <th>Supply</th>
+                  <th>Dominance</th>
+                  <th>24h Change</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="section">
+            <div class="section-header">
+              <h3 class="section-title">⛓️ Stablecoins by Chain</h3>
+            </div>
+            <div id="stables-by-chain"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Raises Tab -->
+    <div class="tab-content" id="tab-raises">
+      <div class="loading-container" id="raises-loading">
+        <div class="loading-spinner"></div>
+        <p>Loading fundraising data...</p>
+      </div>
+      <div id="raises-content" style="display: none;">
+        <div class="stats-grid" id="raises-stats"></div>
+        <div class="two-column">
+          <div class="section">
+            <div class="section-header">
+              <h3 class="section-title">🚀 Recent Raises (30 days)</h3>
+            </div>
+            <div class="cards-grid" id="raises-cards"></div>
+          </div>
+          <div class="section">
+            <div class="section-header">
+              <h3 class="section-title">🪂 Potential Airdrops</h3>
+              <span class="section-subtitle">Well-funded protocols (>$5M raised)</span>
+            </div>
+            <div class="cards-grid" id="airdrops-cards"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trending Tab -->
+    <div class="tab-content" id="tab-trending">
+      <div class="loading-container" id="trending-loading">
+        <div class="loading-spinner"></div>
+        <p>Loading trending tokens...</p>
+      </div>
+      <div id="trending-content" style="display: none;">
+        <div class="section">
+          <div class="section-header">
+            <h3 class="section-title">🔥 Trending Tokens (DexScreener)</h3>
+            <span class="section-subtitle">Boosted/trending tokens across all chains</span>
+          </div>
+          <div class="cards-grid" id="trending-cards"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let dataCache = {};
+    let currentTab = 'overview';
+
+    function formatNumber(num, decimals = 2) {
+      if (num === null || num === undefined) return '-';
+      if (num >= 1e12) return `$${(num / 1e12).toFixed(decimals)}T`;
+      if (num >= 1e9) return `$${(num / 1e9).toFixed(decimals)}B`;
+      if (num >= 1e6) return `$${(num / 1e6).toFixed(decimals)}M`;
+      if (num >= 1e3) return `$${(num / 1e3).toFixed(decimals)}K`;
+      return `$${num.toFixed(decimals)}`;
+    }
+
+    function formatPercent(num) {
+      if (num === null || num === undefined) return '-';
+      const sign = num >= 0 ? '+' : '';
+      return `${sign}${num.toFixed(2)}%`;
+    }
+
+    function getChangeClass(num) {
+      if (num > 0) return 'positive';
+      if (num < 0) return 'negative';
+      return '';
+    }
+
+    function getSignalClass(signal) {
+      if (!signal) return 'neutral';
+      return signal.toLowerCase();
+    }
+
+    async function fetchAPI(endpoint) {
+      try {
+        const res = await fetch(`/api/analytics/${endpoint}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } catch (err) {
+        console.error(`API error (${endpoint}):`, err);
+        return null;
+      }
+    }
+
+    async function loadOverview() {
+      document.getElementById('overview-loading').style.display = 'flex';
+      document.getElementById('overview-content').style.display = 'none';
+
+      const data = await fetchAPI('overview');
+      if (!data) {
+        document.getElementById('overview-loading').innerHTML = '<p style="color: var(--accent-red);">Failed to load data. Please try again.</p>';
+        return;
+      }
+
+      dataCache.overview = data;
+
+      const signalEl = document.getElementById('marketSignal');
+      const signalTextEl = document.getElementById('marketSignalText');
+      signalEl.className = `market-signal ${getSignalClass(data.signals?.marketSentiment)}`;
+      signalTextEl.textContent = data.signals?.marketSentiment || 'NEUTRAL';
+
+      document.getElementById('overview-stats').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Total DeFi TVL</div>
+          <div class="stat-value">${formatNumber(data.summary?.totalTvl)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Stablecoin Supply</div>
+          <div class="stat-value">${formatNumber(data.summary?.totalStablecoins)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Spot DEX Volume 24h</div>
+          <div class="stat-value">${formatNumber(data.summary?.spotVolume24h)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Perps Volume 24h</div>
+          <div class="stat-value">${formatNumber(data.summary?.derivVolume24h)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">TVL Trend</div>
+          <div class="stat-value" style="color: var(--accent-${data.signals?.tvlTrend === 'BULLISH' ? 'green' : data.signals?.tvlTrend === 'BEARISH' ? 'red' : 'yellow'})">${data.signals?.tvlTrend || '-'}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Volume Trend</div>
+          <div class="stat-value" style="color: var(--accent-${data.signals?.volumeTrend === 'INCREASING' ? 'green' : 'red'})">${data.signals?.volumeTrend || '-'}</div>
+        </div>
+      `;
+
+      const protocolsBody = document.querySelector('#top-protocols-table tbody');
+      protocolsBody.innerHTML = data.topProtocols?.slice(0, 10).map((p, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>
+            <div class="protocol-name">
+              ${p.logo ? `<img src="${p.logo}" class="protocol-logo" alt="${p.name}">` : '<div class="protocol-logo"></div>'}
+              <div class="protocol-info">
+                <span class="protocol-title">${p.name}</span>
+                <span class="protocol-symbol">${p.symbol || ''}</span>
+              </div>
+            </div>
+          </td>
+          <td class="tvl-value">${formatNumber(p.tvl)}</td>
+          <td class="change-value ${getChangeClass(p.change24h)}">${formatPercent(p.change24h)}</td>
+          <td class="change-value ${getChangeClass(p.change7d)}">${formatPercent(p.change7d)}</td>
+          <td><span class="signal-badge ${getSignalClass(p.change7d > 5 ? 'bullish' : p.change7d < -5 ? 'bearish' : 'neutral')}">${p.change7d > 5 ? '🟢 BULLISH' : p.change7d < -5 ? '🔴 BEARISH' : '🟡 NEUTRAL'}</span></td>
+        </tr>
+      `).join('') || '<tr><td colspan="6">No data</td></tr>';
+
+      const categoryEl = document.getElementById('category-breakdown');
+      const maxTvl = data.categoryBreakdown?.[0]?.tvl || 1;
+      categoryEl.innerHTML = data.categoryBreakdown?.slice(0, 10).map(c => `
+        <div style="margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <span style="font-size: 0.85rem; color: var(--text-primary)">${c.name}</span>
+            <span style="font-size: 0.85rem; font-family: var(--font-mono)">${formatNumber(c.tvl)}</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill cyan" style="width: ${(c.tvl / maxTvl) * 100}%"></div>
+          </div>
+        </div>
+      `).join('') || '<p>No data</p>';
+
+      const dexBody = document.querySelector('#top-dex-table tbody');
+      dexBody.innerHTML = data.topDexes?.map((d, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td style="font-weight: 600; color: var(--text-primary)">${d.name}</td>
+          <td class="volume-value">${formatNumber(d.volume24h)}</td>
+          <td class="change-value ${getChangeClass(d.change24h)}">${formatPercent(d.change24h)}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="4">No data</td></tr>';
+
+      const perpsBody = document.querySelector('#top-perps-table tbody');
+      perpsBody.innerHTML = data.topPerps?.map((p, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td style="font-weight: 600; color: var(--text-primary)">${p.name}</td>
+          <td class="volume-value">${formatNumber(p.volume24h)}</td>
+          <td class="change-value ${getChangeClass(p.change24h)}">${formatPercent(p.change24h)}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="4">No data</td></tr>';
+
+      document.getElementById('overview-loading').style.display = 'none';
+      document.getElementById('overview-content').style.display = 'block';
+    }
+
+    async function loadProtocols() {
+      document.getElementById('protocols-loading').style.display = 'flex';
+      document.getElementById('protocols-content').style.display = 'none';
+
+      const data = await fetchAPI('protocols?limit=50');
+      if (!data) return;
+
+      dataCache.protocols = data;
+
+      const tbody = document.querySelector('#protocols-table tbody');
+      tbody.innerHTML = data.protocols?.map((p, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>
+            <div class="protocol-name">
+              ${p.logo ? `<img src="${p.logo}" class="protocol-logo" alt="${p.name}">` : '<div class="protocol-logo"></div>'}
+              <div class="protocol-info">
+                <span class="protocol-title">${p.name}</span>
+                <span class="protocol-symbol">${p.symbol || ''}</span>
+              </div>
+            </div>
+          </td>
+          <td><span class="chain-badge">${p.category || 'Other'}</span></td>
+          <td class="tvl-value">${formatNumber(p.tvl)}</td>
+          <td class="change-value ${getChangeClass(p.change7d)}">${formatPercent(p.change7d)}</td>
+          <td class="change-value ${getChangeClass(p.change30d)}">${formatPercent(p.change30d)}</td>
+          <td><span class="signal-badge ${getSignalClass(p.signal)}">${p.signal === 'BULLISH' ? '🟢' : p.signal === 'BEARISH' ? '🔴' : '🟡'} ${p.signal || 'NEUTRAL'}</span></td>
+          <td>
+            <div class="chain-badges">
+              ${(p.chains || []).slice(0, 3).map(c => `<span class="chain-badge">${c}</span>`).join('')}
+              ${p.chains?.length > 3 ? `<span class="chain-badge">+${p.chains.length - 3}</span>` : ''}
+            </div>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="8">No data</td></tr>';
+
+      document.getElementById('protocols-loading').style.display = 'none';
+      document.getElementById('protocols-content').style.display = 'block';
+    }
+
+    async function loadChains() {
+      document.getElementById('chains-loading').style.display = 'flex';
+      document.getElementById('chains-content').style.display = 'none';
+
+      const data = await fetchAPI('chains');
+      if (!data) return;
+
+      dataCache.chains = data;
+
+      const tbody = document.querySelector('#chains-table tbody');
+      tbody.innerHTML = data.chains?.slice(0, 30).map((c, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td style="font-weight: 600; color: var(--text-primary)">${c.name}</td>
+          <td class="tvl-value">${formatNumber(c.tvl)}</td>
+          <td>
+            <div class="quality-score">
+              <div class="quality-bar">
+                <div class="quality-fill ${parseFloat(c.dominance) > 10 ? 'high' : parseFloat(c.dominance) > 2 ? 'medium' : 'low'}" style="width: ${Math.min(100, c.dominance * 2)}%"></div>
+              </div>
+              <span style="font-size: 0.85rem">${c.dominance}%</span>
+            </div>
+          </td>
+          <td>${c.protocolCount}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="5">No data</td></tr>';
+
+      document.getElementById('chains-loading').style.display = 'none';
+      document.getElementById('chains-content').style.display = 'block';
+    }
+
+    async function loadYields() {
+      document.getElementById('yields-loading').style.display = 'flex';
+      document.getElementById('yields-content').style.display = 'none';
+
+      const data = await fetchAPI('yields?limit=50');
+      if (!data) return;
+
+      dataCache.yields = data;
+
+      document.getElementById('yields-stats').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Total Pools</div>
+          <div class="stat-value">${data.totalPools?.toLocaleString() || '-'}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg APY (Top Pools)</div>
+          <div class="stat-value" style="color: var(--accent-green)">${data.stats?.avgApy?.toFixed(2) || '-'}%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Median APY</div>
+          <div class="stat-value">${data.stats?.medianApy?.toFixed(2) || '-'}%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Sustainable Yields</div>
+          <div class="stat-value">${data.stats?.sustainableCount || 0} / ${data.filteredCount || 0}</div>
+        </div>
+      `;
+
+      const tbody = document.querySelector('#yields-table tbody');
+      tbody.innerHTML = data.yields?.map((y, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td style="font-weight: 600; color: var(--text-primary)">${y.pool}</td>
+          <td>${y.project}</td>
+          <td><span class="chain-badge">${y.chain}</span></td>
+          <td style="color: var(--accent-green); font-weight: 600; font-family: var(--font-mono)">${y.apy?.toFixed(2)}%</td>
+          <td class="tvl-value">${formatNumber(y.tvl)}</td>
+          <td>
+            <div class="quality-score">
+              <div class="quality-bar">
+                <div class="quality-fill ${y.quality > 70 ? 'high' : y.quality > 40 ? 'medium' : 'low'}" style="width: ${y.quality}%"></div>
+              </div>
+              <span style="font-size: 0.8rem">${y.quality}</span>
+            </div>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="7">No data</td></tr>';
+
+      document.getElementById('yields-loading').style.display = 'none';
+      document.getElementById('yields-content').style.display = 'block';
+    }
+
+    async function loadStablecoins() {
+      document.getElementById('stablecoins-loading').style.display = 'flex';
+      document.getElementById('stablecoins-content').style.display = 'none';
+
+      const data = await fetchAPI('stablecoins');
+      if (!data) return;
+
+      dataCache.stablecoins = data;
+
+      document.getElementById('stablecoins-stats').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Total Supply</div>
+          <div class="stat-value">${formatNumber(data.totalSupply)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Dominant Stablecoin</div>
+          <div class="stat-value">${data.signals?.dominant || '-'}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Supply Trend</div>
+          <div class="stat-value" style="color: var(--accent-${data.signals?.supplyTrend === 'GROWING' ? 'green' : 'red'})">${data.signals?.supplyTrend || '-'}</div>
+        </div>
+      `;
+
+      const tbody = document.querySelector('#stablecoins-table tbody');
+      tbody.innerHTML = data.stablecoins?.map((s, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>
+            <div class="protocol-info">
+              <span class="protocol-title">${s.name}</span>
+              <span class="protocol-symbol">${s.symbol}</span>
+            </div>
+          </td>
+          <td class="tvl-value">${formatNumber(s.supply)}</td>
+          <td>${s.dominance}%</td>
+          <td class="change-value ${getChangeClass(s.change24h)}">${formatPercent(s.change24h)}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="5">No data</td></tr>';
+
+      const maxSupply = data.byChain?.[0]?.supply || 1;
+      document.getElementById('stables-by-chain').innerHTML = data.byChain?.map(c => `
+        <div style="margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <span style="font-size: 0.85rem; color: var(--text-primary)">${c.chain}</span>
+            <span style="font-size: 0.85rem; font-family: var(--font-mono)">${formatNumber(c.supply)}</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill purple" style="width: ${(c.supply / maxSupply) * 100}%"></div>
+          </div>
+        </div>
+      `).join('') || '<p>No data</p>';
+
+      document.getElementById('stablecoins-loading').style.display = 'none';
+      document.getElementById('stablecoins-content').style.display = 'block';
+    }
+
+    async function loadRaises() {
+      document.getElementById('raises-loading').style.display = 'flex';
+      document.getElementById('raises-content').style.display = 'none';
+
+      const data = await fetchAPI('raises?days=30');
+      if (!data) return;
+
+      dataCache.raises = data;
+
+      document.getElementById('raises-stats').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Total Raised (30d)</div>
+          <div class="stat-value">${formatNumber(data.totalRaised)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Number of Raises</div>
+          <div class="stat-value">${data.raisesCount || 0}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Potential Airdrops</div>
+          <div class="stat-value">${data.potentialAirdrops?.length || 0}</div>
+        </div>
+      `;
+
+      document.getElementById('raises-cards').innerHTML = data.raises?.slice(0, 12).map(r => `
+        <div class="info-card">
+          <div class="card-header">
+            <div class="card-title">${r.name}</div>
+            <span class="card-badge" style="background: rgba(34, 197, 94, 0.15); color: var(--accent-green)">${r.round || 'Raise'}</span>
+          </div>
+          <div class="card-stats">
+            <div class="card-stat">
+              <span class="card-stat-label">Amount</span>
+              <span class="card-stat-value">${formatNumber(r.amount)}</span>
+            </div>
+            <div class="card-stat">
+              <span class="card-stat-label">Date</span>
+              <span class="card-stat-value" style="font-size: 0.9rem">${new Date(r.date).toLocaleDateString()}</span>
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="card-tag">${r.category || 'Crypto'}</span>
+            ${r.leadInvestors?.slice(0, 2).map(inv => `<span class="card-tag" style="background: rgba(139, 92, 246, 0.15); color: var(--accent-purple)">${inv}</span>`).join('') || ''}
+          </div>
+        </div>
+      `).join('') || '<p>No recent raises</p>';
+
+      document.getElementById('airdrops-cards').innerHTML = data.potentialAirdrops?.map(a => `
+        <div class="info-card">
+          <div class="card-header">
+            <div class="card-title">${a.name}</div>
+            <span class="card-badge" style="background: rgba(251, 191, 36, 0.15); color: var(--accent-yellow)">🪂 Airdrop</span>
+          </div>
+          <div class="card-stats">
+            <div class="card-stat">
+              <span class="card-stat-label">Raised</span>
+              <span class="card-stat-value">${formatNumber(a.raised)}</span>
+            </div>
+            <div class="card-stat">
+              <span class="card-stat-label">Round</span>
+              <span class="card-stat-value" style="font-size: 0.9rem">${a.round || '-'}</span>
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="card-tag">${a.category || 'Crypto'}</span>
+          </div>
+        </div>
+      `).join('') || '<p>No potential airdrops found</p>';
+
+      document.getElementById('raises-loading').style.display = 'none';
+      document.getElementById('raises-content').style.display = 'block';
+    }
+
+    async function loadTrending() {
+      document.getElementById('trending-loading').style.display = 'flex';
+      document.getElementById('trending-content').style.display = 'none';
+
+      const data = await fetchAPI('trending');
+      if (!data) return;
+
+      dataCache.trending = data;
+
+      document.getElementById('trending-cards').innerHTML = data.tokens?.map(t => `
+        <div class="info-card">
+          <div class="card-header">
+            <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
+              ${t.icon ? `<img src="${t.icon}" style="width: 24px; height: 24px; border-radius: 50%;">` : '🔥'}
+              ${t.description || 'Unknown Token'}
+            </div>
+            <span class="chain-badge">${t.chain}</span>
+          </div>
+          <div style="margin-top: 8px;">
+            <code style="font-size: 0.7rem; color: var(--text-muted); word-break: break-all;">${t.address?.slice(0, 20)}...</code>
+          </div>
+        </div>
+      `).join('') || '<p>No trending tokens</p>';
+
+      document.getElementById('trending-loading').style.display = 'none';
+      document.getElementById('trending-content').style.display = 'block';
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+
+      currentTab = tabName;
+      loadTabData(tabName);
+    }
+
+    function loadTabData(tabName) {
+      switch (tabName) {
+        case 'overview':
+          if (!dataCache.overview) loadOverview();
+          break;
+        case 'protocols':
+          if (!dataCache.protocols) loadProtocols();
+          break;
+        case 'chains':
+          if (!dataCache.chains) loadChains();
+          break;
+        case 'yields':
+          if (!dataCache.yields) loadYields();
+          break;
+        case 'stablecoins':
+          if (!dataCache.stablecoins) loadStablecoins();
+          break;
+        case 'raises':
+          if (!dataCache.raises) loadRaises();
+          break;
+        case 'trending':
+          if (!dataCache.trending) loadTrending();
+          break;
+      }
+    }
+
+    function refreshData() {
+      dataCache = {};
+      loadTabData(currentTab);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+      });
+      loadOverview();
+    });
+  </script>
+</body>
+</html>

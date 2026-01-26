@@ -156,7 +156,8 @@
             │  (JSON)            │                    │  (Visual Cards)      │
             │                    │                    │                      │
             │  {                 │                    │  ┌─────────────────┐ │
-            │   asset: "AAVE",   │                    │  │ AAVE            │ │
+            │   asset: "AAVE",   │                    │              592c753..cd1cf1e  main -> main
+            │ AAVE            │ │
             │   signal: "LONG",  │                    │  │ CAUTIOUS LONG   │ │
             │   confidence: 0.72,│                    │  │ Confidence: 72% │ │
             │   drivers: [...],  │                    │  │                 │ │
