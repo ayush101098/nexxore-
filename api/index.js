@@ -11,7 +11,22 @@ const analyst = require('./analyst.js');
 const analytics = require('./analytics.js');
 
 module.exports = async (req, res) => {
-  const { pathname } = new URL(req.url, `http://${req.headers.host}`);
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  // Parse URL
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const pathname = url.pathname;
+  
+  // Parse query params and attach to req
+  req.query = Object.fromEntries(url.searchParams);
   
   // Route to appropriate handler
   if (pathname === '/api/news') {

@@ -834,10 +834,19 @@
     }
 
     async function fetchAPI(endpoint) {
+      const url = `/api/analytics/${endpoint}`;
+      console.log('Fetching:', url);
       try {
-        const res = await fetch(`/api/analytics/${endpoint}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return await res.json();
+        const res = await fetch(url);
+        console.log('Response status:', res.status);
+        if (!res.ok) {
+          const text = await res.text();
+          console.error('Response body:', text);
+          throw new Error(`HTTP ${res.status}: ${text}`);
+        }
+        const data = await res.json();
+        console.log('Data received:', endpoint, data ? 'success' : 'null');
+        return data;
       } catch (err) {
         console.error(`API error (${endpoint}):`, err);
         return null;
