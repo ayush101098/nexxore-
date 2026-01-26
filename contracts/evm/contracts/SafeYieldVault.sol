@@ -94,11 +94,22 @@ contract SafeYieldVault is ERC4626, AccessControl, ReentrancyGuard, Pausable {
     event StrategyRemoved(address indexed strategy);
     event StrategyAllocationUpdated(address indexed strategy, uint256 newAllocation);
     event RebalanceProposed(uint256 indexed proposalId, address from, address to, uint256 amount);
+    event RebalanceApproved(uint256 indexed proposalId, address approver);
     event RebalanceExecuted(uint256 indexed proposalId, address from, address to, uint256 amount);
     event EmergencyUnwind(address indexed strategy, uint256 amount, string reason);
     event DepositsRestricted(uint256 riskScore, RiskState state);
     event DepositsResumed(uint256 riskScore, RiskState state);
     event YieldHarvested(address indexed strategy, uint256 amount);
+    
+    // Critical state change events (audit fix)
+    event VaultPaused(address indexed caller, uint256 timestamp, uint256 riskScore);
+    event VaultUnpaused(address indexed caller, uint256 timestamp, uint256 riskScore);
+    event RedemptionProcessed(address indexed owner, address indexed receiver, uint256 shares, uint256 assets);
+    event WithdrawalProcessed(address indexed owner, address indexed receiver, uint256 assets, uint256 shares);
+    event FeeRecipientUpdated(address indexed oldRecipient, address indexed newRecipient);
+    event ManagementFeeUpdated(uint256 oldFee, uint256 newFee);
+    event PerformanceFeeUpdated(uint256 oldFee, uint256 newFee);
+    event TargetAllocationsSet(address[] strategies, uint256[] allocations);
 
     // ============================================================================
     // ERRORS
@@ -181,7 +192,9 @@ contract SafeYieldVault is ERC4626, AccessControl, ReentrancyGuard, Pausable {
         if (assets > idleAssets) {
             _withdrawFromStrategies(assets - idleAssets);
         }
-        return super.withdraw(assets, receiver, owner);
+        uint256 shares = super.withdraw(assets, receiver, owner);
+        emit WithdrawalProcessed(owner, receiver, assets, shares);
+        return shares;
     }
 
     /**
@@ -199,7 +212,9 @@ contract SafeYieldVault is ERC4626, AccessControl, ReentrancyGuard, Pausable {
         if (assets > idleAssets) {
             _withdrawFromStrategies(assets - idleAssets);
         }
-        return super.redeem(shares, receiver, owner);
+        uint256 returnedAssets = super.redeem(shares, receiver, owner);
+        emit RedemptionProcessed(owner, receiver, shares, returnedAssets);
+        return returnedAssets;
     }
 
     // ============================================================================
@@ -339,6 +354,8 @@ contract SafeYieldVault is ERC4626, AccessControl, ReentrancyGuard, Pausable {
 
         // Account for idle buffer
         require(totalAllocation <= BASIS_POINTS - MIN_IDLE_BUFFER, "Exceeds max total");
+        
+        emit TargetAllocationsSet(strategyAddresses, allocations);
     }
 
     // ============================================================================
@@ -395,6 +412,7 @@ contract SafeYieldVault is ERC4626, AccessControl, ReentrancyGuard, Pausable {
         require(block.timestamp < proposal.proposedAt + 1 days, "Proposal expired");
         
         proposal.approved = true;
+        emit RebalanceApproved(proposalId, msg.sender);
     }
 
     /**
@@ -598,26 +616,34 @@ contract SafeYieldVault is ERC4626, AccessControl, ReentrancyGuard, Pausable {
     // ============================================================================
 
     function setFeeRecipient(address _feeRecipient) external onlyRole(GOVERNANCE) {
+        address oldRecipient = feeRecipient;
         feeRecipient = _feeRecipient;
+        emit FeeRecipientUpdated(oldRecipient, _feeRecipient);
     }
 
     function setManagementFee(uint256 _fee) external onlyRole(GOVERNANCE) {
         require(_fee <= 200, "Fee too high"); // Max 2%
+        uint256 oldFee = managementFee;
         managementFee = _fee;
+        emit ManagementFeeUpdated(oldFee, _fee);
     }
 
     function setPerformanceFee(uint256 _fee) external onlyRole(GOVERNANCE) {
         require(_fee <= 2000, "Fee too high"); // Max 20%
+        uint256 oldFee = performanceFee;
         performanceFee = _fee;
+        emit PerformanceFeeUpdated(oldFee, _fee);
     }
 
     function pause() external onlyRole(RISK_AGENT) {
         _pause();
+        emit VaultPaused(msg.sender, block.timestamp, vaultRiskScore);
     }
 
     function unpause() external onlyRole(GOVERNANCE) {
         require(vaultRiskScore < CRITICAL_RISK, "Risk too high");
         _unpause();
+        emit VaultUnpaused(msg.sender, block.timestamp, vaultRiskScore);
     }
 }
 
