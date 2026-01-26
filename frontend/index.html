@@ -3,50 +3,662 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>nexxore — Autonomous capital orchestration</title>
-  <meta name="description" content="Mint nUSD, deploy yield and trading strategies, and let agents manage your portfolio 24/7.">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <title>nexxore — DeFi Ecosystem | Perps, Vaults & Research</title>
+  <meta name="description" content="Trade perpetuals, manage vaults, and access institutional-grade research. Full DeFi ecosystem with autonomous agents and on-chain transparency.">
+  
+  <!-- Google Fonts: Space Grotesk, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/wallet.css">
   
+  <!-- Navigation Styles -->
+  <style>
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.05) !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      transform: translateY(-2px);
+    }
+
+    .nav-link-highlight:hover {
+      background: rgba(168, 85, 247, 0.1) !important;
+      border-color: rgba(168, 85, 247, 0.3) !important;
+      transform: translateY(-2px);
+    }
+
+    #connectWalletBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(168, 85, 247, 0.4) !important;
+    }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+      /* Navigation Mobile */
+      .navbar .container {
+        flex-direction: column !important;
+        padding: 12px 16px !important;
+      }
+      
+      .nav-brand svg {
+        height: 40px !important;
+      }
+      
+      .nav-links {
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 8px !important;
+      }
+      
+      .nav-group {
+        flex-direction: column !important;
+        width: 100% !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        gap: 8px !important;
+      }
+      
+      .nav-link, .nav-link-highlight {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 12px 20px !important;
+      }
+      
+      #connectWalletBtn {
+        width: 100% !important;
+        padding: 14px 24px !important;
+      }
+      
+      /* Hero Mobile */
+      .hero-section {
+        min-height: auto !important;
+        padding: 80px 20px 60px !important;
+      }
+      
+      .hero-content {
+        padding-top: 40px !important;
+      }
+      
+      .hero-content h1 {
+        font-size: 2rem !important;
+        line-height: 1.2 !important;
+        margin-bottom: 20px !important;
+      }
+      
+      .hero-content p {
+        font-size: 1rem !important;
+        margin-bottom: 32px !important;
+      }
+      
+      /* Feature Pills Mobile */
+      .hero-content > div[style*="flex-wrap"] {
+        gap: 8px !important;
+      }
+      
+      .hero-content > div[style*="flex-wrap"] > div {
+        font-size: 0.75rem !important;
+        padding: 6px 14px !important;
+      }
+      
+      /* CTA Buttons Mobile */
+      .hero-content > div[style*="gap: 16px"] {
+        flex-direction: column !important;
+        gap: 12px !important;
+      }
+      
+      .hero-content a[href] {
+        width: 100% !important;
+        padding: 14px 28px !important;
+        font-size: 0.95rem !important;
+        text-align: center !important;
+      }
+      
+      /* Products Grid Mobile */
+      .products-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        margin-bottom: 24px !important;
+      }
+      
+      .product-card {
+        padding: 20px !important;
+      }
+      
+      /* Supported Assets Mobile */
+      .hero-content > div[style*="Supported Assets"] {
+        padding: 16px 20px !important;
+      }
+      
+      .hero-content > div[style*="Supported Assets"] > div:last-child {
+        gap: 12px !important;
+        font-size: 1rem !important;
+      }
+      
+      /* Geometric Patterns Mobile - Hide some */
+      .hero-section > div[style*="rotate(45deg)"] {
+        width: 200px !important;
+        height: 200px !important;
+        opacity: 0.5;
+      }
+      
+      .hero-section > div[style*="rotate(-30deg)"] {
+        width: 150px !important;
+        height: 150px !important;
+        opacity: 0.5;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .hero-content h1 {
+        font-size: 1.75rem !important;
+      }
+      
+      .products-grid {
+        gap: 10px !important;
+      }
+      
+      .product-card {
+        padding: 18px !important;
+      }
+      
+      .product-card > div:first-child {
+        font-size: 2rem !important;
+      }
+      
+      .hero-content > div[style*="Supported Assets"] span {
+        font-size: 0.95rem !important;
+      }
+    }
+  </style>
+  
   <!-- Web3 Libraries -->
   <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+  
+  <!-- Global Page Styles -->
+  <style>
+    body {
+      background: #09090b;
+      position: relative;
+    }
+    
+    /* Subtle grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), 
+                        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.5;
+      z-index: 0;
+      pointer-events: none;
+    }
+    
+    /* All sections should have relative positioning to appear above background */
+    section {
+      position: relative;
+      z-index: 1;
+    }
+  </style>
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container">
-      <div class="nav-brand"><a href="/" class="brand-link"><svg class="site-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160"><defs><linearGradient id="logoGrad" x1="0" x2="1"><stop offset="0" stop-color="#00d4ff"/><stop offset="1" stop-color="#0066ff"/></linearGradient></defs><g transform="translate(40,40) scale(0.9)"><circle cx="50" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/></g><g transform="translate(150,110)"><text x="0" y="0" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="56" fill="currentColor">nexxore</text></g></svg></a></div>
-      <div class="nav-links">
-        <a href="research.html" class="btn btn-outline" style="margin-right: 10px;">Research</a>
-        <a href="deposit-new.html" class="btn btn-outline" style="margin-right: 10px;">Deposit</a>
-        <a href="vault-new.html" class="btn btn-outline" style="margin-right: 10px;">Vault</a>
-        <button id="connectWalletBtn" class="btn btn-primary">Connect Wallet</button>
+  <nav class="navbar" style="backdrop-filter: blur(20px); background: rgba(9, 9, 11, 0.9); border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 24px;">
+      <div class="nav-brand"><a href="/" class="brand-link"><svg class="site-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160"><defs><linearGradient id="logoGrad" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs><g transform="translate(40,40) scale(0.9)"><circle cx="50" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/></g><g transform="translate(150,110)"><text x="0" y="0" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="56" fill="currentColor">nexxore</text></g></svg></a></div>
+      
+      <div class="nav-links" style="display: flex; align-items: center; gap: 8px;">
+        <a href="#waitlist" class="btn btn-primary" style="padding: 12px 24px; background: linear-gradient(135deg, #a855f7, #22c55e); border: none; border-radius: 10px; color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3); text-decoration: none; display: inline-block;">
+          Join Waitlist
+        </a>
       </div>
     </div>
   </nav>
 
   <!-- Hero -->
-  <section id="hero" class="hero-section">
-    <div class="container">
-      <div class="hero-content">
-        <h1 class="hero-headline">Autonomous capital execution onchain. Yield, optimized.</h1>
-        <p class="hero-subheadline">Mint nUSD, deploy yield and trading strategies, and let agents manage your portfolio 24/7.</p>
-        <div class="hero-cta">
-          <a href="deposit-new.html" class="btn btn-primary">Start Depositing</a>
-          <a href="vault-new.html" class="btn btn-outline">View Vault</a>
+  <section id="hero" class="hero-section" style="position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden; background: #09090b;">
+    <!-- Animated Network Background -->
+    <canvas id="networkCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;"></canvas>
+    
+    <!-- Geometric Patterns -->
+    <div style="position: absolute; top: 20%; right: 10%; width: 400px; height: 400px; background: linear-gradient(135deg, rgba(168, 85, 247, 0.03), rgba(34, 197, 94, 0.02)); transform: rotate(45deg); border: 1px solid rgba(168, 85, 247, 0.08); z-index: 1;"></div>
+    <div style="position: absolute; bottom: 15%; left: 5%; width: 300px; height: 300px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.03), rgba(168, 85, 247, 0.02)); transform: rotate(-30deg); border: 1px solid rgba(34, 197, 94, 0.08); z-index: 1;"></div>
+    
+    <!-- Floating Grid Lines -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 60px 60px; z-index: 0; opacity: 0.4;"></div>
+    
+    <div class="container" style="position: relative; z-index: 10;">
+      <div class="hero-content" style="max-width: 900px; margin: 0 auto; text-align: center; padding-top: 80px;">
+        <!-- Main Description -->
+        <h1 style="font-size: 3.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 24px; color: white; animation: fadeInUp 1s ease-out 0.1s backwards;">
+          Autonomous Capital Execution<br>
+          <span style="background: linear-gradient(135deg, #a855f7, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">On-Chain Intelligence</span>
+        </h1>
+
+        <p style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 32px; line-height: 1.6; max-width: 700px; margin-left: auto; margin-right: auto; animation: fadeInUp 1s ease-out 0.4s backwards;">
+          Trade perpetuals, manage vaults, access institutional-grade research. Built on modular architecture with complete transparency.
+        </p>
+
+        <!-- Products Grid -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; max-width: 1100px; margin: 0 auto 32px; animation: fadeInUp 1s ease-out 0.5s backwards;" class="products-grid">
+          <a href="perps.html" style="padding: 24px; background: rgba(6, 182, 212, 0.04); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 12px; text-decoration: none; transition: all 0.3s; position: relative; overflow: hidden;" class="product-card">
+            <div style="font-size: 2.5rem; margin-bottom: 8px;">⚡</div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: #06b6d4; margin-bottom: 4px;">Perpetuals</div>
+            <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5);">Leveraged trading</div>
+          </a>
+          <a href="vaults.html" style="padding: 24px; background: rgba(168, 85, 247, 0.04); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 12px; text-decoration: none; transition: all 0.3s; position: relative; overflow: hidden;" class="product-card">
+            <div style="font-size: 2.5rem; margin-bottom: 8px;">🏦</div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: #a855f7; margin-bottom: 4px;">Vaults</div>
+            <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5);">Automated yield</div>
+          </a>
+          <a href="research.html" style="padding: 24px; background: rgba(34, 197, 94, 0.04); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 12px; text-decoration: none; transition: all 0.3s; position: relative; overflow: hidden;" class="product-card">
+            <div style="font-size: 2.5rem; margin-bottom: 8px;">🔬</div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: #22c55e; margin-bottom: 4px;">Research</div>
+            <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5);">AI-powered insights</div>
+          </a>
+          <a href="signals-dashboard.html" style="padding: 24px; background: rgba(249, 115, 22, 0.04); border: 1px solid rgba(249, 115, 22, 0.2); border-radius: 12px; text-decoration: none; transition: all 0.3s; position: relative; overflow: hidden;" class="product-card">
+            <div style="font-size: 2.5rem; margin-bottom: 8px;">📡</div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: #f97316; margin-bottom: 4px;">Signals</div>
+            <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5);">Real-time alerts</div>
+          </a>
+          <a href="analytics.html" style="padding: 24px; background: rgba(236, 72, 153, 0.04); border: 1px solid rgba(236, 72, 153, 0.2); border-radius: 12px; text-decoration: none; transition: all 0.3s; position: relative; overflow: hidden;" class="product-card">
+            <div style="font-size: 2.5rem; margin-bottom: 8px;">📊</div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: #ec4899; margin-bottom: 4px;">Analytics</div>
+            <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5);">Multi-source data</div>
+          </a>
+          <a href="safe-yield.html" style="padding: 24px; background: rgba(234, 179, 8, 0.04); border: 1px solid rgba(234, 179, 8, 0.2); border-radius: 12px; text-decoration: none; transition: all 0.3s; position: relative; overflow: hidden;" class="product-card">
+            <div style="font-size: 2.5rem; margin-bottom: 8px;">💰</div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: #eab308; margin-bottom: 4px;">Safe Yield</div>
+            <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5);">Curated yields</div>
+          </a>
+          <a href="delta-agent.html" style="padding: 24px; background: rgba(168, 85, 247, 0.06); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 12px; text-decoration: none; transition: all 0.3s; position: relative; overflow: hidden;" class="product-card">
+            <div style="position: absolute; top: 8px; right: 8px; font-size: 0.65rem; background: linear-gradient(135deg, #a855f7, #22c55e); padding: 2px 8px; border-radius: 10px; color: white; font-weight: 700;">NEW</div>
+            <div style="font-size: 2.5rem; margin-bottom: 8px;">🤖</div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: #a855f7; margin-bottom: 4px;">Delta Agent</div>
+            <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5);">Auto-neutral trading</div>
+          </a>
+        </div>
+
+        <!-- CTA Buttons -->
+        <div style="display: flex; gap: 16px; justify-content: center; margin-bottom: 40px; animation: fadeInUp 1s ease-out 0.6s backwards;">
+          <a href="perps.html" style="padding: 16px 36px; background: linear-gradient(135deg, #a855f7, #22c55e); border: none; border-radius: 10px; color: white; font-weight: 700; font-size: 1.05rem; text-decoration: none; transition: all 0.3s; box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3); display: inline-block;">
+            Launch Perps →
+          </a>
+          <a href="vaults.html" style="padding: 16px 36px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; color: white; font-weight: 700; font-size: 1.05rem; text-decoration: none; transition: all 0.3s; backdrop-filter: blur(10px); display: inline-block;">
+            Explore Vaults
+          </a>
+        </div>
+
+        <!-- Supported Assets -->
+        <div style="text-align: center; padding: 20px 32px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 10px; backdrop-filter: blur(10px); max-width: 600px; margin: 0 auto; animation: fadeInUp 1s ease-out 0.7s backwards;">
+          <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.4); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">Supported Assets</div>
+          <div style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap;">
+            <span style="font-size: 1.1rem; font-weight: 700; color: #a855f7; font-family: 'JetBrains Mono', monospace;">ETH</span>
+            <span style="color: rgba(255, 255, 255, 0.2);">·</span>
+            <span style="font-size: 1.1rem; font-weight: 700; color: #f97316; font-family: 'JetBrains Mono', monospace;">BTC</span>
+            <span style="color: rgba(255, 255, 255, 0.2);">·</span>
+            <span style="font-size: 1.1rem; font-weight: 700; color: #06b6d4; font-family: 'JetBrains Mono', monospace;">SOL</span>
+            <span style="color: rgba(255, 255, 255, 0.2);">·</span>
+            <span style="font-size: 1.1rem; font-weight: 700; color: #22c55e; font-family: 'JetBrains Mono', monospace;">USDT</span>
+          </div>
         </div>
       </div>
     </div>
-    <div class="hero-background">
-      <div class="gradient-orb gradient-orb-1"></div>
-      <div class="gradient-orb gradient-orb-2"></div>
-      <div class="gradient-orb gradient-orb-3"></div>
+
+    <!-- Scroll Indicator -->
+    <div style="position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 10; animation: bounce 2s infinite;">
+      <div style="width: 30px; height: 50px; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 20px; position: relative;">
+        <div style="width: 6px; height: 10px; background: white; border-radius: 3px; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); animation: scrollDot 2s infinite;"></div>
+      </div>
     </div>
   </section>
 
-  <!-- Workflow Section -->
-  <section id="workflow" class="workflow-section">
+  <style>
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {
+        transform: translateX(-50%) translateY(0);
+      }
+      40% {
+        transform: translateX(-50%) translateY(-10px);
+      }
+      60% {
+        transform: translateX(-50%) translateY(-5px);
+      }
+    }
+
+    @keyframes scrollDot {
+      0% {
+        opacity: 0;
+        top: 8px;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        top: 32px;
+      }
+    }
+  </style>
+
+  <script>
+    // Network Animation Canvas
+    const canvas = document.getElementById('networkCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = [];
+    const particleCount = 100;
+    const connectionDistance = 150;
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.radius = Math.random() * 2 + 1;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fill();
+      }
+    }
+
+    // Initialize particles
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
+
+    function connectParticles() {
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < connectionDistance) {
+            const opacity = (1 - distance / connectionDistance) * 0.15;
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(168, 85, 247, ${opacity})`;
+            ctx.lineWidth = 1;
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      particles.forEach(particle => {
+        particle.update();
+        particle.draw();
+      });
+
+      connectParticles();
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Resize canvas on window resize
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    // Scroll-triggered animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -100px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    // Observe all sections
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('section').forEach(section => {
+        if (!section.id || section.id !== 'hero') {
+          section.style.opacity = '0';
+          section.style.transform = 'translateY(30px)';
+          section.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out';
+          observer.observe(section);
+        }
+      });
+    });
+  </script>
+
+  <style>
+    /* Product card hover effects */
+    .product-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .product-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .product-card:hover::before {
+      opacity: 1;
+    }
+
+    .product-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+  </style>
+
+  <!-- NX-Perps CTA Section -->
+  <section id="nx-perps-cta" style="background: rgba(168, 85, 247, 0.03); padding: 60px 0; position: relative; overflow: hidden; border-top: 1px solid rgba(168, 85, 247, 0.1); border-bottom: 1px solid rgba(34, 197, 94, 0.1);">
+    <!-- Background Graphics -->
+    <div style="position: absolute; top: 10%; left: 5%; width: 250px; height: 250px; background: rgba(168, 85, 247, 0.02); transform: rotate(25deg); border: 1px solid rgba(168, 85, 247, 0.06); z-index: 0;"></div>
+    <div style="position: absolute; bottom: 10%; right: 5%; width: 300px; height: 300px; background: rgba(34, 197, 94, 0.02); transform: rotate(-35deg); border: 1px solid rgba(34, 197, 94, 0.06); z-index: 0;"></div>
     <div class="container">
+      <div style="max-width: 1200px; margin: 0 auto;">
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 48px; align-items: center;">
+          <!-- Left Side: Content -->
+          <div>
+            <div style="display: inline-block; padding: 6px 16px; background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #a855f7; margin-bottom: 16px;">
+              🎯 Now Live
+            </div>
+            
+            <h2 style="font-size: 2.8rem; font-weight: 800; margin-bottom: 16px; line-height: 1.2; background: linear-gradient(135deg, #a855f7, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+              NX-Perps<br>Decentralized Perpetuals
+            </h2>
+            
+            <p style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 20px; line-height: 1.6;">
+              Trade perpetuals with complete on-chain transparency. No CEX risk. Modular architecture. Self-balancing funding mechanism.
+            </p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+              <div style="display: flex; align-items: start; gap: 12px;">
+                <div style="width: 24px; height: 24px; background: linear-gradient(135deg, #a855f7, #c084fc); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+                  <span style="color: white; font-weight: 700; font-size: 0.8rem;">✓</span>
+                </div>
+                <div>
+                  <div style="font-weight: 600; color: white; margin-bottom: 4px;">On-Chain Settlement</div>
+                  <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">100% transparent, no black boxes</div>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: start; gap: 12px;">
+                <div style="width: 24px; height: 24px; background: linear-gradient(135deg, #06b6d4, #22d3ee); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+                  <span style="color: white; font-weight: 700; font-size: 0.8rem;">✓</span>
+                </div>
+                <div>
+                  <div style="font-weight: 600; color: white; margin-bottom: 4px;">No Protocol Risk</div>
+                  <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Protocol never takes positions</div>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: start; gap: 12px;">
+                <div style="width: 24px; height: 24px; background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+                  <span style="color: white; font-weight: 700; font-size: 0.8rem;">✓</span>
+                </div>
+                <div>
+                  <div style="font-weight: 600; color: white; margin-bottom: 4px;">Funding Mechanism</div>
+                  <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Peer-to-peer, self-balancing</div>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: start; gap: 12px;">
+                <div style="width: 24px; height: 24px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+                  <span style="color: white; font-weight: 700; font-size: 0.8rem;">✓</span>
+                </div>
+                <div>
+                  <div style="font-weight: 600; color: white; margin-bottom: 4px;">LP Backstop</div>
+                  <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Earn from fees & funding</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 16px; align-items: center;">
+              <a href="perps.html" class="btn btn-primary" style="padding: 16px 32px; font-size: 1.1rem; font-weight: 700; box-shadow: 0 8px 24px rgba(168, 85, 247, 0.3);">
+                Start Trading Perps →
+              </a>
+              <a href="perps.html#lp-vaults" class="btn btn-outline" style="padding: 16px 32px; font-size: 1.1rem;">
+                Become an LP
+              </a>
+            </div>
+          </div>
+
+          <!-- Right Side: Visual Stats -->
+          <div>
+            <div style="background: rgba(15, 15, 18, 0.8); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 32px; backdrop-filter: blur(10px);">
+              <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 24px; color: white; text-align: center;">Live Protocol Stats</h3>
+              
+              <div style="display: grid; gap: 20px;">
+                <div style="text-align: center; padding: 16px; background: rgba(168, 85, 247, 0.06); border-radius: 10px; border: 1px solid rgba(168, 85, 247, 0.15);">
+                  <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: rgba(255, 255, 255, 0.5); margin-bottom: 8px;">Total Open Interest</div>
+                  <div style="font-size: 2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; background: linear-gradient(135deg, #a855f7, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">$0.00</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div style="text-align: center; padding: 16px; background: rgba(6, 182, 212, 0.06); border-radius: 10px; border: 1px solid rgba(6, 182, 212, 0.15);">
+                    <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px;">24h Volume</div>
+                    <div style="font-size: 1.3rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: #06b6d4;">$0.00</div>
+                  </div>
+
+                  <div style="text-align: center; padding: 16px; background: rgba(34, 197, 94, 0.06); border-radius: 10px; border: 1px solid rgba(34, 197, 94, 0.15);">
+                    <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px;">LP TVL</div>
+                    <div style="font-size: 1.3rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: #22c55e;">$0.00</div>
+                  </div>
+                </div>
+
+                <div style="text-align: center; padding: 16px; background: rgba(249, 115, 22, 0.06); border-radius: 10px; border: 1px solid rgba(249, 115, 22, 0.15);">
+                  <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: rgba(255, 255, 255, 0.5); margin-bottom: 8px;">Active Markets</div>
+                  <div style="font-size: 1.5rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: #f97316;">ETH • BTC • SOL</div>
+                </div>
+              </div>
+
+              <div style="margin-top: 24px; padding: 16px; background: rgba(168, 85, 247, 0.04); border-radius: 8px; border: 1px dashed rgba(168, 85, 247, 0.2);">
+                <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); text-align: center;">
+                  <strong style="color: #a855f7;">Up to 50x leverage</strong> • Instant execution • 24/7 trading
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Animated background elements -->
+    <div style="position: absolute; top: 20%; left: 10%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(168, 85, 247, 0.08), transparent); border-radius: 50%; filter: blur(60px); pointer-events: none; animation: float 8s ease-in-out infinite;"></div>
+    <div style="position: absolute; bottom: 20%; right: 10%; width: 400px; height: 400px; background: radial-gradient(circle, rgba(34, 197, 94, 0.08), transparent); border-radius: 50%; filter: blur(80px); pointer-events: none; animation: float 10s ease-in-out infinite reverse;"></div>
+  </section>
+
+  <style>
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    /* Mobile Responsive for NX-Perps CTA */
+    @media (max-width: 968px) {
+      #nx-perps-cta > div > div > div {
+        grid-template-columns: 1fr !important;
+        gap: 32px !important;
+      }
+      
+      #nx-perps-cta h2 {
+        font-size: 2rem !important;
+      }
+      
+      #nx-perps-cta p {
+        font-size: 1rem !important;
+      }
+      
+      #nx-perps-cta > div > div > div > div > div[style*=\"grid-template-columns: 1fr 1fr\"] {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      #nx-perps-cta {
+        padding: 48px 0 !important;
+      }
+      
+      #nx-perps-cta h2 {
+        font-size: 1.75rem !important;
+      }
+    }
+  </style>
+
+  <!-- Workflow Section -->
+  <section id="workflow" class="workflow-section" style="position: relative; padding: 70px 0; background: rgba(0, 0, 0, 0.5); overflow: hidden;">
+    <!-- Background Geometric Elements -->
+    <div style="position: absolute; top: 15%; right: 8%; width: 200px; height: 200px; background: rgba(168, 85, 247, 0.03); transform: rotate(30deg); border: 1px solid rgba(168, 85, 247, 0.08); z-index: 0;"></div>
+    <div style="position: absolute; bottom: 20%; left: 5%; width: 180px; height: 180px; background: rgba(34, 197, 94, 0.03); transform: rotate(-20deg); border: 1px solid rgba(34, 197, 94, 0.08); z-index: 0;"></div>
+    
+    <div class="container" style="position: relative; z-index: 1;">
       <div class="workflow-diagram">
         <div class="workflow-card">
           <div class="workflow-icon" style="background:linear-gradient(135deg,#9333ea,#c084fc)">
@@ -60,7 +672,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
         </div>
         <div class="workflow-card">
-          <div class="workflow-icon" style="background:linear-gradient(135deg,#3b82f6,#60a5fa)">
+          <div class="workflow-icon" style="background:linear-gradient(135deg,#a855f7,#c084fc)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><text x="12" y="15" font-size="7" text-anchor="middle" fill="currentColor" font-family="Inter">n</text></svg>
           </div>
           <h3>nUSD</h3>
@@ -147,7 +759,7 @@
 
       <div class="agents-grid">
         <div class="agent-card" title="Optimizes fills and rebalances positions."><div class="agent-icon"><img src="assets/icons/bolt.svg" alt="Precision Execution" class="icon-svg"/></div><div class="agent-title">Precision Execution</div><div class="agent-sub">Trading Agent — Minimizes slippage and MEV</div></div>
-        <a href="https://sepolia.basescan.org/address/0x5B38Da6a701c568545dCfcB03FcB875f56beddC4" target="_blank" class="agent-card agent-card-clickable" title="View Yield Vault on BaseScan. Scans protocols and rotates capital." style="text-decoration: none; color: inherit; cursor: pointer;"><div class="agent-icon"><img src="assets/icons/rotate.svg" alt="Yield Engine" class="icon-svg"/></div><div class="agent-title">Yield Engine</div><div class="agent-sub">DeFi Strategy Agent — Auto-compounds and reallocates</div><div style="margin-top: 8px; font-size: 0.75rem; color: #00d4ff; font-weight: 600;">→ View Vault Contract</div></a>
+        <div class="agent-card" title="Scans protocols and rotates capital."><div class="agent-icon"><img src="assets/icons/rotate.svg" alt="Yield Engine" class="icon-svg"/></div><div class="agent-title">Yield Engine</div><div class="agent-sub">DeFi Strategy Agent — Auto-compounds and reallocates</div></div>
         <a href="research.html" class="agent-card agent-card-clickable" title="Alerts before markets react based on signals. Click to explore live research dashboard." style="text-decoration: none; color: inherit; cursor: pointer;"><div class="agent-icon"><img src="assets/icons/search.svg" alt="Info Edge" class="icon-svg"/></div><div class="agent-title">Info Edge</div><div class="agent-sub">Research/Alpha Agent — Sentiment & trend signals</div><div style="margin-top: 8px; font-size: 0.75rem; color: #00d4ff; font-weight: 600;">→ View Live Dashboard</div></a>
         <div class="agent-card" title="Event-driven tactical plays with controlled risk."><div class="agent-icon"><img src="assets/icons/target.svg" alt="Tactical Plays" class="icon-svg"/></div><div class="agent-title">Tactical Plays</div><div class="agent-sub">Degen Agent — High-convex setups</div></div>
       </div>
@@ -155,9 +767,9 @@
   </section><section id="sandbox" class="sandbox-section">
     <div class="container">
       <div class="section-header">
-        <h2 class="section-headline">Strategy Sandbox</h2>
-        <p class="section-copy">Transparent Strategy Logic. Verifiable Capital Execution.</p>
-        <p class="section-copy" style="margin-top:8px;max-width:900px">Inspect strategy rules, execution logic, historical performance, and live capital allocation — all before deploying a single dollar.</p>
+        <h2 class="section-headline">Strategy Builder</h2>
+        <p class="section-copy" style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.9);">Design. Deploy. Dominate.</p>
+        <p class="section-copy" style="margin-top:12px;max-width:800px;font-size:1.05rem;">Create custom trading strategies with transparent on-chain execution. No code required — just configure your risk parameters and let autonomous agents handle the rest.</p>
       </div>
 
       <div class="sandbox-grid" id="sandboxGrid">
@@ -183,9 +795,7 @@
             <div class="strategy-live">Target Volatility: &lt; X% — Execution Status: Inactive</div>
             <div class="strategy-cue">Designed for treasuries & long-term allocators</div>
             <div class="strategy-actions">
-              <button class="btn btn-outline btn-sm inspect">Inspect</button>
-              <button class="btn btn-secondary btn-sm simulate">Simulate</button>
-              <button class="btn btn-outline btn-sm view-logic">View Logic</button>
+              <button class="btn btn-primary btn-sm view-logic">View Strategy Logic</button>
             </div>
           </div>
         </div>
@@ -212,9 +822,7 @@
             <div class="strategy-live">Sharpe Target: &gt; X — Execution Status: Inactive</div>
             <div class="strategy-cue">Built for active capital managers</div>
             <div class="strategy-actions">
-              <button class="btn btn-outline btn-sm inspect">Inspect</button>
-              <button class="btn btn-secondary btn-sm simulate">Simulate</button>
-              <button class="btn btn-outline btn-sm view-logic">View Logic</button>
+              <button class="btn btn-primary btn-sm view-logic">View Strategy Logic</button>
             </div>
           </div>
         </div>
@@ -241,9 +849,7 @@
             <div class="strategy-live">Max Drawdown Guardrails: Enabled — Execution Status: Inactive</div>
             <div class="strategy-cue">Best suited for tactical deployment</div>
             <div class="strategy-actions">
-              <button class="btn btn-outline btn-sm inspect">Inspect</button>
-              <button class="btn btn-secondary btn-sm simulate">Simulate</button>
-              <button class="btn btn-outline btn-sm view-logic">View Logic</button>
+              <button class="btn btn-primary btn-sm view-logic">View Strategy Logic</button>
             </div>
           </div>
         </div>
@@ -270,9 +876,7 @@
             <div class="strategy-live">Risk Controls: Custom — Execution Status: Inactive</div>
             <div class="strategy-cue">For advanced users only</div>
             <div class="strategy-actions">
-              <button class="btn btn-outline btn-sm inspect">Inspect</button>
-              <button class="btn btn-secondary btn-sm simulate">Simulate</button>
-              <button class="btn btn-outline btn-sm view-logic">View Logic</button>
+              <button class="btn btn-primary btn-sm view-logic">View Strategy Logic</button>
             </div>
           </div>
         </div>
@@ -287,16 +891,6 @@
 
       <div class="trust-signals" style="margin-top:18px;text-align:center;max-width:900px;margin-left:auto;margin-right:auto;color:var(--muted)">
         <p><strong>All strategies execute on-chain with deterministic logic.</strong> No black boxes. No discretionary intervention.</p>
-      </div>
-    </div>
-  </section><section id="portfolio" class="portfolio-section">
-    <div class="container">
-      <div class="section-content">
-        <div class="section-text"><h2 class="section-headline">Portfolio Health (Live Score)</h2><p class="section-copy">Real-time health gauge and risk metrics.</p></div>
-        <div class="section-visual">
-          <div class="health-gauge">—</div>
-          <div class="mini-stats"><div class="mini-stat">Risk Utilization</div><div class="mini-stat">Yield Efficiency</div><div class="mini-stat">Volatility Exposure</div></div>
-        </div>
       </div>
     </div>
   </section><section id="waitlist" class="waitlist-section">
@@ -322,8 +916,7 @@
                     <div class="footer-column">
                         <h4>Products</h4>
                         <a href="#agents">Agent Terminal</a>
-                        <a href="#sandbox">Strategy Sandbox</a>
-                        <a href="#portfolio">Portfolio Optimizer</a>
+                        <a href="#sandbox">Strategy Builder</a>
                     </div>
                     <div class="footer-column">
                         <h4>Resources</h4>
@@ -369,7 +962,8 @@
     </div>
 
     <!-- JavaScript -->
-    <script src="js/wallet.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/walletConnect.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
