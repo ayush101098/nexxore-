@@ -1,0 +1,2458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delta Neutral Agent | Nexxore</title>
+  <meta name="description" content="Build, backtest, and deploy delta-neutral strategies with automated execution and real-time monitoring.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --bg: #09090b;
+      --surface: #0f0f12;
+      --surface-2: #16161a;
+      --surface-3: #1c1c21;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --text: #fafafa;
+      --text-secondary: rgba(255,255,255,0.6);
+      --text-tertiary: rgba(255,255,255,0.35);
+      --accent: #3b82f6;
+      --accent-dim: rgba(59,130,246,0.12);
+      --green: #22c55e;
+      --green-dim: rgba(34,197,94,0.12);
+      --red: #ef4444;
+      --red-dim: rgba(239,68,68,0.12);
+      --yellow: #eab308;
+      --yellow-dim: rgba(234,179,8,0.12);
+      --purple: #a855f7;
+      --purple-dim: rgba(168,85,247,0.12);
+      --cyan: #06b6d4;
+      --cyan-dim: rgba(6,182,212,0.12);
+      --orange: #f97316;
+      --orange-dim: rgba(249,115,22,0.12);
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Inter', -apple-system, sans-serif;
+      --radius: 10px;
+      --radius-lg: 14px;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      max-width: 1800px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo-mark {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .logo-text {
+      font-weight: 600;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+    }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface-2);
+      padding: 4px;
+      border-radius: 8px;
+    }
+
+    .nav-pill {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+
+    .nav-pill:hover { color: var(--text); background: var(--surface-3); }
+    .nav-pill.active { color: var(--text); background: var(--surface); }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .agent-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: var(--green-dim);
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--green);
+    }
+
+    .agent-status.paused {
+      background: var(--yellow-dim);
+      border-color: rgba(234,179,8,0.3);
+      color: var(--yellow);
+    }
+
+    .agent-status.stopped {
+      background: var(--red-dim);
+      border-color: rgba(239,68,68,0.3);
+      color: var(--red);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 currentColor; }
+      50% { opacity: 0.7; box-shadow: 0 0 0 6px transparent; }
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      padding: 40px 0;
+      margin-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--purple-dim);
+      border: 1px solid rgba(168,85,247,0.3);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--purple);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .hero-title {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--text), var(--text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 24px;
+    }
+
+    .hero-features {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .hero-feature {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .hero-feature-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+
+    /* Tab Navigation */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      padding: 4px;
+      border-radius: 10px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px 20px;
+      background: none;
+      border: none;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .tab:hover { color: var(--text-secondary); }
+    .tab.active { background: var(--surface-2); color: var(--text); }
+
+    .tab-icon {
+      font-size: 14px;
+    }
+
+    /* Tab Content */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Main Grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 20px;
+    }
+
+    @media (max-width: 1200px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Panel */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface-2);
+    }
+
+    .panel-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    /* Agent Monitor Section */
+    .monitor-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .monitor-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .monitor-card.alert {
+      border-color: var(--red);
+      animation: alertPulse 2s infinite;
+    }
+
+    .monitor-card.warning {
+      border-color: var(--yellow);
+    }
+
+    @keyframes alertPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.3); }
+      50% { box-shadow: 0 0 0 4px rgba(239,68,68,0); }
+    }
+
+    .monitor-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-tertiary);
+      margin-bottom: 8px;
+    }
+
+    .monitor-value {
+      font-family: var(--mono);
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .monitor-value.positive { color: var(--green); }
+    .monitor-value.negative { color: var(--red); }
+    .monitor-value.neutral { color: var(--yellow); }
+
+    .monitor-change {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .monitor-change.up { color: var(--green); }
+    .monitor-change.down { color: var(--red); }
+
+    .monitor-icon {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      background: var(--surface-3);
+      color: var(--text-tertiary);
+    }
+
+    /* Delta Drift Chart */
+    .drift-chart {
+      height: 200px;
+      background: var(--bg);
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    /* Rebalance History */
+    .rebalance-list {
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .rebalance-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--surface-2);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .rebalance-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .rebalance-icon.buy { background: var(--green-dim); color: var(--green); }
+    .rebalance-icon.sell { background: var(--red-dim); color: var(--red); }
+    .rebalance-icon.hedge { background: var(--purple-dim); color: var(--purple); }
+
+    .rebalance-info { flex: 1; }
+
+    .rebalance-action {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .rebalance-details {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .rebalance-time {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .rebalance-pnl {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Backtest Section */
+    .backtest-header {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .strategy-select {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .select {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    .select:focus { outline: none; border-color: var(--accent); }
+
+    .date-range {
+      display: flex;
+      gap: 8px;
+    }
+
+    .date-input {
+      padding: 12px 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text);
+      font-family: var(--mono);
+    }
+
+    .date-input:focus { outline: none; border-color: var(--accent); }
+
+    .run-backtest-btn {
+      padding: 12px 24px;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .run-backtest-btn:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+
+    /* Backtest Results */
+    .backtest-results {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .result-card {
+      background: var(--surface-2);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .result-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-tertiary);
+      margin-bottom: 8px;
+    }
+
+    .result-value {
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .result-value.positive { color: var(--green); }
+    .result-value.negative { color: var(--red); }
+
+    /* Equity Curve */
+    .equity-chart {
+      height: 280px;
+      background: var(--bg);
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    /* Drawdown Chart */
+    .drawdown-chart {
+      height: 120px;
+      background: var(--bg);
+      border-radius: 8px;
+    }
+
+    /* Cost Model Section */
+    .cost-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .cost-panel {
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .cost-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .cost-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .cost-total {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--red);
+    }
+
+    .cost-breakdown {
+      space-y: 8px;
+    }
+
+    .cost-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cost-item:last-child { border-bottom: none; }
+
+    .cost-item-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .cost-item-value {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* Impact Simulator */
+    .impact-simulator {
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .simulator-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .simulator-title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .simulator-result {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .simulator-label {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .simulator-value {
+      font-family: var(--mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .simulator-sliders {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .slider-group {
+      background: var(--surface-3);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .slider-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .slider-value {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--bg);
+      outline: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.4);
+    }
+
+    /* Risk Controls Section */
+    .risk-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .risk-panel {
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .risk-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .risk-title {
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .risk-status {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .risk-status.safe { background: var(--green-dim); color: var(--green); }
+    .risk-status.warning { background: var(--yellow-dim); color: var(--yellow); }
+    .risk-status.danger { background: var(--red-dim); color: var(--red); }
+
+    .risk-meter {
+      margin-bottom: 12px;
+    }
+
+    .meter-bar {
+      height: 8px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+
+    .meter-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .meter-fill.safe { background: var(--green); }
+    .meter-fill.warning { background: var(--yellow); }
+    .meter-fill.danger { background: var(--red); }
+
+    .meter-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .risk-limit-input {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .risk-limit-input label {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      min-width: 60px;
+    }
+
+    .risk-input {
+      flex: 1;
+      padding: 8px 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .risk-input:focus { outline: none; border-color: var(--accent); }
+
+    /* Alert Log */
+    .alert-log {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .alert-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px;
+      background: var(--surface-3);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      border-left: 3px solid var(--border);
+    }
+
+    .alert-item.critical { border-left-color: var(--red); background: var(--red-dim); }
+    .alert-item.warning { border-left-color: var(--yellow); }
+    .alert-item.info { border-left-color: var(--accent); }
+
+    .alert-icon {
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .alert-content { flex: 1; }
+
+    .alert-message {
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+
+    .alert-time {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      font-family: var(--mono);
+    }
+
+    /* Agent Controls Sidebar */
+    .agent-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .control-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+    }
+
+    .control-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-tertiary);
+      margin-bottom: 12px;
+    }
+
+    /* Strategy Config */
+    .config-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .config-row:last-child { border-bottom: none; }
+
+    .config-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .config-value {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: var(--surface-3);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-switch.active { background: var(--green); }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .toggle-switch.active::after { transform: translateX(20px); }
+
+    /* Threshold Settings */
+    .threshold-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .threshold-item {
+      background: var(--surface-2);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .threshold-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .threshold-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .threshold-value {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      padding: 14px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--green);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #16a34a;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--border-hover);
+      background: var(--surface-3);
+    }
+
+    .btn-danger {
+      background: var(--red-dim);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: var(--red);
+    }
+
+    .btn-danger:hover {
+      background: var(--red);
+      color: white;
+    }
+
+    /* Oracle Status */
+    .oracle-status {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .oracle-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--surface-2);
+      border-radius: 8px;
+    }
+
+    .oracle-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .oracle-dot.offline { background: var(--red); }
+    .oracle-dot.delayed { background: var(--yellow); }
+
+    .oracle-info { flex: 1; }
+
+    .oracle-name {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .oracle-latency {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      font-family: var(--mono);
+    }
+
+    /* Position Summary */
+    .position-summary {
+      background: var(--surface-2);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .position-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+    }
+
+    .position-label {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .position-value {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Live Price Display */
+    .live-price {
+      text-align: center;
+      padding: 20px;
+      background: var(--surface-2);
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+
+    .price-asset {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+    }
+
+    .price-value {
+      font-family: var(--mono);
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .price-change {
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .price-change.up { color: var(--green); }
+    .price-change.down { color: var(--red); }
+
+    /* Deploy Section */
+    .deploy-section {
+      background: linear-gradient(135deg, var(--purple-dim), var(--accent-dim));
+      border: 1px solid rgba(168,85,247,0.3);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .deploy-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .deploy-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 3px; }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .monitor-grid { grid-template-columns: repeat(2, 1fr); }
+      .backtest-results { grid-template-columns: repeat(3, 1fr); }
+      .cost-grid { grid-template-columns: 1fr; }
+      .risk-grid { grid-template-columns: 1fr; }
+      .simulator-sliders { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .app { padding: 0 16px 32px; }
+      .hero { padding: 24px 0; }
+      .hero-title { font-size: 28px; }
+      .monitor-grid { grid-template-columns: 1fr; }
+      .backtest-results { grid-template-columns: repeat(2, 1fr); }
+      .tabs { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <a href="/" class="logo">
+        <div class="logo-mark">N</div>
+        <span class="logo-text">nexxore</span>
+      </a>
+      <div class="header-center">
+        <a href="/perps.html" class="nav-pill">Perpetuals</a>
+        <a href="/delta-neutral.html" class="nav-pill">Builder</a>
+        <a href="/delta-agent.html" class="nav-pill active">Agent</a>
+        <a href="/vaults.html" class="nav-pill">Vaults</a>
+      </div>
+      <div class="header-right">
+        <div class="agent-status" id="agentStatus">
+          <span class="pulse-dot"></span>
+          <span id="statusText">Agent Active</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-badge">🤖 Autonomous Trading Agent</div>
+      <h1 class="hero-title">Delta Neutral Agent</h1>
+      <p class="hero-subtitle">Build, backtest, and deploy delta-neutral strategies across perpetuals and options with automated execution and real-time monitoring.</p>
+      <div class="hero-features">
+        <div class="hero-feature">
+          <div class="hero-feature-icon" style="background: var(--green-dim); color: var(--green);">⚡</div>
+          <span>Auto-Rebalancing</span>
+        </div>
+        <div class="hero-feature">
+          <div class="hero-feature-icon" style="background: var(--purple-dim); color: var(--purple);">📊</div>
+          <span>Historical Backtesting</span>
+        </div>
+        <div class="hero-feature">
+          <div class="hero-feature-icon" style="background: var(--cyan-dim); color: var(--cyan);">💰</div>
+          <span>Cost Modeling</span>
+        </div>
+        <div class="hero-feature">
+          <div class="hero-feature-icon" style="background: var(--red-dim); color: var(--red);">🛡️</div>
+          <span>Risk Controls</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab Navigation -->
+    <div class="tabs">
+      <button class="tab active" data-tab="monitor">
+        <span class="tab-icon">📡</span>
+        Live Monitor
+      </button>
+      <button class="tab" data-tab="backtest">
+        <span class="tab-icon">📈</span>
+        Backtest
+      </button>
+      <button class="tab" data-tab="costs">
+        <span class="tab-icon">💸</span>
+        Cost Model
+      </button>
+      <button class="tab" data-tab="risk">
+        <span class="tab-icon">🛡️</span>
+        Risk Controls
+      </button>
+    </div>
+
+    <!-- Tab Content: Live Monitor -->
+    <div class="tab-content active" id="tab-monitor">
+      <div class="main-grid">
+        <div>
+          <!-- Monitor Cards -->
+          <div class="monitor-grid">
+            <div class="monitor-card" id="deltaCard">
+              <div class="monitor-label">Net Delta</div>
+              <div class="monitor-value neutral" id="monitorDelta">0.024</div>
+              <div class="monitor-change" id="deltaChange">Within threshold</div>
+              <div class="monitor-icon">Δ</div>
+            </div>
+            <div class="monitor-card">
+              <div class="monitor-label">Position Value</div>
+              <div class="monitor-value" id="monitorValue">$48,250</div>
+              <div class="monitor-change up" id="valueChange">+2.4% today</div>
+              <div class="monitor-icon">💰</div>
+            </div>
+            <div class="monitor-card">
+              <div class="monitor-label">Unrealized P&L</div>
+              <div class="monitor-value positive" id="monitorPnl">+$1,247</div>
+              <div class="monitor-change up">+2.6%</div>
+              <div class="monitor-icon">📈</div>
+            </div>
+            <div class="monitor-card">
+              <div class="monitor-label">Rebalances (24h)</div>
+              <div class="monitor-value" id="monitorRebalances">3</div>
+              <div class="monitor-change">Last: 2h ago</div>
+              <div class="monitor-icon">🔄</div>
+            </div>
+          </div>
+
+          <!-- Delta Drift Chart -->
+          <div class="panel" style="margin-bottom: 16px;">
+            <div class="panel-header">
+              <span class="panel-title">📉 Delta Drift Over Time</span>
+              <span class="panel-badge">24H</span>
+            </div>
+            <div class="panel-body">
+              <div class="drift-chart" id="driftChart"></div>
+              <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-tertiary);">
+                <span>Upper Threshold: +0.15</span>
+                <span>Target: 0.00</span>
+                <span>Lower Threshold: -0.15</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rebalance History -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🔄 Rebalance History</span>
+              <span class="panel-badge" id="totalRebalances">12 Total</span>
+            </div>
+            <div class="panel-body">
+              <div class="rebalance-list" id="rebalanceList">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="agent-sidebar">
+          <!-- Live Price -->
+          <div class="live-price">
+            <div class="price-asset">ETH-USD</div>
+            <div class="price-value" id="livePrice">$3,245.67</div>
+            <div class="price-change up" id="priceChange">+1.24%</div>
+          </div>
+
+          <!-- Oracle Status -->
+          <div class="control-section">
+            <div class="control-title">📡 Oracle Status</div>
+            <div class="oracle-status">
+              <div class="oracle-item">
+                <div class="oracle-dot"></div>
+                <div class="oracle-info">
+                  <div class="oracle-name">Binance Spot</div>
+                  <div class="oracle-latency">12ms latency</div>
+                </div>
+              </div>
+              <div class="oracle-item">
+                <div class="oracle-dot"></div>
+                <div class="oracle-info">
+                  <div class="oracle-name">Deribit Options</div>
+                  <div class="oracle-latency">45ms latency</div>
+                </div>
+              </div>
+              <div class="oracle-item">
+                <div class="oracle-dot delayed"></div>
+                <div class="oracle-info">
+                  <div class="oracle-name">Chainlink Oracle</div>
+                  <div class="oracle-latency">~15 blocks</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Current Position -->
+          <div class="control-section">
+            <div class="control-title">📊 Current Position</div>
+            <div class="position-summary">
+              <div class="position-row">
+                <span class="position-label">Long ETH Perp</span>
+                <span class="position-value">5.2 ETH</span>
+              </div>
+              <div class="position-row">
+                <span class="position-label">Short $3,400 Put</span>
+                <span class="position-value">-3 contracts</span>
+              </div>
+              <div class="position-row">
+                <span class="position-label">Long $3,100 Put</span>
+                <span class="position-value">+2 contracts</span>
+              </div>
+              <div class="position-row" style="border-top: 1px solid var(--border); margin-top: 8px; padding-top: 8px;">
+                <span class="position-label">Net Delta</span>
+                <span class="position-value" style="color: var(--yellow);">0.024</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rebalancing Thresholds -->
+          <div class="control-section">
+            <div class="control-title">⚙️ Rebalancing Thresholds</div>
+            <div class="threshold-grid">
+              <div class="threshold-item">
+                <div class="threshold-header">
+                  <span class="threshold-label">Delta Threshold</span>
+                  <span class="threshold-value" id="deltaThresholdDisplay">±0.15</span>
+                </div>
+                <input type="range" class="slider" id="deltaThreshold" min="5" max="50" value="15">
+              </div>
+              <div class="threshold-item">
+                <div class="threshold-header">
+                  <span class="threshold-label">Time Interval</span>
+                  <span class="threshold-value" id="timeIntervalDisplay">4 hours</span>
+                </div>
+                <input type="range" class="slider" id="timeInterval" min="1" max="24" value="4">
+              </div>
+              <div class="threshold-item">
+                <div class="threshold-header">
+                  <span class="threshold-label">Min Trade Size</span>
+                  <span class="threshold-value" id="minTradeDisplay">$500</span>
+                </div>
+                <input type="range" class="slider" id="minTrade" min="100" max="2000" value="500" step="100">
+              </div>
+            </div>
+          </div>
+
+          <!-- Agent Controls -->
+          <div class="control-section">
+            <div class="control-title">🎮 Agent Controls</div>
+            <div class="config-row">
+              <span class="config-label">Auto-Rebalance</span>
+              <div class="toggle-switch active" id="autoRebalanceToggle"></div>
+            </div>
+            <div class="config-row">
+              <span class="config-label">Event Protection</span>
+              <div class="toggle-switch active" id="eventProtectionToggle"></div>
+            </div>
+            <div class="config-row">
+              <span class="config-label">Stop Loss</span>
+              <div class="toggle-switch" id="stopLossToggle"></div>
+            </div>
+            <div class="action-buttons">
+              <button class="btn btn-primary" id="deployBtn">🚀 Deploy Agent</button>
+              <button class="btn btn-secondary" id="pauseBtn">⏸️ Pause Agent</button>
+              <button class="btn btn-danger" id="emergencyBtn">🛑 Emergency Stop</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content: Backtest -->
+    <div class="tab-content" id="tab-backtest">
+      <div class="main-grid">
+        <div>
+          <!-- Backtest Controls -->
+          <div class="backtest-header">
+            <div class="strategy-select">
+              <select class="select" id="backtestStrategy">
+                <option value="basis">Basis Trade (Long Spot + Short Perp)</option>
+                <option value="straddle-hedge">Straddle + Perp Hedge</option>
+                <option value="covered-call">Covered Call + Perp Hedge</option>
+                <option value="protective-put">Protective Put Strategy</option>
+                <option value="iron-condor">Iron Condor</option>
+                <option value="custom">Custom Strategy</option>
+              </select>
+            </div>
+            <div class="date-range">
+              <input type="date" class="date-input" id="startDate" value="2025-01-01">
+              <input type="date" class="date-input" id="endDate" value="2026-01-27">
+            </div>
+            <button class="run-backtest-btn" id="runBacktestBtn">
+              ▶️ Run Backtest
+            </button>
+          </div>
+
+          <!-- Backtest Results -->
+          <div class="backtest-results" id="backtestResults">
+            <div class="result-card">
+              <div class="result-label">Total Return</div>
+              <div class="result-value positive" id="btReturn">+24.7%</div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">Sharpe Ratio</div>
+              <div class="result-value" id="btSharpe">1.82</div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">Max Drawdown</div>
+              <div class="result-value negative" id="btDrawdown">-8.3%</div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">Win Rate</div>
+              <div class="result-value" id="btWinRate">67%</div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">Rebalances</div>
+              <div class="result-value" id="btRebalances">156</div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">Total Fees</div>
+              <div class="result-value negative" id="btFees">-$2,340</div>
+            </div>
+          </div>
+
+          <!-- Equity Curve -->
+          <div class="panel" style="margin-bottom: 16px;">
+            <div class="panel-header">
+              <span class="panel-title">📈 Equity Curve</span>
+              <span class="panel-badge">vs Benchmark</span>
+            </div>
+            <div class="panel-body">
+              <div class="equity-chart" id="equityChart"></div>
+            </div>
+          </div>
+
+          <!-- Drawdown Chart -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📉 Drawdown</span>
+            </div>
+            <div class="panel-body">
+              <div class="drawdown-chart" id="drawdownChart"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="agent-sidebar">
+          <!-- Backtest Parameters -->
+          <div class="control-section">
+            <div class="control-title">⚙️ Backtest Parameters</div>
+            <div class="threshold-grid">
+              <div class="threshold-item">
+                <div class="threshold-header">
+                  <span class="threshold-label">Initial Capital</span>
+                  <span class="threshold-value" id="capitalDisplay">$50,000</span>
+                </div>
+                <input type="range" class="slider" id="capitalSlider" min="10000" max="500000" value="50000" step="10000">
+              </div>
+              <div class="threshold-item">
+                <div class="threshold-header">
+                  <span class="threshold-label">Rebalance Threshold</span>
+                  <span class="threshold-value" id="btThresholdDisplay">±0.15</span>
+                </div>
+                <input type="range" class="slider" id="btThreshold" min="5" max="50" value="15">
+              </div>
+              <div class="threshold-item">
+                <div class="threshold-header">
+                  <span class="threshold-label">Max Leverage</span>
+                  <span class="threshold-value" id="btLeverageDisplay">3x</span>
+                </div>
+                <input type="range" class="slider" id="btLeverage" min="1" max="10" value="3">
+              </div>
+            </div>
+          </div>
+
+          <!-- Cost Assumptions -->
+          <div class="control-section">
+            <div class="control-title">💸 Cost Assumptions</div>
+            <div class="position-summary">
+              <div class="position-row">
+                <span class="position-label">Trading Fee</span>
+                <span class="position-value">0.05%</span>
+              </div>
+              <div class="position-row">
+                <span class="position-label">Slippage</span>
+                <span class="position-value">0.10%</span>
+              </div>
+              <div class="position-row">
+                <span class="position-label">Funding (avg)</span>
+                <span class="position-value">0.01%/8h</span>
+              </div>
+              <div class="position-row">
+                <span class="position-label">Gas Cost</span>
+                <span class="position-value">$2.50/tx</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Monthly Returns -->
+          <div class="control-section">
+            <div class="control-title">📅 Monthly Returns</div>
+            <div id="monthlyReturns" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content: Cost Model -->
+    <div class="tab-content" id="tab-costs">
+      <div class="main-grid">
+        <div>
+          <!-- Cost Breakdown -->
+          <div class="cost-grid">
+            <div class="cost-panel">
+              <div class="cost-header">
+                <span class="cost-title">📊 Trading Costs</span>
+                <span class="cost-total" id="tradingCostTotal">-$127.50</span>
+              </div>
+              <div class="cost-breakdown">
+                <div class="cost-item">
+                  <span class="cost-item-label">Maker Fees</span>
+                  <span class="cost-item-value">-$42.00</span>
+                </div>
+                <div class="cost-item">
+                  <span class="cost-item-label">Taker Fees</span>
+                  <span class="cost-item-value">-$63.50</span>
+                </div>
+                <div class="cost-item">
+                  <span class="cost-item-label">Rebates</span>
+                  <span class="cost-item-value" style="color: var(--green);">+$8.00</span>
+                </div>
+                <div class="cost-item">
+                  <span class="cost-item-label">Spread Cost</span>
+                  <span class="cost-item-value">-$30.00</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="cost-panel">
+              <div class="cost-header">
+                <span class="cost-title">⚡ Execution Costs</span>
+                <span class="cost-total" id="execCostTotal">-$89.20</span>
+              </div>
+              <div class="cost-breakdown">
+                <div class="cost-item">
+                  <span class="cost-item-label">Expected Slippage</span>
+                  <span class="cost-item-value">-$54.20</span>
+                </div>
+                <div class="cost-item">
+                  <span class="cost-item-label">Price Impact</span>
+                  <span class="cost-item-value">-$22.00</span>
+                </div>
+                <div class="cost-item">
+                  <span class="cost-item-label">Timing Cost</span>
+                  <span class="cost-item-value">-$13.00</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="cost-panel">
+              <div class="cost-header">
+                <span class="cost-title">⛽ Gas & Network</span>
+                <span class="cost-total" id="gasCostTotal">-$45.00</span>
+              </div>
+              <div class="cost-breakdown">
+                <div class="cost-item">
+                  <span class="cost-item-label">Perp Trades (15)</span>
+                  <span class="cost-item-value">-$22.50</span>
+                </div>
+                <div class="cost-item">
+                  <span class="cost-item-label">Option Trades (8)</span>
+                  <span class="cost-item-value">-$16.00</span>
+                </div>
+                <div class="cost-item">
+                  <span class="cost-item-label">Approvals</span>
+                  <span class="cost-item-value">-$6.50</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Funding Rate Panel -->
+          <div class="panel" style="margin-bottom: 16px;">
+            <div class="panel-header">
+              <span class="panel-title">📊 Funding Rate Exposure</span>
+              <span class="panel-badge" id="fundingNet">Net: -$42.30/day</span>
+            </div>
+            <div class="panel-body">
+              <div class="drift-chart" id="fundingChart"></div>
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px;">
+                <div class="result-card">
+                  <div class="result-label">Current Rate</div>
+                  <div class="result-value" id="currentFunding">0.0124%</div>
+                </div>
+                <div class="result-card">
+                  <div class="result-label">8h Projection</div>
+                  <div class="result-value negative" id="funding8h">-$15.42</div>
+                </div>
+                <div class="result-card">
+                  <div class="result-label">24h Projection</div>
+                  <div class="result-value negative" id="funding24h">-$42.30</div>
+                </div>
+                <div class="result-card">
+                  <div class="result-label">Monthly Est.</div>
+                  <div class="result-value negative" id="fundingMonthly">-$1,269</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Impact Simulator -->
+          <div class="impact-simulator">
+            <div class="simulator-header">
+              <span class="simulator-title">📐 Expected Return Simulator</span>
+              <div class="simulator-result">
+                <span class="simulator-label">Net Expected Return:</span>
+                <span class="simulator-value" id="expectedReturn">+12.4%</span>
+              </div>
+            </div>
+            <div class="simulator-sliders">
+              <div class="slider-group">
+                <div class="slider-header">
+                  <span class="slider-label">Price Move Range</span>
+                  <span class="slider-value" id="priceRangeDisplay">±15%</span>
+                </div>
+                <input type="range" class="slider" id="priceRange" min="5" max="50" value="15">
+              </div>
+              <div class="slider-group">
+                <div class="slider-header">
+                  <span class="slider-label">Rebalancing Threshold</span>
+                  <span class="slider-value" id="rebalanceDisplay">0.15 Δ</span>
+                </div>
+                <input type="range" class="slider" id="rebalanceThreshold" min="5" max="50" value="15">
+              </div>
+              <div class="slider-group">
+                <div class="slider-header">
+                  <span class="slider-label">Funding Rate (annualized)</span>
+                  <span class="slider-value" id="fundingDisplay">8%</span>
+                </div>
+                <input type="range" class="slider" id="fundingRate" min="0" max="30" value="8">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="agent-sidebar">
+          <!-- Total Cost Summary -->
+          <div class="control-section" style="background: linear-gradient(135deg, var(--red-dim), var(--surface));">
+            <div class="control-title">💰 Total Cost Impact</div>
+            <div style="text-align: center; padding: 20px 0;">
+              <div style="font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px;">Monthly Cost Estimate</div>
+              <div style="font-family: var(--mono); font-size: 32px; font-weight: 700; color: var(--red);" id="totalMonthlyCost">-$1,531</div>
+              <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 8px;">On $50,000 position</div>
+            </div>
+            <div class="position-summary" style="background: var(--surface-3);">
+              <div class="position-row">
+                <span class="position-label">Trading Fees</span>
+                <span class="position-value" style="color: var(--red);">-$127/mo</span>
+              </div>
+              <div class="position-row">
+                <span class="position-label">Slippage</span>
+                <span class="position-value" style="color: var(--red);">-$89/mo</span>
+              </div>
+              <div class="position-row">
+                <span class="position-label">Funding</span>
+                <span class="position-value" style="color: var(--red);">-$1,269/mo</span>
+              </div>
+              <div class="position-row">
+                <span class="position-label">Gas</span>
+                <span class="position-value" style="color: var(--red);">-$45/mo</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cost Optimization Tips -->
+          <div class="control-section">
+            <div class="control-title">💡 Optimization Tips</div>
+            <div class="alert-log">
+              <div class="alert-item info">
+                <span class="alert-icon">💡</span>
+                <div class="alert-content">
+                  <div class="alert-message">Use limit orders to earn maker rebates</div>
+                </div>
+              </div>
+              <div class="alert-item info">
+                <span class="alert-icon">💡</span>
+                <div class="alert-content">
+                  <div class="alert-message">Increase rebalance threshold to reduce frequency</div>
+                </div>
+              </div>
+              <div class="alert-item info">
+                <span class="alert-icon">💡</span>
+                <div class="alert-content">
+                  <div class="alert-message">Consider Layer 2 for lower gas costs</div>
+                </div>
+              </div>
+              <div class="alert-item warning">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                  <div class="alert-message">Funding rates are elevated - consider spot alternatives</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content: Risk Controls -->
+    <div class="tab-content" id="tab-risk">
+      <div class="main-grid">
+        <div>
+          <!-- Risk Meters -->
+          <div class="risk-grid">
+            <div class="risk-panel">
+              <div class="risk-header">
+                <span class="risk-title">Δ Delta Exposure</span>
+                <span class="risk-status safe">SAFE</span>
+              </div>
+              <div class="risk-meter">
+                <div class="meter-bar">
+                  <div class="meter-fill safe" style="width: 16%;" id="deltaMeter"></div>
+                </div>
+                <div class="meter-labels">
+                  <span>-0.50</span>
+                  <span>0.024</span>
+                  <span>+0.50</span>
+                </div>
+              </div>
+              <div class="risk-limit-input">
+                <label>Max Δ:</label>
+                <input type="number" class="risk-input" id="maxDelta" value="0.25" step="0.05">
+              </div>
+            </div>
+
+            <div class="risk-panel">
+              <div class="risk-header">
+                <span class="risk-title">Γ Gamma Exposure</span>
+                <span class="risk-status warning">CAUTION</span>
+              </div>
+              <div class="risk-meter">
+                <div class="meter-bar">
+                  <div class="meter-fill warning" style="width: 58%;" id="gammaMeter"></div>
+                </div>
+                <div class="meter-labels">
+                  <span>0</span>
+                  <span>0.145</span>
+                  <span>0.25</span>
+                </div>
+              </div>
+              <div class="risk-limit-input">
+                <label>Max Γ:</label>
+                <input type="number" class="risk-input" id="maxGamma" value="0.25" step="0.01">
+              </div>
+            </div>
+
+            <div class="risk-panel">
+              <div class="risk-header">
+                <span class="risk-title">📊 Collateral Utilization</span>
+                <span class="risk-status safe">HEALTHY</span>
+              </div>
+              <div class="risk-meter">
+                <div class="meter-bar">
+                  <div class="meter-fill safe" style="width: 42%;" id="collateralMeter"></div>
+                </div>
+                <div class="meter-labels">
+                  <span>0%</span>
+                  <span>42%</span>
+                  <span>100%</span>
+                </div>
+              </div>
+              <div class="risk-limit-input">
+                <label>Max Use:</label>
+                <input type="number" class="risk-input" id="maxCollateral" value="75" step="5">
+                <span style="font-size: 12px; color: var(--text-tertiary);">%</span>
+              </div>
+            </div>
+
+            <div class="risk-panel">
+              <div class="risk-header">
+                <span class="risk-title">⚠️ Liquidation Distance</span>
+                <span class="risk-status safe">SAFE</span>
+              </div>
+              <div class="risk-meter">
+                <div class="meter-bar">
+                  <div class="meter-fill safe" style="width: 24%;" id="liqMeter"></div>
+                </div>
+                <div class="meter-labels">
+                  <span>Liq Price</span>
+                  <span>24% buffer</span>
+                  <span>Current</span>
+                </div>
+              </div>
+              <div class="position-summary" style="margin-top: 12px;">
+                <div class="position-row">
+                  <span class="position-label">Liquidation Price</span>
+                  <span class="position-value" style="color: var(--red);">$2,467</span>
+                </div>
+                <div class="position-row">
+                  <span class="position-label">Current Price</span>
+                  <span class="position-value">$3,245</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alert Configuration -->
+          <div class="panel" style="margin-top: 16px;">
+            <div class="panel-header">
+              <span class="panel-title">🔔 Alert Configuration</span>
+              <span class="panel-badge">4 Active</span>
+            </div>
+            <div class="panel-body">
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                <div class="threshold-item">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 12px;">Delta Breach Alert</span>
+                    <div class="toggle-switch active"></div>
+                  </div>
+                  <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 8px;">Trigger when |Δ| > 0.25</div>
+                </div>
+                <div class="threshold-item">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 12px;">Gamma Spike Alert</span>
+                    <div class="toggle-switch active"></div>
+                  </div>
+                  <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 8px;">Trigger when Γ > 0.20</div>
+                </div>
+                <div class="threshold-item">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 12px;">Collateral Warning</span>
+                    <div class="toggle-switch active"></div>
+                  </div>
+                  <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 8px;">Trigger when utilization > 75%</div>
+                </div>
+                <div class="threshold-item">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 12px;">Liquidation Proximity</span>
+                    <div class="toggle-switch active"></div>
+                  </div>
+                  <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 8px;">Trigger when < 15% buffer</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="agent-sidebar">
+          <!-- Risk Score -->
+          <div class="control-section" style="text-align: center;">
+            <div class="control-title">🛡️ Overall Risk Score</div>
+            <div style="padding: 30px 0;">
+              <div style="width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(var(--green) 0deg 252deg, var(--surface-3) 252deg 360deg); margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 90px; height: 90px; border-radius: 50%; background: var(--surface-2); display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                  <div style="font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--green);">70</div>
+                  <div style="font-size: 10px; color: var(--text-tertiary);">/ 100</div>
+                </div>
+              </div>
+            </div>
+            <div style="font-size: 14px; font-weight: 600; color: var(--green); margin-bottom: 4px;">LOW RISK</div>
+            <div style="font-size: 11px; color: var(--text-tertiary);">Position well within limits</div>
+          </div>
+
+          <!-- Recent Alerts -->
+          <div class="control-section">
+            <div class="control-title">🚨 Recent Alerts</div>
+            <div class="alert-log" id="alertLog">
+              <div class="alert-item warning">
+                <span class="alert-icon">⚠️</span>
+                <div class="alert-content">
+                  <div class="alert-message">Gamma approaching limit (0.145/0.25)</div>
+                  <div class="alert-time">2 minutes ago</div>
+                </div>
+              </div>
+              <div class="alert-item info">
+                <span class="alert-icon">ℹ️</span>
+                <div class="alert-content">
+                  <div class="alert-message">Auto-rebalance executed: sold 0.3 ETH perp</div>
+                  <div class="alert-time">2 hours ago</div>
+                </div>
+              </div>
+              <div class="alert-item info">
+                <span class="alert-icon">ℹ️</span>
+                <div class="alert-content">
+                  <div class="alert-message">Delta threshold crossed, rebalance triggered</div>
+                  <div class="alert-time">5 hours ago</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Emergency Actions -->
+          <div class="control-section">
+            <div class="control-title">🆘 Emergency Actions</div>
+            <div class="action-buttons">
+              <button class="btn btn-secondary">🔄 Force Rebalance</button>
+              <button class="btn btn-danger">📤 Close All Positions</button>
+              <button class="btn btn-secondary">💰 Add Collateral</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================================
+    // STATE
+    // ============================================================================
+    const state = {
+      asset: 'ETH',
+      spotPrice: 3245.67,
+      priceChange: 1.24,
+      netDelta: 0.024,
+      positionValue: 48250,
+      unrealizedPnl: 1247,
+      rebalanceCount: 3,
+      agentStatus: 'active', // active, paused, stopped
+      deltaThreshold: 0.15,
+      timeInterval: 4,
+      minTradeSize: 500,
+      autoRebalance: true,
+      eventProtection: true,
+      stopLoss: false,
+      
+      // Backtest state
+      backtestCapital: 50000,
+      backtestThreshold: 0.15,
+      backtestLeverage: 3,
+      
+      // Cost model
+      priceRange: 15,
+      rebalanceThresholdCost: 0.15,
+      fundingRate: 8,
+      
+      // Risk limits
+      maxDelta: 0.25,
+      maxGamma: 0.25,
+      maxCollateral: 75,
+      
+      // Charts
+      driftChart: null,
+      equityChart: null,
+      drawdownChart: null,
+      fundingChart: null
+    };
+
+    const SYMBOLS = { ETH: 'ETHUSDT', BTC: 'BTCUSDT', SOL: 'SOLUSDT' };
+    let ws = null;
+
+    // ============================================================================
+    // INITIALIZATION
+    // ============================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      initTabs();
+      initCharts();
+      initControls();
+      fetchPrices();
+      populateRebalanceHistory();
+      populateMonthlyReturns();
+      startDeltaMonitor();
+      setInterval(fetchPrices, 10000);
+    });
+
+    // ============================================================================
+    // TABS
+    // ============================================================================
+    function initTabs() {
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.onclick = () => {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+          
+          // Resize charts when tab becomes visible
+          setTimeout(() => {
+            if (tab.dataset.tab === 'monitor' && state.driftChart) state.driftChart.timeScale().fitContent();
+            if (tab.dataset.tab === 'backtest' && state.equityChart) state.equityChart.timeScale().fitContent();
+            if (tab.dataset.tab === 'costs' && state.fundingChart) state.fundingChart.timeScale().fitContent();
+          }, 100);
+        };
+      });
+    }
+
+    // ============================================================================
+    // PRICE FETCHING
+    // ============================================================================
+    async function fetchPrices() {
+      try {
+        const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT`);
+        const data = await res.json();
+        state.spotPrice = parseFloat(data.lastPrice);
+        state.priceChange = parseFloat(data.priceChangePercent);
+        
+        document.getElementById('livePrice').textContent = `$${state.spotPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+        const changeEl = document.getElementById('priceChange');
+        changeEl.textContent = `${state.priceChange >= 0 ? '+' : ''}${state.priceChange.toFixed(2)}%`;
+        changeEl.className = `price-change ${state.priceChange >= 0 ? 'up' : 'down'}`;
+        
+        // Update monitor
+        updateDeltaDrift();
+      } catch (e) { console.error('Price fetch error:', e); }
+    }
+
+    // ============================================================================
+    // CHARTS
+    // ============================================================================
+    function initCharts() {
+      initDriftChart();
+      initEquityChart();
+      initDrawdownChart();
+      initFundingChart();
+    }
+
+    function initDriftChart() {
+      const container = document.getElementById('driftChart');
+      state.driftChart = LightweightCharts.createChart(container, {
+        layout: { background: { type: 'solid', color: '#09090b' }, textColor: 'rgba(255,255,255,0.5)' },
+        grid: { vertLines: { color: 'rgba(255,255,255,0.03)' }, horzLines: { color: 'rgba(255,255,255,0.03)' } },
+        rightPriceScale: { borderVisible: false },
+        timeScale: { borderVisible: false, timeVisible: true }
+      });
+
+      const lineSeries = state.driftChart.addLineSeries({
+        color: '#a855f7',
+        lineWidth: 2
+      });
+
+      // Generate sample delta drift data
+      const now = Math.floor(Date.now() / 1000);
+      const data = [];
+      for (let i = 288; i >= 0; i--) {
+        const time = now - i * 300; // 5 min intervals
+        const delta = (Math.sin(i / 20) * 0.1 + Math.random() * 0.08 - 0.04);
+        data.push({ time, value: delta });
+      }
+      lineSeries.setData(data);
+
+      // Add threshold lines
+      const upperLine = state.driftChart.addLineSeries({ color: 'rgba(239,68,68,0.5)', lineWidth: 1, lineStyle: 2 });
+      const lowerLine = state.driftChart.addLineSeries({ color: 'rgba(239,68,68,0.5)', lineWidth: 1, lineStyle: 2 });
+      const zeroLine = state.driftChart.addLineSeries({ color: 'rgba(234,179,8,0.3)', lineWidth: 1, lineStyle: 2 });
+
+      upperLine.setData(data.map(d => ({ time: d.time, value: 0.15 })));
+      lowerLine.setData(data.map(d => ({ time: d.time, value: -0.15 })));
+      zeroLine.setData(data.map(d => ({ time: d.time, value: 0 })));
+    }
+
+    function initEquityChart() {
+      const container = document.getElementById('equityChart');
+      state.equityChart = LightweightCharts.createChart(container, {
+        layout: { background: { type: 'solid', color: '#09090b' }, textColor: 'rgba(255,255,255,0.5)' },
+        grid: { vertLines: { color: 'rgba(255,255,255,0.03)' }, horzLines: { color: 'rgba(255,255,255,0.03)' } },
+        rightPriceScale: { borderVisible: false },
+        timeScale: { borderVisible: false, timeVisible: true }
+      });
+
+      const strategySeries = state.equityChart.addLineSeries({ color: '#22c55e', lineWidth: 2 });
+      const benchmarkSeries = state.equityChart.addLineSeries({ color: 'rgba(255,255,255,0.3)', lineWidth: 1 });
+
+      // Generate sample equity curve
+      const startDate = new Date('2025-01-01');
+      const strategyData = [], benchmarkData = [];
+      let strategyValue = 50000, benchmarkValue = 50000;
+
+      for (let i = 0; i < 392; i++) {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + i);
+        const time = Math.floor(date.getTime() / 1000);
+        
+        strategyValue *= (1 + (Math.random() * 0.006 - 0.002));
+        benchmarkValue *= (1 + (Math.random() * 0.008 - 0.003));
+        
+        strategyData.push({ time, value: strategyValue });
+        benchmarkData.push({ time, value: benchmarkValue });
+      }
+
+      strategySeries.setData(strategyData);
+      benchmarkSeries.setData(benchmarkData);
+    }
+
+    function initDrawdownChart() {
+      const container = document.getElementById('drawdownChart');
+      const drawdownChart = LightweightCharts.createChart(container, {
+        layout: { background: { type: 'solid', color: '#09090b' }, textColor: 'rgba(255,255,255,0.5)' },
+        grid: { vertLines: { color: 'rgba(255,255,255,0.03)' }, horzLines: { color: 'rgba(255,255,255,0.03)' } },
+        rightPriceScale: { borderVisible: false },
+        timeScale: { borderVisible: false }
+      });
+
+      const areaSeries = drawdownChart.addAreaSeries({
+        topColor: 'rgba(239,68,68,0.4)',
+        bottomColor: 'rgba(239,68,68,0.0)',
+        lineColor: '#ef4444',
+        lineWidth: 1
+      });
+
+      // Generate sample drawdown data
+      const startDate = new Date('2025-01-01');
+      const data = [];
+      let maxValue = 50000, currentValue = 50000;
+
+      for (let i = 0; i < 392; i++) {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + i);
+        const time = Math.floor(date.getTime() / 1000);
+        
+        currentValue *= (1 + (Math.random() * 0.006 - 0.002));
+        maxValue = Math.max(maxValue, currentValue);
+        const drawdown = ((currentValue - maxValue) / maxValue) * 100;
+        
+        data.push({ time, value: drawdown });
+      }
+
+      areaSeries.setData(data);
+    }
+
+    function initFundingChart() {
+      const container = document.getElementById('fundingChart');
+      state.fundingChart = LightweightCharts.createChart(container, {
+        layout: { background: { type: 'solid', color: '#09090b' }, textColor: 'rgba(255,255,255,0.5)' },
+        grid: { vertLines: { color: 'rgba(255,255,255,0.03)' }, horzLines: { color: 'rgba(255,255,255,0.03)' } },
+        rightPriceScale: { borderVisible: false },
+        timeScale: { borderVisible: false, timeVisible: true }
+      });
+
+      const histogramSeries = state.fundingChart.addHistogramSeries({
+        color: '#06b6d4',
+        priceFormat: { type: 'percent' }
+      });
+
+      // Generate sample funding rate data
+      const now = Math.floor(Date.now() / 1000);
+      const data = [];
+      for (let i = 90; i >= 0; i--) {
+        const time = now - i * 28800; // 8h intervals
+        const rate = (Math.random() * 0.03 - 0.005);
+        data.push({ time, value: rate, color: rate >= 0 ? '#22c55e' : '#ef4444' });
+      }
+
+      histogramSeries.setData(data);
+    }
+
+    // ============================================================================
+    // CONTROLS
+    // ============================================================================
+    function initControls() {
+      // Delta threshold slider
+      document.getElementById('deltaThreshold').oninput = (e) => {
+        state.deltaThreshold = parseInt(e.target.value) / 100;
+        document.getElementById('deltaThresholdDisplay').textContent = `±${(e.target.value / 100).toFixed(2)}`;
+      };
+
+      // Time interval slider
+      document.getElementById('timeInterval').oninput = (e) => {
+        state.timeInterval = parseInt(e.target.value);
+        document.getElementById('timeIntervalDisplay').textContent = `${e.target.value} hours`;
+      };
+
+      // Min trade slider
+      document.getElementById('minTrade').oninput = (e) => {
+        state.minTradeSize = parseInt(e.target.value);
+        document.getElementById('minTradeDisplay').textContent = `$${e.target.value}`;
+      };
+
+      // Toggle switches
+      document.querySelectorAll('.toggle-switch').forEach(toggle => {
+        toggle.onclick = () => toggle.classList.toggle('active');
+      });
+
+      // Backtest sliders
+      document.getElementById('capitalSlider').oninput = (e) => {
+        state.backtestCapital = parseInt(e.target.value);
+        document.getElementById('capitalDisplay').textContent = `$${parseInt(e.target.value).toLocaleString()}`;
+      };
+
+      document.getElementById('btThreshold').oninput = (e) => {
+        state.backtestThreshold = parseInt(e.target.value) / 100;
+        document.getElementById('btThresholdDisplay').textContent = `±${(e.target.value / 100).toFixed(2)}`;
+      };
+
+      document.getElementById('btLeverage').oninput = (e) => {
+        state.backtestLeverage = parseInt(e.target.value);
+        document.getElementById('btLeverageDisplay').textContent = `${e.target.value}x`;
+      };
+
+      // Cost model sliders
+      document.getElementById('priceRange').oninput = (e) => {
+        state.priceRange = parseInt(e.target.value);
+        document.getElementById('priceRangeDisplay').textContent = `±${e.target.value}%`;
+        updateExpectedReturn();
+      };
+
+      document.getElementById('rebalanceThreshold').oninput = (e) => {
+        state.rebalanceThresholdCost = parseInt(e.target.value) / 100;
+        document.getElementById('rebalanceDisplay').textContent = `${(e.target.value / 100).toFixed(2)} Δ`;
+        updateExpectedReturn();
+      };
+
+      document.getElementById('fundingRate').oninput = (e) => {
+        state.fundingRate = parseInt(e.target.value);
+        document.getElementById('fundingDisplay').textContent = `${e.target.value}%`;
+        updateExpectedReturn();
+      };
+
+      // Run backtest button
+      document.getElementById('runBacktestBtn').onclick = runBacktest;
+
+      // Agent control buttons
+      document.getElementById('deployBtn').onclick = () => {
+        state.agentStatus = 'active';
+        updateAgentStatus();
+        alert('🚀 Agent deployed!\n\nMonitoring delta drift and executing rebalances automatically.\n\nThreshold: ±' + state.deltaThreshold.toFixed(2) + '\nInterval: ' + state.timeInterval + 'h');
+      };
+
+      document.getElementById('pauseBtn').onclick = () => {
+        state.agentStatus = state.agentStatus === 'paused' ? 'active' : 'paused';
+        updateAgentStatus();
+      };
+
+      document.getElementById('emergencyBtn').onclick = () => {
+        state.agentStatus = 'stopped';
+        updateAgentStatus();
+        alert('🛑 Emergency stop activated!\n\nAll automated trading halted.\nPositions remain open - manual action required.');
+      };
+    }
+
+    function updateAgentStatus() {
+      const statusEl = document.getElementById('agentStatus');
+      const textEl = document.getElementById('statusText');
+      
+      statusEl.className = 'agent-status ' + state.agentStatus;
+      textEl.textContent = state.agentStatus === 'active' ? 'Agent Active' :
+                           state.agentStatus === 'paused' ? 'Agent Paused' : 'Agent Stopped';
+    }
+
+    function updateExpectedReturn() {
+      // Simple expected return calculation
+      const baseReturn = 18; // Base strategy return
+      const rebalanceCost = (0.15 / state.rebalanceThresholdCost) * 2; // More frequent = more cost
+      const fundingCost = state.fundingRate * 0.8; // Funding drag
+      const volatilityBonus = state.priceRange * 0.3; // More volatility = more rebalancing profit
+      
+      const netReturn = baseReturn - rebalanceCost - fundingCost + volatilityBonus;
+      
+      const el = document.getElementById('expectedReturn');
+      el.textContent = `${netReturn >= 0 ? '+' : ''}${netReturn.toFixed(1)}%`;
+      el.style.color = netReturn >= 0 ? 'var(--green)' : 'var(--red)';
+    }
+
+    // ============================================================================
+    // DELTA MONITORING
+    // ============================================================================
+    function startDeltaMonitor() {
+      setInterval(updateDeltaDrift, 5000);
+    }
+
+    function updateDeltaDrift() {
+      // Simulate delta drift
+      state.netDelta += (Math.random() - 0.5) * 0.02;
+      state.netDelta = Math.max(-0.5, Math.min(0.5, state.netDelta));
+      
+      const deltaEl = document.getElementById('monitorDelta');
+      const changeEl = document.getElementById('deltaChange');
+      const cardEl = document.getElementById('deltaCard');
+      
+      deltaEl.textContent = state.netDelta.toFixed(3);
+      
+      if (Math.abs(state.netDelta) < 0.1) {
+        deltaEl.className = 'monitor-value neutral';
+        changeEl.textContent = 'Within threshold';
+        changeEl.className = 'monitor-change';
+        cardEl.className = 'monitor-card';
+      } else if (Math.abs(state.netDelta) < state.deltaThreshold) {
+        deltaEl.className = 'monitor-value ' + (state.netDelta > 0 ? 'positive' : 'negative');
+        changeEl.textContent = 'Approaching threshold';
+        changeEl.className = 'monitor-change';
+        cardEl.className = 'monitor-card warning';
+      } else {
+        deltaEl.className = 'monitor-value ' + (state.netDelta > 0 ? 'positive' : 'negative');
+        changeEl.textContent = '⚠️ Rebalance needed!';
+        changeEl.className = 'monitor-change down';
+        cardEl.className = 'monitor-card alert';
+        
+        // Auto rebalance if enabled
+        if (state.autoRebalance && state.agentStatus === 'active') {
+          triggerRebalance();
+        }
+      }
+    }
+
+    function triggerRebalance() {
+      const direction = state.netDelta > 0 ? 'Sold' : 'Bought';
+      const amount = Math.abs(state.netDelta) * 10;
+      
+      // Reset delta
+      state.netDelta = (Math.random() - 0.5) * 0.05;
+      state.rebalanceCount++;
+      
+      document.getElementById('monitorRebalances').textContent = state.rebalanceCount;
+      
+      // Add to history
+      addRebalanceEvent(direction, amount);
+      
+      // Add alert
+      addAlert('info', `Auto-rebalance executed: ${direction} ${amount.toFixed(2)} ETH perp`);
+    }
+
+    function addRebalanceEvent(action, amount) {
+      const list = document.getElementById('rebalanceList');
+      const iconClass = action === 'Sold' ? 'sell' : 'buy';
+      const pnl = (Math.random() * 40 - 10).toFixed(2);
+      
+      const html = `
+        <div class="rebalance-item">
+          <div class="rebalance-icon ${iconClass}">${action === 'Sold' ? '📉' : '📈'}</div>
+          <div class="rebalance-info">
+            <div class="rebalance-action">${action} ${amount.toFixed(2)} ETH Perp</div>
+            <div class="rebalance-details">Delta correction • Threshold breach</div>
+          </div>
+          <div>
+            <div class="rebalance-time">Just now</div>
+            <div class="rebalance-pnl" style="color: ${parseFloat(pnl) >= 0 ? 'var(--green)' : 'var(--red)'}">${parseFloat(pnl) >= 0 ? '+' : ''}$${pnl}</div>
+          </div>
+        </div>
+      `;
+      
+      list.insertAdjacentHTML('afterbegin', html);
+    }
+
+    function addAlert(type, message) {
+      const log = document.getElementById('alertLog');
+      const html = `
+        <div class="alert-item ${type}">
+          <span class="alert-icon">${type === 'critical' ? '🚨' : type === 'warning' ? '⚠️' : 'ℹ️'}</span>
+          <div class="alert-content">
+            <div class="alert-message">${message}</div>
+            <div class="alert-time">Just now</div>
+          </div>
+        </div>
+      `;
+      
+      log.insertAdjacentHTML('afterbegin', html);
+    }
+
+    // ============================================================================
+    // POPULATE DATA
+    // ============================================================================
+    function populateRebalanceHistory() {
+      const events = [
+        { action: 'Sold', amount: 0.35, time: '2 hours ago', pnl: '+$12.40', type: 'sell' },
+        { action: 'Bought', amount: 0.42, time: '6 hours ago', pnl: '+$8.20', type: 'buy' },
+        { action: 'Hedged', amount: 1.2, time: '12 hours ago', pnl: '-$3.50', type: 'hedge' },
+        { action: 'Sold', amount: 0.28, time: '18 hours ago', pnl: '+$15.80', type: 'sell' },
+        { action: 'Bought', amount: 0.55, time: '1 day ago', pnl: '+$22.10', type: 'buy' }
+      ];
+
+      const list = document.getElementById('rebalanceList');
+      list.innerHTML = events.map(e => `
+        <div class="rebalance-item">
+          <div class="rebalance-icon ${e.type}">${e.type === 'sell' ? '📉' : e.type === 'buy' ? '📈' : '🔄'}</div>
+          <div class="rebalance-info">
+            <div class="rebalance-action">${e.action} ${e.amount} ETH Perp</div>
+            <div class="rebalance-details">Delta correction • ${e.type === 'hedge' ? 'Scheduled' : 'Threshold breach'}</div>
+          </div>
+          <div>
+            <div class="rebalance-time">${e.time}</div>
+            <div class="rebalance-pnl" style="color: ${e.pnl.startsWith('+') ? 'var(--green)' : 'var(--red)'}">${e.pnl}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function populateMonthlyReturns() {
+      const returns = [
+        { month: 'Jan', value: 2.4 }, { month: 'Feb', value: 3.1 },
+        { month: 'Mar', value: -1.2 }, { month: 'Apr', value: 4.5 },
+        { month: 'May', value: 2.8 }, { month: 'Jun', value: 1.9 },
+        { month: 'Jul', value: 3.7 }, { month: 'Aug', value: -0.5 },
+        { month: 'Sep', value: 2.1 }, { month: 'Oct', value: 4.2 },
+        { month: 'Nov', value: 1.8 }, { month: 'Dec', value: 2.9 }
+      ];
+
+      const container = document.getElementById('monthlyReturns');
+      container.innerHTML = returns.map(r => `
+        <div style="background: ${r.value >= 0 ? 'var(--green-dim)' : 'var(--red-dim)'}; padding: 8px 4px; border-radius: 4px; text-align: center;">
+          <div style="font-size: 9px; color: var(--text-tertiary);">${r.month}</div>
+          <div style="font-family: var(--mono); font-size: 11px; font-weight: 600; color: ${r.value >= 0 ? 'var(--green)' : 'var(--red)'};">${r.value >= 0 ? '+' : ''}${r.value}%</div>
+        </div>
+      `).join('');
+    }
+
+    // ============================================================================
+    // BACKTEST
+    // ============================================================================
+    function runBacktest() {
+      const btn = document.getElementById('runBacktestBtn');
+      btn.innerHTML = '⏳ Running...';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        // Simulate backtest results
+        const strategy = document.getElementById('backtestStrategy').value;
+        
+        const results = {
+          'basis': { return: 24.7, sharpe: 1.82, drawdown: -8.3, winRate: 67, rebalances: 156, fees: 2340 },
+          'straddle-hedge': { return: 18.2, sharpe: 1.45, drawdown: -12.1, winRate: 58, rebalances: 89, fees: 1890 },
+          'covered-call': { return: 15.8, sharpe: 1.92, drawdown: -6.2, winRate: 72, rebalances: 45, fees: 980 },
+          'protective-put': { return: 12.4, sharpe: 1.35, drawdown: -4.8, winRate: 61, rebalances: 78, fees: 1560 },
+          'iron-condor': { return: 21.3, sharpe: 1.68, drawdown: -9.7, winRate: 64, rebalances: 112, fees: 2120 },
+          'custom': { return: 8.5, sharpe: 0.95, drawdown: -15.2, winRate: 52, rebalances: 234, fees: 3450 }
+        };
+
+        const r = results[strategy];
+        
+        document.getElementById('btReturn').textContent = `+${r.return}%`;
+        document.getElementById('btReturn').className = 'result-value positive';
+        document.getElementById('btSharpe').textContent = r.sharpe.toFixed(2);
+        document.getElementById('btDrawdown').textContent = `${r.drawdown}%`;
+        document.getElementById('btWinRate').textContent = `${r.winRate}%`;
+        document.getElementById('btRebalances').textContent = r.rebalances;
+        document.getElementById('btFees').textContent = `-$${r.fees.toLocaleString()}`;
+
+        btn.innerHTML = '▶️ Run Backtest';
+        btn.disabled = false;
+      }, 1500);
+    }
+
+    // Initialize expected return
+    updateExpectedReturn();
+  </script>
+</body>
+</html>

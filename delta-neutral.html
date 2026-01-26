@@ -3,1267 +3,1417 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Delta Neutral Builder — Combined Options + Perps | Nexxore</title>
-  <meta name="description" content="Build delta-neutral positions combining perpetual futures and options. Advanced hedging strategies on a single interface.">
+  <title>Delta Neutral Builder | Nexxore</title>
+  <meta name="description" content="Build delta-neutral positions combining perpetual futures and options.">
   
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/wallet.css">
-  
-  <!-- Libraries -->
-  <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
   <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
   
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
     :root {
+      --bg: #09090b;
+      --surface: #0f0f12;
+      --surface-2: #16161a;
+      --surface-3: #1c1c21;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --text: #fafafa;
+      --text-secondary: rgba(255,255,255,0.6);
+      --text-tertiary: rgba(255,255,255,0.35);
+      --accent: #3b82f6;
+      --accent-dim: rgba(59,130,246,0.12);
       --green: #22c55e;
+      --green-dim: rgba(34,197,94,0.12);
       --red: #ef4444;
-      --blue: #0EA5E9;
-      --purple: #8B5CF6;
-      --orange: #f97316;
+      --red-dim: rgba(239,68,68,0.12);
       --yellow: #eab308;
+      --yellow-dim: rgba(234,179,8,0.12);
+      --purple: #a855f7;
+      --purple-dim: rgba(168,85,247,0.12);
+      --cyan: #06b6d4;
+      --cyan-dim: rgba(6,182,212,0.12);
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Inter', -apple-system, sans-serif;
+      --radius: 10px;
+      --radius-lg: 14px;
     }
 
-    .delta-hero {
-      background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(139, 92, 246, 0.1) 50%, rgba(34, 197, 94, 0.1) 100%);
-      border-radius: 16px;
-      padding: 40px 32px;
-      margin-bottom: 32px;
-      border: 1px solid rgba(14, 165, 233, 0.2);
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .delta-hero h1 {
-      font-size: 2.2rem;
-      font-weight: 700;
-      margin-bottom: 12px;
-      background: linear-gradient(135deg, #0EA5E9, #8B5CF6, #22c55e);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    /* Layout */
+    .app {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
     }
 
-    .delta-hero p {
-      font-size: 1.1rem;
-      color: rgba(255, 255, 255, 0.7);
-      max-width: 800px;
-    }
-
-    .strategy-badges {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 20px;
-    }
-
-    .strategy-badge {
-      padding: 6px 14px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .main-layout {
-      display: grid;
-      grid-template-columns: 1fr 380px;
-      gap: 24px;
-      margin-bottom: 32px;
-    }
-
-    @media (max-width: 1200px) {
-      .main-layout {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .panel {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 24px;
-    }
-
-    .panel-header {
+    /* Header */
+    .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 100;
     }
 
-    .panel-title {
-      font-size: 1.1rem;
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo-mark {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-weight: 700;
-      color: white;
+      font-size: 15px;
+    }
+
+    .logo-text {
+      font-weight: 600;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+    }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface-2);
+      padding: 4px;
+      border-radius: 8px;
+    }
+
+    .nav-pill {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+
+    .nav-pill:hover { color: var(--text); background: var(--surface-3); }
+    .nav-pill.active { color: var(--text); background: var(--surface); }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      background: var(--surface-2);
+      border-radius: 20px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+      50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(34,197,94,0); }
+    }
+
+    /* Page Title */
+    .page-header {
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .page-subtitle {
+      color: var(--text-tertiary);
+      font-size: 14px;
+    }
+
+    /* Main Layout */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 1200px) {
+      .main-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Strategy Cards with Graphs */
+    .strategy-section {
+      margin-bottom: 20px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-tertiary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .strategy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .strategy-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .strategy-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-1px);
+    }
+
+    .strategy-card.active {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, var(--accent-dim), transparent);
+    }
+
+    .strategy-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .strategy-card-name {
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+
+    .strategy-card-desc {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .strategy-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 6px;
+      border-radius: 4px;
+    }
+
+    .strategy-badge.neutral { background: var(--green-dim); color: var(--green); }
+    .strategy-badge.bullish { background: var(--cyan-dim); color: var(--cyan); }
+    .strategy-badge.bearish { background: var(--red-dim); color: var(--red); }
+
+    .strategy-mini-chart {
+      height: 50px;
+      margin: 8px -14px -14px;
+      background: var(--surface-2);
+      border-top: 1px solid var(--border);
+      position: relative;
+    }
+
+    .strategy-mini-chart canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .strategy-stats {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .strategy-stat {
+      font-size: 10px;
+    }
+
+    .strategy-stat-label {
+      color: var(--text-tertiary);
+      margin-bottom: 2px;
+    }
+
+    .strategy-stat-value {
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 11px;
     }
 
     /* Asset Selector */
-    .asset-selector {
+    .asset-bar {
       display: flex;
       gap: 8px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .asset-btn {
       flex: 1;
-      padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .asset-btn:hover { border-color: var(--border-hover); }
+    
+    .asset-btn.active {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .asset-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 10px;
+    }
+
+    .asset-icon.eth { background: linear-gradient(135deg, #627eea, #8c9eff); }
+    .asset-icon.btc { background: linear-gradient(135deg, #f7931a, #ffb84d); }
+    .asset-icon.sol { background: linear-gradient(135deg, #9945ff, #14f195); }
+
+    .asset-info {
+      text-align: left;
+    }
+
+    .asset-symbol {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .asset-price {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* Panel */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface-2);
+    }
+
+    .panel-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+
+    .panel-badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    /* Settings Panel */
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .setting-item {
+      background: var(--surface-2);
       border-radius: 8px;
-      color: white;
+      padding: 12px;
+    }
+
+    .setting-label {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .setting-value {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+    }
+
+    .slider-container {
+      position: relative;
+    }
+
+    .slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--surface-3);
+      outline: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(59,130,246,0.4);
+    }
+
+    /* Right Column */
+    .right-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Live Chart */
+    .chart-panel {
+      flex: 1;
+      min-height: 320px;
+    }
+
+    .chart-container {
+      height: 280px;
+      background: var(--bg);
+      border-radius: 8px;
+    }
+
+    .chart-toolbar {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .chart-tf-btn {
+      padding: 5px 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .chart-tf-btn:hover { border-color: var(--border-hover); color: var(--text); }
+    .chart-tf-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+    /* Builder Panel */
+    .builder-tabs {
+      display: flex;
+      gap: 2px;
+      background: var(--bg);
+      padding: 3px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .builder-tab {
+      flex: 1;
+      padding: 10px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .builder-tab:hover { color: var(--text-secondary); }
+    .builder-tab.active { background: var(--surface-2); color: var(--text); }
+
+    /* Position Rows */
+    .leg-builder {
+      margin-bottom: 16px;
+    }
+
+    .leg-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .leg-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-tertiary);
+    }
+
+    .add-btn {
+      font-size: 11px;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: none;
+      padding: 4px 10px;
+      border-radius: 4px;
       cursor: pointer;
       font-weight: 600;
-      transition: all 0.2s;
+      transition: all 0.15s;
+    }
+
+    .add-btn:hover { background: var(--accent); color: white; }
+
+    .leg-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    /* Toggle Group */
+    .toggle-group {
+      display: flex;
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 2px;
+    }
+
+    .toggle-btn {
+      padding: 6px 12px;
+      background: none;
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .toggle-btn.active { background: var(--surface); color: var(--text); }
+    .toggle-btn.long.active { color: var(--green); background: var(--green-dim); }
+    .toggle-btn.short.active { color: var(--red); background: var(--red-dim); }
+    .toggle-btn.call.active { color: var(--green); background: var(--green-dim); }
+    .toggle-btn.put.active { color: var(--red); background: var(--red-dim); }
+
+    /* Input */
+    .input {
+      width: 100%;
+      padding: 8px 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+      transition: border-color 0.15s;
+    }
+
+    .input:focus { outline: none; border-color: var(--accent); }
+    .input::placeholder { color: var(--text-tertiary); }
+
+    .input-sm {
+      width: 70px;
+      padding: 6px 8px;
+      font-size: 12px;
+    }
+
+    /* Remove Button */
+    .remove-btn {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+
+    .remove-btn:hover {
+      border-color: var(--red);
+      color: var(--red);
+      background: var(--red-dim);
+    }
+
+    /* Expiry Row */
+    .expiry-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .expiry-btn {
+      flex: 1;
+      padding: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .expiry-btn:hover { border-color: var(--border-hover); }
+    .expiry-btn.active { border-color: var(--purple); color: var(--purple); background: var(--purple-dim); }
+
+    /* Greeks Display */
+    .greeks-bar {
+      display: flex;
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .greek-cell {
+      flex: 1;
+      background: var(--surface-2);
+      padding: 12px 8px;
       text-align: center;
     }
 
-    .asset-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
+    .greek-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
     }
 
-    .asset-btn.active {
-      background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(139, 92, 246, 0.2));
-      border-color: #0EA5E9;
-    }
-
-    .asset-btn .price {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.85rem;
-      color: rgba(255, 255, 255, 0.6);
-      margin-top: 4px;
-    }
-
-    /* Strategy Templates */
-    .strategy-templates {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .strategy-card {
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 16px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .strategy-card:hover {
-      border-color: var(--blue);
-      transform: translateY(-2px);
-    }
-
-    .strategy-card.active {
-      border-color: var(--blue);
-      background: rgba(14, 165, 233, 0.1);
-    }
-
-    .strategy-card-title {
+    .greek-val {
+      font-family: var(--mono);
+      font-size: 14px;
       font-weight: 600;
-      color: white;
-      margin-bottom: 6px;
-      font-size: 0.95rem;
     }
 
-    .strategy-card-desc {
-      font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.5);
-      line-height: 1.4;
+    .greek-val.pos { color: var(--green); }
+    .greek-val.neg { color: var(--red); }
+    .greek-val.neu { color: var(--yellow); }
+
+    /* Delta Gauge */
+    .delta-gauge {
+      margin-bottom: 16px;
     }
 
-    .strategy-card-delta {
-      margin-top: 10px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.85rem;
-      color: var(--green);
+    .gauge-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
     }
 
-    /* Position Builder */
-    .position-section {
-      margin-bottom: 24px;
+    .gauge-label {
+      font-size: 11px;
+      color: var(--text-secondary);
     }
 
-    .section-header {
+    .gauge-value {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .gauge-track {
+      height: 8px;
+      background: linear-gradient(90deg, var(--red) 0%, var(--yellow) 50%, var(--green) 100%);
+      border-radius: 4px;
+      position: relative;
+    }
+
+    .gauge-thumb {
+      position: absolute;
+      top: -4px;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border-radius: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      transition: left 0.3s ease;
+    }
+
+    .gauge-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 9px;
+      color: var(--text-tertiary);
+    }
+
+    /* P&L Chart */
+    .pnl-section {
+      margin-top: 16px;
+    }
+
+    .pnl-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
     }
 
-    .section-title {
-      font-size: 0.9rem;
+    .pnl-title {
+      font-size: 11px;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.8);
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      color: var(--text-tertiary);
     }
 
-    .add-btn {
-      padding: 6px 12px;
-      background: rgba(14, 165, 233, 0.2);
-      border: 1px solid rgba(14, 165, 233, 0.3);
-      border-radius: 6px;
-      color: var(--blue);
-      cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-
-    .add-btn:hover {
-      background: rgba(14, 165, 233, 0.3);
-    }
-
-    /* Perp Position */
-    .perp-row {
-      display: grid;
-      grid-template-columns: 100px 1fr 80px 80px;
-      gap: 12px;
-      align-items: center;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 8px;
-      margin-bottom: 8px;
-    }
-
-    .side-toggle {
+    .pnl-stats {
       display: flex;
-      border-radius: 6px;
-      overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      gap: 16px;
     }
 
-    .side-btn {
-      flex: 1;
-      padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border: none;
-      color: rgba(255, 255, 255, 0.6);
-      cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 600;
-      transition: all 0.2s;
+    .pnl-stat {
+      text-align: right;
     }
 
-    .side-btn.long.active {
-      background: rgba(34, 197, 94, 0.2);
-      color: var(--green);
-    }
-
-    .side-btn.short.active {
-      background: rgba(239, 68, 68, 0.2);
-      color: var(--red);
-    }
-
-    .input-sm {
-      width: 100%;
-      padding: 8px 12px;
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 6px;
-      color: white;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.9rem;
-    }
-
-    .input-sm:focus {
-      outline: none;
-      border-color: var(--blue);
-    }
-
-    /* Options Row */
-    .option-row {
-      display: grid;
-      grid-template-columns: 80px 80px 100px 80px 80px 40px;
-      gap: 8px;
-      align-items: center;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 8px;
-      margin-bottom: 8px;
-    }
-
-    .option-type-toggle {
-      display: flex;
-      border-radius: 6px;
-      overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .type-btn {
-      flex: 1;
-      padding: 6px 8px;
-      background: rgba(255, 255, 255, 0.05);
-      border: none;
-      color: rgba(255, 255, 255, 0.6);
-      cursor: pointer;
-      font-size: 0.75rem;
-      font-weight: 600;
-      transition: all 0.2s;
-    }
-
-    .type-btn.call.active {
-      background: rgba(34, 197, 94, 0.2);
-      color: var(--green);
-    }
-
-    .type-btn.put.active {
-      background: rgba(239, 68, 68, 0.2);
-      color: var(--red);
-    }
-
-    .remove-btn {
-      width: 28px;
-      height: 28px;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      border-radius: 6px;
-      color: var(--red);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .remove-btn:hover {
-      background: rgba(239, 68, 68, 0.2);
-    }
-
-    /* Greeks Display */
-    .greeks-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .greek-card {
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 8px;
-      padding: 14px;
-      text-align: center;
-    }
-
-    .greek-label {
-      font-size: 0.75rem;
-      color: rgba(255, 255, 255, 0.5);
+    .pnl-stat-label {
+      font-size: 9px;
+      color: var(--text-tertiary);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
     }
 
-    .greek-value {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 1.1rem;
-      font-weight: 700;
+    .pnl-stat-value {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
     }
 
-    .greek-value.positive { color: var(--green); }
-    .greek-value.negative { color: var(--red); }
-    .greek-value.neutral { color: var(--yellow); }
-
-    /* P&L Chart */
-    .pnl-chart-container {
-      height: 300px;
-      margin-bottom: 20px;
-    }
+    .pnl-stat-value.profit { color: var(--green); }
+    .pnl-stat-value.loss { color: var(--red); }
+    .pnl-stat-value.be { color: var(--yellow); }
 
     #pnlChart {
       width: 100%;
-      height: 100%;
+      height: 180px;
+      background: var(--bg);
+      border-radius: 8px;
     }
 
-    /* Summary Panel */
-    .summary-grid {
+    /* Summary Cards */
+    .summary-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 16px;
     }
 
-    .summary-item {
-      background: rgba(0, 0, 0, 0.3);
+    .summary-card {
+      background: var(--surface-2);
       border-radius: 8px;
       padding: 14px;
+      text-align: center;
     }
 
-    .summary-label {
-      font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.5);
+    .summary-card-label {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
       margin-bottom: 6px;
     }
 
-    .summary-value {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 1rem;
+    .summary-card-value {
+      font-family: var(--mono);
+      font-size: 16px;
       font-weight: 600;
-      color: white;
     }
 
-    /* Expiry Selector */
-    .expiry-selector {
+    .summary-card-value.green { color: var(--green); }
+    .summary-card-value.red { color: var(--red); }
+
+    /* Action Bar */
+    .action-bar {
       display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-      overflow-x: auto;
-      padding-bottom: 8px;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
     }
 
-    .expiry-btn {
-      padding: 8px 16px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 6px;
-      color: rgba(255, 255, 255, 0.7);
-      cursor: pointer;
-      font-size: 0.85rem;
-      white-space: nowrap;
-      transition: all 0.2s;
-    }
-
-    .expiry-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .expiry-btn.active {
-      background: rgba(139, 92, 246, 0.2);
-      border-color: var(--purple);
-      color: var(--purple);
-    }
-
-    /* Strike Selector */
-    .strike-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-      margin-bottom: 16px;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    .strike-btn {
-      padding: 8px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 4px;
-      color: rgba(255, 255, 255, 0.6);
-      cursor: pointer;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
-      text-align: center;
-      transition: all 0.2s;
-    }
-
-    .strike-btn:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .strike-btn.atm {
-      background: rgba(14, 165, 233, 0.1);
-      border-color: rgba(14, 165, 233, 0.3);
-      color: var(--blue);
-    }
-
-    .strike-btn.selected {
-      background: rgba(139, 92, 246, 0.2);
-      border-color: var(--purple);
-      color: white;
-    }
-
-    /* Action Buttons */
-    .action-buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .btn-execute {
-      padding: 16px;
-      background: linear-gradient(135deg, var(--green), #16a34a);
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-execute:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
-    }
-
-    .btn-simulate {
-      padding: 16px;
-      background: rgba(139, 92, 246, 0.2);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      border-radius: 10px;
-      color: var(--purple);
-      font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-simulate:hover {
-      background: rgba(139, 92, 246, 0.3);
-    }
-
-    /* Position List */
-    .positions-list {
-      margin-top: 24px;
-    }
-
-    .position-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      background: rgba(0, 0, 0, 0.3);
+    .btn {
+      flex: 1;
+      padding: 14px 20px;
       border-radius: 8px;
-      margin-bottom: 8px;
-    }
-
-    .position-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .position-type {
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 0.75rem;
+      font-size: 14px;
       font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    .position-type.perp { background: rgba(14, 165, 233, 0.2); color: var(--blue); }
-    .position-type.call { background: rgba(34, 197, 94, 0.2); color: var(--green); }
-    .position-type.put { background: rgba(239, 68, 68, 0.2); color: var(--red); }
-
-    .position-details {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.9rem;
-      color: white;
-    }
-
-    .position-greeks {
-      font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.5);
-    }
-
-    /* Info Tooltip */
-    .info-icon {
-      display: inline-flex;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      display: flex;
       align-items: center;
       justify-content: center;
-      width: 16px;
-      height: 16px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      font-size: 0.7rem;
-      color: rgba(255, 255, 255, 0.5);
-      cursor: help;
-      margin-left: 6px;
+      gap: 8px;
     }
 
-    /* Live Chart */
-    .live-chart-container {
-      height: 250px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      overflow: hidden;
+    .btn-primary {
+      background: var(--green);
+      color: white;
     }
 
-    /* Risk Meter */
-    .risk-meter {
-      margin-bottom: 20px;
+    .btn-primary:hover {
+      background: #16a34a;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(34,197,94,0.3);
     }
 
-    .risk-bar {
-      height: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 8px;
+    .btn-secondary {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
     }
 
-    .risk-fill {
-      height: 100%;
-      transition: width 0.3s, background 0.3s;
+    .btn-secondary:hover {
+      border-color: var(--border-hover);
+      background: var(--surface-3);
     }
 
-    .risk-low { background: linear-gradient(90deg, var(--green), #86efac); }
-    .risk-medium { background: linear-gradient(90deg, var(--yellow), var(--orange)); }
-    .risk-high { background: linear-gradient(90deg, var(--orange), var(--red)); }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 3px; }
 
-    /* Breakeven Display */
-    .breakeven-display {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
-    .breakeven-item {
-      flex: 1;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 8px;
-      text-align: center;
-    }
-
-    .breakeven-label {
-      font-size: 0.75rem;
-      color: rgba(255, 255, 255, 0.5);
-      margin-bottom: 4px;
-    }
-
-    .breakeven-value {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--yellow);
-    }
-
-    /* Mobile Responsive */
+    /* Responsive */
     @media (max-width: 768px) {
-      .delta-hero {
-        padding: 24px 16px;
-      }
-
-      .delta-hero h1 {
-        font-size: 1.6rem;
-      }
-
-      .greeks-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .option-row {
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-      }
-
-      .perp-row {
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-      }
-
-      .strike-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .strategy-templates {
-        grid-template-columns: 1fr;
-      }
+      .app { padding: 0 16px 32px; }
+      .strategy-grid { grid-template-columns: 1fr; }
+      .settings-grid { grid-template-columns: 1fr; }
+      .summary-row { grid-template-columns: 1fr 1fr; }
+      .greeks-bar { flex-wrap: wrap; }
+      .greek-cell { min-width: 60px; }
     }
   </style>
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container">
-      <div class="nav-brand">
-        <a href="/" class="brand-link">
-          <svg class="site-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160">
-            <defs>
-              <linearGradient id="logoGrad" x1="0" x2="1">
-                <stop offset="0" stop-color="#0EA5E9"/>
-                <stop offset="1" stop-color="#8B5CF6"/>
-              </linearGradient>
-            </defs>
-            <g transform="translate(40,40) scale(0.9)">
-              <circle cx="50" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.95"/>
-              <circle cx="78" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/>
-              <circle cx="64" cy="64" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/>
-            </g>
-            <g transform="translate(150,110)">
-              <text x="0" y="0" font-family="Space Grotesk, Inter, system-ui, sans-serif" font-weight="700" font-size="56" fill="currentColor">nexxore</text>
-            </g>
-          </svg>
-        </a>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <a href="/" class="logo">
+        <div class="logo-mark">N</div>
+        <span class="logo-text">nexxore</span>
+      </a>
+      <div class="header-center">
+        <a href="/perps.html" class="nav-pill">Perpetuals</a>
+        <a href="/delta-neutral.html" class="nav-pill active">Delta Neutral</a>
+        <a href="/vaults.html" class="nav-pill">Vaults</a>
       </div>
-      <div class="nav-links">
-        <a href="/perps.html" style="color: rgba(255,255,255,0.7); margin-right: 20px;">Perps</a>
-        <a href="https://tally.so/r/mVAAX4" target="_blank" class="btn btn-primary">Join Waitlist</a>
+      <div class="header-right">
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          <span>Live Prices</span>
+        </div>
       </div>
+    </header>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">Delta Neutral Builder</h1>
+      <p class="page-subtitle">Combine perpetuals and options to create market-neutral positions with defined risk profiles.</p>
     </div>
-  </nav>
 
-  <section style="padding-top: 100px;">
-    <div class="container">
-      <!-- Hero -->
-      <div class="delta-hero">
-        <h1>Delta Neutral Builder</h1>
-        <p>Combine perpetual futures and options to create precisely hedged positions. Achieve delta neutrality, collect premium, or build complex strategies—all in one interface.</p>
-        <div class="strategy-badges">
-          <span class="strategy-badge" style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: #22c55e;">✓ Delta Neutral</span>
-          <span class="strategy-badge" style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); color: #8B5CF6;">✓ Options + Perps</span>
-          <span class="strategy-badge" style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #0EA5E9;">✓ Real-time Greeks</span>
-          <span class="strategy-badge" style="background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.3); color: #f97316;">✓ P&L Visualization</span>
-        </div>
-      </div>
-
-      <!-- Asset Selection -->
-      <div class="asset-selector">
-        <button class="asset-btn active" data-asset="ETH">
-          <div>ETH</div>
-          <div class="price" id="ethPrice">$0.00</div>
-        </button>
-        <button class="asset-btn" data-asset="BTC">
-          <div>BTC</div>
-          <div class="price" id="btcPrice">$0.00</div>
-        </button>
-        <button class="asset-btn" data-asset="SOL">
-          <div>SOL</div>
-          <div class="price" id="solPrice">$0.00</div>
-        </button>
-      </div>
-
-      <!-- Strategy Templates -->
-      <div class="panel" style="margin-bottom: 24px;">
-        <div class="panel-header">
-          <span class="panel-title">Strategy Templates</span>
-          <span style="font-size: 0.85rem; color: rgba(255,255,255,0.5);">Click to auto-populate</span>
-        </div>
-        <div class="strategy-templates">
-          <div class="strategy-card" data-strategy="delta-neutral-long">
-            <div class="strategy-card-title">🎯 Delta Neutral Long</div>
-            <div class="strategy-card-desc">Long perp + long put to neutralize directional exposure</div>
-            <div class="strategy-card-delta">Δ ≈ 0</div>
-          </div>
-          <div class="strategy-card" data-strategy="delta-neutral-short">
-            <div class="strategy-card-title">🎯 Delta Neutral Short</div>
-            <div class="strategy-card-desc">Short perp + long call to neutralize directional exposure</div>
-            <div class="strategy-card-delta">Δ ≈ 0</div>
-          </div>
-          <div class="strategy-card" data-strategy="covered-call">
-            <div class="strategy-card-title">📈 Covered Call</div>
-            <div class="strategy-card-desc">Long perp + short OTM call for premium income</div>
-            <div class="strategy-card-delta">Δ ≈ 0.3</div>
-          </div>
-          <div class="strategy-card" data-strategy="protective-put">
-            <div class="strategy-card-title">🛡️ Protective Put</div>
-            <div class="strategy-card-desc">Long perp + long put for downside protection</div>
-            <div class="strategy-card-delta">Δ ≈ 0.5</div>
-          </div>
-          <div class="strategy-card" data-strategy="straddle-hedge">
-            <div class="strategy-card-title">⚖️ Straddle + Hedge</div>
-            <div class="strategy-card-desc">Long straddle + perp hedge for volatility play</div>
-            <div class="strategy-card-delta">Δ ≈ 0</div>
-          </div>
-          <div class="strategy-card" data-strategy="custom">
-            <div class="strategy-card-title">🔧 Custom Build</div>
-            <div class="strategy-card-desc">Build your own combination from scratch</div>
-            <div class="strategy-card-delta">Δ = ?</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Main Layout -->
-      <div class="main-layout">
-        <!-- Left Panel - Position Builder -->
-        <div>
-          <!-- Live Price Chart -->
-          <div class="panel" style="margin-bottom: 24px;">
-            <div class="panel-header">
-              <span class="panel-title" id="chartAssetTitle">ETH Live Price</span>
-              <span style="font-family: 'JetBrains Mono'; font-size: 1.2rem; font-weight: 700;" id="spotPrice">$0.00</span>
+    <!-- Main Layout -->
+    <div class="main-layout">
+      <!-- Left Column: Strategies & Settings -->
+      <div>
+        <!-- Asset Selector -->
+        <div class="asset-bar">
+          <div class="asset-btn active" data-asset="ETH">
+            <div class="asset-icon eth">Ξ</div>
+            <div class="asset-info">
+              <div class="asset-symbol">ETH</div>
+              <div class="asset-price" id="ethPrice">—</div>
             </div>
-            <div class="live-chart-container" id="liveChart"></div>
           </div>
-
-          <!-- Perps Section -->
-          <div class="panel" style="margin-bottom: 24px;">
-            <div class="section-header">
-              <span class="section-title">📊 Perpetual Position</span>
-              <button class="add-btn" id="addPerpBtn">+ Add Perp</button>
+          <div class="asset-btn" data-asset="BTC">
+            <div class="asset-icon btc">₿</div>
+            <div class="asset-info">
+              <div class="asset-symbol">BTC</div>
+              <div class="asset-price" id="btcPrice">—</div>
             </div>
-            <div id="perpPositions">
-              <div class="perp-row" data-perp-id="1">
-                <div class="side-toggle">
-                  <button class="side-btn long active" data-side="long">Long</button>
-                  <button class="side-btn short" data-side="short">Short</button>
+          </div>
+          <div class="asset-btn" data-asset="SOL">
+            <div class="asset-icon sol">◎</div>
+            <div class="asset-info">
+              <div class="asset-symbol">SOL</div>
+              <div class="asset-price" id="solPrice">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Strategy Cards -->
+        <div class="strategy-section">
+          <div class="section-label">Strategy Templates</div>
+          <div class="strategy-grid">
+            <div class="strategy-card active" data-strategy="delta-neutral">
+              <div class="strategy-card-header">
+                <div>
+                  <div class="strategy-card-name">Delta Neutral</div>
+                  <div class="strategy-card-desc">Long perp + protective puts</div>
                 </div>
-                <input type="number" class="input-sm perp-size" placeholder="Size (USD)" value="10000">
-                <input type="number" class="input-sm perp-leverage" placeholder="Lev" value="1">
-                <button class="remove-btn" onclick="removePerp(this)">✕</button>
+                <span class="strategy-badge neutral">Δ≈0</span>
+              </div>
+              <div class="strategy-stats">
+                <div class="strategy-stat">
+                  <div class="strategy-stat-label">Risk</div>
+                  <div class="strategy-stat-value" style="color: var(--green);">Low</div>
+                </div>
+                <div class="strategy-stat">
+                  <div class="strategy-stat-label">Reward</div>
+                  <div class="strategy-stat-value">Medium</div>
+                </div>
+              </div>
+              <div class="strategy-mini-chart">
+                <canvas id="strategyChart1"></canvas>
+              </div>
+            </div>
+
+            <div class="strategy-card" data-strategy="covered-call">
+              <div class="strategy-card-header">
+                <div>
+                  <div class="strategy-card-name">Covered Call</div>
+                  <div class="strategy-card-desc">Long perp + sell OTM call</div>
+                </div>
+                <span class="strategy-badge bullish">Δ≈0.3</span>
+              </div>
+              <div class="strategy-stats">
+                <div class="strategy-stat">
+                  <div class="strategy-stat-label">Risk</div>
+                  <div class="strategy-stat-value" style="color: var(--yellow);">Med</div>
+                </div>
+                <div class="strategy-stat">
+                  <div class="strategy-stat-label">Yield</div>
+                  <div class="strategy-stat-value" style="color: var(--green);">+APY</div>
+                </div>
+              </div>
+              <div class="strategy-mini-chart">
+                <canvas id="strategyChart2"></canvas>
+              </div>
+            </div>
+
+            <div class="strategy-card" data-strategy="protective-put">
+              <div class="strategy-card-header">
+                <div>
+                  <div class="strategy-card-name">Protective Put</div>
+                  <div class="strategy-card-desc">Long perp + buy OTM put</div>
+                </div>
+                <span class="strategy-badge bullish">Δ≈0.5</span>
+              </div>
+              <div class="strategy-stats">
+                <div class="strategy-stat">
+                  <div class="strategy-stat-label">Risk</div>
+                  <div class="strategy-stat-value" style="color: var(--green);">Capped</div>
+                </div>
+                <div class="strategy-stat">
+                  <div class="strategy-stat-label">Cost</div>
+                  <div class="strategy-stat-value" style="color: var(--red);">Premium</div>
+                </div>
+              </div>
+              <div class="strategy-mini-chart">
+                <canvas id="strategyChart3"></canvas>
+              </div>
+            </div>
+
+            <div class="strategy-card" data-strategy="straddle">
+              <div class="strategy-card-header">
+                <div>
+                  <div class="strategy-card-name">Hedged Straddle</div>
+                  <div class="strategy-card-desc">Straddle + short perp</div>
+                </div>
+                <span class="strategy-badge neutral">Δ≈0</span>
+              </div>
+              <div class="strategy-stats">
+                <div class="strategy-stat">
+                  <div class="strategy-stat-label">Volatility</div>
+                  <div class="strategy-stat-value" style="color: var(--purple);">Long</div>
+                </div>
+                <div class="strategy-stat">
+                  <div class="strategy-stat-label">Theta</div>
+                  <div class="strategy-stat-value" style="color: var(--red);">-</div>
+                </div>
+              </div>
+              <div class="strategy-mini-chart">
+                <canvas id="strategyChart4"></canvas>
+              </div>
+            </div>
+
+            <div class="strategy-card" data-strategy="iron-condor">
+              <div class="strategy-card-header">
+                <div>
+                  <div class="strategy-card-name">Iron Condor</div>
+                  <div class="strategy-card-desc">Range-bound income</div>
+                </div>
+                <span class="strategy-badge neutral">Δ≈0</span>
+              </div>
+              <div class="strategy-stats">
+                <div class="strategy-stat">
+                  <div class="strategy-stat-label">Win Rate</div>
+                  <div class="strategy-stat-value" style="color: var(--green);">High</div>
+                </div>
+                <div class="strategy-stat">
+                  <div class="strategy-stat-label">Risk</div>
+                  <div class="strategy-stat-value" style="color: var(--yellow);">Defined</div>
+                </div>
+              </div>
+              <div class="strategy-mini-chart">
+                <canvas id="strategyChart5"></canvas>
+              </div>
+            </div>
+
+            <div class="strategy-card" data-strategy="custom">
+              <div class="strategy-card-header">
+                <div>
+                  <div class="strategy-card-name">Custom Build</div>
+                  <div class="strategy-card-desc">Design your own strategy</div>
+                </div>
+                <span class="strategy-badge" style="background: var(--purple-dim); color: var(--purple);">PRO</span>
+              </div>
+              <div class="strategy-stats">
+                <div class="strategy-stat">
+                  <div class="strategy-stat-label">Flexibility</div>
+                  <div class="strategy-stat-value" style="color: var(--purple);">Full</div>
+                </div>
+                <div class="strategy-stat">
+                  <div class="strategy-stat-label">Legs</div>
+                  <div class="strategy-stat-value">Unlimited</div>
+                </div>
+              </div>
+              <div class="strategy-mini-chart">
+                <canvas id="strategyChart6"></canvas>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Options Section -->
-          <div class="panel" style="margin-bottom: 24px;">
-            <div class="section-header">
-              <span class="section-title">🎛️ Options Positions</span>
-              <button class="add-btn" id="addOptionBtn">+ Add Option</button>
+        <!-- Advanced Settings -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Parameters</span>
+            <span class="panel-badge">Advanced</span>
+          </div>
+          <div class="panel-body">
+            <div class="settings-grid">
+              <div class="setting-item">
+                <div class="setting-label">
+                  <span>Implied Volatility</span>
+                  <span class="setting-value" id="ivDisplay">60%</span>
+                </div>
+                <input type="range" class="slider" id="ivSlider" min="20" max="150" value="60">
+              </div>
+              <div class="setting-item">
+                <div class="setting-label">
+                  <span>Risk-Free Rate</span>
+                  <span class="setting-value" id="rateDisplay">5%</span>
+                </div>
+                <input type="range" class="slider" id="rateSlider" min="0" max="15" value="5">
+              </div>
+              <div class="setting-item">
+                <div class="setting-label">
+                  <span>Max Leverage</span>
+                  <span class="setting-value" id="levDisplay">10x</span>
+                </div>
+                <input type="range" class="slider" id="levSlider" min="1" max="50" value="10">
+              </div>
+              <div class="setting-item">
+                <div class="setting-label">
+                  <span>Slippage Tolerance</span>
+                  <span class="setting-value" id="slipDisplay">0.5%</span>
+                </div>
+                <input type="range" class="slider" id="slipSlider" min="1" max="30" value="5">
+              </div>
             </div>
             
-            <!-- Expiry Selector -->
-            <div class="expiry-selector" id="expirySelector">
-              <button class="expiry-btn active" data-expiry="7d">7 Days</button>
-              <button class="expiry-btn" data-expiry="14d">14 Days</button>
-              <button class="expiry-btn" data-expiry="30d">30 Days</button>
-              <button class="expiry-btn" data-expiry="60d">60 Days</button>
-              <button class="expiry-btn" data-expiry="90d">90 Days</button>
-            </div>
-
-            <div id="optionPositions">
-              <div class="option-row" data-option-id="1">
-                <div class="option-type-toggle">
-                  <button class="type-btn call active" data-type="call">Call</button>
-                  <button class="type-btn put" data-type="put">Put</button>
-                </div>
-                <div class="side-toggle">
-                  <button class="side-btn long active" data-side="long">Buy</button>
-                  <button class="side-btn short" data-side="short">Sell</button>
-                </div>
-                <input type="number" class="input-sm option-strike" placeholder="Strike" value="">
-                <input type="number" class="input-sm option-qty" placeholder="Qty" value="1">
-                <input type="number" class="input-sm option-premium" placeholder="Prem" value="" readonly>
-                <button class="remove-btn" onclick="removeOption(this)">✕</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- P&L Chart -->
-          <div class="panel">
-            <div class="panel-header">
-              <span class="panel-title">📈 P&L at Expiry</span>
-              <span style="font-size: 0.85rem; color: rgba(255,255,255,0.5);">Price range: ±30%</span>
-            </div>
-            <div class="breakeven-display">
-              <div class="breakeven-item">
-                <div class="breakeven-label">Lower Breakeven</div>
-                <div class="breakeven-value" id="lowerBreakeven">$0.00</div>
-              </div>
-              <div class="breakeven-item">
-                <div class="breakeven-label">Upper Breakeven</div>
-                <div class="breakeven-value" id="upperBreakeven">$0.00</div>
-              </div>
-            </div>
-            <div class="pnl-chart-container">
-              <canvas id="pnlChart"></canvas>
+            <div class="section-label" style="margin-top: 16px;">Expiry Selection</div>
+            <div class="expiry-row">
+              <button class="expiry-btn active" data-expiry="7">7D</button>
+              <button class="expiry-btn" data-expiry="14">14D</button>
+              <button class="expiry-btn" data-expiry="30">30D</button>
+              <button class="expiry-btn" data-expiry="60">60D</button>
+              <button class="expiry-btn" data-expiry="90">90D</button>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Right Panel - Summary & Greeks -->
-        <div>
-          <!-- Greeks -->
-          <div class="panel" style="margin-bottom: 24px;">
-            <div class="panel-header">
-              <span class="panel-title">Greeks Summary</span>
-              <span class="info-icon" title="Combined Greeks of all positions">?</span>
+      <!-- Right Column: Chart & Builder -->
+      <div class="right-column">
+        <!-- Price Chart -->
+        <div class="panel chart-panel">
+          <div class="panel-header">
+            <span class="panel-title" id="chartTitle">ETH-USD • Live</span>
+            <span id="spotPrice" style="font-family: var(--mono); font-size: 14px; font-weight: 600;">$0.00</span>
+          </div>
+          <div class="panel-body">
+            <div class="chart-toolbar">
+              <button class="chart-tf-btn" data-tf="1m">1M</button>
+              <button class="chart-tf-btn" data-tf="5m">5M</button>
+              <button class="chart-tf-btn active" data-tf="15m">15M</button>
+              <button class="chart-tf-btn" data-tf="1h">1H</button>
+              <button class="chart-tf-btn" data-tf="4h">4H</button>
+              <button class="chart-tf-btn" data-tf="1d">1D</button>
             </div>
-            <div class="greeks-grid">
-              <div class="greek-card">
-                <div class="greek-label">Delta (Δ)</div>
-                <div class="greek-value neutral" id="totalDelta">0.00</div>
+            <div class="chart-container" id="priceChart"></div>
+          </div>
+        </div>
+
+        <!-- Position Builder -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Position Builder</span>
+            <span class="panel-badge" id="totalLegs">0 legs</span>
+          </div>
+          <div class="panel-body">
+            <!-- Builder Tabs -->
+            <div class="builder-tabs">
+              <button class="builder-tab active" data-tab="combined">Combined View</button>
+              <button class="builder-tab" data-tab="perps">Perpetuals</button>
+              <button class="builder-tab" data-tab="options">Options</button>
+            </div>
+
+            <!-- Perpetuals -->
+            <div class="leg-builder" id="perpSection">
+              <div class="leg-header">
+                <span class="leg-title">⚡ Perpetual Futures</span>
+                <button class="add-btn" id="addPerpBtn">+ Add Perp</button>
               </div>
-              <div class="greek-card">
-                <div class="greek-label">Gamma (Γ)</div>
-                <div class="greek-value" id="totalGamma">0.00</div>
+              <div id="perpContainer">
+                <div class="leg-row" data-perp-id="1">
+                  <div class="toggle-group">
+                    <button class="toggle-btn long active">Long</button>
+                    <button class="toggle-btn short">Short</button>
+                  </div>
+                  <input type="number" class="input" style="flex:1;" placeholder="Size (USD)" value="10000">
+                  <input type="number" class="input input-sm" placeholder="Lev" value="1" min="1">
+                  <button class="remove-btn" onclick="removeLeg(this)">×</button>
+                </div>
               </div>
-              <div class="greek-card">
-                <div class="greek-label">Theta (Θ)</div>
-                <div class="greek-value" id="totalTheta">0.00</div>
+            </div>
+
+            <!-- Options -->
+            <div class="leg-builder" id="optionSection">
+              <div class="leg-header">
+                <span class="leg-title">📊 Options</span>
+                <button class="add-btn" id="addOptionBtn">+ Add Option</button>
               </div>
-              <div class="greek-card">
-                <div class="greek-label">Vega (ν)</div>
-                <div class="greek-value" id="totalVega">0.00</div>
+              <div id="optionContainer">
+                <div class="leg-row" data-option-id="1">
+                  <div class="toggle-group">
+                    <button class="toggle-btn call active">Call</button>
+                    <button class="toggle-btn put">Put</button>
+                  </div>
+                  <input type="number" class="input" style="width: 90px;" placeholder="Strike">
+                  <input type="number" class="input input-sm" placeholder="Qty" value="1">
+                  <div class="toggle-group">
+                    <button class="toggle-btn long active">Buy</button>
+                    <button class="toggle-btn short">Sell</button>
+                  </div>
+                  <button class="remove-btn" onclick="removeLeg(this)">×</button>
+                </div>
               </div>
-              <div class="greek-card">
-                <div class="greek-label">Rho (ρ)</div>
-                <div class="greek-value" id="totalRho">0.00</div>
+            </div>
+
+            <!-- Greeks Bar -->
+            <div class="greeks-bar">
+              <div class="greek-cell">
+                <div class="greek-label">Delta</div>
+                <div class="greek-val neu" id="gDelta">0.00</div>
+              </div>
+              <div class="greek-cell">
+                <div class="greek-label">Gamma</div>
+                <div class="greek-val" id="gGamma">0.00</div>
+              </div>
+              <div class="greek-cell">
+                <div class="greek-label">Theta</div>
+                <div class="greek-val" id="gTheta">0.00</div>
+              </div>
+              <div class="greek-cell">
+                <div class="greek-label">Vega</div>
+                <div class="greek-val" id="gVega">0.00</div>
+              </div>
+              <div class="greek-cell">
+                <div class="greek-label">IV</div>
+                <div class="greek-val" id="gIV">60%</div>
               </div>
             </div>
 
             <!-- Delta Gauge -->
-            <div style="margin-top: 16px;">
-              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 8px;">
-                <span style="color: var(--red);">Bearish</span>
-                <span style="color: rgba(255,255,255,0.5);">Delta Exposure</span>
-                <span style="color: var(--green);">Bullish</span>
+            <div class="delta-gauge">
+              <div class="gauge-header">
+                <span class="gauge-label">Net Delta Exposure</span>
+                <span class="gauge-value" id="deltaStatus">Neutral</span>
               </div>
-              <div style="height: 12px; background: linear-gradient(90deg, var(--red), var(--yellow) 50%, var(--green)); border-radius: 6px; position: relative;">
-                <div id="deltaGauge" style="position: absolute; top: -4px; width: 20px; height: 20px; background: white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3); left: 50%; transform: translateX(-50%); transition: left 0.3s;"></div>
+              <div class="gauge-track">
+                <div class="gauge-thumb" id="deltaThumb" style="left: 50%;"></div>
               </div>
-            </div>
-          </div>
-
-          <!-- Position Summary -->
-          <div class="panel" style="margin-bottom: 24px;">
-            <div class="panel-header">
-              <span class="panel-title">Position Summary</span>
-            </div>
-            <div class="summary-grid">
-              <div class="summary-item">
-                <div class="summary-label">Total Collateral</div>
-                <div class="summary-value" id="totalCollateral">$0.00</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Net Premium</div>
-                <div class="summary-value" id="netPremium">$0.00</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Max Profit</div>
-                <div class="summary-value" style="color: var(--green);" id="maxProfit">∞</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-label">Max Loss</div>
-                <div class="summary-value" style="color: var(--red);" id="maxLoss">$0.00</div>
+              <div class="gauge-labels">
+                <span>Bearish (-10)</span>
+                <span>Neutral (0)</span>
+                <span>Bullish (+10)</span>
               </div>
             </div>
 
-            <!-- Risk Meter -->
-            <div class="risk-meter">
-              <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                <span style="color: rgba(255,255,255,0.7);">Risk Level</span>
-                <span id="riskLabel" style="color: var(--green);">Low</span>
+            <!-- P&L Section -->
+            <div class="pnl-section">
+              <div class="pnl-header">
+                <span class="pnl-title">P&L at Expiry</span>
+                <div class="pnl-stats">
+                  <div class="pnl-stat">
+                    <div class="pnl-stat-label">Max Profit</div>
+                    <div class="pnl-stat-value profit" id="maxProfit">∞</div>
+                  </div>
+                  <div class="pnl-stat">
+                    <div class="pnl-stat-label">Max Loss</div>
+                    <div class="pnl-stat-value loss" id="maxLoss">$0</div>
+                  </div>
+                  <div class="pnl-stat">
+                    <div class="pnl-stat-label">Breakeven</div>
+                    <div class="pnl-stat-value be" id="breakeven">—</div>
+                  </div>
+                </div>
               </div>
-              <div class="risk-bar">
-                <div class="risk-fill risk-low" id="riskFill" style="width: 20%;"></div>
+              <canvas id="pnlChart"></canvas>
+            </div>
+
+            <!-- Summary -->
+            <div class="summary-row">
+              <div class="summary-card">
+                <div class="summary-card-label">Collateral</div>
+                <div class="summary-card-value" id="totalCollateral">$0</div>
+              </div>
+              <div class="summary-card">
+                <div class="summary-card-label">Net Premium</div>
+                <div class="summary-card-value" id="netPremium">$0</div>
+              </div>
+              <div class="summary-card">
+                <div class="summary-card-label">Funding</div>
+                <div class="summary-card-value green" id="funding">+0.01%</div>
+              </div>
+              <div class="summary-card">
+                <div class="summary-card-label">Est. APY</div>
+                <div class="summary-card-value green" id="estApy">—</div>
               </div>
             </div>
-          </div>
 
-          <!-- Active Positions -->
-          <div class="panel" style="margin-bottom: 24px;">
-            <div class="panel-header">
-              <span class="panel-title">Active Legs</span>
-              <span style="font-size: 0.85rem; color: rgba(255,255,255,0.5);" id="legCount">0 legs</span>
-            </div>
-            <div class="positions-list" id="positionsList">
-              <div style="text-align: center; color: rgba(255,255,255,0.4); padding: 20px;">
-                No positions added yet
-              </div>
-            </div>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="action-buttons">
-            <button class="btn-simulate" id="simulateBtn">
-              📊 Simulate
-            </button>
-            <button class="btn-execute" id="executeBtn">
-              ⚡ Execute All
-            </button>
-          </div>
-
-          <div style="margin-top: 16px; padding: 14px; background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.2); border-radius: 8px;">
-            <div style="font-size: 0.85rem; color: rgba(255,255,255,0.7);">
-              <strong style="color: var(--blue);">💡 Pro Tip:</strong> For true delta neutrality, adjust your perp size to offset the net delta from options positions.
+            <!-- Actions -->
+            <div class="action-bar">
+              <button class="btn btn-secondary" id="simulateBtn">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v12l4-3 4 3 4-3V3l-4 3-4-3-4 3z"/></svg>
+                Simulate
+              </button>
+              <button class="btn btn-primary" id="executeBtn">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5-5-5-5"/><path d="M11 12l5-5-5-5"/></svg>
+                Execute Position
+              </button>
             </div>
           </div>
         </div>
       </div>
-
     </div>
-  </section>
+  </div>
 
-  <!-- Footer -->
-  <footer style="background: rgba(0,0,0,0.5); padding: 48px 0; margin-top: 64px; border-top: 1px solid rgba(255,255,255,0.1);">
-    <div class="container">
-      <div style="text-align: center; color: rgba(255,255,255,0.6);">
-        <p style="margin-bottom: 8px;">&copy; 2026 Nexxore. Building the future of DeFi.</p>
-        <p style="font-size: 0.85rem;">Delta Neutral Builder: Combine options + perps for advanced hedging strategies.</p>
-      </div>
-    </div>
-  </footer>
-
-  <script src="js/wallet.js"></script>
   <script>
     // ============================================================================
-    // CONFIGURATION
+    // STATE
     // ============================================================================
-    
-    const ASSETS = {
-      ETH: { symbol: 'ETHUSDT', name: 'Ethereum', decimals: 2 },
-      BTC: { symbol: 'BTCUSDT', name: 'Bitcoin', decimals: 2 },
-      SOL: { symbol: 'SOLUSDT', name: 'Solana', decimals: 2 }
+    const state = {
+      asset: 'ETH',
+      spotPrice: 0,
+      prices: { ETH: 0, BTC: 0, SOL: 0 },
+      expiry: 7,
+      iv: 0.60,
+      riskFreeRate: 0.05,
+      maxLeverage: 10,
+      slippage: 0.005,
+      timeframe: '15m',
+      perpIdCounter: 1,
+      optionIdCounter: 1
     };
 
-    let currentAsset = 'ETH';
-    let spotPrice = 0;
-    let liveChart = null;
-    let candleSeries = null;
-    let priceWS = null;
-    
-    let perpPositions = [];
-    let optionPositions = [];
-    let selectedExpiry = '7d';
-    
-    let perpIdCounter = 1;
-    let optionIdCounter = 1;
+    const SYMBOLS = { ETH: 'ETHUSDT', BTC: 'BTCUSDT', SOL: 'SOLUSDT' };
+    const TF_MAP = { '1m': '1m', '5m': '5m', '15m': '15m', '1h': '1h', '4h': '4h', '1d': '1d' };
+    let chart = null, candleSeries = null, ws = null;
 
     // ============================================================================
     // PRICE FETCHING
     // ============================================================================
-    
     async function fetchPrices() {
       try {
-        const symbols = ['ETHUSDT', 'BTCUSDT', 'SOLUSDT'];
-        const promises = symbols.map(s => 
-          fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${s}`).then(r => r.json())
+        const results = await Promise.all(
+          Object.entries(SYMBOLS).map(async ([asset, symbol]) => {
+            const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
+            return { asset, data: await res.json() };
+          })
         );
-        const results = await Promise.all(promises);
         
-        document.getElementById('ethPrice').textContent = `$${parseFloat(results[0].price).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-        document.getElementById('btcPrice').textContent = `$${parseFloat(results[1].price).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-        document.getElementById('solPrice').textContent = `$${parseFloat(results[2].price).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+        results.forEach(({ asset, data }) => {
+          state.prices[asset] = parseFloat(data.lastPrice);
+          const priceEl = document.getElementById(`${asset.toLowerCase()}Price`);
+          if (priceEl) {
+            priceEl.textContent = `$${state.prices[asset].toLocaleString(undefined, { maximumFractionDigits: asset === 'BTC' ? 0 : 2 })}`;
+          }
+          
+          if (asset === state.asset) {
+            state.spotPrice = state.prices[asset];
+            document.getElementById('spotPrice').textContent = 
+              `$${state.spotPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+            setDefaultStrikes();
+          }
+        });
         
-        const assetSymbol = ASSETS[currentAsset].symbol;
-        const currentPrice = results.find(r => r.symbol === assetSymbol);
-        if (currentPrice) {
-          spotPrice = parseFloat(currentPrice.price);
-          document.getElementById('spotPrice').textContent = `$${spotPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-          updateStrikeSuggestions();
-          calculateGreeks();
-          drawPnLChart();
+        calculate();
+      } catch (e) { console.error('Price fetch error:', e); }
+    }
+
+    function setDefaultStrikes() {
+      document.querySelectorAll('#optionContainer .leg-row input[placeholder="Strike"]').forEach(input => {
+        if (!input.value && state.spotPrice > 0) {
+          input.value = Math.round(state.spotPrice / 50) * 50;
         }
-      } catch (e) {
-        console.error('Price fetch error:', e);
-      }
+      });
     }
 
     // ============================================================================
     // LIVE CHART
     // ============================================================================
-    
-    function initLiveChart() {
-      const container = document.getElementById('liveChart');
-      liveChart = LightweightCharts.createChart(container, {
-        layout: {
-          background: { type: 'solid', color: 'transparent' },
-          textColor: 'rgba(255, 255, 255, 0.6)',
-        },
-        grid: {
-          vertLines: { color: 'rgba(255, 255, 255, 0.03)' },
-          horzLines: { color: 'rgba(255, 255, 255, 0.03)' },
-        },
-        rightPriceScale: { borderColor: 'rgba(255, 255, 255, 0.1)' },
-        timeScale: { borderColor: 'rgba(255, 255, 255, 0.1)', timeVisible: true },
+    function initChart() {
+      const container = document.getElementById('priceChart');
+      chart = LightweightCharts.createChart(container, {
+        layout: { background: { type: 'solid', color: '#09090b' }, textColor: 'rgba(255,255,255,0.5)' },
+        grid: { vertLines: { color: 'rgba(255,255,255,0.03)' }, horzLines: { color: 'rgba(255,255,255,0.03)' } },
+        rightPriceScale: { borderVisible: false },
+        timeScale: { borderVisible: false, timeVisible: true },
+        crosshair: { vertLine: { color: 'rgba(59,130,246,0.3)' }, horzLine: { color: 'rgba(59,130,246,0.3)' } }
       });
 
-      candleSeries = liveChart.addCandlestickSeries({
-        upColor: '#22c55e',
-        downColor: '#ef4444',
-        borderUpColor: '#22c55e',
-        borderDownColor: '#ef4444',
-        wickUpColor: '#22c55e',
-        wickDownColor: '#ef4444',
+      candleSeries = chart.addCandlestickSeries({
+        upColor: '#22c55e', downColor: '#ef4444',
+        borderUpColor: '#22c55e', borderDownColor: '#ef4444',
+        wickUpColor: '#22c55e', wickDownColor: '#ef4444'
       });
 
       loadChartData();
     }
 
     async function loadChartData() {
-      const symbol = ASSETS[currentAsset].symbol;
       try {
-        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=5m&limit=200`);
+        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${SYMBOLS[state.asset]}&interval=${state.timeframe}&limit=200`);
         const data = await res.json();
-        const candles = data.map(d => ({
-          time: d[0] / 1000,
-          open: parseFloat(d[1]),
-          high: parseFloat(d[2]),
-          low: parseFloat(d[3]),
-          close: parseFloat(d[4]),
-        }));
-        candleSeries.setData(candles);
-        connectPriceWS();
-      } catch (e) {
-        console.error('Chart data error:', e);
-      }
+        candleSeries.setData(data.map(d => ({
+          time: d[0] / 1000, open: +d[1], high: +d[2], low: +d[3], close: +d[4]
+        })));
+        connectWS();
+      } catch (e) { console.error('Chart error:', e); }
     }
 
-    function connectPriceWS() {
-      if (priceWS) priceWS.close();
-      const symbol = ASSETS[currentAsset].symbol.toLowerCase();
-      priceWS = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol}@kline_5m`);
-      priceWS.onmessage = (e) => {
-        const msg = JSON.parse(e.data);
-        const k = msg.k;
-        candleSeries.update({
-          time: k.t / 1000,
-          open: parseFloat(k.o),
-          high: parseFloat(k.h),
-          low: parseFloat(k.l),
-          close: parseFloat(k.c),
-        });
-        spotPrice = parseFloat(k.c);
-        document.getElementById('spotPrice').textContent = `$${spotPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+    function connectWS() {
+      if (ws) ws.close();
+      ws = new WebSocket(`wss://stream.binance.com:9443/ws/${SYMBOLS[state.asset].toLowerCase()}@kline_${state.timeframe}`);
+      ws.onmessage = e => {
+        const k = JSON.parse(e.data).k;
+        candleSeries.update({ time: k.t / 1000, open: +k.o, high: +k.h, low: +k.l, close: +k.c });
+        state.spotPrice = +k.c;
+        state.prices[state.asset] = state.spotPrice;
+        document.getElementById('spotPrice').textContent = `$${state.spotPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
       };
     }
 
     // ============================================================================
-    // STRIKE SUGGESTIONS
+    // BLACK-SCHOLES
     // ============================================================================
-    
-    function updateStrikeSuggestions() {
-      if (spotPrice <= 0) return;
-      
-      // Set default strikes for options
-      document.querySelectorAll('.option-strike').forEach(input => {
-        if (!input.value) {
-          input.value = Math.round(spotPrice / 50) * 50; // Round to nearest 50
-        }
-      });
-    }
-
-    // ============================================================================
-    // GREEKS CALCULATION (Black-Scholes approximation)
-    // ============================================================================
-    
-    function calculateGreeks() {
-      let totalDelta = 0;
-      let totalGamma = 0;
-      let totalTheta = 0;
-      let totalVega = 0;
-      let totalRho = 0;
-      let totalCollateral = 0;
-      let netPremium = 0;
-
-      // Calculate perp delta (delta = 1 for long, -1 for short)
-      document.querySelectorAll('.perp-row').forEach(row => {
-        const side = row.querySelector('.side-btn.active').dataset.side;
-        const size = parseFloat(row.querySelector('.perp-size').value) || 0;
-        const leverage = parseFloat(row.querySelector('.perp-leverage').value) || 1;
-        
-        const notional = size * leverage;
-        const perpDelta = side === 'long' ? notional / spotPrice : -notional / spotPrice;
-        totalDelta += perpDelta;
-        totalCollateral += size;
-      });
-
-      // Calculate option greeks
-      document.querySelectorAll('.option-row').forEach(row => {
-        const type = row.querySelector('.type-btn.active').dataset.type;
-        const side = row.querySelector('.side-btn.active').dataset.side;
-        const strike = parseFloat(row.querySelector('.option-strike').value) || spotPrice;
-        const qty = parseFloat(row.querySelector('.option-qty').value) || 1;
-        
-        // Get days to expiry
-        const daysMap = { '7d': 7, '14d': 14, '30d': 30, '60d': 60, '90d': 90 };
-        const days = daysMap[selectedExpiry] || 30;
-        
-        // Simple Black-Scholes approximation
-        const T = days / 365;
-        const r = 0.05; // Risk-free rate
-        const sigma = 0.60; // Implied volatility (60% for crypto)
-        
-        const greeks = calculateBSGreeks(spotPrice, strike, T, r, sigma, type);
-        const multiplier = side === 'long' ? qty : -qty;
-        
-        totalDelta += greeks.delta * multiplier;
-        totalGamma += greeks.gamma * multiplier;
-        totalTheta += greeks.theta * multiplier;
-        totalVega += greeks.vega * multiplier;
-        totalRho += greeks.rho * multiplier;
-        
-        // Update premium display
-        const premium = greeks.price * qty;
-        row.querySelector('.option-premium').value = premium.toFixed(2);
-        netPremium += side === 'long' ? -premium : premium;
-        
-        if (side === 'short') {
-          totalCollateral += premium * 2; // Margin for short options
-        } else {
-          totalCollateral += premium;
-        }
-      });
-
-      // Update UI
-      updateGreekDisplay('totalDelta', totalDelta.toFixed(3));
-      updateGreekDisplay('totalGamma', totalGamma.toFixed(4));
-      updateGreekDisplay('totalTheta', totalTheta.toFixed(2));
-      updateGreekDisplay('totalVega', totalVega.toFixed(2));
-      updateGreekDisplay('totalRho', totalRho.toFixed(3));
-
-      document.getElementById('totalCollateral').textContent = `$${totalCollateral.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-      document.getElementById('netPremium').textContent = `${netPremium >= 0 ? '+' : ''}$${netPremium.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-      document.getElementById('netPremium').style.color = netPremium >= 0 ? 'var(--green)' : 'var(--red)';
-
-      // Update delta gauge
-      const gaugePosition = Math.max(0, Math.min(100, 50 + totalDelta * 5));
-      document.getElementById('deltaGauge').style.left = `${gaugePosition}%`;
-
-      // Update risk level
-      const absDelda = Math.abs(totalDelta);
-      let riskLevel, riskClass, riskWidth;
-      if (absDelda < 0.1) {
-        riskLevel = 'Low (Delta Neutral)';
-        riskClass = 'risk-low';
-        riskWidth = 20;
-      } else if (absDelda < 0.5) {
-        riskLevel = 'Medium';
-        riskClass = 'risk-medium';
-        riskWidth = 50;
-      } else {
-        riskLevel = 'High';
-        riskClass = 'risk-high';
-        riskWidth = 80;
-      }
-      document.getElementById('riskLabel').textContent = riskLevel;
-      const riskFill = document.getElementById('riskFill');
-      riskFill.className = `risk-fill ${riskClass}`;
-      riskFill.style.width = `${riskWidth}%`;
-
-      updatePositionsList();
-    }
-
-    function updateGreekDisplay(id, value) {
-      const el = document.getElementById(id);
-      el.textContent = value;
-      const numVal = parseFloat(value);
-      if (Math.abs(numVal) < 0.05) {
-        el.className = 'greek-value neutral';
-      } else if (numVal > 0) {
-        el.className = 'greek-value positive';
-      } else {
-        el.className = 'greek-value negative';
-      }
-    }
-
-    function calculateBSGreeks(S, K, T, r, sigma, type) {
-      // Black-Scholes calculations
-      const d1 = (Math.log(S / K) + (r + sigma * sigma / 2) * T) / (sigma * Math.sqrt(T));
-      const d2 = d1 - sigma * Math.sqrt(T);
-      
-      const Nd1 = normalCDF(d1);
-      const Nd2 = normalCDF(d2);
-      const nd1 = normalPDF(d1);
-      
-      let price, delta;
-      if (type === 'call') {
-        price = S * Nd1 - K * Math.exp(-r * T) * Nd2;
-        delta = Nd1;
-      } else {
-        price = K * Math.exp(-r * T) * normalCDF(-d2) - S * normalCDF(-d1);
-        delta = Nd1 - 1;
-      }
-      
-      const gamma = nd1 / (S * sigma * Math.sqrt(T));
-      const theta = (-S * nd1 * sigma / (2 * Math.sqrt(T)) - r * K * Math.exp(-r * T) * (type === 'call' ? Nd2 : normalCDF(-d2))) / 365;
-      const vega = S * nd1 * Math.sqrt(T) / 100;
-      const rho = (type === 'call' ? K * T * Math.exp(-r * T) * Nd2 : -K * T * Math.exp(-r * T) * normalCDF(-d2)) / 100;
-      
-      return { price, delta, gamma, theta, vega, rho };
-    }
-
     function normalCDF(x) {
-      const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
-      const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+      const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
       const sign = x < 0 ? -1 : 1;
       x = Math.abs(x) / Math.sqrt(2);
       const t = 1 / (1 + p * x);
@@ -1271,416 +1421,439 @@
       return 0.5 * (1 + sign * y);
     }
 
-    function normalPDF(x) {
-      return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+    function normalPDF(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+    function bsGreeks(S, K, T, r, sigma, isCall) {
+      if (T <= 0 || sigma <= 0) return { price: 0, delta: 0, gamma: 0, theta: 0, vega: 0 };
+      const d1 = (Math.log(S / K) + (r + sigma * sigma / 2) * T) / (sigma * Math.sqrt(T));
+      const d2 = d1 - sigma * Math.sqrt(T);
+      const Nd1 = normalCDF(d1), Nd2 = normalCDF(d2), nd1 = normalPDF(d1);
+      
+      let price, delta;
+      if (isCall) {
+        price = S * Nd1 - K * Math.exp(-r * T) * Nd2;
+        delta = Nd1;
+      } else {
+        price = K * Math.exp(-r * T) * normalCDF(-d2) - S * normalCDF(-d1);
+        delta = Nd1 - 1;
+      }
+      
+      return {
+        price,
+        delta,
+        gamma: nd1 / (S * sigma * Math.sqrt(T)),
+        theta: (-S * nd1 * sigma / (2 * Math.sqrt(T)) - r * K * Math.exp(-r * T) * (isCall ? Nd2 : normalCDF(-d2))) / 365,
+        vega: S * nd1 * Math.sqrt(T) / 100
+      };
+    }
+
+    // ============================================================================
+    // CALCULATIONS
+    // ============================================================================
+    function calculate() {
+      if (state.spotPrice <= 0) return;
+      
+      let totalDelta = 0, totalGamma = 0, totalTheta = 0, totalVega = 0;
+      let totalCollateral = 0, netPremium = 0;
+      let legCount = 0;
+
+      // Perps
+      document.querySelectorAll('#perpContainer .leg-row').forEach(row => {
+        const isLong = row.querySelector('.toggle-btn.long').classList.contains('active');
+        const sizeInput = row.querySelectorAll('input')[0];
+        const levInput = row.querySelectorAll('input')[1];
+        const size = parseFloat(sizeInput?.value) || 0;
+        const leverage = Math.min(parseFloat(levInput?.value) || 1, state.maxLeverage);
+        
+        if (size > 0) {
+          const notional = size * leverage;
+          const perpDelta = isLong ? notional / state.spotPrice : -notional / state.spotPrice;
+          totalDelta += perpDelta;
+          totalCollateral += size;
+          legCount++;
+        }
+      });
+
+      // Options
+      const T = state.expiry / 365;
+      document.querySelectorAll('#optionContainer .leg-row').forEach(row => {
+        const toggleGroups = row.querySelectorAll('.toggle-group');
+        const isCall = toggleGroups[0]?.querySelector('.toggle-btn.call')?.classList.contains('active');
+        const isBuy = toggleGroups[1]?.querySelector('.toggle-btn.long')?.classList.contains('active');
+        const inputs = row.querySelectorAll('input');
+        const strike = parseFloat(inputs[0]?.value) || state.spotPrice;
+        const qty = parseFloat(inputs[1]?.value) || 1;
+        
+        const greeks = bsGreeks(state.spotPrice, strike, T, state.riskFreeRate, state.iv, isCall);
+        const mult = isBuy ? qty : -qty;
+        
+        totalDelta += greeks.delta * mult;
+        totalGamma += greeks.gamma * mult;
+        totalTheta += greeks.theta * mult;
+        totalVega += greeks.vega * mult;
+        
+        const premium = greeks.price * qty;
+        netPremium += isBuy ? -premium : premium;
+        totalCollateral += isBuy ? premium : premium * 2;
+        legCount++;
+      });
+
+      // Update UI
+      document.getElementById('totalLegs').textContent = `${legCount} leg${legCount !== 1 ? 's' : ''}`;
+      
+      updateGreek('gDelta', totalDelta);
+      updateGreek('gGamma', totalGamma);
+      updateGreek('gTheta', totalTheta);
+      updateGreek('gVega', totalVega);
+      document.getElementById('gIV').textContent = `${Math.round(state.iv * 100)}%`;
+      
+      // Delta gauge
+      const exposure = Math.max(-10, Math.min(10, totalDelta));
+      const pct = 50 + (exposure / 10) * 50;
+      document.getElementById('deltaThumb').style.left = `${pct}%`;
+      const statusEl = document.getElementById('deltaStatus');
+      if (Math.abs(totalDelta) < 0.1) {
+        statusEl.textContent = 'Neutral';
+        statusEl.style.color = 'var(--yellow)';
+      } else {
+        statusEl.textContent = totalDelta > 0 ? 'Bullish' : 'Bearish';
+        statusEl.style.color = totalDelta > 0 ? 'var(--green)' : 'var(--red)';
+      }
+
+      // Summary
+      document.getElementById('totalCollateral').textContent = `$${totalCollateral.toLocaleString(undefined, { minimumFractionDigits: 0 })}`;
+      const premiumEl = document.getElementById('netPremium');
+      premiumEl.textContent = `${netPremium >= 0 ? '+' : ''}$${netPremium.toLocaleString(undefined, { minimumFractionDigits: 0 })}`;
+      premiumEl.classList.toggle('green', netPremium >= 0);
+      premiumEl.classList.toggle('red', netPremium < 0);
+
+      // Estimated APY (simplified)
+      if (totalCollateral > 0 && netPremium > 0) {
+        const annualizedPremium = (netPremium / T) * (365 / state.expiry);
+        const apy = (annualizedPremium / totalCollateral) * 100;
+        document.getElementById('estApy').textContent = `${apy.toFixed(1)}%`;
+      } else {
+        document.getElementById('estApy').textContent = '—';
+      }
+
+      drawPnLChart();
+    }
+
+    function updateGreek(id, value) {
+      const el = document.getElementById(id);
+      el.textContent = Math.abs(value) < 0.01 ? '0.00' : value.toFixed(3);
+      el.className = 'greek-val ' + (Math.abs(value) < 0.05 ? 'neu' : value > 0 ? 'pos' : 'neg');
     }
 
     // ============================================================================
     // P&L CHART
     // ============================================================================
-    
     function drawPnLChart() {
       const canvas = document.getElementById('pnlChart');
       const ctx = canvas.getContext('2d');
-      
-      // Set canvas size
       canvas.width = canvas.parentElement.clientWidth;
-      canvas.height = 280;
+      canvas.height = 180;
       
-      const width = canvas.width;
-      const height = canvas.height;
-      const padding = 50;
+      const W = canvas.width, H = canvas.height, P = 35;
+      ctx.fillStyle = '#09090b';
+      ctx.fillRect(0, 0, W, H);
       
-      // Clear
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-      ctx.fillRect(0, 0, width, height);
-      
-      if (spotPrice <= 0) return;
-      
-      // Price range: ±30%
-      const minPrice = spotPrice * 0.7;
-      const maxPrice = spotPrice * 1.3;
-      const priceRange = maxPrice - minPrice;
-      
-      // Calculate P&L at each price point
+      if (state.spotPrice <= 0) return;
+
+      const minPrice = state.spotPrice * 0.7, maxPrice = state.spotPrice * 1.3;
       const points = [];
-      let maxPnL = -Infinity;
-      let minPnL = Infinity;
-      
+      let maxPnL = -Infinity, minPnL = Infinity;
+
       for (let i = 0; i <= 100; i++) {
-        const price = minPrice + (priceRange * i / 100);
-        const pnl = calculatePnLAtPrice(price);
+        const price = minPrice + ((maxPrice - minPrice) * i / 100);
+        const pnl = calcPnLAt(price);
         points.push({ price, pnl });
         maxPnL = Math.max(maxPnL, pnl);
         minPnL = Math.min(minPnL, pnl);
       }
-      
-      // Ensure we show zero line
-      maxPnL = Math.max(maxPnL, Math.abs(minPnL) * 0.2);
-      minPnL = Math.min(minPnL, -Math.abs(maxPnL) * 0.2);
-      const pnlRange = maxPnL - minPnL || 1;
-      
-      // Draw grid
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-      ctx.lineWidth = 1;
+
+      maxPnL = Math.max(maxPnL, Math.abs(minPnL) * 0.3, 100);
+      minPnL = Math.min(minPnL, -Math.abs(maxPnL) * 0.3, -100);
+      const range = maxPnL - minPnL || 1;
+      const zeroY = P + (maxPnL / range) * (H - 2 * P);
+
+      // Grid
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      ctx.setLineDash([]);
       for (let i = 0; i <= 4; i++) {
-        const y = padding + (height - 2 * padding) * i / 4;
+        const y = P + (i / 4) * (H - 2 * P);
         ctx.beginPath();
-        ctx.moveTo(padding, y);
-        ctx.lineTo(width - padding, y);
+        ctx.moveTo(P, y);
+        ctx.lineTo(W - P, y);
         ctx.stroke();
       }
-      
-      // Draw zero line
-      const zeroY = padding + (maxPnL / pnlRange) * (height - 2 * padding);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-      ctx.setLineDash([5, 5]);
+
+      // Zero line
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.setLineDash([4, 4]);
       ctx.beginPath();
-      ctx.moveTo(padding, zeroY);
-      ctx.lineTo(width - padding, zeroY);
+      ctx.moveTo(P, zeroY);
+      ctx.lineTo(W - P, zeroY);
       ctx.stroke();
       ctx.setLineDash([]);
-      
-      // Draw current price line
-      const currentX = padding + ((spotPrice - minPrice) / priceRange) * (width - 2 * padding);
-      ctx.strokeStyle = 'rgba(14, 165, 233, 0.5)';
-      ctx.setLineDash([3, 3]);
+
+      // Current price line
+      const curX = P + ((state.spotPrice - minPrice) / (maxPrice - minPrice)) * (W - 2 * P);
+      ctx.strokeStyle = 'rgba(59,130,246,0.5)';
+      ctx.setLineDash([4, 4]);
       ctx.beginPath();
-      ctx.moveTo(currentX, padding);
-      ctx.lineTo(currentX, height - padding);
+      ctx.moveTo(curX, P);
+      ctx.lineTo(curX, H - P);
       ctx.stroke();
       ctx.setLineDash([]);
-      
-      // Draw P&L curve
+
+      // P&L curve
       ctx.beginPath();
-      points.forEach((point, i) => {
-        const x = padding + (i / 100) * (width - 2 * padding);
-        const y = padding + ((maxPnL - point.pnl) / pnlRange) * (height - 2 * padding);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+      points.forEach((p, i) => {
+        const x = P + (i / 100) * (W - 2 * P);
+        const y = P + ((maxPnL - p.pnl) / range) * (H - 2 * P);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       });
       
-      // Gradient fill
-      const gradient = ctx.createLinearGradient(0, padding, 0, height - padding);
-      gradient.addColorStop(0, 'rgba(34, 197, 94, 0.3)');
-      gradient.addColorStop(0.5, 'rgba(234, 179, 8, 0.1)');
-      gradient.addColorStop(1, 'rgba(239, 68, 68, 0.3)');
-      
-      ctx.strokeStyle = 'rgba(139, 92, 246, 1)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#a855f7';
+      ctx.lineWidth = 2.5;
       ctx.stroke();
+
+      // Gradient fill
+      const gradient = ctx.createLinearGradient(0, P, 0, H - P);
+      gradient.addColorStop(0, 'rgba(34,197,94,0.25)');
+      gradient.addColorStop(0.5, 'rgba(168,85,247,0.05)');
+      gradient.addColorStop(1, 'rgba(239,68,68,0.25)');
       
-      // Fill area
-      ctx.lineTo(width - padding, zeroY);
-      ctx.lineTo(padding, zeroY);
+      ctx.lineTo(W - P, zeroY);
+      ctx.lineTo(P, zeroY);
       ctx.closePath();
       ctx.fillStyle = gradient;
       ctx.fill();
-      
-      // Draw labels
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-      ctx.font = '11px JetBrains Mono';
+
+      // Labels
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.font = '10px JetBrains Mono';
       ctx.textAlign = 'center';
-      
-      // Price labels
-      ctx.fillText(`$${minPrice.toFixed(0)}`, padding, height - padding + 20);
-      ctx.fillText(`$${spotPrice.toFixed(0)}`, currentX, height - padding + 20);
-      ctx.fillText(`$${maxPrice.toFixed(0)}`, width - padding, height - padding + 20);
-      
-      // P&L labels
-      ctx.textAlign = 'right';
-      ctx.fillText(`+$${maxPnL.toFixed(0)}`, padding - 5, padding + 5);
-      ctx.fillText(`$0`, padding - 5, zeroY + 4);
-      ctx.fillText(`-$${Math.abs(minPnL).toFixed(0)}`, padding - 5, height - padding);
-      
-      // Find breakeven points
-      let lowerBE = null, upperBE = null;
+      ctx.fillText(`$${minPrice.toFixed(0)}`, P, H - P + 14);
+      ctx.fillText(`$${state.spotPrice.toFixed(0)}`, curX, H - P + 14);
+      ctx.fillText(`$${maxPrice.toFixed(0)}`, W - P, H - P + 14);
+
+      // Find breakevens and update stats
+      let breakevens = [];
       for (let i = 1; i < points.length; i++) {
         if ((points[i-1].pnl < 0 && points[i].pnl >= 0) || (points[i-1].pnl >= 0 && points[i].pnl < 0)) {
-          if (points[i].price < spotPrice && !lowerBE) lowerBE = points[i].price;
-          else if (points[i].price >= spotPrice && !upperBE) upperBE = points[i].price;
+          breakevens.push(points[i].price);
         }
       }
       
-      document.getElementById('lowerBreakeven').textContent = lowerBE ? `$${lowerBE.toFixed(2)}` : 'N/A';
-      document.getElementById('upperBreakeven').textContent = upperBE ? `$${upperBE.toFixed(2)}` : 'N/A';
-      
-      // Update max profit/loss
-      document.getElementById('maxProfit').textContent = maxPnL > 10000000 ? '∞' : `$${maxPnL.toFixed(2)}`;
-      document.getElementById('maxLoss').textContent = `$${Math.abs(minPnL).toFixed(2)}`;
+      document.getElementById('breakeven').textContent = breakevens.length > 0 
+        ? `$${breakevens[0].toFixed(0)}${breakevens.length > 1 ? ` / $${breakevens[1].toFixed(0)}` : ''}`
+        : '—';
+      document.getElementById('maxProfit').textContent = maxPnL > 1e6 ? '∞' : `$${maxPnL.toFixed(0)}`;
+      document.getElementById('maxLoss').textContent = `$${Math.abs(minPnL).toFixed(0)}`;
     }
 
-    function calculatePnLAtPrice(price) {
+    function calcPnLAt(price) {
       let pnl = 0;
-      
-      // Perp P&L
-      document.querySelectorAll('.perp-row').forEach(row => {
-        const side = row.querySelector('.side-btn.active').dataset.side;
-        const size = parseFloat(row.querySelector('.perp-size').value) || 0;
-        const leverage = parseFloat(row.querySelector('.perp-leverage').value) || 1;
-        
-        const notional = size * leverage;
-        const priceChange = (price - spotPrice) / spotPrice;
-        const perpPnL = side === 'long' ? notional * priceChange : -notional * priceChange;
-        pnl += perpPnL;
+
+      // Perps
+      document.querySelectorAll('#perpContainer .leg-row').forEach(row => {
+        const isLong = row.querySelector('.toggle-btn.long').classList.contains('active');
+        const inputs = row.querySelectorAll('input');
+        const size = parseFloat(inputs[0]?.value) || 0;
+        const leverage = Math.min(parseFloat(inputs[1]?.value) || 1, state.maxLeverage);
+        const change = (price - state.spotPrice) / state.spotPrice;
+        pnl += isLong ? size * leverage * change : -size * leverage * change;
       });
-      
-      // Options P&L at expiry
-      document.querySelectorAll('.option-row').forEach(row => {
-        const type = row.querySelector('.type-btn.active').dataset.type;
-        const side = row.querySelector('.side-btn.active').dataset.side;
-        const strike = parseFloat(row.querySelector('.option-strike').value) || spotPrice;
-        const qty = parseFloat(row.querySelector('.option-qty').value) || 1;
-        const premium = parseFloat(row.querySelector('.option-premium').value) || 0;
-        
-        let intrinsicValue = 0;
-        if (type === 'call') {
-          intrinsicValue = Math.max(0, price - strike);
-        } else {
-          intrinsicValue = Math.max(0, strike - price);
-        }
-        
-        if (side === 'long') {
-          pnl += (intrinsicValue - premium) * qty;
-        } else {
-          pnl += (premium - intrinsicValue) * qty;
-        }
+
+      // Options
+      document.querySelectorAll('#optionContainer .leg-row').forEach(row => {
+        const toggleGroups = row.querySelectorAll('.toggle-group');
+        const isCall = toggleGroups[0]?.querySelector('.toggle-btn.call')?.classList.contains('active');
+        const isBuy = toggleGroups[1]?.querySelector('.toggle-btn.long')?.classList.contains('active');
+        const inputs = row.querySelectorAll('input');
+        const strike = parseFloat(inputs[0]?.value) || state.spotPrice;
+        const qty = parseFloat(inputs[1]?.value) || 1;
+        const T = state.expiry / 365;
+        const premium = bsGreeks(state.spotPrice, strike, T, state.riskFreeRate, state.iv, isCall).price;
+        const intrinsic = isCall ? Math.max(0, price - strike) : Math.max(0, strike - price);
+        pnl += isBuy ? (intrinsic - premium) * qty : (premium - intrinsic) * qty;
       });
-      
+
       return pnl;
     }
 
     // ============================================================================
-    // POSITIONS LIST
+    // POSITION MANAGEMENT
     // ============================================================================
-    
-    function updatePositionsList() {
-      const container = document.getElementById('positionsList');
-      let html = '';
-      let legCount = 0;
-      
-      // Perps
-      document.querySelectorAll('.perp-row').forEach(row => {
-        const side = row.querySelector('.side-btn.active').dataset.side;
-        const size = parseFloat(row.querySelector('.perp-size').value) || 0;
-        const leverage = parseFloat(row.querySelector('.perp-leverage').value) || 1;
-        
-        if (size > 0) {
-          legCount++;
-          const delta = side === 'long' ? (size * leverage / spotPrice).toFixed(3) : (-size * leverage / spotPrice).toFixed(3);
-          html += `
-            <div class="position-item">
-              <div class="position-info">
-                <span class="position-type perp">PERP</span>
-                <div>
-                  <div class="position-details">${side.toUpperCase()} $${size.toLocaleString()} @ ${leverage}x</div>
-                  <div class="position-greeks">Δ = ${delta}</div>
-                </div>
-              </div>
-            </div>
-          `;
-        }
-      });
-      
-      // Options
-      document.querySelectorAll('.option-row').forEach(row => {
-        const type = row.querySelector('.type-btn.active').dataset.type;
-        const side = row.querySelector('.side-btn.active').dataset.side;
-        const strike = parseFloat(row.querySelector('.option-strike').value) || 0;
-        const qty = parseFloat(row.querySelector('.option-qty').value) || 1;
-        
-        if (strike > 0) {
-          legCount++;
-          html += `
-            <div class="position-item">
-              <div class="position-info">
-                <span class="position-type ${type}">${type.toUpperCase()}</span>
-                <div>
-                  <div class="position-details">${side === 'long' ? 'BUY' : 'SELL'} ${qty}x $${strike.toLocaleString()} ${type}</div>
-                  <div class="position-greeks">${selectedExpiry} expiry</div>
-                </div>
-              </div>
-            </div>
-          `;
-        }
-      });
-      
-      container.innerHTML = html || '<div style="text-align: center; color: rgba(255,255,255,0.4); padding: 20px;">No positions added yet</div>';
-      document.getElementById('legCount').textContent = `${legCount} leg${legCount !== 1 ? 's' : ''}`;
+    function addPerp() {
+      state.perpIdCounter++;
+      const html = `
+        <div class="leg-row" data-perp-id="${state.perpIdCounter}">
+          <div class="toggle-group">
+            <button class="toggle-btn long active">Long</button>
+            <button class="toggle-btn short">Short</button>
+          </div>
+          <input type="number" class="input" style="flex:1;" placeholder="Size (USD)" value="">
+          <input type="number" class="input input-sm" placeholder="Lev" value="1" min="1">
+          <button class="remove-btn" onclick="removeLeg(this)">×</button>
+        </div>
+      `;
+      document.getElementById('perpContainer').insertAdjacentHTML('beforeend', html);
+      attachListeners();
+    }
+
+    function addOption() {
+      state.optionIdCounter++;
+      const strike = Math.round(state.spotPrice / 50) * 50;
+      const html = `
+        <div class="leg-row" data-option-id="${state.optionIdCounter}">
+          <div class="toggle-group">
+            <button class="toggle-btn call active">Call</button>
+            <button class="toggle-btn put">Put</button>
+          </div>
+          <input type="number" class="input" style="width: 90px;" placeholder="Strike" value="${strike}">
+          <input type="number" class="input input-sm" placeholder="Qty" value="1">
+          <div class="toggle-group">
+            <button class="toggle-btn long active">Buy</button>
+            <button class="toggle-btn short">Sell</button>
+          </div>
+          <button class="remove-btn" onclick="removeLeg(this)">×</button>
+        </div>
+      `;
+      document.getElementById('optionContainer').insertAdjacentHTML('beforeend', html);
+      attachListeners();
+    }
+
+    function removeLeg(btn) {
+      btn.closest('.leg-row').remove();
+      calculate();
     }
 
     // ============================================================================
-    // STRATEGY TEMPLATES
+    // STRATEGY PRESETS
     // ============================================================================
-    
     function applyStrategy(strategy) {
-      // Clear existing positions
-      document.getElementById('perpPositions').innerHTML = '';
-      document.getElementById('optionPositions').innerHTML = '';
-      perpIdCounter = 0;
-      optionIdCounter = 0;
-      
-      const atmStrike = Math.round(spotPrice / 50) * 50;
-      
+      document.getElementById('perpContainer').innerHTML = '';
+      document.getElementById('optionContainer').innerHTML = '';
+      state.perpIdCounter = 0;
+      state.optionIdCounter = 0;
+
+      const atm = Math.round(state.spotPrice / 50) * 50;
+      const otmCall = Math.round(state.spotPrice * 1.1 / 50) * 50;
+      const otmPut = Math.round(state.spotPrice * 0.9 / 50) * 50;
+
       switch (strategy) {
-        case 'delta-neutral-long':
-          addPerpPosition('long', 10000, 1);
-          addOptionPosition('put', 'long', atmStrike, 3); // Buy 3 ATM puts to offset ~1 delta
-          break;
-        case 'delta-neutral-short':
-          addPerpPosition('short', 10000, 1);
-          addOptionPosition('call', 'long', atmStrike, 3);
+        case 'delta-neutral':
+          addPerpPreset('long', 10000, 1);
+          addOptionPreset('put', 'buy', atm, 3);
           break;
         case 'covered-call':
-          addPerpPosition('long', 10000, 1);
-          addOptionPosition('call', 'short', atmStrike * 1.1, 2); // Sell OTM calls
+          addPerpPreset('long', 10000, 1);
+          addOptionPreset('call', 'sell', otmCall, 3);
           break;
         case 'protective-put':
-          addPerpPosition('long', 10000, 1);
-          addOptionPosition('put', 'long', atmStrike * 0.9, 2);
+          addPerpPreset('long', 10000, 1);
+          addOptionPreset('put', 'buy', otmPut, 3);
           break;
-        case 'straddle-hedge':
-          addOptionPosition('call', 'long', atmStrike, 1);
-          addOptionPosition('put', 'long', atmStrike, 1);
-          addPerpPosition('short', 5000, 1); // Small hedge
+        case 'straddle':
+          addOptionPreset('call', 'buy', atm, 1);
+          addOptionPreset('put', 'buy', atm, 1);
+          addPerpPreset('short', 3000, 1);
+          break;
+        case 'iron-condor':
+          addOptionPreset('put', 'sell', otmPut, 1);
+          addOptionPreset('put', 'buy', Math.round(state.spotPrice * 0.85 / 50) * 50, 1);
+          addOptionPreset('call', 'sell', otmCall, 1);
+          addOptionPreset('call', 'buy', Math.round(state.spotPrice * 1.15 / 50) * 50, 1);
           break;
         case 'custom':
-        default:
-          addPerpPosition('long', 0, 1);
-          addOptionPosition('call', 'long', atmStrike, 1);
+          addPerpPreset('long', 0, 1);
+          addOptionPreset('call', 'buy', atm, 1);
           break;
       }
-      
-      calculateGreeks();
-      drawPnLChart();
+      calculate();
     }
 
-    function addPerpPosition(side = 'long', size = 0, leverage = 1) {
-      perpIdCounter++;
+    function addPerpPreset(side, size, leverage) {
+      state.perpIdCounter++;
       const html = `
-        <div class="perp-row" data-perp-id="${perpIdCounter}">
-          <div class="side-toggle">
-            <button class="side-btn long ${side === 'long' ? 'active' : ''}" data-side="long">Long</button>
-            <button class="side-btn short ${side === 'short' ? 'active' : ''}" data-side="short">Short</button>
+        <div class="leg-row" data-perp-id="${state.perpIdCounter}">
+          <div class="toggle-group">
+            <button class="toggle-btn long ${side === 'long' ? 'active' : ''}">Long</button>
+            <button class="toggle-btn short ${side === 'short' ? 'active' : ''}">Short</button>
           </div>
-          <input type="number" class="input-sm perp-size" placeholder="Size (USD)" value="${size}">
-          <input type="number" class="input-sm perp-leverage" placeholder="Lev" value="${leverage}">
-          <button class="remove-btn" onclick="removePerp(this)">✕</button>
+          <input type="number" class="input" style="flex:1;" placeholder="Size (USD)" value="${size}">
+          <input type="number" class="input input-sm" placeholder="Lev" value="${leverage}">
+          <button class="remove-btn" onclick="removeLeg(this)">×</button>
         </div>
       `;
-      document.getElementById('perpPositions').insertAdjacentHTML('beforeend', html);
-      attachPerpListeners();
+      document.getElementById('perpContainer').insertAdjacentHTML('beforeend', html);
+      attachListeners();
     }
 
-    function addOptionPosition(type = 'call', side = 'long', strike = 0, qty = 1) {
-      optionIdCounter++;
+    function addOptionPreset(type, side, strike, qty) {
+      state.optionIdCounter++;
       const html = `
-        <div class="option-row" data-option-id="${optionIdCounter}">
-          <div class="option-type-toggle">
-            <button class="type-btn call ${type === 'call' ? 'active' : ''}" data-type="call">Call</button>
-            <button class="type-btn put ${type === 'put' ? 'active' : ''}" data-type="put">Put</button>
+        <div class="leg-row" data-option-id="${state.optionIdCounter}">
+          <div class="toggle-group">
+            <button class="toggle-btn call ${type === 'call' ? 'active' : ''}">Call</button>
+            <button class="toggle-btn put ${type === 'put' ? 'active' : ''}">Put</button>
           </div>
-          <div class="side-toggle">
-            <button class="side-btn long ${side === 'long' ? 'active' : ''}" data-side="long">Buy</button>
-            <button class="side-btn short ${side === 'short' ? 'active' : ''}" data-side="short">Sell</button>
+          <input type="number" class="input" style="width: 90px;" placeholder="Strike" value="${strike}">
+          <input type="number" class="input input-sm" placeholder="Qty" value="${qty}">
+          <div class="toggle-group">
+            <button class="toggle-btn long ${side === 'buy' ? 'active' : ''}">Buy</button>
+            <button class="toggle-btn short ${side === 'sell' ? 'active' : ''}">Sell</button>
           </div>
-          <input type="number" class="input-sm option-strike" placeholder="Strike" value="${strike}">
-          <input type="number" class="input-sm option-qty" placeholder="Qty" value="${qty}">
-          <input type="number" class="input-sm option-premium" placeholder="Prem" value="" readonly>
-          <button class="remove-btn" onclick="removeOption(this)">✕</button>
+          <button class="remove-btn" onclick="removeLeg(this)">×</button>
         </div>
       `;
-      document.getElementById('optionPositions').insertAdjacentHTML('beforeend', html);
-      attachOptionListeners();
-    }
-
-    function removePerp(btn) {
-      btn.closest('.perp-row').remove();
-      calculateGreeks();
-      drawPnLChart();
-    }
-
-    function removeOption(btn) {
-      btn.closest('.option-row').remove();
-      calculateGreeks();
-      drawPnLChart();
+      document.getElementById('optionContainer').insertAdjacentHTML('beforeend', html);
+      attachListeners();
     }
 
     // ============================================================================
     // EVENT LISTENERS
     // ============================================================================
-    
-    function attachPerpListeners() {
-      document.querySelectorAll('.perp-row').forEach(row => {
-        row.querySelectorAll('.side-btn').forEach(btn => {
+    function attachListeners() {
+      document.querySelectorAll('.toggle-group').forEach(group => {
+        group.querySelectorAll('.toggle-btn').forEach(btn => {
           btn.onclick = () => {
-            row.querySelectorAll('.side-btn').forEach(b => b.classList.remove('active'));
+            group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            calculateGreeks();
-            drawPnLChart();
-          };
-        });
-        
-        row.querySelectorAll('input').forEach(input => {
-          input.oninput = () => {
-            calculateGreeks();
-            drawPnLChart();
+            calculate();
           };
         });
       });
-    }
 
-    function attachOptionListeners() {
-      document.querySelectorAll('.option-row').forEach(row => {
-        row.querySelectorAll('.type-btn').forEach(btn => {
-          btn.onclick = () => {
-            row.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            calculateGreeks();
-            drawPnLChart();
-          };
-        });
-        
-        row.querySelectorAll('.side-btn').forEach(btn => {
-          btn.onclick = () => {
-            row.querySelectorAll('.side-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            calculateGreeks();
-            drawPnLChart();
-          };
-        });
-        
-        row.querySelectorAll('input:not([readonly])').forEach(input => {
-          input.oninput = () => {
-            calculateGreeks();
-            drawPnLChart();
-          };
-        });
+      document.querySelectorAll('.input').forEach(input => {
+        input.oninput = calculate;
       });
     }
 
     // ============================================================================
-    // INITIALIZATION
+    // INIT
     // ============================================================================
-    
     document.addEventListener('DOMContentLoaded', () => {
-      initLiveChart();
+      initChart();
       fetchPrices();
-      setInterval(fetchPrices, 10000);
-      
-      // Asset selector
+      setInterval(fetchPrices, 15000);
+
+      // Asset selection
       document.querySelectorAll('.asset-btn').forEach(btn => {
         btn.onclick = () => {
-          document.querySelector('.asset-btn.active').classList.remove('active');
+          document.querySelectorAll('.asset-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
-          currentAsset = btn.dataset.asset;
-          document.getElementById('chartAssetTitle').textContent = `${currentAsset} Live Price`;
+          state.asset = btn.dataset.asset;
+          document.getElementById('chartTitle').textContent = `${state.asset}-USD • Live`;
           loadChartData();
           fetchPrices();
         };
       });
-      
-      // Strategy cards
+
+      // Strategy selection
       document.querySelectorAll('.strategy-card').forEach(card => {
         card.onclick = () => {
           document.querySelectorAll('.strategy-card').forEach(c => c.classList.remove('active'));
@@ -1688,78 +1861,219 @@
           applyStrategy(card.dataset.strategy);
         };
       });
-      
-      // Expiry selector
+
+      // Expiry selection
       document.querySelectorAll('.expiry-btn').forEach(btn => {
         btn.onclick = () => {
-          document.querySelector('.expiry-btn.active').classList.remove('active');
+          document.querySelectorAll('.expiry-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
-          selectedExpiry = btn.dataset.expiry;
-          calculateGreeks();
-          drawPnLChart();
+          state.expiry = parseInt(btn.dataset.expiry);
+          calculate();
         };
       });
-      
+
+      // Timeframe selection
+      document.querySelectorAll('.chart-tf-btn').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('.chart-tf-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          state.timeframe = btn.dataset.tf;
+          loadChartData();
+        };
+      });
+
+      // Settings sliders
+      document.getElementById('ivSlider').oninput = (e) => {
+        state.iv = parseInt(e.target.value) / 100;
+        document.getElementById('ivDisplay').textContent = `${e.target.value}%`;
+        calculate();
+      };
+
+      document.getElementById('rateSlider').oninput = (e) => {
+        state.riskFreeRate = parseInt(e.target.value) / 100;
+        document.getElementById('rateDisplay').textContent = `${e.target.value}%`;
+        calculate();
+      };
+
+      document.getElementById('levSlider').oninput = (e) => {
+        state.maxLeverage = parseInt(e.target.value);
+        document.getElementById('levDisplay').textContent = `${e.target.value}x`;
+      };
+
+      document.getElementById('slipSlider').oninput = (e) => {
+        state.slippage = parseInt(e.target.value) / 1000;
+        document.getElementById('slipDisplay').textContent = `${(e.target.value / 10).toFixed(1)}%`;
+      };
+
       // Add buttons
-      document.getElementById('addPerpBtn').onclick = () => {
-        addPerpPosition();
-        calculateGreeks();
-        drawPnLChart();
-      };
-      
-      document.getElementById('addOptionBtn').onclick = () => {
-        addOptionPosition('call', 'long', Math.round(spotPrice / 50) * 50, 1);
-        calculateGreeks();
-        drawPnLChart();
-      };
-      
-      // Execute button
+      document.getElementById('addPerpBtn').onclick = addPerp;
+      document.getElementById('addOptionBtn').onclick = addOption;
+
+      // Action buttons
       document.getElementById('executeBtn').onclick = () => {
-        const delta = parseFloat(document.getElementById('totalDelta').textContent);
-        const legs = parseInt(document.getElementById('legCount').textContent);
-        
-        if (legs === 0) {
-          alert('Please add at least one position');
-          return;
-        }
-        
-        let message = `Execute Delta Neutral Strategy\n\n`;
-        message += `Total Legs: ${legs}\n`;
-        message += `Net Delta: ${delta.toFixed(3)}\n`;
-        message += `Collateral: ${document.getElementById('totalCollateral').textContent}\n\n`;
-        
-        if (Math.abs(delta) < 0.1) {
-          message += `✅ Position is delta neutral!\n`;
-        } else {
-          message += `⚠️ Position has directional exposure (Δ=${delta.toFixed(2)})\n`;
-        }
-        
-        message += `\nSmart contract integration coming soon!`;
-        alert(message);
+        const delta = parseFloat(document.getElementById('gDelta').textContent);
+        alert(`Execute Position\n\nNet Delta: ${delta}\nCollateral: ${document.getElementById('totalCollateral').textContent}\nSlippage: ${(state.slippage * 100).toFixed(1)}%\n\n${Math.abs(delta) < 0.1 ? '✅ Delta Neutral' : '⚠️ Has directional exposure'}\n\nSmart contract integration coming soon!`);
       };
-      
-      // Simulate button
+
       document.getElementById('simulateBtn').onclick = () => {
+        calculate();
         drawPnLChart();
-        alert('P&L simulation updated! Check the chart for projected outcomes.');
+        drawStrategyCharts();
       };
-      
-      // Initial setup
-      attachPerpListeners();
-      attachOptionListeners();
-      
-      // Initial calculations after prices load
-      setTimeout(() => {
-        updateStrikeSuggestions();
-        calculateGreeks();
-        drawPnLChart();
-      }, 1500);
+
+      // Builder tabs
+      document.querySelectorAll('.builder-tab').forEach(tab => {
+        tab.onclick = () => {
+          document.querySelectorAll('.builder-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          const view = tab.dataset.tab;
+          document.getElementById('perpSection').style.display = (view === 'combined' || view === 'perps') ? 'block' : 'none';
+          document.getElementById('optionSection').style.display = (view === 'combined' || view === 'options') ? 'block' : 'none';
+        };
+      });
+
+      attachListeners();
+      setTimeout(() => { calculate(); drawPnLChart(); }, 1500);
     });
 
-    // Resize handler for P&L chart
     window.addEventListener('resize', () => {
       drawPnLChart();
+      drawStrategyCharts();
     });
+
+    // ============================================================================
+    // STRATEGY MINI CHARTS
+    // ============================================================================
+    function drawStrategyCharts() {
+      const strategies = {
+        1: drawDeltaNeutralMini,
+        2: drawCoveredCallMini,
+        3: drawProtectivePutMini,
+        4: drawStraddleMini,
+        5: drawIronCondorMini,
+        6: drawCustomMini
+      };
+
+      for (let i = 1; i <= 6; i++) {
+        const canvas = document.getElementById(`strategyChart${i}`);
+        if (canvas && strategies[i]) {
+          strategies[i](canvas);
+        }
+      }
+    }
+
+    function setupMiniCanvas(canvas) {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = 50;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#16161a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      return ctx;
+    }
+
+    function drawMiniPnL(ctx, W, H, points, color = '#a855f7') {
+      const maxY = Math.max(...points.map(p => Math.abs(p)));
+      const zeroY = H / 2;
+      
+      // Zero line
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(0, zeroY);
+      ctx.lineTo(W, zeroY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // P&L curve
+      ctx.beginPath();
+      points.forEach((p, i) => {
+        const x = (i / (points.length - 1)) * W;
+        const y = zeroY - (p / (maxY || 1)) * (H / 2 - 5);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Fill gradient
+      ctx.lineTo(W, zeroY);
+      ctx.lineTo(0, zeroY);
+      ctx.closePath();
+      const gradient = ctx.createLinearGradient(0, 0, 0, H);
+      gradient.addColorStop(0, color + '30');
+      gradient.addColorStop(0.5, color + '05');
+      gradient.addColorStop(1, color + '30');
+      ctx.fillStyle = gradient;
+      ctx.fill();
+    }
+
+    function drawDeltaNeutralMini(canvas) {
+      const ctx = setupMiniCanvas(canvas);
+      const points = [];
+      for (let i = 0; i <= 50; i++) {
+        const x = (i - 25) / 25;
+        points.push(Math.abs(x) < 0.3 ? 0.5 : 0.5 - Math.abs(x) * 0.3);
+      }
+      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#22c55e');
+    }
+
+    function drawCoveredCallMini(canvas) {
+      const ctx = setupMiniCanvas(canvas);
+      const points = [];
+      for (let i = 0; i <= 50; i++) {
+        const x = (i - 25) / 25;
+        if (x < 0.3) points.push(x * 2);
+        else points.push(0.6);
+      }
+      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#06b6d4');
+    }
+
+    function drawProtectivePutMini(canvas) {
+      const ctx = setupMiniCanvas(canvas);
+      const points = [];
+      for (let i = 0; i <= 50; i++) {
+        const x = (i - 25) / 25;
+        if (x < -0.2) points.push(-0.3);
+        else points.push(x * 1.5 - 0.1);
+      }
+      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#06b6d4');
+    }
+
+    function drawStraddleMini(canvas) {
+      const ctx = setupMiniCanvas(canvas);
+      const points = [];
+      for (let i = 0; i <= 50; i++) {
+        const x = (i - 25) / 25;
+        points.push(Math.abs(x) * 1.5 - 0.3);
+      }
+      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#22c55e');
+    }
+
+    function drawIronCondorMini(canvas) {
+      const ctx = setupMiniCanvas(canvas);
+      const points = [];
+      for (let i = 0; i <= 50; i++) {
+        const x = (i - 25) / 25;
+        if (Math.abs(x) < 0.4) points.push(0.5);
+        else if (Math.abs(x) < 0.7) points.push(0.5 - (Math.abs(x) - 0.4) * 2.5);
+        else points.push(-0.25);
+      }
+      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#eab308');
+    }
+
+    function drawCustomMini(canvas) {
+      const ctx = setupMiniCanvas(canvas);
+      const points = [];
+      for (let i = 0; i <= 50; i++) {
+        const x = (i - 25) / 25;
+        points.push(Math.sin(x * 3) * 0.4);
+      }
+      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#a855f7');
+    }
+
+    // Draw strategy charts after DOM ready
+    setTimeout(drawStrategyCharts, 500);
   </script>
 </body>
 </html>
