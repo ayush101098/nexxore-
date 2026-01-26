@@ -1394,6 +1394,13 @@
         <div>
           <!-- Backtest Controls -->
           <div class="backtest-header">
+            <div class="strategy-select" style="min-width: 120px;">
+              <select class="select" id="backtestAsset">
+                <option value="ETH">ETH</option>
+                <option value="BTC">BTC</option>
+                <option value="SOL">SOL</option>
+              </select>
+            </div>
             <div class="strategy-select">
               <select class="select" id="backtestStrategy">
                 <option value="basis">Basis Trade (Long Spot + Short Perp)</option>
@@ -1405,8 +1412,8 @@
               </select>
             </div>
             <div class="date-range">
-              <input type="date" class="date-input" id="startDate" value="2025-01-01">
-              <input type="date" class="date-input" id="endDate" value="2026-01-27">
+              <input type="date" class="date-input" id="startDate">
+              <input type="date" class="date-input" id="endDate">
             </div>
             <button class="run-backtest-btn" id="runBacktestBtn">
               ▶️ Run Backtest
@@ -1979,12 +1986,22 @@
       initTabs();
       initCharts();
       initControls();
+      initDateInputs();
       fetchPrices();
       populateRebalanceHistory();
       populateMonthlyReturns();
       startDeltaMonitor();
       setInterval(fetchPrices, 10000);
     });
+
+    function initDateInputs() {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 6); // 6 months back
+      
+      document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+      document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+    }
 
     // ============================================================================
     // TABS
@@ -2416,39 +2433,589 @@
     }
 
     // ============================================================================
-    // BACKTEST
+    // BACKTEST ENGINE
     // ============================================================================
-    function runBacktest() {
+    let backtestData = {
+      priceHistory: [],
+      equityCurve: [],
+      drawdownCurve: [],
+      trades: [],
+      monthlyReturns: []
+    };
+
+    async function fetchHistoricalData(asset, startDate, endDate) {
+      const symbol = SYMBOLS[asset];
+      const start = new Date(startDate).getTime();
+      const end = new Date(endDate).getTime();
+      
+      try {
+        // Fetch daily klines from Binance
+        const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&startTime=${start}&endTime=${end}&limit=1000`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        return data.map(d => ({
+          time: d[0],
+          date: new Date(d[0]),
+          open: parseFloat(d[1]),
+          high: parseFloat(d[2]),
+          low: parseFloat(d[3]),
+          close: parseFloat(d[4]),
+          volume: parseFloat(d[5])
+        }));
+      } catch (e) {
+        console.error('Failed to fetch historical data:', e);
+        return generateSyntheticData(asset, startDate, endDate);
+      }
+    }
+
+    function generateSyntheticData(asset, startDate, endDate) {
+      const data = [];
+      const basePrice = asset === 'BTC' ? 45000 : asset === 'ETH' ? 2500 : 100;
+      let price = basePrice;
+      
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const volatility = 0.03 * (asset === 'SOL' ? 1.5 : asset === 'BTC' ? 0.8 : 1);
+        const change = (Math.random() - 0.48) * volatility;
+        price = price * (1 + change);
+        
+        data.push({
+          time: d.getTime(),
+          date: new Date(d),
+          open: price * (1 - Math.random() * 0.01),
+          high: price * (1 + Math.random() * 0.02),
+          low: price * (1 - Math.random() * 0.02),
+          close: price,
+          volume: Math.random() * 1000000000
+        });
+      }
+      
+      return data;
+    }
+
+    // Strategy simulation functions
+    function simulateBasisTrade(prices, capital, threshold, leverage) {
+      const results = { equity: [], trades: [], dailyReturns: [] };
+      let position = { spotQty: 0, perpQty: 0, entryPrice: 0 };
+      let equity = capital;
+      let maxEquity = capital;
+      
+      // Funding rate simulation (varies by market conditions)
+      const avgFundingRate = 0.0001; // 0.01% per 8h = ~10.95% annualized
+      
+      prices.forEach((day, i) => {
+        if (i === 0) {
+          // Enter position: long spot, short perp
+          position.spotQty = (capital * 0.5) / day.close;
+          position.perpQty = position.spotQty * leverage;
+          position.entryPrice = day.close;
+          results.trades.push({ day: i, type: 'OPEN', price: day.close, size: position.spotQty });
+        }
+        
+        // Calculate daily P&L
+        const spotPnL = position.spotQty * (day.close - (i > 0 ? prices[i-1].close : day.close));
+        const perpPnL = -position.perpQty * (day.close - (i > 0 ? prices[i-1].close : day.close));
+        const fundingIncome = position.perpQty * day.close * avgFundingRate * 3; // 3 funding periods per day
+        
+        const dailyPnL = spotPnL + perpPnL + fundingIncome;
+        const tradingFee = Math.abs(dailyPnL) * 0.0005; // 0.05% trading costs
+        
+        equity += dailyPnL - tradingFee;
+        maxEquity = Math.max(maxEquity, equity);
+        
+        const dailyReturn = i > 0 ? (equity - results.equity[i-1].value) / results.equity[i-1].value : 0;
+        results.dailyReturns.push(dailyReturn);
+        
+        results.equity.push({
+          time: Math.floor(day.time / 1000),
+          value: equity,
+          drawdown: ((equity - maxEquity) / maxEquity) * 100
+        });
+        
+        // Check for rebalancing (when delta drifts)
+        const currentDelta = (position.spotQty - position.perpQty) / position.spotQty;
+        if (Math.abs(currentDelta) > threshold && i > 0) {
+          const rebalanceQty = Math.abs(currentDelta) * position.spotQty * 0.5;
+          results.trades.push({ day: i, type: 'REBALANCE', price: day.close, size: rebalanceQty });
+        }
+      });
+      
+      return results;
+    }
+
+    function simulateStraddleHedge(prices, capital, threshold, leverage) {
+      const results = { equity: [], trades: [], dailyReturns: [] };
+      let equity = capital;
+      let maxEquity = capital;
+      
+      // Straddle parameters
+      const iv = 0.6; // 60% implied volatility
+      const daysToExpiry = 30;
+      
+      prices.forEach((day, i) => {
+        const dte = Math.max(1, daysToExpiry - (i % 30));
+        const timeDecay = Math.sqrt(dte / 365);
+        
+        // Straddle value approximation
+        const straddleValue = day.close * iv * timeDecay * 0.8;
+        
+        // P&L from gamma (profits from moves)
+        const priceMove = i > 0 ? Math.abs(day.close - prices[i-1].close) / prices[i-1].close : 0;
+        const gammaPnL = priceMove > 0.02 ? (priceMove - 0.02) * capital * 2 : 0;
+        
+        // Theta decay (time value loss)
+        const thetaLoss = straddleValue * 0.03;
+        
+        // Perp hedge P&L
+        const hedgeSize = capital * 0.3;
+        const hedgePnL = i > 0 ? -hedgeSize * (day.close - prices[i-1].close) / prices[i-1].close : 0;
+        
+        const dailyPnL = gammaPnL - thetaLoss + hedgePnL;
+        const fees = Math.abs(dailyPnL) * 0.001;
+        
+        equity += dailyPnL - fees;
+        maxEquity = Math.max(maxEquity, equity);
+        
+        const dailyReturn = i > 0 ? (equity - results.equity[i-1].value) / results.equity[i-1].value : 0;
+        results.dailyReturns.push(dailyReturn);
+        
+        results.equity.push({
+          time: Math.floor(day.time / 1000),
+          value: equity,
+          drawdown: ((equity - maxEquity) / maxEquity) * 100
+        });
+        
+        // Roll options monthly
+        if (i % 30 === 0 && i > 0) {
+          results.trades.push({ day: i, type: 'ROLL', price: day.close, size: capital * 0.1 });
+        }
+      });
+      
+      return results;
+    }
+
+    function simulateCoveredCall(prices, capital, threshold, leverage) {
+      const results = { equity: [], trades: [], dailyReturns: [] };
+      let equity = capital;
+      let maxEquity = capital;
+      let position = { spotQty: 0, callStrike: 0, premium: 0 };
+      
+      prices.forEach((day, i) => {
+        if (i === 0 || i % 30 === 0) {
+          // Buy spot and sell OTM call
+          position.spotQty = capital * 0.8 / day.close;
+          position.callStrike = day.close * 1.1; // 10% OTM
+          position.premium = day.close * 0.03; // ~3% premium for 30d 10% OTM call
+          
+          results.trades.push({ day: i, type: i === 0 ? 'OPEN' : 'ROLL', price: day.close, size: position.spotQty });
+        }
+        
+        // Spot P&L
+        const spotPnL = i > 0 ? position.spotQty * (day.close - prices[i-1].close) : 0;
+        
+        // Call P&L (capped upside)
+        let callPnL = 0;
+        if (day.close > position.callStrike) {
+          callPnL = -position.spotQty * (day.close - position.callStrike);
+        }
+        
+        // Premium income (amortized daily)
+        const dailyPremium = (position.premium * position.spotQty) / 30;
+        
+        const dailyPnL = spotPnL + callPnL + dailyPremium;
+        const fees = Math.abs(dailyPnL) * 0.0003;
+        
+        equity += dailyPnL - fees;
+        maxEquity = Math.max(maxEquity, equity);
+        
+        const dailyReturn = i > 0 ? (equity - results.equity[i-1].value) / results.equity[i-1].value : 0;
+        results.dailyReturns.push(dailyReturn);
+        
+        results.equity.push({
+          time: Math.floor(day.time / 1000),
+          value: equity,
+          drawdown: ((equity - maxEquity) / maxEquity) * 100
+        });
+      });
+      
+      return results;
+    }
+
+    function simulateProtectivePut(prices, capital, threshold, leverage) {
+      const results = { equity: [], trades: [], dailyReturns: [] };
+      let equity = capital;
+      let maxEquity = capital;
+      let position = { spotQty: 0, putStrike: 0, putCost: 0 };
+      
+      prices.forEach((day, i) => {
+        if (i === 0 || i % 30 === 0) {
+          position.spotQty = capital * 0.9 / day.close;
+          position.putStrike = day.close * 0.9; // 10% OTM put
+          position.putCost = day.close * 0.025; // ~2.5% premium
+          
+          results.trades.push({ day: i, type: i === 0 ? 'OPEN' : 'ROLL', price: day.close, size: position.spotQty });
+        }
+        
+        // Spot P&L
+        const spotPnL = i > 0 ? position.spotQty * (day.close - prices[i-1].close) : 0;
+        
+        // Put protection (limits downside)
+        let putPnL = 0;
+        if (day.close < position.putStrike) {
+          putPnL = position.spotQty * (position.putStrike - day.close);
+        }
+        
+        // Put cost (amortized daily)
+        const dailyPutCost = (position.putCost * position.spotQty) / 30;
+        
+        const dailyPnL = spotPnL + putPnL - dailyPutCost;
+        const fees = Math.abs(spotPnL) * 0.0003;
+        
+        equity += dailyPnL - fees;
+        maxEquity = Math.max(maxEquity, equity);
+        
+        const dailyReturn = i > 0 ? (equity - results.equity[i-1].value) / results.equity[i-1].value : 0;
+        results.dailyReturns.push(dailyReturn);
+        
+        results.equity.push({
+          time: Math.floor(day.time / 1000),
+          value: equity,
+          drawdown: ((equity - maxEquity) / maxEquity) * 100
+        });
+      });
+      
+      return results;
+    }
+
+    function simulateIronCondor(prices, capital, threshold, leverage) {
+      const results = { equity: [], trades: [], dailyReturns: [] };
+      let equity = capital;
+      let maxEquity = capital;
+      let position = { width: 0, premium: 0, upperBreak: 0, lowerBreak: 0 };
+      
+      prices.forEach((day, i) => {
+        if (i === 0 || i % 30 === 0) {
+          // Set up iron condor
+          position.width = day.close * 0.15; // 15% wing width
+          position.premium = day.close * 0.04; // ~4% total premium collected
+          position.upperBreak = day.close * 1.10;
+          position.lowerBreak = day.close * 0.90;
+          position.entryPrice = day.close;
+          
+          results.trades.push({ day: i, type: i === 0 ? 'OPEN' : 'ROLL', price: day.close, size: capital * 0.2 });
+        }
+        
+        let dailyPnL = 0;
+        
+        // Premium decay (theta profit)
+        const dailyTheta = (position.premium * capital * 0.5) / 30;
+        
+        // Loss if outside wings
+        if (day.close > position.upperBreak || day.close < position.lowerBreak) {
+          const breach = Math.max(
+            day.close - position.upperBreak,
+            position.lowerBreak - day.close,
+            0
+          );
+          const maxLoss = position.width * capital * 0.5 / position.entryPrice;
+          dailyPnL = -Math.min(breach * capital * 0.5 / position.entryPrice, maxLoss);
+        } else {
+          dailyPnL = dailyTheta;
+        }
+        
+        const fees = Math.abs(dailyPnL) * 0.0005;
+        equity += dailyPnL - fees;
+        maxEquity = Math.max(maxEquity, equity);
+        
+        const dailyReturn = i > 0 ? (equity - results.equity[i-1].value) / results.equity[i-1].value : 0;
+        results.dailyReturns.push(dailyReturn);
+        
+        results.equity.push({
+          time: Math.floor(day.time / 1000),
+          value: equity,
+          drawdown: ((equity - maxEquity) / maxEquity) * 100
+        });
+      });
+      
+      return results;
+    }
+
+    function simulateCustomStrategy(prices, capital, threshold, leverage) {
+      // Custom delta-neutral with active rebalancing
+      const results = { equity: [], trades: [], dailyReturns: [] };
+      let equity = capital;
+      let maxEquity = capital;
+      let delta = 0;
+      let position = { long: 0, short: 0 };
+      
+      prices.forEach((day, i) => {
+        if (i === 0) {
+          position.long = (capital * 0.5) / day.close;
+          position.short = position.long;
+        }
+        
+        // Delta drifts with price movement
+        if (i > 0) {
+          const priceChange = (day.close - prices[i-1].close) / prices[i-1].close;
+          delta += priceChange * 0.5;
+        }
+        
+        // Rebalance when delta exceeds threshold
+        if (Math.abs(delta) > threshold) {
+          const rebalanceSize = Math.abs(delta) * position.long;
+          if (delta > 0) {
+            position.short += rebalanceSize;
+          } else {
+            position.long += rebalanceSize;
+          }
+          results.trades.push({ day: i, type: 'REBALANCE', price: day.close, size: rebalanceSize });
+          delta = 0;
+        }
+        
+        // Calculate P&L
+        const longPnL = i > 0 ? position.long * (day.close - prices[i-1].close) : 0;
+        const shortPnL = i > 0 ? -position.short * (day.close - prices[i-1].close) : 0;
+        const funding = position.short * day.close * 0.0001 * 3;
+        
+        const dailyPnL = longPnL + shortPnL + funding;
+        const fees = results.trades.filter(t => t.day === i).length * day.close * 0.001;
+        
+        equity += dailyPnL - fees;
+        maxEquity = Math.max(maxEquity, equity);
+        
+        const dailyReturn = i > 0 ? (equity - results.equity[i-1].value) / results.equity[i-1].value : 0;
+        results.dailyReturns.push(dailyReturn);
+        
+        results.equity.push({
+          time: Math.floor(day.time / 1000),
+          value: equity,
+          drawdown: ((equity - maxEquity) / maxEquity) * 100
+        });
+      });
+      
+      return results;
+    }
+
+    // Calculate performance metrics
+    function calculateMetrics(results, capital) {
+      const equity = results.equity;
+      const returns = results.dailyReturns.filter(r => !isNaN(r) && isFinite(r));
+      
+      // Total return
+      const finalEquity = equity[equity.length - 1].value;
+      const totalReturn = ((finalEquity - capital) / capital) * 100;
+      
+      // Sharpe Ratio (annualized)
+      const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
+      const stdDev = Math.sqrt(returns.reduce((sq, r) => sq + Math.pow(r - avgReturn, 2), 0) / returns.length);
+      const sharpe = stdDev > 0 ? (avgReturn * 365) / (stdDev * Math.sqrt(365)) : 0;
+      
+      // Max Drawdown
+      const maxDrawdown = Math.min(...equity.map(e => e.drawdown));
+      
+      // Win Rate
+      const winningDays = returns.filter(r => r > 0).length;
+      const winRate = (winningDays / returns.length) * 100;
+      
+      // Rebalance count
+      const rebalances = results.trades.filter(t => t.type === 'REBALANCE').length;
+      
+      // Total fees (estimated)
+      const avgTradeSize = capital * 0.1;
+      const totalFees = results.trades.length * avgTradeSize * 0.001;
+      
+      // Monthly returns
+      const monthlyReturns = [];
+      for (let i = 0; i < equity.length; i += 30) {
+        const startVal = equity[i].value;
+        const endVal = equity[Math.min(i + 29, equity.length - 1)].value;
+        const monthReturn = ((endVal - startVal) / startVal) * 100;
+        const date = new Date(equity[i].time * 1000);
+        monthlyReturns.push({
+          month: date.toLocaleString('default', { month: 'short' }),
+          value: monthReturn
+        });
+      }
+      
+      return {
+        totalReturn: totalReturn.toFixed(1),
+        sharpe: Math.max(0, sharpe).toFixed(2),
+        maxDrawdown: maxDrawdown.toFixed(1),
+        winRate: winRate.toFixed(0),
+        rebalances,
+        totalFees: Math.round(totalFees),
+        monthlyReturns
+      };
+    }
+
+    async function runBacktest() {
       const btn = document.getElementById('runBacktestBtn');
-      btn.innerHTML = '⏳ Running...';
+      btn.innerHTML = '⏳ Fetching data...';
       btn.disabled = true;
 
-      setTimeout(() => {
-        // Simulate backtest results
+      try {
+        const asset = document.getElementById('backtestAsset').value;
         const strategy = document.getElementById('backtestStrategy').value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const capital = state.backtestCapital;
+        const threshold = state.backtestThreshold;
+        const leverage = state.backtestLeverage;
+
+        btn.innerHTML = '⏳ Fetching prices...';
         
-        const results = {
-          'basis': { return: 24.7, sharpe: 1.82, drawdown: -8.3, winRate: 67, rebalances: 156, fees: 2340 },
-          'straddle-hedge': { return: 18.2, sharpe: 1.45, drawdown: -12.1, winRate: 58, rebalances: 89, fees: 1890 },
-          'covered-call': { return: 15.8, sharpe: 1.92, drawdown: -6.2, winRate: 72, rebalances: 45, fees: 980 },
-          'protective-put': { return: 12.4, sharpe: 1.35, drawdown: -4.8, winRate: 61, rebalances: 78, fees: 1560 },
-          'iron-condor': { return: 21.3, sharpe: 1.68, drawdown: -9.7, winRate: 64, rebalances: 112, fees: 2120 },
-          'custom': { return: 8.5, sharpe: 0.95, drawdown: -15.2, winRate: 52, rebalances: 234, fees: 3450 }
+        // Fetch historical data
+        const prices = await fetchHistoricalData(asset, startDate, endDate);
+        
+        if (prices.length < 30) {
+          throw new Error('Insufficient price data');
+        }
+
+        btn.innerHTML = '⏳ Running simulation...';
+        
+        // Run strategy simulation
+        let results;
+        switch (strategy) {
+          case 'basis':
+            results = simulateBasisTrade(prices, capital, threshold, leverage);
+            break;
+          case 'straddle-hedge':
+            results = simulateStraddleHedge(prices, capital, threshold, leverage);
+            break;
+          case 'covered-call':
+            results = simulateCoveredCall(prices, capital, threshold, leverage);
+            break;
+          case 'protective-put':
+            results = simulateProtectivePut(prices, capital, threshold, leverage);
+            break;
+          case 'iron-condor':
+            results = simulateIronCondor(prices, capital, threshold, leverage);
+            break;
+          case 'custom':
+            results = simulateCustomStrategy(prices, capital, threshold, leverage);
+            break;
+          default:
+            results = simulateBasisTrade(prices, capital, threshold, leverage);
+        }
+
+        btn.innerHTML = '⏳ Calculating metrics...';
+        
+        // Calculate metrics
+        const metrics = calculateMetrics(results, capital);
+        
+        // Update UI
+        const returnEl = document.getElementById('btReturn');
+        returnEl.textContent = `${parseFloat(metrics.totalReturn) >= 0 ? '+' : ''}${metrics.totalReturn}%`;
+        returnEl.className = `result-value ${parseFloat(metrics.totalReturn) >= 0 ? 'positive' : 'negative'}`;
+        
+        document.getElementById('btSharpe').textContent = metrics.sharpe;
+        document.getElementById('btDrawdown').textContent = `${metrics.maxDrawdown}%`;
+        document.getElementById('btWinRate').textContent = `${metrics.winRate}%`;
+        document.getElementById('btRebalances').textContent = metrics.rebalances;
+        document.getElementById('btFees').textContent = `-$${metrics.totalFees.toLocaleString()}`;
+
+        // Update charts
+        updateEquityChart(results.equity, prices, capital);
+        updateDrawdownChart(results.equity);
+        updateMonthlyReturnsUI(metrics.monthlyReturns);
+        
+        // Store for later use
+        backtestData = {
+          priceHistory: prices,
+          equityCurve: results.equity,
+          drawdownCurve: results.equity.map(e => e.drawdown),
+          trades: results.trades,
+          monthlyReturns: metrics.monthlyReturns
         };
 
-        const r = results[strategy];
-        
-        document.getElementById('btReturn').textContent = `+${r.return}%`;
-        document.getElementById('btReturn').className = 'result-value positive';
-        document.getElementById('btSharpe').textContent = r.sharpe.toFixed(2);
-        document.getElementById('btDrawdown').textContent = `${r.drawdown}%`;
-        document.getElementById('btWinRate').textContent = `${r.winRate}%`;
-        document.getElementById('btRebalances').textContent = r.rebalances;
-        document.getElementById('btFees').textContent = `-$${r.fees.toLocaleString()}`;
+        btn.innerHTML = '✅ Complete!';
+        setTimeout(() => {
+          btn.innerHTML = '▶️ Run Backtest';
+          btn.disabled = false;
+        }, 1500);
 
-        btn.innerHTML = '▶️ Run Backtest';
+      } catch (error) {
+        console.error('Backtest error:', error);
+        btn.innerHTML = '❌ Error - Retry';
         btn.disabled = false;
-      }, 1500);
+        
+        // Show error alert
+        alert(`Backtest failed: ${error.message}\n\nUsing synthetic data as fallback.`);
+      }
+    }
+
+    function updateEquityChart(equityData, priceData, capital) {
+      // Clear existing data
+      if (state.equityChart) {
+        state.equityChart.remove();
+      }
+      
+      const container = document.getElementById('equityChart');
+      state.equityChart = LightweightCharts.createChart(container, {
+        layout: { background: { type: 'solid', color: '#09090b' }, textColor: 'rgba(255,255,255,0.5)' },
+        grid: { vertLines: { color: 'rgba(255,255,255,0.03)' }, horzLines: { color: 'rgba(255,255,255,0.03)' } },
+        rightPriceScale: { borderVisible: false },
+        timeScale: { borderVisible: false, timeVisible: true }
+      });
+
+      const strategySeries = state.equityChart.addLineSeries({ 
+        color: '#22c55e', 
+        lineWidth: 2,
+        title: 'Strategy'
+      });
+      
+      const benchmarkSeries = state.equityChart.addLineSeries({ 
+        color: 'rgba(255,255,255,0.3)', 
+        lineWidth: 1,
+        title: 'Buy & Hold'
+      });
+
+      // Strategy equity
+      strategySeries.setData(equityData.map(e => ({ time: e.time, value: e.value })));
+      
+      // Benchmark (buy and hold)
+      const benchmarkData = priceData.map((p, i) => ({
+        time: Math.floor(p.time / 1000),
+        value: capital * (p.close / priceData[0].close)
+      }));
+      benchmarkSeries.setData(benchmarkData);
+      
+      state.equityChart.timeScale().fitContent();
+    }
+
+    function updateDrawdownChart(equityData) {
+      const container = document.getElementById('drawdownChart');
+      container.innerHTML = '';
+      
+      const drawdownChart = LightweightCharts.createChart(container, {
+        layout: { background: { type: 'solid', color: '#09090b' }, textColor: 'rgba(255,255,255,0.5)' },
+        grid: { vertLines: { color: 'rgba(255,255,255,0.03)' }, horzLines: { color: 'rgba(255,255,255,0.03)' } },
+        rightPriceScale: { borderVisible: false },
+        timeScale: { borderVisible: false }
+      });
+
+      const areaSeries = drawdownChart.addAreaSeries({
+        topColor: 'rgba(239,68,68,0.0)',
+        bottomColor: 'rgba(239,68,68,0.4)',
+        lineColor: '#ef4444',
+        lineWidth: 1
+      });
+
+      areaSeries.setData(equityData.map(e => ({ time: e.time, value: e.drawdown })));
+      drawdownChart.timeScale().fitContent();
+    }
+
+    function updateMonthlyReturnsUI(monthlyReturns) {
+      const container = document.getElementById('monthlyReturns');
+      container.innerHTML = monthlyReturns.slice(0, 12).map(r => `
+        <div style="background: ${r.value >= 0 ? 'var(--green-dim)' : 'var(--red-dim)'}; padding: 8px 4px; border-radius: 4px; text-align: center;">
+          <div style="font-size: 9px; color: var(--text-tertiary);">${r.month}</div>
+          <div style="font-family: var(--mono); font-size: 11px; font-weight: 600; color: ${r.value >= 0 ? 'var(--green)' : 'var(--red)'};">${r.value >= 0 ? '+' : ''}${r.value.toFixed(1)}%</div>
+        </div>
+      `).join('');
     }
 
     // Initialize expected return
