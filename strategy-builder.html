@@ -562,15 +562,79 @@
   <main class="main-layout">
     <!-- Strategy Templates -->
     <div class="panel">
-      <div class="panel-title">Select Risk Appetite</div>
-      <div style="display:flex;gap:10px;margin-bottom:18px;">
-        <button class="risk-btn" data-risk="low" style="background:var(--safe-green-bg);color:var(--safe-green);">Low</button>
-        <button class="risk-btn" data-risk="medium" style="background:var(--balanced-blue-bg);color:var(--balanced-blue);">Medium</button>
-        <button class="risk-btn" data-risk="high" style="background:var(--aggressive-purple-bg);color:var(--aggressive-purple);">High</button>
-        <button class="risk-btn" data-risk="extreme" style="background:var(--degen-red-bg);color:var(--degen-red);">Very High</button>
+      <div class="panel-title">Strategy Templates</div>
+      
+      <div class="template-card safe selected">
+        <div class="template-header">
+          <span class="template-name">Safe Yield</span>
+          <span class="template-risk low">Low Risk</span>
+        </div>
+        <div class="template-desc">Capital preservation with blue-chip lending protocols</div>
+        <div class="template-stats">
+          <div class="template-stat">
+            <span class="label">APY:</span>
+            <span class="value">5-8%</span>
+          </div>
+          <div class="template-stat">
+            <span class="label">DD:</span>
+            <span class="value">~5%</span>
+          </div>
+        </div>
       </div>
-      <div id="template-list"></div>
-    </div>
+
+      <div class="template-card balanced">
+        <div class="template-header">
+          <span class="template-name">Balanced Realloc</span>
+          <span class="template-risk medium">Medium</span>
+        </div>
+        <div class="template-desc">Risk-adjusted yield optimization across protocols</div>
+        <div class="template-stats">
+          <div class="template-stat">
+            <span class="label">APY:</span>
+            <span class="value">12-18%</span>
+          </div>
+          <div class="template-stat">
+            <span class="label">DD:</span>
+            <span class="value">~15%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="template-card aggressive">
+        <div class="template-header">
+          <span class="template-name">Opportunistic Alpha</span>
+          <span class="template-risk high">High</span>
+        </div>
+        <div class="template-desc">Event-driven alpha capture with leverage</div>
+        <div class="template-stats">
+          <div class="template-stat">
+            <span class="label">APY:</span>
+            <span class="value">25-40%</span>
+          </div>
+          <div class="template-stat">
+            <span class="label">DD:</span>
+            <span class="value">~30%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="template-card degen">
+        <div class="template-header">
+          <span class="template-name">Tactical Degen</span>
+          <span class="template-risk extreme">Extreme</span>
+        </div>
+        <div class="template-desc">High-conviction, high-variance plays</div>
+        <div class="template-stats">
+          <div class="template-stat">
+            <span class="label">APY:</span>
+            <span class="value">50%+</span>
+          </div>
+          <div class="template-stat">
+            <span class="label">DD:</span>
+            <span class="value">~50%</span>
+          </div>
+        </div>
+      </div>
 
       <div class="template-card">
         <div class="template-header">
@@ -756,63 +820,14 @@
 
   <script>
     // Template selection
-    // Dynamic strategy builder logic
-    const templates = [
-      {
-        name: 'Safe Yield',
-        risk: 'low',
-        riskLabel: 'Low Risk',
-        desc: 'Capital preservation with blue-chip lending protocols',
-        apy: '5-8%',
-        dd: '~5%'
-      },
-      {
-        name: 'Balanced Realloc',
-        risk: 'medium',
-        riskLabel: 'Medium',
-        desc: 'Risk-adjusted yield optimization across protocols',
-        apy: '12-18%',
-        dd: '~15%'
-      },
-      {
-        name: 'Opportunistic Alpha',
-        risk: 'high',
-        riskLabel: 'High',
-        desc: 'Event-driven alpha capture with leverage',
-        apy: '25-40%',
-        dd: '~30%'
-      },
-      {
-        name: 'Tactical Degen',
-        risk: 'extreme',
-        riskLabel: 'Extreme',
-        desc: 'High-conviction, high-variance plays',
-        apy: '50%+',
-        dd: '~50%'
-      }
-    ];
-    const templateList = document.getElementById('template-list');
-    function renderTemplates(risk) {
-      templateList.innerHTML = templates.filter(t => !risk || t.risk === risk).map(t => `
-        <div class="template-card ${t.risk}">
-          <div class="template-header">
-            <span class="template-name">${t.name}</span>
-            <span class="template-risk ${t.risk}">${t.riskLabel}</span>
-          </div>
-          <div class="template-desc">${t.desc}</div>
-          <div class="template-stats">
-            <div class="template-stat"><span class="label">APY:</span><span class="value">${t.apy}</span></div>
-            <div class="template-stat"><span class="label">DD:</span><span class="value">${t.dd}</span></div>
-          </div>
-        </div>
-      `).join('');
-    }
-    renderTemplates();
-    document.querySelectorAll('.risk-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        document.querySelectorAll('.risk-btn').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        renderTemplates(btn.dataset.risk);
+    document.querySelectorAll('.template-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        
+        // Update canvas title based on selection
+        const name = card.querySelector('.template-name').textContent;
+        document.querySelector('.canvas-title').textContent = name + ' Strategy';
       });
     });
 
