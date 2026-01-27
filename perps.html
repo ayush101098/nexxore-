@@ -547,6 +547,85 @@
   </div>
 
   <script>
+    // Global chart variables
+    let chart = null;
+    let candleSeries = null;
+    let currentMarket = 'ETH';
+    
+    // Market configuration
+    const marketConfig = {
+      ETH: { name: 'Ethereum', basePrice: 4650, targetPrice: 4812, decimals: 2, icon: 'ETH', gradient: 'linear-gradient(135deg, #627eea, #8c9eff)' },
+      BTC: { name: 'Bitcoin', basePrice: 98000, targetPrice: 102500, decimals: 0, icon: 'BTC', gradient: 'linear-gradient(135deg, #f7931a, #ffb347)' },
+      SOL: { name: 'Solana', basePrice: 295, targetPrice: 312, decimals: 2, icon: 'SOL', gradient: 'linear-gradient(135deg, #9945ff, #14f195)' }
+    };
+    
+    // Generate chart data for a specific market
+    function generateChartData(market) {
+      const config = marketConfig[market];
+      const data = [];
+      const now = Math.floor(Date.now() / 1000);
+      let time = now - 150 * 3600;
+      let price = config.basePrice;
+      
+      for (let i = 0; i < 150; i++) {
+        const trend = (config.targetPrice - config.basePrice) / 150;
+        const volatility = (Math.random() - 0.48) * 0.025;
+        const change = price * volatility + trend;
+        const open = price, close = price + change;
+        const high = Math.max(open, close) * (1 + Math.random() * 0.006);
+        const low = Math.min(open, close) * (1 - Math.random() * 0.006);
+        const roundedTime = Math.floor(time);
+        
+        data.push({ 
+          time: roundedTime, 
+          open: parseFloat(open.toFixed(config.decimals)), 
+          high: parseFloat(high.toFixed(config.decimals)), 
+          low: parseFloat(low.toFixed(config.decimals)), 
+          close: parseFloat(close.toFixed(config.decimals)) 
+        });
+        
+        time += 3600;
+        price = close;
+      }
+      return data;
+    }
+    
+    // Update chart header UI
+    function updateChartHeaderUI(market) {
+      const config = marketConfig[market];
+      const iconEl = document.querySelector('.chart-asset-icon');
+      const nameEl = document.querySelector('.chart-asset-name');
+      
+      if (iconEl) {
+        iconEl.textContent = config.icon;
+        iconEl.style.background = config.gradient;
+      }
+      if (nameEl) nameEl.textContent = config.name;
+      
+      // Update submit button
+      const submitBtn = document.getElementById('submitOrder');
+      const isLong = document.querySelector('.direction-btn.long.active');
+      if (submitBtn) {
+        submitBtn.textContent = (isLong ? 'Long ' : 'Short ') + market;
+      }
+    }
+    
+    // Switch market and update chart
+    function switchMarket(market) {
+      if (!chart || !candleSeries) return;
+      currentMarket = market;
+      
+      // Update chart header
+      updateChartHeaderUI(market);
+      
+      // Generate and set new data
+      const data = generateChartData(market);
+      candleSeries.setData(data);
+      chart.timeScale().fitContent();
+      
+      console.log(`📊 Switched to ${market} chart`);
+    }
+
     // Initialize Chart
     function initChart() {
       const chartContainer = document.getElementById('tradingChart');
@@ -572,7 +651,7 @@
       
       console.log('Creating chart with dimensions:', width, 'x', height);
       
-      const chart = LightweightCharts.createChart(chartContainer, {
+      chart = LightweightCharts.createChart(chartContainer, {
         width: width,
         height: height,
         layout: { background: { type: 'solid', color: '#111114' }, textColor: 'rgba(255,255,255,0.6)' },
@@ -582,49 +661,16 @@
         timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true, secondsVisible: false },
       });
 
-      const candleSeries = chart.addCandlestickSeries({
+      candleSeries = chart.addCandlestickSeries({
         upColor: '#22c55e', downColor: '#ef4444',
         borderUpColor: '#22c55e', borderDownColor: '#ef4444',
         wickUpColor: '#22c55e', wickDownColor: '#ef4444',
       });
 
-      // Generate data with proper timestamps - ETH price ~$4,800 for Jan 2026
-      const data = [];
-      const now = Math.floor(Date.now() / 1000);
-      let time = now - 150 * 3600;
-      let price = 4650; // Starting price that trends up to current
-      
-      for (let i = 0; i < 150; i++) {
-        // Add slight upward bias to reach current price
-        const trend = (4812 - 4650) / 150;
-        const volatility = (Math.random() - 0.48) * 0.025; // Slight upward bias
-        const change = price * volatility + trend;
-        const open = price, close = price + change;
-        const high = Math.max(open, close) * (1 + Math.random() * 0.006);
-        const low = Math.min(open, close) * (1 - Math.random() * 0.006);
-        const roundedTime = Math.floor(time);
-        
-        data.push({ 
-          time: roundedTime, 
-          open: parseFloat(open.toFixed(2)), 
-          high: parseFloat(high.toFixed(2)), 
-          low: parseFloat(low.toFixed(2)), 
-          close: parseFloat(close.toFixed(2)) 
-        });
-        
-        time += 3600;
-        price = close;
-      }
-      
+      // Generate initial ETH data
+      const data = generateChartData('ETH');
       candleSeries.setData(data);
       chart.timeScale().fitContent();
-      
-      // Update live price display
-      if (data.length > 0) {
-        const lastPrice = data[data.length - 1].close;
-        const priceEl = document.getElementById('livePrice');
-        if (priceEl) priceEl.textContent = '$' + lastPrice.toFixed(2);
-      }
 
       // Resize handler
       const resizeChart = () => {
@@ -669,18 +715,20 @@
         this.classList.add('active');
         const submitBtn = document.getElementById('submitOrder');
         if (this.classList.contains('long')) {
-          submitBtn.className = 'submit-btn long'; submitBtn.textContent = 'Long ETH';
+          submitBtn.className = 'submit-btn long'; submitBtn.textContent = 'Long ' + currentMarket;
         } else {
-          submitBtn.className = 'submit-btn short'; submitBtn.textContent = 'Short ETH';
+          submitBtn.className = 'submit-btn short'; submitBtn.textContent = 'Short ' + currentMarket;
         }
       });
     });
 
-    // Tab handlers
+    // Tab handlers - Market switching
     document.querySelectorAll('.market-tab').forEach(tab => {
       tab.addEventListener('click', function() {
         document.querySelectorAll('.market-tab').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
+        const market = this.dataset.market;
+        if (market) switchMarket(market);
       });
     });
     document.querySelectorAll('.tf-btn').forEach(btn => {
@@ -742,8 +790,8 @@
     
     // Update main chart header for active market
     function updateChartHeader(symbol, data) {
-      const activeTab = document.querySelector('.market-tab.active');
-      if (!activeTab || activeTab.dataset.market !== symbol) return;
+      // Only update if this is the currently selected market
+      if (symbol !== currentMarket) return;
       if (!data.price || data.price <= 0) return;
       
       const livePrice = document.getElementById('livePrice');
