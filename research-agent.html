@@ -557,32 +557,32 @@
 
   <!-- Main Content -->
   <main class="main-content">
-    <!-- Stats Bar -->
+    <!-- Stats Bar - Live Data -->
     <div class="stats-bar">
       <div class="stat-card">
-        <div class="stat-label">Active Signals</div>
-        <div class="stat-value">12</div>
-        <div class="stat-change">+3 today</div>
+        <div class="stat-label">BTC Price</div>
+        <div class="stat-value" id="btcPrice">$--</div>
+        <div class="stat-change" id="btcChange">--</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Win Rate</div>
-        <div class="stat-value">73%</div>
-        <div class="stat-change">+2.1% MTD</div>
+        <div class="stat-label">ETH Price</div>
+        <div class="stat-value" id="ethPrice">$--</div>
+        <div class="stat-change" id="ethChange">--</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Total TVL</div>
-        <div class="stat-value">$182B</div>
-        <div class="stat-change">+4.2% 24h</div>
+        <div class="stat-label">DeFi TVL</div>
+        <div class="stat-value" id="defiTvl">$--</div>
+        <div class="stat-change" id="tvlChange">--</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Hot Narratives</div>
-        <div class="stat-value">7</div>
-        <div class="stat-change">+2 this week</div>
+        <div class="stat-label">Fear & Greed</div>
+        <div class="stat-value" id="fearGreed">--</div>
+        <div class="stat-change" id="fgLabel">--</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Airdrops</div>
-        <div class="stat-value">23</div>
-        <div class="stat-change">Est. $45M</div>
+        <div class="stat-label">Gas (Gwei)</div>
+        <div class="stat-value" id="gasPrice">--</div>
+        <div class="stat-change" id="gasLabel">--</div>
       </div>
     </div>
 
@@ -591,94 +591,44 @@
       <div class="grid-2">
         <div class="panel">
           <div class="panel-header">
-            <div class="panel-title">Alpha Signals</div>
-            <span class="panel-badge">Live</span>
+            <div class="panel-title">🔥 Live Crypto News</div>
+            <span class="panel-badge">Real-time</span>
           </div>
-          <div class="scrollable">
-            <div class="signal-item">
-              <div class="signal-header">
-                <span class="signal-name">Aave v3 Expansion</span>
-                <span class="signal-score">92</span>
-              </div>
-              <div class="signal-meta">
-                <span>Ethereum</span>
-                <span>TVL: $8.2B</span>
-                <span>2h ago</span>
-              </div>
-            </div>
-            <div class="signal-item">
-              <div class="signal-header">
-                <span class="signal-name">Hyperliquid Perps</span>
-                <span class="signal-score">89</span>
-              </div>
-              <div class="signal-meta">
-                <span>L2</span>
-                <span>Vol: $1.2B/24h</span>
-                <span>4h ago</span>
-              </div>
-            </div>
-            <div class="signal-item">
-              <div class="signal-header">
-                <span class="signal-name">Kamino Finance</span>
-                <span class="signal-score">76</span>
-              </div>
-              <div class="signal-meta">
-                <span>Solana</span>
-                <span>TVL: $450M</span>
-                <span>6h ago</span>
-              </div>
-            </div>
-            <div class="signal-item">
-              <div class="signal-header">
-                <span class="signal-name">Pendle Finance</span>
-                <span class="signal-score">74</span>
-              </div>
-              <div class="signal-meta">
-                <span>Multi-chain</span>
-                <span>TVL: $2.1B</span>
-                <span>8h ago</span>
-              </div>
-            </div>
-            <div class="signal-item">
-              <div class="signal-header">
-                <span class="signal-name">Morpho Blue</span>
-                <span class="signal-score">71</span>
-              </div>
-              <div class="signal-meta">
-                <span>Ethereum</span>
-                <span>TVL: $1.8B</span>
-                <span>12h ago</span>
-              </div>
-            </div>
+          <div class="scrollable" id="newsContainer">
+            <div style="padding: 20px; text-align: center; color: var(--text-muted);">Loading news...</div>
           </div>
         </div>
 
         <div class="panel">
           <div class="panel-header">
-            <div class="panel-title">Performance</div>
-            <span class="panel-badge">30D</span>
+            <div class="panel-title">📊 Top Movers (24h)</div>
+            <span class="panel-badge">Live</span>
           </div>
-          <div class="chart-container">
-            <canvas id="performanceChart"></canvas>
+          <div class="scrollable" id="moversContainer">
+            <div style="padding: 20px; text-align: center; color: var(--text-muted);">Loading market data...</div>
           </div>
-          <table class="data-table" style="margin-top: 16px;">
-            <tr>
-              <td>Total Signals</td>
-              <td style="text-align: right;"><span class="tvl-value">847</span></td>
-            </tr>
-            <tr>
-              <td>Successful</td>
-              <td style="text-align: right;"><span class="change-value">619</span></td>
-            </tr>
-            <tr>
-              <td>Avg Return</td>
-              <td style="text-align: right;"><span class="change-value">+18.4%</span></td>
-            </tr>
-            <tr>
-              <td>Best Signal</td>
-              <td style="text-align: right;"><span class="change-value">+142%</span></td>
-            </tr>
-          </table>
+        </div>
+      </div>
+      
+      <div class="grid-2" style="margin-top: 16px;">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🏦 DeFi TVL Rankings</div>
+            <span class="panel-badge">DefiLlama</span>
+          </div>
+          <div class="scrollable" id="tvlContainer">
+            <div style="padding: 20px; text-align: center; color: var(--text-muted);">Loading TVL data...</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">⚡ Chain Activity</div>
+            <span class="panel-badge">Live</span>
+          </div>
+          <div class="scrollable" id="chainsContainer">
+            <div style="padding: 20px; text-align: center; color: var(--text-muted);">Loading chain data...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -688,8 +638,8 @@
       <div class="grid-2">
         <div class="panel">
           <div class="panel-header">
-            <div class="panel-title">Hot Narratives</div>
-            <span class="panel-badge">7 Active</span>
+            <div class="panel-title">🎯 Hot Narratives</div>
+            <span class="panel-badge" id="narrativeCount">-- Active</span>
           </div>
           <div class="scrollable">
             <div class="narrative-card">
@@ -740,12 +690,24 @@
                 <span class="narrative-stat">$15.2B TVL</span>
               </div>
             </div>
+            <div class="narrative-card">
+              <div class="narrative-header">
+                <span class="narrative-name">Solana DeFi</span>
+                <span class="momentum-badge">Rising</span>
+              </div>
+              <div class="narrative-desc">Jupiter, Raydium, Kamino leading Solana summer</div>
+              <div class="narrative-stats">
+                <span class="narrative-stat">+42% 7D</span>
+                <span class="narrative-stat">25 protocols</span>
+                <span class="narrative-stat">$6.8B TVL</span>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="panel">
           <div class="panel-header">
-            <div class="panel-title">Protocol Analysis</div>
+            <div class="panel-title">📰 Market Analysis</div>
             <span class="panel-badge">Latest</span>
           </div>
           <div class="scrollable">
@@ -1037,10 +999,8 @@
   </main>
 
   <script>
-    // Messari API Configuration
-    const MESSARI_API_KEY = 'XFt9ZK6NwVSRovOVTtkNmxydSRdqLlIqnQQsjlpArr+dK-uL';
-    const MESSARI_BASE_URL = 'https://data.messari.io/api';
-
+    // ===== LIVE DATA APIs =====
+    
     // Format functions
     function formatPrice(price) {
       if (!price) return '$0.00';
@@ -1049,12 +1009,12 @@
       return '$' + price.toLocaleString('en-US', { maximumFractionDigits: 4 });
     }
 
-    function formatMarketCap(mcap) {
-      if (!mcap) return '$0';
-      if (mcap >= 1e12) return '$' + (mcap / 1e12).toFixed(2) + 'T';
-      if (mcap >= 1e9) return '$' + (mcap / 1e9).toFixed(1) + 'B';
-      if (mcap >= 1e6) return '$' + (mcap / 1e6).toFixed(1) + 'M';
-      return '$' + mcap.toLocaleString();
+    function formatTVL(tvl) {
+      if (!tvl) return '$0';
+      if (tvl >= 1e12) return '$' + (tvl / 1e12).toFixed(2) + 'T';
+      if (tvl >= 1e9) return '$' + (tvl / 1e9).toFixed(1) + 'B';
+      if (tvl >= 1e6) return '$' + (tvl / 1e6).toFixed(1) + 'M';
+      return '$' + tvl.toLocaleString();
     }
 
     function formatPercent(pct) {
@@ -1062,71 +1022,251 @@
       const sign = pct >= 0 ? '+' : '';
       return sign + pct.toFixed(2) + '%';
     }
+    
+    function timeAgo(timestamp) {
+      const seconds = Math.floor((Date.now() / 1000) - timestamp);
+      if (seconds < 60) return 'Just now';
+      if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+      if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+      return Math.floor(seconds / 86400) + 'd ago';
+    }
 
-    // Fetch from Messari API
-    async function fetchMessari(endpoint) {
+    // ===== FETCH BINANCE PRICES =====
+    async function fetchPrices() {
       try {
-        const response = await fetch(`${MESSARI_BASE_URL}${endpoint}`, {
-          headers: {
-            'x-messari-api-key': MESSARI_API_KEY
-          }
-        });
-        if (!response.ok) throw new Error('API Error');
-        return await response.json();
-      } catch (error) {
-        console.error('Messari API Error:', error);
-        return null;
+        const [btcRes, ethRes] = await Promise.all([
+          fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT'),
+          fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT')
+        ]);
+        
+        const btcData = await btcRes.json();
+        const ethData = await ethRes.json();
+        
+        // BTC
+        document.getElementById('btcPrice').textContent = formatPrice(parseFloat(btcData.lastPrice));
+        const btcChange = parseFloat(btcData.priceChangePercent);
+        const btcChangeEl = document.getElementById('btcChange');
+        btcChangeEl.textContent = formatPercent(btcChange);
+        btcChangeEl.style.color = btcChange >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+        
+        // ETH
+        document.getElementById('ethPrice').textContent = formatPrice(parseFloat(ethData.lastPrice));
+        const ethChange = parseFloat(ethData.priceChangePercent);
+        const ethChangeEl = document.getElementById('ethChange');
+        ethChangeEl.textContent = formatPercent(ethChange);
+        ethChangeEl.style.color = ethChange >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+        
+        console.log('✅ Prices loaded');
+      } catch (err) {
+        console.error('Price fetch error:', err);
       }
     }
 
-    // Fetch and display top assets
-    async function fetchTopAssets() {
-      const data = await fetchMessari('/v2/assets?limit=15&fields=id,slug,symbol,name,metrics/market_data/price_usd,metrics/market_data/percent_change_usd_last_24_hours,metrics/marketcap/current_marketcap_usd');
-      
-      if (data && data.data) {
-        // Update stats bar
-        const btc = data.data.find(a => a.symbol === 'BTC');
-        const eth = data.data.find(a => a.symbol === 'ETH');
+    // ===== FETCH DEFILLAMA TVL =====
+    async function fetchDefiTVL() {
+      try {
+        const res = await fetch('https://api.llama.fi/protocols');
+        const protocols = await res.json();
         
-        if (btc) {
-          const btcPriceEl = document.querySelector('.stat-card:nth-child(1) .stat-value');
-          const btcChangeEl = document.querySelector('.stat-card:nth-child(1) .stat-change');
-          if (btcPriceEl) btcPriceEl.textContent = formatPrice(btc.metrics.market_data.price_usd);
-          if (btcChangeEl) {
-            const change = btc.metrics.market_data.percent_change_usd_last_24_hours;
-            btcChangeEl.textContent = formatPercent(change);
-            btcChangeEl.style.color = change >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
-          }
-        }
+        // Calculate total TVL
+        const totalTVL = protocols.reduce((sum, p) => sum + (p.tvl || 0), 0);
+        document.getElementById('defiTvl').textContent = formatTVL(totalTVL);
         
-        if (eth) {
-          const ethPriceEl = document.querySelector('.stat-card:nth-child(2) .stat-value');
-          const ethChangeEl = document.querySelector('.stat-card:nth-child(2) .stat-change');
-          if (ethPriceEl) ethPriceEl.textContent = formatPrice(eth.metrics.market_data.price_usd);
-          if (ethChangeEl) {
-            const change = eth.metrics.market_data.percent_change_usd_last_24_hours;
-            ethChangeEl.textContent = formatPercent(change);
-            ethChangeEl.style.color = change >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
-          }
-        }
-
-        // Calculate total market cap from top assets (estimate)
-        const totalMcap = data.data.reduce((sum, asset) => {
-          return sum + (asset.metrics?.marketcap?.current_marketcap_usd || 0);
-        }, 0) * 1.5; // Multiply to estimate total market
-
-        const mcapEl = document.querySelector('.stat-card:nth-child(3) .stat-value');
-        if (mcapEl) mcapEl.textContent = formatMarketCap(totalMcap);
-
-        // BTC Dominance
-        if (btc && totalMcap > 0) {
-          const btcDom = (btc.metrics.marketcap.current_marketcap_usd / totalMcap * 100).toFixed(1);
-          const domEl = document.querySelector('.stat-card:nth-child(4) .stat-value');
-          if (domEl) domEl.textContent = btcDom + '%';
-        }
-
-        console.log('Messari data loaded:', data.data.length, 'assets');
+        // Get top 10 protocols by TVL
+        const top10 = protocols.sort((a, b) => (b.tvl || 0) - (a.tvl || 0)).slice(0, 10);
+        
+        const tvlContainer = document.getElementById('tvlContainer');
+        tvlContainer.innerHTML = top10.map((p, i) => `
+          <div class="signal-item">
+            <div class="signal-header">
+              <span class="signal-name">${i + 1}. ${p.name}</span>
+              <span class="signal-score" style="background: var(--accent-blue); color: white;">${formatTVL(p.tvl)}</span>
+            </div>
+            <div class="signal-meta">
+              <span>${p.category || 'DeFi'}</span>
+              <span>${p.chains?.length || 1} chain${p.chains?.length > 1 ? 's' : ''}</span>
+              <span style="color: ${(p.change_1d || 0) >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
+                ${formatPercent(p.change_1d || 0)} 24h
+              </span>
+            </div>
+          </div>
+        `).join('');
+        
+        // TVL change (estimate from top protocols)
+        const avgChange = top10.reduce((sum, p) => sum + (p.change_1d || 0), 0) / 10;
+        const tvlChangeEl = document.getElementById('tvlChange');
+        tvlChangeEl.textContent = formatPercent(avgChange) + ' 24h';
+        tvlChangeEl.style.color = avgChange >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+        
+        console.log('✅ TVL data loaded');
+      } catch (err) {
+        console.error('TVL fetch error:', err);
+        document.getElementById('tvlContainer').innerHTML = '<div style="padding: 20px; text-align: center; color: var(--accent-red);">Failed to load TVL data</div>';
       }
+    }
+    
+    // ===== FETCH CHAIN TVL =====
+    async function fetchChainTVL() {
+      try {
+        const res = await fetch('https://api.llama.fi/chains');
+        const chains = await res.json();
+        
+        const top8 = chains.sort((a, b) => (b.tvl || 0) - (a.tvl || 0)).slice(0, 8);
+        
+        const chainsContainer = document.getElementById('chainsContainer');
+        chainsContainer.innerHTML = top8.map(chain => `
+          <div class="signal-item">
+            <div class="signal-header">
+              <span class="signal-name">${chain.name}</span>
+              <span class="signal-score" style="background: var(--accent-purple); color: white;">${formatTVL(chain.tvl)}</span>
+            </div>
+            <div class="signal-meta">
+              <span>${chain.gecko_id || chain.name.toLowerCase()}</span>
+              <span>TVL Rank #${chains.indexOf(chain) + 1}</span>
+            </div>
+          </div>
+        `).join('');
+        
+        console.log('✅ Chain data loaded');
+      } catch (err) {
+        console.error('Chain fetch error:', err);
+      }
+    }
+
+    // ===== FETCH CRYPTO NEWS =====
+    async function fetchNews() {
+      try {
+        // Using CryptoCompare News API (free, no key required for basic)
+        const res = await fetch('https://min-api.cryptocompare.com/data/v2/news/?lang=EN&sortOrder=popular');
+        const data = await res.json();
+        
+        const newsContainer = document.getElementById('newsContainer');
+        
+        if (data.Data && data.Data.length > 0) {
+          newsContainer.innerHTML = data.Data.slice(0, 8).map(article => `
+            <div class="signal-item">
+              <div class="signal-header">
+                <a href="${article.url}" target="_blank" class="signal-name" style="text-decoration: none; color: var(--text-primary);">
+                  ${article.title.slice(0, 80)}${article.title.length > 80 ? '...' : ''}
+                </a>
+              </div>
+              <div class="signal-meta">
+                <span>${article.source}</span>
+                <span>${timeAgo(article.published_on)}</span>
+                <span>${article.categories?.split('|')[0] || 'Crypto'}</span>
+              </div>
+            </div>
+          `).join('');
+        }
+        
+        console.log('✅ News loaded');
+      } catch (err) {
+        console.error('News fetch error:', err);
+        document.getElementById('newsContainer').innerHTML = '<div style="padding: 20px; text-align: center; color: var(--accent-red);">Failed to load news</div>';
+      }
+    }
+
+    // ===== FETCH TOP MOVERS =====
+    async function fetchTopMovers() {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=20&sparkline=false&price_change_percentage=24h');
+        const coins = await res.json();
+        
+        // Sort by absolute price change
+        const movers = coins.sort((a, b) => 
+          Math.abs(b.price_change_percentage_24h || 0) - Math.abs(a.price_change_percentage_24h || 0)
+        ).slice(0, 8);
+        
+        const moversContainer = document.getElementById('moversContainer');
+        moversContainer.innerHTML = movers.map(coin => {
+          const change = coin.price_change_percentage_24h || 0;
+          const isUp = change >= 0;
+          return `
+            <div class="signal-item">
+              <div class="signal-header">
+                <span class="signal-name">${coin.symbol.toUpperCase()} — ${coin.name}</span>
+                <span class="signal-score" style="background: ${isUp ? 'var(--accent-green)' : 'var(--accent-red)'}; color: white;">
+                  ${formatPercent(change)}
+                </span>
+              </div>
+              <div class="signal-meta">
+                <span>${formatPrice(coin.current_price)}</span>
+                <span>Vol: ${formatTVL(coin.total_volume)}</span>
+                <span>MCap: ${formatTVL(coin.market_cap)}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+        
+        console.log('✅ Movers loaded');
+      } catch (err) {
+        console.error('Movers fetch error:', err);
+        document.getElementById('moversContainer').innerHTML = '<div style="padding: 20px; text-align: center; color: var(--accent-red);">Failed to load movers</div>';
+      }
+    }
+
+    // ===== FETCH FEAR & GREED INDEX =====
+    async function fetchFearGreed() {
+      try {
+        const res = await fetch('https://api.alternative.me/fng/?limit=1');
+        const data = await res.json();
+        
+        if (data.data && data.data[0]) {
+          const fg = data.data[0];
+          document.getElementById('fearGreed').textContent = fg.value;
+          document.getElementById('fgLabel').textContent = fg.value_classification;
+          
+          // Color based on value
+          const val = parseInt(fg.value);
+          const color = val <= 25 ? 'var(--accent-red)' : 
+                        val <= 45 ? '#f59e0b' : 
+                        val <= 55 ? 'var(--text-secondary)' : 
+                        val <= 75 ? '#22c55e' : 'var(--accent-green)';
+          document.getElementById('fgLabel').style.color = color;
+        }
+        
+        console.log('✅ Fear & Greed loaded');
+      } catch (err) {
+        console.error('F&G fetch error:', err);
+      }
+    }
+
+    // ===== FETCH ETH GAS =====
+    async function fetchGas() {
+      try {
+        // Using Etherscan API (public endpoint)
+        const res = await fetch('https://api.etherscan.io/api?module=gastracker&action=gasoracle');
+        const data = await res.json();
+        
+        if (data.result) {
+          const gas = data.result;
+          document.getElementById('gasPrice').textContent = gas.ProposeGasPrice || '--';
+          document.getElementById('gasLabel').textContent = gas.ProposeGasPrice < 20 ? 'Low' : gas.ProposeGasPrice < 50 ? 'Normal' : 'High';
+        }
+      } catch (err) {
+        // Fallback to static estimate
+        document.getElementById('gasPrice').textContent = '~15';
+        document.getElementById('gasLabel').textContent = 'Est.';
+      }
+    }
+
+    // ===== REFRESH ALL DATA =====
+    async function refreshData() {
+      const btn = document.querySelector('.refresh-btn');
+      btn.textContent = 'Loading...';
+      
+      await Promise.all([
+        fetchPrices(),
+        fetchDefiTVL(),
+        fetchChainTVL(),
+        fetchNews(),
+        fetchTopMovers(),
+        fetchFearGreed(),
+        fetchGas()
+      ]);
+      
+      btn.textContent = 'Refresh';
+      console.log('✅ All data refreshed');
     }
 
     // Tab Navigation
@@ -1209,24 +1349,12 @@
       });
     }
 
-    // Refresh data function
-    function refreshData() {
-      const btn = document.querySelector('.refresh-btn');
-      btn.textContent = 'Loading...';
-      
-      fetchTopAssets().then(() => {
-        btn.textContent = 'Refresh';
-      }).catch(() => {
-        btn.textContent = 'Refresh';
-      });
-    }
-
-    // Initialize on page load
+    // Initialize all data on page load
     document.addEventListener('DOMContentLoaded', () => {
-      fetchTopAssets();
+      refreshData();
       
       // Auto-refresh every 60 seconds
-      setInterval(fetchTopAssets, 60000);
+      setInterval(refreshData, 60000);
     });
   </script>
 </body>

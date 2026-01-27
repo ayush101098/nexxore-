@@ -546,6 +546,79 @@
     .panel::-webkit-scrollbar { width: 4px; }
     .panel::-webkit-scrollbar-track { background: transparent; }
     .panel::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+    /* nUSD Minting Info */
+    .minting-info-box {
+      margin-top: 20px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(34, 197, 94, 0.05));
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 4px;
+    }
+    
+    .minting-param {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .minting-param:last-of-type {
+      border-bottom: none;
+    }
+    
+    .minting-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    .minting-value {
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--balanced-blue);
+    }
+    
+    .minting-explanation {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* What is nUSD Tooltip/Section */
+    .nusd-explainer {
+      margin-top: 24px;
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+    }
+    
+    .nusd-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    
+    .nusd-badge {
+      font-size: 0.6rem;
+      padding: 2px 8px;
+      background: var(--balanced-blue-bg);
+      color: var(--balanced-blue);
+      font-weight: 500;
+    }
+    
+    .nusd-text {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
@@ -664,11 +737,11 @@
             <span class="step-number">Step 1</span>
             <span class="step-type">Entry</span>
           </div>
-          <div class="step-title">Deposit & Mint</div>
+          <div class="step-title">Deposit & Mint nUSD</div>
           <div class="step-config">
             <div class="config-item">
               <div class="config-label">Collateral</div>
-              <select class="config-select">
+              <select class="config-select" id="collateralSelect">
                 <option>ETH</option>
                 <option>WBTC</option>
                 <option>USDC</option>
@@ -678,6 +751,25 @@
             <div class="config-item">
               <div class="config-label">Output</div>
               <div class="config-value">nUSD</div>
+            </div>
+          </div>
+          
+          <!-- nUSD Minting Info Box -->
+          <div class="minting-info-box" id="mintingInfo">
+            <div class="minting-param">
+              <span class="minting-label">Collateral Ratio</span>
+              <span class="minting-value">150%</span>
+            </div>
+            <div class="minting-param">
+              <span class="minting-label">Liquidation Threshold</span>
+              <span class="minting-value">130%</span>
+            </div>
+            <div class="minting-param">
+              <span class="minting-label">Stability Fee</span>
+              <span class="minting-value">0.5%</span>
+            </div>
+            <div class="minting-explanation">
+              Mint nUSD by depositing blue-chip stablecoins. Lower risk of liquidation due to stable collateral. Your collateral earns yield in top-tier protocols while backing nUSD.
             </div>
           </div>
         </div>
@@ -815,19 +907,293 @@
         <button class="deploy-btn">Deploy Strategy</button>
         <p class="deploy-note">All strategies execute on-chain with deterministic logic</p>
       </div>
+
+      <!-- nUSD Explainer -->
+      <div class="nusd-explainer">
+        <div class="nusd-title">
+          What is nUSD?
+          <span class="nusd-badge">Nexxore Native</span>
+        </div>
+        <div class="nusd-text">
+          <strong>nUSD</strong> is Nexxore's native stablecoin, minted by depositing collateral (ETH, WBTC, stablecoins). Unlike traditional stables, your collateral remains productive—earning yield across DeFi protocols while backing your nUSD.<br><br>
+          <strong>Key Benefits:</strong><br>
+          • <strong>Capital Efficiency</strong> — Your collateral generates yield instead of sitting idle<br>
+          • <strong>On-Chain Transparency</strong> — All positions tracked in real-time on-chain<br>
+          • <strong>Risk-Adjusted</strong> — Collateral ratios vary by strategy risk profile<br>
+          • <strong>Auto-Liquidation Protection</strong> — Smart rebalancing prevents liquidations<br><br>
+          Mint nUSD → Deploy in strategy → Earn yield → Redeem anytime
+        </div>
+      </div>
     </div>
   </main>
 
   <script>
+    // Strategy Presets - parameters change based on risk profile
+    const strategyPresets = {
+      'Safe Yield': {
+        color: 'safe-green',
+        leverage: { min: 1, max: 1.5, default: 1 },
+        stopLoss: { min: 2, max: 8, default: 5 },
+        takeProfit: { min: 5, max: 20, default: 15 },
+        protocols: [
+          { name: 'Aave v3', pct: 40 },
+          { name: 'Compound', pct: 30 },
+          { name: 'MakerDAO', pct: 20 },
+          { name: 'Reserve', pct: 10 }
+        ],
+        rebalance: 'Weekly',
+        slippage: 0.5,
+        apy: { min: 5, max: 8 },
+        maxDD: 5,
+        sharpe: 1.84,
+        riskPosition: 15,
+        description: 'Configure your capital preservation strategy',
+        collateralOptions: ['USDC', 'USDT', 'DAI'],
+        minting: {
+          collateralRatio: '150%',
+          liquidationThreshold: '130%',
+          stabilityFee: '0.5%',
+          explanation: 'Mint nUSD by depositing blue-chip stablecoins. Lower risk of liquidation due to stable collateral. Your collateral earns yield in top-tier protocols while backing nUSD.'
+        }
+      },
+      'Balanced Realloc': {
+        color: 'balanced-blue',
+        leverage: { min: 1, max: 2.5, default: 1.5 },
+        stopLoss: { min: 5, max: 15, default: 10 },
+        takeProfit: { min: 15, max: 35, default: 25 },
+        protocols: [
+          { name: 'Aave v3', pct: 30 },
+          { name: 'Yearn', pct: 25 },
+          { name: 'Convex', pct: 25 },
+          { name: 'Reserve', pct: 20 }
+        ],
+        rebalance: 'Daily',
+        slippage: 1.0,
+        apy: { min: 12, max: 18 },
+        maxDD: 15,
+        sharpe: 1.42,
+        riskPosition: 40,
+        description: 'Risk-adjusted yield optimization across protocols',
+        collateralOptions: ['ETH', 'WBTC', 'USDC', 'DAI'],
+        minting: {
+          collateralRatio: '175%',
+          liquidationThreshold: '150%',
+          stabilityFee: '1.0%',
+          explanation: 'Mint nUSD using ETH or BTC as collateral. Your assets are deployed across yield-generating protocols. Auto-rebalancing maintains optimal position while generating sustainable yields.'
+        }
+      },
+      'Opportunistic Alpha': {
+        color: 'aggressive-purple',
+        leverage: { min: 1.5, max: 4, default: 2.5 },
+        stopLoss: { min: 10, max: 25, default: 15 },
+        takeProfit: { min: 30, max: 60, default: 40 },
+        protocols: [
+          { name: 'GMX', pct: 30 },
+          { name: 'Pendle', pct: 25 },
+          { name: 'Eigen Layer', pct: 25 },
+          { name: 'Reserve', pct: 20 }
+        ],
+        rebalance: 'On Drift > 5%',
+        slippage: 2.0,
+        apy: { min: 25, max: 40 },
+        maxDD: 30,
+        sharpe: 1.12,
+        riskPosition: 65,
+        description: 'Event-driven alpha capture with leverage',
+        collateralOptions: ['ETH', 'WBTC', 'stETH', 'rETH'],
+        minting: {
+          collateralRatio: '200%',
+          liquidationThreshold: '175%',
+          stabilityFee: '2.0%',
+          explanation: 'Leverage your yield-bearing assets (stETH, rETH) to mint nUSD. The strategy deploys capital into high-alpha opportunities while maintaining hedged positions.'
+        }
+      },
+      'Tactical Degen': {
+        color: 'degen-red',
+        leverage: { min: 2, max: 5, default: 3.5 },
+        stopLoss: { min: 15, max: 40, default: 25 },
+        takeProfit: { min: 50, max: 100, default: 75 },
+        protocols: [
+          { name: 'New LP Farms', pct: 35 },
+          { name: 'Perp DEXs', pct: 30 },
+          { name: 'Options Vaults', pct: 25 },
+          { name: 'Reserve', pct: 10 }
+        ],
+        rebalance: 'On Drift > 3%',
+        slippage: 3.0,
+        apy: { min: 50, max: 150 },
+        maxDD: 50,
+        sharpe: 0.85,
+        riskPosition: 90,
+        description: 'High-conviction, high-variance plays',
+        collateralOptions: ['ETH', 'WBTC', 'SOL', 'ARB'],
+        minting: {
+          collateralRatio: '250%',
+          liquidationThreshold: '200%',
+          stabilityFee: '3.5%',
+          explanation: 'Maximum capital efficiency with higher liquidation risk. nUSD is deployed into emerging opportunities, new protocol launches, and leveraged positions. Active monitoring required.'
+        }
+      },
+      'Custom Strategy': {
+        color: 'text-muted',
+        leverage: { min: 1, max: 5, default: 1 },
+        stopLoss: { min: 2, max: 50, default: 10 },
+        takeProfit: { min: 5, max: 100, default: 30 },
+        protocols: [
+          { name: 'Custom', pct: 100 }
+        ],
+        rebalance: 'Manual',
+        slippage: 1.0,
+        apy: { min: 0, max: 200 },
+        maxDD: '?',
+        sharpe: '?',
+        riskPosition: 50,
+        description: 'Build from scratch with full control',
+        collateralOptions: ['ETH', 'WBTC', 'USDC', 'USDT', 'DAI', 'stETH', 'rETH'],
+        minting: {
+          collateralRatio: 'Custom',
+          liquidationThreshold: 'Custom',
+          stabilityFee: 'Custom',
+          explanation: 'Full control over collateral ratios, liquidation thresholds, and protocol allocations. Define your own risk parameters and deployment strategy.'
+        }
+      }
+    };
+
+    let currentStrategy = 'Safe Yield';
+
+    // Apply strategy preset
+    function applyPreset(strategyName) {
+      const preset = strategyPresets[strategyName];
+      if (!preset) return;
+      
+      currentStrategy = strategyName;
+      
+      // Update canvas title & subtitle
+      document.querySelector('.canvas-title').textContent = strategyName + ' Strategy';
+      document.querySelector('.canvas-subtitle').textContent = preset.description;
+      
+      // Update leverage slider
+      const leverageSlider = document.querySelectorAll('.slider')[0];
+      leverageSlider.min = preset.leverage.min;
+      leverageSlider.max = preset.leverage.max;
+      leverageSlider.value = preset.leverage.default;
+      leverageSlider.nextElementSibling || updateSliderDisplay(leverageSlider, 'Leverage');
+      
+      // Update stop loss slider
+      const stopSlider = document.querySelectorAll('.slider')[1];
+      stopSlider.min = preset.stopLoss.min;
+      stopSlider.max = preset.stopLoss.max;
+      stopSlider.value = preset.stopLoss.default;
+      
+      // Update take profit slider  
+      const profitSlider = document.querySelectorAll('.slider')[2];
+      profitSlider.min = preset.takeProfit.min;
+      profitSlider.max = preset.takeProfit.max;
+      profitSlider.value = preset.takeProfit.default;
+      
+      // Update all slider displays
+      document.querySelectorAll('.slider-group').forEach(group => {
+        const slider = group.querySelector('.slider');
+        const valueDisplay = group.querySelector('.slider-value');
+        const label = group.querySelector('.slider-label').textContent;
+        
+        if (label.includes('Leverage')) {
+          valueDisplay.textContent = slider.value + 'x';
+        } else if (label.includes('Stop')) {
+          valueDisplay.textContent = '-' + slider.value + '%';
+        } else if (label.includes('Profit')) {
+          valueDisplay.textContent = '+' + slider.value + '%';
+        }
+      });
+      
+      // Update protocol allocation in flow step
+      const protocolStep = document.querySelector('.flow-step:nth-child(2) .step-config');
+      if (protocolStep && preset.protocols.length > 0) {
+        protocolStep.innerHTML = preset.protocols.map(p => `
+          <div class="config-item">
+            <div class="config-label">${p.name}</div>
+            <div class="config-value" style="color: var(--${preset.color});">${p.pct}%</div>
+          </div>
+        `).join('');
+      }
+      
+      // Update rebalance & slippage
+      const rebalanceSelect = document.querySelector('.flow-step:nth-child(3) .config-select');
+      if (rebalanceSelect) {
+        rebalanceSelect.value = preset.rebalance;
+      }
+      const slippageEl = document.querySelector('.flow-step:nth-child(3) .config-value');
+      if (slippageEl) {
+        slippageEl.textContent = preset.slippage + '%';
+      }
+      
+      // Update collateral options
+      const collateralSelect = document.querySelector('.flow-step:nth-child(1) .config-select');
+      if (collateralSelect) {
+        collateralSelect.innerHTML = preset.collateralOptions.map(opt => 
+          `<option>${opt}</option>`
+        ).join('');
+      }
+      
+      // Update nUSD minting info
+      const mintingInfo = document.getElementById('mintingInfo');
+      if (mintingInfo) {
+        mintingInfo.innerHTML = `
+          <div class="minting-param">
+            <span class="minting-label">Collateral Ratio</span>
+            <span class="minting-value">${preset.minting.collateralRatio}</span>
+          </div>
+          <div class="minting-param">
+            <span class="minting-label">Liquidation Threshold</span>
+            <span class="minting-value">${preset.minting.liquidationThreshold}</span>
+          </div>
+          <div class="minting-param">
+            <span class="minting-label">Stability Fee</span>
+            <span class="minting-value">${preset.minting.stabilityFee}</span>
+          </div>
+          <div class="minting-explanation">${preset.minting.explanation}</div>
+        `;
+      }
+      
+      // Update summary stats
+      const apyEl = document.querySelector('.summary-stat:nth-child(1) .summary-stat-value');
+      const ddEl = document.querySelector('.summary-stat:nth-child(2) .summary-stat-value');
+      const sharpeEl = document.querySelector('.summary-stat:nth-child(3) .summary-stat-value');
+      const riskEl = document.querySelector('.summary-stat:nth-child(4) .summary-stat-value');
+      
+      if (apyEl) {
+        apyEl.textContent = preset.apy.min + '-' + preset.apy.max + '%';
+        apyEl.className = 'summary-stat-value ' + (preset.apy.max <= 15 ? 'green' : preset.apy.max <= 30 ? 'blue' : 'purple');
+      }
+      if (ddEl) ddEl.textContent = '-' + preset.maxDD + '%';
+      if (sharpeEl) {
+        sharpeEl.textContent = typeof preset.sharpe === 'number' ? preset.sharpe.toFixed(2) : preset.sharpe;
+        sharpeEl.className = 'summary-stat-value ' + (preset.sharpe >= 1.5 ? 'green' : preset.sharpe >= 1.0 ? 'blue' : '');
+      }
+      if (riskEl) {
+        const riskLevel = preset.riskPosition < 30 ? 'Low' : preset.riskPosition < 50 ? 'Medium' : preset.riskPosition < 75 ? 'High' : 'Extreme';
+        riskEl.textContent = riskLevel;
+        riskEl.className = 'summary-stat-value ' + (riskLevel === 'Low' ? 'green' : riskLevel === 'Medium' ? 'blue' : 'purple');
+      }
+      
+      // Update risk meter
+      document.querySelector('.risk-indicator').style.left = preset.riskPosition + '%';
+      
+      // Update deploy button color
+      const deployBtn = document.querySelector('.deploy-btn');
+      if (deployBtn) {
+        deployBtn.style.background = `var(--${preset.color})`;
+      }
+    }
+
     // Template selection
     document.querySelectorAll('.template-card').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
         
-        // Update canvas title based on selection
         const name = card.querySelector('.template-name').textContent;
-        document.querySelector('.canvas-title').textContent = name + ' Strategy';
+        applyPreset(name);
       });
     });
 
@@ -846,19 +1212,28 @@
           valueDisplay.textContent = '+' + slider.value + '%';
         }
         
-        // Update risk indicator
         updateRiskMeter();
       });
     });
 
     function updateRiskMeter() {
+      const preset = strategyPresets[currentStrategy];
       const leverage = parseFloat(document.querySelectorAll('.slider')[0].value);
       const stopLoss = parseFloat(document.querySelectorAll('.slider')[1].value);
       
-      // Simple risk calculation
-      const risk = Math.min(((leverage - 1) * 20) + (20 - stopLoss), 100);
+      // Risk calculation based on strategy + user adjustments
+      const leverageRisk = ((leverage - preset.leverage.min) / (preset.leverage.max - preset.leverage.min)) * 40;
+      const stopRisk = ((preset.stopLoss.max - stopLoss) / (preset.stopLoss.max - preset.stopLoss.min)) * 30;
+      const baseRisk = preset.riskPosition * 0.3;
+      
+      const risk = Math.min(Math.max(baseRisk + leverageRisk + stopRisk, 5), 95);
       document.querySelector('.risk-indicator').style.left = risk + '%';
     }
+
+    // Initialize with Safe Yield
+    document.addEventListener('DOMContentLoaded', () => {
+      applyPreset('Safe Yield');
+    });
   </script>
 </body>
 </html>
