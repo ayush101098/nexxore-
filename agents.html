@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexxore Agents — Onchain Hedge Fund OS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #08080a;
+      --bg-elevated: #0f0f12;
+      --bg-card: #131318;
+      --text: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --text-muted: rgba(255, 255, 255, 0.4);
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #a855f7;
+      --accent-secondary: #22c55e;
+      --research: #3b82f6;
+      --portfolio: #f59e0b;
+      --execution: #22c55e;
+      --performance: #ef4444;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    
+    /* Navbar */
+    .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(8, 8, 10, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 14px 0; }
+    .navbar .container { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .nav-links { display: flex; align-items: center; gap: 12px; }
+    .btn-secondary { padding: 10px 20px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text-secondary); font-weight: 500; font-size: 0.85rem; text-decoration: none; transition: all 0.25s ease; }
+    .btn-secondary:hover { background: var(--bg-elevated); border-color: rgba(255, 255, 255, 0.15); color: var(--text); }
+    .btn-primary { padding: 10px 20px; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: 600; font-size: 0.85rem; text-decoration: none; transition: all 0.25s ease; }
+    .btn-primary:hover { background: #9333ea; }
+    
+    /* Hero */
+    .hero { min-height: 60vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 120px 24px 60px; position: relative; }
+    .hero-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 50% 0%, rgba(168, 85, 247, 0.08), transparent 60%); z-index: 0; }
+    .hero-content { position: relative; z-index: 1; max-width: 800px; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 24px; font-size: 0.75rem; font-weight: 600; color: var(--accent); margin-bottom: 24px; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; margin-bottom: 16px; line-height: 1.2; }
+    .hero h1 span { background: linear-gradient(135deg, var(--accent), var(--accent-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero p { font-size: 1.05rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto 32px; line-height: 1.6; }
+    
+    /* Architecture Diagram */
+    .architecture { padding: 60px 24px 80px; background: var(--bg-elevated); }
+    .architecture .container { max-width: 1000px; margin: 0 auto; }
+    .section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 12px; text-align: center; }
+    .section-desc { font-size: 0.95rem; color: var(--text-secondary); text-align: center; margin-bottom: 48px; max-width: 600px; margin-left: auto; margin-right: auto; }
+    
+    .pipeline { display: flex; flex-direction: column; align-items: center; gap: 0; }
+    .pipeline-row { display: flex; align-items: center; gap: 20px; }
+    .pipeline-node { padding: 16px 28px; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; font-weight: 600; font-size: 0.9rem; min-width: 180px; text-align: center; transition: all 0.3s; }
+    .pipeline-node.data { border-color: rgba(100, 116, 139, 0.4); color: #94a3b8; }
+    .pipeline-node.research { border-color: rgba(59, 130, 246, 0.4); color: var(--research); }
+    .pipeline-node.portfolio { border-color: rgba(245, 158, 11, 0.4); color: var(--portfolio); }
+    .pipeline-node.execution { border-color: rgba(34, 197, 94, 0.4); color: var(--execution); }
+    .pipeline-node.performance { border-color: rgba(239, 68, 68, 0.4); color: var(--performance); }
+    .pipeline-node:hover { transform: scale(1.02); }
+    
+    .pipeline-arrow { display: flex; flex-direction: column; align-items: center; padding: 8px 0; }
+    .pipeline-arrow svg { width: 24px; height: 24px; color: var(--text-muted); }
+    .pipeline-arrow-label { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+    
+    .feedback-loop { margin-top: 24px; padding: 16px 24px; background: rgba(168, 85, 247, 0.05); border: 1px dashed rgba(168, 85, 247, 0.3); border-radius: 12px; display: flex; align-items: center; gap: 12px; }
+    .feedback-loop svg { width: 20px; height: 20px; color: var(--accent); }
+    .feedback-loop span { font-size: 0.8rem; color: var(--text-secondary); }
+    
+    /* Agent Cards */
+    .agents-section { padding: 80px 24px; }
+    .agents-section .container { max-width: 1100px; margin: 0 auto; }
+    
+    .agent-detail { margin-bottom: 60px; padding: 40px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; position: relative; overflow: hidden; }
+    .agent-detail::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .agent-detail.research::before { background: linear-gradient(90deg, var(--research), transparent); }
+    .agent-detail.portfolio::before { background: linear-gradient(90deg, var(--portfolio), transparent); }
+    .agent-detail.execution::before { background: linear-gradient(90deg, var(--execution), transparent); }
+    .agent-detail.performance::before { background: linear-gradient(90deg, var(--performance), transparent); }
+    
+    .agent-header { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 28px; }
+    .agent-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .agent-icon.research { background: rgba(59, 130, 246, 0.15); color: var(--research); }
+    .agent-icon.portfolio { background: rgba(245, 158, 11, 0.15); color: var(--portfolio); }
+    .agent-icon.execution { background: rgba(34, 197, 94, 0.15); color: var(--execution); }
+    .agent-icon.performance { background: rgba(239, 68, 68, 0.15); color: var(--performance); }
+    .agent-icon svg { width: 28px; height: 28px; }
+    
+    .agent-title-wrap h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
+    .agent-title-wrap .subtitle { font-size: 0.85rem; color: var(--text-muted); }
+    .agent-objective { font-size: 1rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 28px; padding: 16px 20px; background: rgba(255, 255, 255, 0.02); border-left: 3px solid var(--border); border-radius: 0 8px 8px 0; }
+    
+    .agent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .agent-block { padding: 20px; background: var(--bg-elevated); border-radius: 12px; }
+    .agent-block h4 { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .agent-block h4 svg { width: 16px; height: 16px; color: var(--text-muted); }
+    .agent-block ul { list-style: none; }
+    .agent-block li { font-size: 0.8rem; color: var(--text-secondary); padding: 6px 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+    .agent-block li:last-child { border-bottom: none; }
+    .agent-block li::before { content: '→'; color: var(--text-muted); font-size: 0.7rem; }
+    
+    /* Schema Display */
+    .schema-block { grid-column: span 2; padding: 20px; background: #0d0d10; border: 1px solid var(--border); border-radius: 12px; }
+    .schema-block h4 { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+    .schema-code { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.7; white-space: pre-wrap; overflow-x: auto; }
+    .schema-code .key { color: #7dd3fc; }
+    .schema-code .string { color: #86efac; }
+    .schema-code .number { color: #fcd34d; }
+    .schema-code .bracket { color: var(--text-muted); }
+    
+    /* Pipeline Visual */
+    .pipeline-visual { padding: 16px 20px; background: var(--bg-elevated); border-radius: 12px; margin-top: 20px; }
+    .pipeline-visual h4 { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 16px; }
+    .pipeline-steps { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pipeline-step { padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; font-size: 0.75rem; color: var(--text-secondary); }
+    .pipeline-step-arrow { color: var(--text-muted); font-size: 0.8rem; }
+    
+    /* Build Timeline */
+    .timeline-section { padding: 80px 24px; background: var(--bg-elevated); }
+    .timeline-section .container { max-width: 800px; margin: 0 auto; }
+    .timeline { position: relative; padding-left: 32px; }
+    .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, var(--accent), var(--execution)); }
+    .timeline-item { position: relative; margin-bottom: 32px; }
+    .timeline-item:last-child { margin-bottom: 0; }
+    .timeline-dot { position: absolute; left: -28px; top: 4px; width: 14px; height: 14px; background: var(--bg); border: 3px solid var(--accent); border-radius: 50%; }
+    .timeline-content { padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; }
+    .timeline-days { font-size: 0.7rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .timeline-title { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .timeline-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+    
+    /* CTA */
+    .cta-section { padding: 80px 24px; text-align: center; }
+    .cta-section .container { max-width: 600px; margin: 0 auto; }
+    .cta-section h2 { font-size: 1.8rem; font-weight: 700; margin-bottom: 16px; }
+    .cta-section p { font-size: 1rem; color: var(--text-secondary); margin-bottom: 32px; }
+    .cta-buttons { display: flex; gap: 12px; justify-content: center; }
+    .btn-large { padding: 16px 36px; font-size: 1rem; }
+    
+    /* Footer */
+    footer { padding: 48px 24px 28px; border-top: 1px solid var(--border); text-align: center; }
+    footer .container { max-width: 1000px; margin: 0 auto; }
+    .footer-links { display: flex; justify-content: center; gap: 32px; margin-bottom: 24px; }
+    .footer-links a { font-size: 0.85rem; color: var(--text-secondary); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--text); }
+    .footer-bottom { font-size: 0.8rem; color: var(--text-muted); }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .agent-grid { grid-template-columns: 1fr; }
+      .schema-block { grid-column: span 1; }
+      .pipeline-row { flex-direction: column; }
+      .cta-buttons { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="width: 32px; height: 32px;">
+          <defs><linearGradient id="logoGrad" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs>
+          <g transform="translate(10,15) scale(0.8)"><circle cx="50" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/></g>
+        </svg>
+        <span style="font-size: 1.1rem; font-weight: 700; color: white;">nexxore</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html" class="btn-secondary">← Home</a>
+        <a href="perps.html" class="btn-secondary">Trade</a>
+        <a href="#" class="btn-primary">Connect Wallet</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        Autonomous Alpha Generation
+      </div>
+      <h1>Onchain <span>Hedge Fund</span> OS</h1>
+      <p>Four specialized agents. One job each. Zero overlap. This is how institutional-grade DeFi strategies get built—debuggable, extensible, and fully autonomous.</p>
+    </div>
+  </section>
+
+  <!-- Architecture -->
+  <section class="architecture">
+    <div class="container">
+      <h2 class="section-title">Agent Architecture</h2>
+      <p class="section-desc">Each agent has one job and one contract. No agent does two jobs. This keeps it debuggable and extensible.</p>
+      
+      <div class="pipeline">
+        <div class="pipeline-row">
+          <div class="pipeline-node data">[ Data Sources ]</div>
+        </div>
+        <div class="pipeline-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+        </div>
+        <div class="pipeline-row">
+          <div class="pipeline-node research">Research Agent</div>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">→</span>
+          <span style="color: var(--text-secondary); font-size: 0.85rem;">Hypotheses</span>
+        </div>
+        <div class="pipeline-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+        </div>
+        <div class="pipeline-row">
+          <div class="pipeline-node portfolio">Portfolio Optimiser</div>
+        </div>
+        <div class="pipeline-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+        </div>
+        <div class="pipeline-row">
+          <div class="pipeline-node execution">Execution Agent</div>
+        </div>
+        <div class="pipeline-arrow">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+        </div>
+        <div class="pipeline-row">
+          <div class="pipeline-node performance">Performance Agent</div>
+        </div>
+        
+        <div class="feedback-loop">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+          <span><strong>Feedback Loop:</strong> Performance metrics → Strategy scoring → Research weighting adjustments. This is how Nexxore learns.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Agent Details -->
+  <section class="agents-section">
+    <div class="container">
+      
+      <!-- Research Agent -->
+      <div class="agent-detail research">
+        <div class="agent-header">
+          <div class="agent-icon research">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+          </div>
+          <div class="agent-title-wrap">
+            <h2>Research Agent</h2>
+            <span class="subtitle">Alpha Factory</span>
+          </div>
+        </div>
+        
+        <div class="agent-objective">
+          <strong>Objective:</strong> Turn noisy information → structured trade hypotheses. Not "buy SOL". But: "SOL 7-day momentum + rising perp OI + social acceleration → long bias, 3–5 day horizon, medium confidence"
+        </div>
+        
+        <div class="agent-grid">
+          <div class="agent-block">
+            <h4>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+              Data Sources (Phase 1)
+            </h4>
+            <ul>
+              <li>cookie.fun → trending narratives, token velocity</li>
+              <li>Twitter (X) → curated accounts only</li>
+              <li>Price, Volume, Open Interest</li>
+              <li>Funding rates</li>
+            </ul>
+          </div>
+          
+          <div class="agent-block">
+            <h4>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+              Feature Extraction
+            </h4>
+            <ul>
+              <li>Social momentum = Δ mentions / time</li>
+              <li>Price momentum = EMA(7) − EMA(21)</li>
+              <li>Funding skew = long vs short pressure</li>
+              <li>OI expansion = leverage entering/exiting</li>
+            </ul>
+          </div>
+          
+          <div class="schema-block">
+            <h4>Hypothesis Output Schema</h4>
+            <pre class="schema-code"><span class="bracket">{</span>
+  <span class="key">"asset"</span>: <span class="string">"SOL"</span>,
+  <span class="key">"bias"</span>: <span class="string">"LONG"</span>,
+  <span class="key">"strategy"</span>: <span class="string">"Momentum"</span>,
+  <span class="key">"time_horizon"</span>: <span class="string">"3-5 days"</span>,
+  <span class="key">"signals"</span>: <span class="bracket">{</span>
+    <span class="key">"social_momentum"</span>: <span class="number">0.82</span>,
+    <span class="key">"price_momentum"</span>: <span class="number">0.74</span>,
+    <span class="key">"funding_rate"</span>: <span class="number">0.12</span>
+  <span class="bracket">}</span>,
+  <span class="key">"confidence"</span>: <span class="number">0.68</span>,
+  <span class="key">"invalidated_if"</span>: <span class="bracket">[</span><span class="string">"Funding flips negative"</span>, <span class="string">"Price breaks 20D VWAP"</span><span class="bracket">]</span>
+<span class="bracket">}</span></pre>
+          </div>
+        </div>
+        
+        <div class="pipeline-visual">
+          <h4>Agent Pipeline</h4>
+          <div class="pipeline-steps">
+            <span class="pipeline-step">Raw signals</span>
+            <span class="pipeline-step-arrow">→</span>
+            <span class="pipeline-step">Feature extraction</span>
+            <span class="pipeline-step-arrow">→</span>
+            <span class="pipeline-step">Narrative clustering</span>
+            <span class="pipeline-step-arrow">→</span>
+            <span class="pipeline-step">Hypothesis generation</span>
+            <span class="pipeline-step-arrow">→</span>
+            <span class="pipeline-step">Confidence scoring</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Portfolio Optimiser -->
+      <div class="agent-detail portfolio">
+        <div class="agent-header">
+          <div class="agent-icon portfolio">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          </div>
+          <div class="agent-title-wrap">
+            <h2>Portfolio Optimiser</h2>
+            <span class="subtitle">Capital Brain</span>
+          </div>
+        </div>
+        
+        <div class="agent-objective">
+          <strong>Objective:</strong> Convert hypotheses → capital weights. Start simple: Mean–Variance (Markowitz), volatility cap per asset, stablecoin buffer. Easy to debug, easy to upgrade to CVaR, Kelly fractions, or regime switching.
+        </div>
+        
+        <div class="agent-grid">
+          <div class="agent-block">
+            <h4>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Inputs
+            </h4>
+            <ul>
+              <li>Expected return → confidence × momentum</li>
+              <li>Covariance → rolling returns</li>
+              <li>Risk budget → user profile</li>
+              <li>Stablecoin buffer (20–40%)</li>
+            </ul>
+          </div>
+          
+          <div class="agent-block">
+            <h4>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              Constraints
+            </h4>
+            <ul>
+              <li>Σ weights = 1</li>
+              <li>w_i ≤ max_weight per asset</li>
+              <li>Stablecoins ≥ 20–40%</li>
+              <li>Volatility cap per position</li>
+            </ul>
+          </div>
+          
+          <div class="schema-block">
+            <h4>Output Schema</h4>
+            <pre class="schema-code"><span class="bracket">{</span>
+  <span class="key">"timestamp"</span>: <span class="string">"2026-01-27"</span>,
+  <span class="key">"weights"</span>: <span class="bracket">{</span>
+    <span class="key">"SOL"</span>: <span class="number">0.25</span>,
+    <span class="key">"ETH"</span>: <span class="number">0.20</span>,
+    <span class="key">"BTC"</span>: <span class="number">0.15</span>,
+    <span class="key">"USDC"</span>: <span class="number">0.40</span>
+  <span class="bracket">}</span>,
+  <span class="key">"risk_metrics"</span>: <span class="bracket">{</span>
+    <span class="key">"expected_vol"</span>: <span class="number">0.18</span>,
+    <span class="key">"expected_return"</span>: <span class="number">0.32</span>
+  <span class="bracket">}</span>
+<span class="bracket">}</span></pre>
+          </div>
+        </div>
+        
+        <div class="pipeline-visual">
+          <h4>Optimisation Math</h4>
+          <div class="pipeline-steps">
+            <span class="pipeline-step" style="font-family: 'JetBrains Mono', monospace;">μ_i = confidence_i × momentum_i</span>
+            <span class="pipeline-step-arrow">→</span>
+            <span class="pipeline-step" style="font-family: 'JetBrains Mono', monospace;">max_w μᵀw − λ wᵀΣw</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Execution Agent -->
+      <div class="agent-detail execution">
+        <div class="agent-header">
+          <div class="agent-icon execution">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <div class="agent-title-wrap">
+            <h2>Execution Agent</h2>
+            <span class="subtitle">Hyperliquid Integration</span>
+          </div>
+        </div>
+        
+        <div class="agent-objective">
+          <strong>Objective:</strong> Turn weights → real trades with minimal slippage. Rules-based, deterministic. No LLM touches this. Execution Agent should be stateless + idempotent.
+        </div>
+        
+        <div class="agent-grid">
+          <div class="agent-block">
+            <h4>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Execution Logic
+            </h4>
+            <ul>
+              <li>Target weight − Current weight = Δ exposure</li>
+              <li>Split orders for size</li>
+              <li>Choose strategy based on market state</li>
+              <li>Execute with failure recovery</li>
+            </ul>
+          </div>
+          
+          <div class="agent-block">
+            <h4>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+              Strategy Mapping
+            </h4>
+            <ul>
+              <li>High momentum → Market / Aggressive limit</li>
+              <li>Choppy → Grid orders</li>
+              <li>Mean reversion → VWAP / TWAP</li>
+              <li>Low liquidity → Scaled entry</li>
+            </ul>
+          </div>
+          
+          <div class="agent-block">
+            <h4>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              State Management
+            </h4>
+            <ul>
+              <li>Order state tracking</li>
+              <li>Position state monitoring</li>
+              <li>Failure recovery protocols</li>
+              <li>Testnet first, always</li>
+            </ul>
+          </div>
+          
+          <div class="agent-block">
+            <h4>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              Hyperliquid Specifics
+            </h4>
+            <ul>
+              <li>Use testnet for validation</li>
+              <li>Maintain order book awareness</li>
+              <li>Gas optimization</li>
+              <li>Slippage protection</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Performance Agent -->
+      <div class="agent-detail performance">
+        <div class="agent-header">
+          <div class="agent-icon performance">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+          </div>
+          <div class="agent-title-wrap">
+            <h2>Performance Agent</h2>
+            <span class="subtitle">Truth Teller</span>
+          </div>
+        </div>
+        
+        <div class="agent-objective">
+          <strong>Objective:</strong> Tell you what actually works. Track every strategy, score every hypothesis, feed learnings back into the system. This feedback loop is Nexxore's moat.
+        </div>
+        
+        <div class="agent-grid">
+          <div class="agent-block">
+            <h4>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Core Metrics
+            </h4>
+            <ul>
+              <li>Sharpe Ratio per strategy</li>
+              <li>Max Drawdown tracking</li>
+              <li>Win rate & profit factor</li>
+              <li>Volatility-adjusted PnL</li>
+            </ul>
+          </div>
+          
+          <div class="agent-block">
+            <h4>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+              Advanced Analytics
+            </h4>
+            <ul>
+              <li>Alpha vs BTC benchmark</li>
+              <li>Strategy attribution</li>
+              <li>Hypothesis accuracy scoring</li>
+              <li>Signal decay analysis</li>
+            </ul>
+          </div>
+          
+          <div class="schema-block">
+            <h4>Feedback Loop Example</h4>
+            <pre class="schema-code"><span class="bracket">//</span> <span class="string">Strategy Performance</span>
+<span class="key">Momentum on SOL</span>    → Sharpe <span class="number">1.8</span>  ✓ Increase allocation
+<span class="key">Mean-rev on memes</span>  → Sharpe <span class="number">0.4</span>  ✗ Reduce allocation
+
+<span class="bracket">//</span> <span class="string">Next Cycle Adjustments</span>
+<span class="bracket">{</span>
+  <span class="key">"action"</span>: <span class="string">"Increase confidence threshold for low-Sharpe strategies"</span>,
+  <span class="key">"capital_shift"</span>: <span class="string">"Allocate less to strategies with Sharpe < 1.0"</span>
+<span class="bracket">}</span></pre>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </section>
+
+  <!-- Build Timeline -->
+  <section class="timeline-section">
+    <div class="container">
+      <h2 class="section-title">2-Week Execution Plan</h2>
+      <p class="section-desc">From zero to autonomous alpha generation</p>
+      
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-days">Day 1–2</div>
+            <div class="timeline-title">Research Agent</div>
+            <div class="timeline-desc">cookie.fun + Twitter ingestion. Hypothesis JSON output. Feature extraction pipeline.</div>
+          </div>
+        </div>
+        
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-days">Day 3–4</div>
+            <div class="timeline-title">Portfolio Optimiser</div>
+            <div class="timeline-desc">Markowitz implementation. Stablecoin buffer logic. Risk budget constraints.</div>
+          </div>
+        </div>
+        
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-days">Day 5–6</div>
+            <div class="timeline-title">Hyperliquid Testnet</div>
+            <div class="timeline-desc">Single asset execution first. Order state management. Failure recovery.</div>
+          </div>
+        </div>
+        
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-days">Day 7–10</div>
+            <div class="timeline-title">Integration & Testing</div>
+            <div class="timeline-desc">Connect all agents. End-to-end flow testing. Edge case handling.</div>
+          </div>
+        </div>
+        
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-days">Day 11–14</div>
+            <div class="timeline-title">Performance Agent & Feedback</div>
+            <div class="timeline-desc">Metrics dashboard. Strategy scoring. Feedback loop implementation. This is where Nexxore learns.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="container">
+      <h2>Ready to Build the Future of DeFi?</h2>
+      <p>Join the waitlist for early access to Nexxore's autonomous agent system.</p>
+      <div class="cta-buttons">
+        <a href="index.html#waitlist" class="btn-primary btn-large">Join Waitlist</a>
+        <a href="https://github.com/nexxore" class="btn-secondary btn-large" target="_blank">View on GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="perps.html">Trade</a>
+        <a href="vaults.html">Vaults</a>
+        <a href="delta-neutral.html">Delta Neutral</a>
+        <a href="#">Docs</a>
+      </div>
+      <div class="footer-bottom">© 2026 nexxore. Building the future of autonomous DeFi.</div>
+    </div>
+  </footer>
+</body>
+</html>
