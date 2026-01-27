@@ -156,6 +156,27 @@
     .pricing-btn.secondary:hover { background: var(--bg-elevated); border-color: var(--accent); color: var(--text); }
     .pricing-note { text-align: center; margin-top: 32px; font-size: 0.8rem; color: var(--text-muted); }
     
+    /* Payment Modal */
+    .payment-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+    .payment-modal.active { display: flex; }
+    .payment-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 40px; max-width: 420px; width: 90%; text-align: center; position: relative; }
+    .payment-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5rem; line-height: 1; }
+    .payment-close:hover { color: var(--text); }
+    .payment-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
+    .payment-subtitle { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 24px; }
+    .payment-qr { width: 200px; height: 200px; margin: 0 auto 20px; background: white; border-radius: 12px; padding: 12px; }
+    .payment-qr img { width: 100%; height: 100%; }
+    .payment-address { margin-bottom: 20px; }
+    .payment-address-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .payment-address-value { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-secondary); background: var(--bg-elevated); padding: 12px; border-radius: 8px; word-break: break-all; cursor: pointer; transition: all 0.2s; border: 1px solid var(--border); }
+    .payment-address-value:hover { border-color: var(--accent); color: var(--text); }
+    .payment-amount { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px; background: rgba(168, 85, 247, 0.1); border-radius: 10px; margin-bottom: 16px; }
+    .payment-amount svg { width: 24px; height: 24px; }
+    .payment-amount span { font-size: 1.1rem; font-weight: 600; color: var(--accent); }
+    .payment-note { font-size: 0.75rem; color: var(--text-muted); }
+    .copied-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--accent-secondary); color: white; padding: 12px 24px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; opacity: 0; transition: opacity 0.3s; z-index: 3000; }
+    .copied-toast.show { opacity: 1; }
+    
     /* CTA */
     .cta-section { padding: 80px 24px; text-align: center; }
     .cta-section .container { max-width: 600px; margin: 0 auto; }
@@ -593,7 +614,7 @@
           <div class="pricing-badge">Full Access</div>
           <h3>Agent Pro</h3>
           <div class="pricing-price">
-            <span class="amount">$10</span>
+            <span class="amount">$19</span>
             <span class="period">/ month</span>
           </div>
           <p class="pricing-desc">Full access to all four agents with autonomous execution capabilities.</p>
@@ -623,16 +644,64 @@
               Priority support & Discord access
             </li>
           </ul>
-          <button class="pricing-btn">Get Full Access — $10/mo</button>
+          <button class="pricing-btn" onclick="openPaymentModal()">Get Full Access — $19/mo</button>
         </div>
       </div>
       
       <p class="pricing-note">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 6px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        Cancel anytime. No lock-in. Pay with crypto or card.
+        Pay with ETH on Ethereum mainnet. Access granted within 24 hours.
       </p>
     </div>
   </section>
+  
+  <!-- Payment Modal -->
+  <div class="payment-modal" id="paymentModal">
+    <div class="payment-content">
+      <button class="payment-close" onclick="closePaymentModal()">×</button>
+      <h3 class="payment-title">Pay with Ethereum</h3>
+      <p class="payment-subtitle">Send exactly $19 worth of ETH to unlock Agent Pro</p>
+      
+      <div class="payment-qr">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=ethereum:0x905aCd442c7B3EF9BfEB0A3189f3686c1Cd0c697" alt="Payment QR Code">
+      </div>
+      
+      <div class="payment-address">
+        <div class="payment-address-label">Ethereum Address</div>
+        <div class="payment-address-value" onclick="copyAddress()" title="Click to copy">
+          0x905aCd442c7B3EF9BfEB0A3189f3686c1Cd0c697
+        </div>
+      </div>
+      
+      <div class="payment-amount">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <span>$19 in ETH (≈ 0.004 ETH)</span>
+      </div>
+      
+      <p class="payment-note">After payment, send your wallet address to access@nexxore.io for verification. Access granted within 24 hours.</p>
+    </div>
+  </div>
+  
+  <div class="copied-toast" id="copiedToast">Address copied!</div>
+  
+  <script>
+    function openPaymentModal() {
+      document.getElementById('paymentModal').classList.add('active');
+    }
+    function closePaymentModal() {
+      document.getElementById('paymentModal').classList.remove('active');
+    }
+    function copyAddress() {
+      navigator.clipboard.writeText('0x905aCd442c7B3EF9BfEB0A3189f3686c1Cd0c697');
+      const toast = document.getElementById('copiedToast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+    // Close modal on outside click
+    document.getElementById('paymentModal').addEventListener('click', function(e) {
+      if (e.target === this) closePaymentModal();
+    });
+  </script>
 
   <!-- CTA -->
   <section class="cta-section">
