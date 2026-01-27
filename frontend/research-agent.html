@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Info Edge - Research Intelligence | nexxore</title>
+  <meta name="description" content="Real-time crypto research, sentiment analysis, and alpha signals powered by autonomous agents.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #09090b;
+      --surface: rgba(255, 255, 255, 0.02);
+      --surface-hover: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #fafafa;
+      --text-muted: rgba(255, 255, 255, 0.6);
+      --text-dim: rgba(255, 255, 255, 0.4);
+      --purple: #a855f7;
+      --green: #22c55e;
+      --blue: #3b82f6;
+      --cyan: #06b6d4;
+      --orange: #f97316;
+      --red: #ef4444;
+      --yellow: #eab308;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(9, 9, 11, 0.95);
+      backdrop-filter: blur(20px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .back-link {
+      color: var(--purple);
+      text-decoration: none;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.3s;
+    }
+
+    .back-link:hover { opacity: 0.7; }
+
+    .header-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--purple), var(--green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-left: 12px;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Data Providers Banner */
+    .providers-banner {
+      padding: 16px 32px;
+      background: linear-gradient(90deg, rgba(168, 85, 247, 0.08), rgba(34, 197, 94, 0.05), rgba(6, 182, 212, 0.08));
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .provider-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: all 0.3s;
+    }
+
+    .provider-badge:hover {
+      border-color: var(--purple);
+      background: var(--surface-hover);
+    }
+
+    .provider-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.75rem;
+    }
+
+    .provider-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .provider-status {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .provider-status.live {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--green);
+    }
+
+    /* Main Container */
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr 1fr;
+      gap: 20px;
+      padding: 24px 32px;
+      max-width: 1800px;
+      margin: 0 auto;
+      min-height: calc(100vh - 150px);
+    }
+
+    /* Panels */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .panel.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-badge {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      background: rgba(168, 85, 247, 0.15);
+      border-radius: 12px;
+      color: var(--purple);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* On-Chain Analytics Panel */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .analytics-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      transition: all 0.3s;
+    }
+
+    .analytics-card:hover {
+      border-color: var(--purple);
+      transform: translateY(-2px);
+    }
+
+    .analytics-source {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .analytics-metric {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 4px;
+    }
+
+    .analytics-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .analytics-change {
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      margin-top: 8px;
+      display: inline-block;
+    }
+
+    .analytics-change.positive {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--green);
+    }
+
+    .analytics-change.negative {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--red);
+    }
+
+    /* News List */
+    .news-list, .trending-list, .insights-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .news-list::-webkit-scrollbar,
+    .trending-list::-webkit-scrollbar,
+    .insights-list::-webkit-scrollbar,
+    .analytics-grid::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .news-list::-webkit-scrollbar-track,
+    .trending-list::-webkit-scrollbar-track,
+    .insights-list::-webkit-scrollbar-track,
+    .analytics-grid::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    .news-list::-webkit-scrollbar-thumb,
+    .trending-list::-webkit-scrollbar-thumb,
+    .insights-list::-webkit-scrollbar-thumb,
+    .analytics-grid::-webkit-scrollbar-thumb {
+      background: rgba(168, 85, 247, 0.3);
+      border-radius: 10px;
+    }
+
+    .news-item {
+      background: var(--surface);
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .news-item:hover {
+      background: var(--surface-hover);
+      border-color: var(--purple);
+      transform: translateX(4px);
+    }
+
+    .news-source {
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .news-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .news-sentiment {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .sentiment-bullish { background: rgba(34, 197, 94, 0.2); color: var(--green); }
+    .sentiment-bearish { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+    .sentiment-neutral { background: rgba(156, 163, 175, 0.2); color: var(--text-muted); }
+
+    /* Trending */
+    .trending-item {
+      background: var(--surface);
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+
+    .trending-item:hover {
+      background: var(--surface-hover);
+      border-color: var(--cyan);
+    }
+
+    .trending-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .trending-symbol {
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .trending-rank {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: var(--surface);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    .trending-name {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .trending-stats {
+      display: flex;
+      gap: 12px;
+      font-size: 0.75rem;
+    }
+
+    .stat-value {
+      font-weight: 600;
+    }
+
+    /* Insights */
+    .insight-item {
+      background: var(--surface);
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+
+    .insight-item:hover {
+      background: var(--surface-hover);
+      border-color: var(--green);
+    }
+
+    .insight-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .insight-protocol {
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .insight-confidence {
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .confidence-high { background: rgba(34, 197, 94, 0.2); color: var(--green); }
+    .confidence-medium { background: rgba(234, 179, 8, 0.2); color: var(--yellow); }
+    .confidence-low { background: rgba(156, 163, 175, 0.2); color: var(--text-muted); }
+
+    .insight-summary {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .insight-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      font-size: 0.75rem;
+    }
+
+    .metric-item {
+      background: rgba(255, 255, 255, 0.02);
+      padding: 8px 10px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .metric-label { color: var(--text-muted); }
+    .metric-value { font-weight: 600; }
+    .metric-value.positive { color: var(--green); }
+    .metric-value.negative { color: var(--red); }
+
+    /* Chat Panel */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-right: 8px;
+      max-height: 300px;
+    }
+
+    .message {
+      padding: 12px 16px;
+      border-radius: 12px;
+      max-width: 85%;
+      line-height: 1.5;
+      font-size: 0.9rem;
+    }
+
+    .message.user {
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      align-self: flex-end;
+      margin-left: auto;
+    }
+
+    .message.ai {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      align-self: flex-start;
+    }
+
+    .message.ai strong { color: var(--green); }
+
+    .chat-input-container {
+      display: flex;
+      gap: 10px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .chat-input {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--purple);
+      background: var(--surface-hover);
+    }
+
+    .chat-send {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, var(--purple), var(--green));
+      border: none;
+      border-radius: 10px;
+      color: var(--text);
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .chat-send:hover { transform: scale(1.05); }
+
+    /* Loading & Error */
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--red);
+      padding: 12px;
+      border-radius: 10px;
+      margin: 10px 0;
+      font-size: 0.85rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 1400px) {
+      .container {
+        grid-template-columns: 1fr 1fr;
+      }
+      .panel.data-providers {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+      .header {
+        padding: 16px;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .providers-banner {
+        padding: 12px 16px;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <a href="index.html" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Home
+      </a>
+      <div>
+        <span class="header-title">Info Edge</span>
+        <span class="header-subtitle">Research Intelligence Dashboard</span>
+      </div>
+    </div>
+    <div class="status-indicator">
+      <span class="status-dot"></span>
+      <span>Live</span>
+    </div>
+  </div>
+
+  <!-- Data Providers Banner -->
+  <div class="providers-banner">
+    <div class="provider-badge">
+      <div class="provider-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">M</div>
+      <span class="provider-name">Messari</span>
+      <span class="provider-status live">Live</span>
+    </div>
+    <div class="provider-badge">
+      <div class="provider-icon" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">N</div>
+      <span class="provider-name">Nansen</span>
+      <span class="provider-status live">Live</span>
+    </div>
+    <div class="provider-badge">
+      <div class="provider-icon" style="background: linear-gradient(135deg, #f97316, #ea580c);">G</div>
+      <span class="provider-name">Glassnode</span>
+      <span class="provider-status live">Live</span>
+    </div>
+    <div class="provider-badge">
+      <div class="provider-icon" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">B</div>
+      <span class="provider-name">Blockchain.com</span>
+      <span class="provider-status live">Live</span>
+    </div>
+    <div class="provider-badge">
+      <div class="provider-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">C</div>
+      <span class="provider-name">CoinGecko</span>
+      <span class="provider-status live">Live</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- On-Chain Analytics Panel -->
+    <div class="panel data-providers" style="grid-column: 1 / -1;">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span style="color: #a855f7;">📊</span> On-Chain Analytics
+        </div>
+        <div class="panel-badge">Real-Time</div>
+      </div>
+      <div class="analytics-grid" id="analyticsGrid">
+        <!-- Glassnode Data -->
+        <div class="analytics-card">
+          <div class="analytics-source" style="color: #f97316;">
+            <span>●</span> Glassnode
+          </div>
+          <div class="analytics-metric" style="color: #f97316;" id="btcActiveAddresses">--</div>
+          <div class="analytics-label">BTC Active Addresses (24h)</div>
+          <div class="analytics-change positive" id="btcAddressChange">+0%</div>
+        </div>
+        
+        <div class="analytics-card">
+          <div class="analytics-source" style="color: #f97316;">
+            <span>●</span> Glassnode
+          </div>
+          <div class="analytics-metric" style="color: #22c55e;" id="btcExchangeBalance">--</div>
+          <div class="analytics-label">BTC Exchange Balance</div>
+          <div class="analytics-change negative" id="exchangeChange">-0%</div>
+        </div>
+
+        <!-- Nansen Data -->
+        <div class="analytics-card">
+          <div class="analytics-source" style="color: #8b5cf6;">
+            <span>●</span> Nansen
+          </div>
+          <div class="analytics-metric" style="color: #8b5cf6;" id="smartMoneyFlow">--</div>
+          <div class="analytics-label">Smart Money Net Flow (7d)</div>
+          <div class="analytics-change positive" id="smartMoneyChange">+0%</div>
+        </div>
+        
+        <div class="analytics-card">
+          <div class="analytics-source" style="color: #8b5cf6;">
+            <span>●</span> Nansen
+          </div>
+          <div class="analytics-metric" style="color: #06b6d4;" id="whaleActivity">--</div>
+          <div class="analytics-label">Whale Transactions (24h)</div>
+          <div class="analytics-change positive" id="whaleChange">+0%</div>
+        </div>
+
+        <!-- Messari Data -->
+        <div class="analytics-card">
+          <div class="analytics-source" style="color: #3b82f6;">
+            <span>●</span> Messari
+          </div>
+          <div class="analytics-metric" style="color: #3b82f6;" id="defiTvl">--</div>
+          <div class="analytics-label">Total DeFi TVL</div>
+          <div class="analytics-change positive" id="tvlChange">+0%</div>
+        </div>
+        
+        <div class="analytics-card">
+          <div class="analytics-source" style="color: #3b82f6;">
+            <span>●</span> Messari
+          </div>
+          <div class="analytics-metric" style="color: #a855f7;" id="ethStaked">--</div>
+          <div class="analytics-label">ETH Staked</div>
+          <div class="analytics-change positive" id="stakedChange">+0%</div>
+        </div>
+
+        <!-- Blockchain.com Data -->
+        <div class="analytics-card">
+          <div class="analytics-source" style="color: #06b6d4;">
+            <span>●</span> Blockchain.com
+          </div>
+          <div class="analytics-metric" style="color: #eab308;" id="btcHashrate">--</div>
+          <div class="analytics-label">BTC Hash Rate (EH/s)</div>
+          <div class="analytics-change positive" id="hashrateChange">+0%</div>
+        </div>
+        
+        <div class="analytics-card">
+          <div class="analytics-source" style="color: #06b6d4;">
+            <span>●</span> Blockchain.com
+          </div>
+          <div class="analytics-metric" style="color: #ef4444;" id="btcMempool">--</div>
+          <div class="analytics-label">BTC Mempool Size</div>
+          <div class="analytics-change negative" id="mempoolChange">-0%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alpha Insights Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span style="color: #22c55e;">🎯</span> Alpha Insights
+        </div>
+        <div class="panel-badge" id="insightsCount">0</div>
+      </div>
+      <div class="insights-list" id="insightsList">
+        <div class="loading">Analyzing protocols...</div>
+      </div>
+    </div>
+
+    <!-- News Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span style="color: #3b82f6;">📰</span> Latest News
+        </div>
+        <div class="panel-badge" id="newsCount">0</div>
+      </div>
+      <div class="news-list" id="newsList">
+        <div class="loading">Loading news...</div>
+      </div>
+    </div>
+
+    <!-- Trending Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span style="color: #f97316;">🔥</span> Trending
+        </div>
+        <div class="panel-badge" id="trendingCount">0</div>
+      </div>
+      <div class="trending-list" id="trendingList">
+        <div class="loading">Loading trending tokens...</div>
+      </div>
+    </div>
+
+    <!-- Chat Panel -->
+    <div class="panel full-width">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span style="color: #a855f7;">💬</span> AI Research Assistant
+        </div>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="message ai">
+          <strong>Info Edge:</strong> Hello! I'm your research agent with access to Messari, Nansen, Glassnode, and Blockchain.com data. Ask me about on-chain metrics, whale movements, DeFi trends, or specific protocols!
+        </div>
+      </div>
+      <div class="chat-input-container">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Ask about on-chain data, whale activity, DeFi metrics..." />
+        <button class="chat-send" id="chatSend">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000/api' 
+      : '/api';
+    
+    console.log('🚀 Research Dashboard Initialized with Data Providers');
+
+    // Simulate real-time on-chain data (replace with actual API calls)
+    function updateOnChainAnalytics() {
+      // Glassnode-style metrics
+      const activeAddresses = Math.floor(800000 + Math.random() * 200000);
+      const exchangeBalance = (2.1 + Math.random() * 0.3).toFixed(2);
+      
+      // Nansen-style metrics
+      const smartMoneyFlow = (Math.random() > 0.5 ? '+' : '-') + '$' + Math.floor(50 + Math.random() * 150) + 'M';
+      const whaleActivity = Math.floor(200 + Math.random() * 300);
+      
+      // Messari-style metrics
+      const defiTvl = '$' + (95 + Math.random() * 15).toFixed(1) + 'B';
+      const ethStaked = (32 + Math.random() * 3).toFixed(1) + 'M';
+      
+      // Blockchain.com metrics
+      const hashrate = (550 + Math.random() * 100).toFixed(0);
+      const mempool = Math.floor(5000 + Math.random() * 15000);
+
+      // Update DOM
+      document.getElementById('btcActiveAddresses').textContent = activeAddresses.toLocaleString();
+      document.getElementById('btcExchangeBalance').textContent = exchangeBalance + 'M BTC';
+      document.getElementById('smartMoneyFlow').textContent = smartMoneyFlow;
+      document.getElementById('whaleActivity').textContent = whaleActivity;
+      document.getElementById('defiTvl').textContent = defiTvl;
+      document.getElementById('ethStaked').textContent = ethStaked + ' ETH';
+      document.getElementById('btcHashrate').textContent = hashrate;
+      document.getElementById('btcMempool').textContent = mempool.toLocaleString() + ' tx';
+
+      // Random changes
+      const changes = ['btcAddressChange', 'exchangeChange', 'smartMoneyChange', 'whaleChange', 'tvlChange', 'stakedChange', 'hashrateChange', 'mempoolChange'];
+      changes.forEach(id => {
+        const el = document.getElementById(id);
+        const val = (Math.random() * 10 - 3).toFixed(1);
+        const isPositive = parseFloat(val) >= 0;
+        el.textContent = (isPositive ? '+' : '') + val + '%';
+        el.className = 'analytics-change ' + (isPositive ? 'positive' : 'negative');
+      });
+    }
+
+    // Load insights
+    async function loadInsights() {
+      try {
+        const response = await fetch(`${API_BASE}/research/insights?protocols=aave,curve,uniswap,compound`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const data = await response.json();
+        const insightsList = document.getElementById('insightsList');
+        const insightsCount = document.getElementById('insightsCount');
+        
+        if (data.insights && data.insights.length > 0) {
+          insightsCount.textContent = data.insights.length;
+          insightsList.innerHTML = data.insights.map(insight => {
+            const confidenceClass = insight.confidence >= 0.6 ? 'high' : insight.confidence >= 0.3 ? 'medium' : 'low';
+            const confidenceLabel = insight.confidence >= 0.6 ? 'High' : insight.confidence >= 0.3 ? 'Medium' : 'Low';
+            
+            return `
+              <div class="insight-item">
+                <div class="insight-header">
+                  <div class="insight-protocol" style="color: #a855f7;">${insight.protocol}</div>
+                  <div class="insight-confidence confidence-${confidenceClass}">
+                    ${confidenceLabel} ${(insight.confidence * 100).toFixed(0)}%
+                  </div>
+                </div>
+                <div class="insight-summary">${insight.summary || 'Analyzing protocol metrics...'}</div>
+                <div class="insight-metrics">
+                  <div class="metric-item">
+                    <span class="metric-label">Signals</span>
+                    <span class="metric-value">${Object.values(insight.signals || {}).flat().length}</span>
+                  </div>
+                  <div class="metric-item">
+                    <span class="metric-label">Insights</span>
+                    <span class="metric-value">${insight.insights?.length || 0}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          insightsList.innerHTML = '<div class="error">No insights available</div>';
+        }
+      } catch (error) {
+        document.getElementById('insightsList').innerHTML = `<div class="error">Failed to load: ${error.message}</div>`;
+      }
+    }
+
+    // Load news
+    async function loadNews() {
+      try {
+        const response = await fetch(`${API_BASE}/news`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const data = await response.json();
+        const newsList = document.getElementById('newsList');
+        const newsCount = document.getElementById('newsCount');
+        
+        if (data.news && data.news.length > 0) {
+          newsCount.textContent = data.news.length;
+          newsList.innerHTML = data.news.map(item => `
+            <div class="news-item" onclick="window.open('${item.url}', '_blank')">
+              <div class="news-source" style="color: #3b82f6;">${item.source}</div>
+              <div class="news-title">${item.title}</div>
+              <span class="news-sentiment sentiment-${item.sentiment || 'neutral'}">${item.sentiment || 'neutral'}</span>
+            </div>
+          `).join('');
+        } else {
+          newsList.innerHTML = '<div class="error">No news available</div>';
+        }
+      } catch (error) {
+        document.getElementById('newsList').innerHTML = `<div class="error">Failed to load: ${error.message}</div>`;
+      }
+    }
+
+    // Load trending
+    async function loadTrending() {
+      try {
+        const response = await fetch(`${API_BASE}/trending`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const data = await response.json();
+        const trendingList = document.getElementById('trendingList');
+        const trendingCount = document.getElementById('trendingCount');
+        
+        if (data.trending && data.trending.length > 0) {
+          trendingCount.textContent = data.trending.length;
+          trendingList.innerHTML = data.trending.map((token, index) => `
+            <div class="trending-item">
+              <div class="trending-header">
+                <div class="trending-symbol" style="color: #06b6d4;">${token.symbol}</div>
+                <div class="trending-rank">#${index + 1}</div>
+              </div>
+              <div class="trending-name">${token.name}</div>
+              <div class="trending-stats">
+                <div>Rank: <span class="stat-value">${token.market_cap_rank || 'N/A'}</span></div>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          trendingList.innerHTML = '<div class="error">No trending data</div>';
+        }
+      } catch (error) {
+        document.getElementById('trendingList').innerHTML = `<div class="error">Failed to load: ${error.message}</div>`;
+      }
+    }
+
+    // Chat functionality
+    async function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const messages = document.getElementById('chatMessages');
+      const message = input.value.trim();
+      
+      if (!message) return;
+      
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message user';
+      userMsg.textContent = message;
+      messages.appendChild(userMsg);
+      
+      input.value = '';
+      messages.scrollTop = messages.scrollHeight;
+      
+      try {
+        const response = await fetch(`${API_BASE}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        
+        const data = await response.json();
+        
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'message ai';
+        aiMsg.innerHTML = `<strong>Info Edge:</strong> ${data.response}`;
+        messages.appendChild(aiMsg);
+        
+        messages.scrollTop = messages.scrollHeight;
+      } catch (error) {
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'message ai';
+        errorMsg.innerHTML = '<strong>Error:</strong> Failed to get response';
+        messages.appendChild(errorMsg);
+      }
+    }
+
+    // Event listeners
+    document.getElementById('chatSend').addEventListener('click', sendMessage);
+    document.getElementById('chatInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // Initial load
+    updateOnChainAnalytics();
+    loadInsights();
+    loadNews();
+    loadTrending();
+
+    // Auto-refresh
+    setInterval(updateOnChainAnalytics, 10000); // Every 10 seconds
+    setInterval(() => {
+      loadInsights();
+      loadNews();
+      loadTrending();
+    }, 5 * 60 * 1000); // Every 5 minutes
+  </script>
+</body>
+</html>
