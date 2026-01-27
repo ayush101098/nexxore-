@@ -780,7 +780,7 @@
             <span class="step-type">Allocation</span>
           </div>
           <div class="step-title">Protocol Distribution</div>
-          <div class="step-config">
+          <div class="step-config" id="protocolAllocation">
             <div class="config-item">
               <div class="config-label">Aave v3</div>
               <div class="config-value" style="color: var(--safe-green);">40%</div>
@@ -1107,9 +1107,9 @@
       });
       
       // Update protocol allocation in flow step
-      const protocolStep = document.querySelector('.flow-step:nth-child(2) .step-config');
-      if (protocolStep && preset.protocols.length > 0) {
-        protocolStep.innerHTML = preset.protocols.map(p => `
+      const protocolAllocation = document.getElementById('protocolAllocation');
+      if (protocolAllocation && preset.protocols.length > 0) {
+        protocolAllocation.innerHTML = preset.protocols.map(p => `
           <div class="config-item">
             <div class="config-label">${p.name}</div>
             <div class="config-value" style="color: var(--${preset.color});">${p.pct}%</div>
