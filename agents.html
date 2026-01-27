@@ -701,6 +701,37 @@
     document.getElementById('paymentModal').addEventListener('click', function(e) {
       if (e.target === this) closePaymentModal();
     });
+    
+    // Check subscription status when wallet connected
+    async function checkSubscription(walletAddress) {
+      try {
+        const res = await fetch(`https://nexxore-api.vercel.app/api/subscription/${walletAddress}`);
+        const data = await res.json();
+        
+        if (data.active) {
+          // User has active subscription - show access granted UI
+          document.querySelectorAll('.pricing-card.featured .pricing-btn').forEach(btn => {
+            btn.textContent = '✓ Access Granted';
+            btn.style.background = '#22c55e';
+            btn.onclick = null;
+          });
+          
+          // Could also unlock agent features here
+          console.log('Agent Pro active until:', data.expiresAt);
+        }
+      } catch (err) {
+        console.log('Subscription check failed:', err);
+      }
+    }
+    
+    // If user has connected wallet, check their subscription
+    if (window.ethereum) {
+      window.ethereum.request({ method: 'eth_accounts' }).then(accounts => {
+        if (accounts.length > 0) {
+          checkSubscription(accounts[0]);
+        }
+      });
+    }
   </script>
 
   <!-- CTA -->
