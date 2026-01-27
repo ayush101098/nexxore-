@@ -3,916 +3,323 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>nexxore — DeFi Ecosystem | Perps, Vaults & Research</title>
-  <meta name="description" content="Trade perpetuals, manage vaults, and access institutional-grade research. Full DeFi ecosystem with autonomous agents and on-chain transparency.">
-  
-  <!-- Google Fonts: Space Grotesk, Inter, JetBrains Mono -->
+  <title>nexxore — DeFi Ecosystem</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="frontend/css/style.css">
-  <link rel="stylesheet" href="frontend/css/wallet.css">
-  
-  <!-- Navigation Styles -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    .nav-link:hover {
-      background: rgba(255, 255, 255, 0.05) !important;
-      border-color: rgba(255, 255, 255, 0.1) !important;
-      transform: translateY(-2px);
-    }
-
-    .nav-link-highlight:hover {
-      background: rgba(168, 85, 247, 0.1) !important;
-      border-color: rgba(168, 85, 247, 0.3) !important;
-      transform: translateY(-2px);
-    }
-
-    #connectWalletBtn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(168, 85, 247, 0.4) !important;
-    }
-
-    /* X/Twitter button hover */
-    .nav-links a[href*="x.com"]:hover {
-      background: rgba(255, 255, 255, 0.1) !important;
-      border-color: rgba(255, 255, 255, 0.2) !important;
-      transform: translateY(-2px);
-    }
-
-    /* Mobile Responsive Styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #09090b; color: white; font-family: 'Inter', sans-serif; }
+    
+    .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(9, 9, 11, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.06); padding: 14px 0; }
+    .navbar .container { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .nav-links { display: flex; align-items: center; gap: 12px; }
+    
+    .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 100px 24px 60px; position: relative; }
+    .hero-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 30% 20%, rgba(168, 85, 247, 0.08), transparent 50%), radial-gradient(circle at 70% 80%, rgba(34, 197, 94, 0.06), transparent 50%); z-index: 0; }
+    .hero-content { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 700; margin-bottom: 16px; line-height: 1.2; }
+    .hero h1 span { background: linear-gradient(135deg, #a855f7, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero p { font-size: 1.1rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto; }
+    
+    .products-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 28px; }
+    .product-card { padding: 14px 10px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; text-decoration: none; text-align: center; transition: all 0.2s; }
+    .product-card:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
+    .product-card .name { font-size: 0.8rem; font-weight: 600; margin-bottom: 2px; }
+    .product-card .sub { font-size: 0.65rem; color: rgba(255, 255, 255, 0.4); }
+    .product-card.new { background: rgba(168, 85, 247, 0.05); border-color: rgba(168, 85, 247, 0.2); position: relative; }
+    .product-card .badge { position: absolute; top: -5px; right: -5px; font-size: 0.5rem; background: linear-gradient(135deg, #a855f7, #22c55e); padding: 2px 5px; border-radius: 4px; color: white; font-weight: 700; }
+    
+    .cta-buttons { display: flex; gap: 12px; justify-content: center; margin-bottom: 28px; }
+    .btn-primary { padding: 12px 28px; background: linear-gradient(135deg, #a855f7, #22c55e); border: none; border-radius: 8px; color: white; font-weight: 600; font-size: 0.9rem; text-decoration: none; box-shadow: 0 4px 16px rgba(168, 85, 247, 0.3); transition: all 0.2s; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4); }
+    .btn-secondary { padding: 12px 28px; background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: rgba(255, 255, 255, 0.7); font-weight: 500; font-size: 0.9rem; text-decoration: none; transition: all 0.2s; }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.05); }
+    
+    .assets-bar { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 16px 24px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 10px; }
+    .assets-bar .label { font-size: 0.7rem; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: 1px; }
+    .assets-bar .asset { font-size: 1rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .assets-bar .dot { color: rgba(255, 255, 255, 0.2); }
+    
+    section { padding: 60px 24px; text-align: center; }
+    section .container { max-width: 1000px; margin: 0 auto; }
+    .section-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 12px; }
+    .section-title span { background: linear-gradient(135deg, #a855f7, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .section-desc { font-size: 1rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto; }
+    
+    .features { background: rgba(0, 0, 0, 0.3); }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .feature-card { padding: 24px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; text-align: center; }
+    .feature-card .icon { width: 48px; height: 48px; margin: 0 auto 16px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .feature-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; color: white; }
+    .feature-card p { font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); line-height: 1.5; }
+    
+    .perps { border-top: 1px solid rgba(255, 255, 255, 0.05); }
+    .perps-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.2); border-radius: 20px; font-size: 0.7rem; font-weight: 600; color: #f97316; margin-bottom: 16px; }
+    .stats-row { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+    .stat-card { padding: 12px 20px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; text-align: center; }
+    .stat-card .label { font-size: 0.6rem; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; margin-bottom: 4px; }
+    .stat-card .value { font-size: 1.1rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    
+    .agents { background: rgba(0, 0, 0, 0.2); }
+    .agents-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .agent-card { padding: 20px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; text-align: center; transition: all 0.2s; text-decoration: none; color: inherit; display: block; }
+    .agent-card:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.1); }
+    .agent-card .icon { width: 40px; height: 40px; margin: 0 auto 12px; background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(34, 197, 94, 0.1)); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .agent-card h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; color: white; }
+    .agent-card p { font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); }
+    
+    .waitlist { background: linear-gradient(180deg, rgba(168, 85, 247, 0.05), rgba(34, 197, 94, 0.03)); border-top: 1px solid rgba(255, 255, 255, 0.05); }
+    .waitlist-form { display: flex; gap: 12px; justify-content: center; max-width: 400px; margin: 0 auto; }
+    .waitlist-form input { flex: 1; padding: 12px 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: white; font-size: 0.9rem; }
+    .waitlist-form input::placeholder { color: rgba(255, 255, 255, 0.4); }
+    .waitlist-form button { padding: 12px 24px; background: linear-gradient(135deg, #a855f7, #22c55e); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    
+    footer { padding: 40px 24px 24px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+    footer .container { max-width: 1000px; margin: 0 auto; }
+    .footer-content { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 40px; margin-bottom: 32px; }
+    .footer-links { display: flex; gap: 48px; }
+    .footer-column h4 { font-size: 0.8rem; font-weight: 600; color: rgba(255, 255, 255, 0.5); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .footer-column a { display: block; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); text-decoration: none; margin-bottom: 8px; transition: color 0.2s; }
+    .footer-column a:hover { color: white; }
+    .footer-bottom { text-align: center; font-size: 0.8rem; color: rgba(255, 255, 255, 0.4); padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+    
     @media (max-width: 768px) {
-      /* Navigation Mobile */
-      .navbar .container {
-        flex-direction: row !important;
-        justify-content: space-between !important;
-        padding: 12px 16px !important;
-      }
-      
-      .nav-brand svg {
-        height: 40px !important;
-      }
-      
-      .nav-links {
-        flex-direction: row !important;
-        gap: 8px !important;
-      }
-      
-      .nav-links a[href*="x.com"] {
-        width: 36px !important;
-        height: 36px !important;
-      }
-      
-      .nav-links .btn-primary {
-        padding: 10px 16px !important;
-        font-size: 0.85rem !important;
-      }
-      
-      .nav-group {
-        flex-direction: column !important;
-        width: 100% !important;
-        border: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        gap: 8px !important;
-      }
-      
-      .nav-link, .nav-link-highlight {
-        width: 100% !important;
-        justify-content: center !important;
-        padding: 12px 20px !important;
-      }
-      
-      #connectWalletBtn {
-        width: 100% !important;
-        padding: 14px 24px !important;
-      }
-      
-      /* Hero Mobile */
-      .hero-section {
-        min-height: auto !important;
-        padding: 80px 20px 60px !important;
-      }
-      
-      .hero-content {
-        padding-top: 40px !important;
-      }
-      
-      .hero-content h1 {
-        font-size: 2rem !important;
-        line-height: 1.2 !important;
-        margin-bottom: 20px !important;
-      }
-      
-      .hero-content p {
-        font-size: 1rem !important;
-        margin-bottom: 32px !important;
-      }
-      
-      /* Feature Pills Mobile */
-      .hero-content > div[style*="flex-wrap"] {
-        gap: 8px !important;
-      }
-      
-      .hero-content > div[style*="flex-wrap"] > div {
-        font-size: 0.75rem !important;
-        padding: 6px 14px !important;
-      }
-      
-      /* CTA Buttons Mobile */
-      .hero-content > div[style*="gap: 16px"] {
-        flex-direction: column !important;
-        gap: 12px !important;
-      }
-      
-      .hero-content a[href] {
-        width: 100% !important;
-        padding: 14px 28px !important;
-        font-size: 0.95rem !important;
-        text-align: center !important;
-      }
-      
-      /* Products Grid Mobile */
-      .products-grid {
-        grid-template-columns: 1fr !important;
-        gap: 12px !important;
-        margin-bottom: 24px !important;
-      }
-      
-      .product-card {
-        padding: 20px !important;
-      }
-      
-      /* Supported Assets Mobile */
-      .hero-content > div[style*="Supported Assets"] {
-        padding: 16px 20px !important;
-      }
-      
-      .hero-content > div[style*="Supported Assets"] > div:last-child {
-        gap: 12px !important;
-        font-size: 1rem !important;
-      }
-      
-      /* Geometric Patterns Mobile - Hide some */
-      .hero-section > div[style*="rotate(45deg)"] {
-        width: 200px !important;
-        height: 200px !important;
-        opacity: 0.5;
-      }
-      
-      .hero-section > div[style*="rotate(-30deg)"] {
-        width: 150px !important;
-        height: 150px !important;
-        opacity: 0.5;
-      }
+      .products-grid { grid-template-columns: repeat(2, 1fr); }
+      .products-grid .product-card:last-child { grid-column: span 2; }
+      .features-grid { grid-template-columns: 1fr; }
+      .agents-grid { grid-template-columns: repeat(2, 1fr); }
+      .stats-row { gap: 10px; }
+      .stat-card { padding: 10px 14px; }
+      .footer-links { gap: 24px; flex-wrap: wrap; }
+      .cta-buttons { flex-direction: column; align-items: center; }
+      .waitlist-form { flex-direction: column; }
     }
     
     @media (max-width: 480px) {
-      .hero-content h1 {
-        font-size: 1.75rem !important;
-      }
-      
-      .products-grid {
-        gap: 10px !important;
-      }
-      
-      .product-card {
-        padding: 18px !important;
-      }
-      
-      .product-card > div:first-child {
-        font-size: 2rem !important;
-      }
-      
-      .hero-content > div[style*="Supported Assets"] span {
-        font-size: 0.95rem !important;
-      }
-    }
-  </style>
-  
-  <!-- Web3 Libraries -->
-  <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
-  
-  <!-- Global Page Styles -->
-  <style>
-    body {
-      background: #09090b;
-      position: relative;
-    }
-    
-    /* Subtle grid background */
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), 
-                        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-      background-size: 60px 60px;
-      opacity: 0.5;
-      z-index: 0;
-      pointer-events: none;
-    }
-    
-    /* All sections should have relative positioning to appear above background */
-    section {
-      position: relative;
-      z-index: 1;
+      .hero h1 { font-size: 1.8rem; }
+      .products-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .agents-grid { grid-template-columns: 1fr; }
+      .assets-bar { flex-wrap: wrap; gap: 10px; }
     }
   </style>
 </head>
 <body>
-  <nav class="navbar" style="backdrop-filter: blur(20px); background: rgba(9, 9, 11, 0.95); border-bottom: 1px solid rgba(255, 255, 255, 0.06); position: fixed; top: 0; left: 0; right: 0; z-index: 1000;">
-    <div class="container" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 24px;">
-      <div class="nav-brand"><a href="/" class="brand-link"><svg class="site-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" style="height: 48px;"><defs><linearGradient id="logoGrad" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs><g transform="translate(40,40) scale(0.9)"><circle cx="50" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/></g><g transform="translate(150,110)"><text x="0" y="0" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="56" fill="currentColor">nexxore</text></g></svg></a></div>
-      
-      <div class="nav-links" style="display: flex; align-items: center; gap: 12px;">
-        <a href="https://x.com/nexxore" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; transition: all 0.3s; text-decoration: none;" title="Follow us on X">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-          </svg>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" style="display: flex; align-items: center; text-decoration: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" style="height: 40px;">
+          <defs><linearGradient id="logoGrad" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs>
+          <g transform="translate(40,40) scale(0.9)"><circle cx="50" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/></g>
+          <g transform="translate(150,110)"><text x="0" y="0" font-family="Inter, sans-serif" font-weight="700" font-size="56" fill="currentColor">nexxore</text></g>
+        </svg>
+      </a>
+      <div class="nav-links">
+        <a href="https://x.com/nexxore" target="_blank" style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
         </a>
-        <a href="#waitlist" class="btn btn-primary" style="padding: 12px 24px; background: linear-gradient(135deg, #a855f7, #22c55e); border: none; border-radius: 10px; color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3); text-decoration: none; display: inline-block;">
-          Join Waitlist
-        </a>
+        <a href="#waitlist" class="btn-primary" style="padding: 10px 20px; font-size: 0.85rem;">Join Waitlist</a>
       </div>
     </div>
   </nav>
 
-  <style>
-    @keyframes pulse-border {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4); }
-      50% { box-shadow: 0 0 0 6px rgba(168, 85, 247, 0); }
-    }
-  </style>
-
-  <!-- Hero -->
-  <section id="hero" class="hero-section" style="position: relative; min-height: 100vh; display: flex; align-items: center; overflow: hidden; background: #09090b; padding-top: 80px;">
-    <!-- Animated Network Background -->
-    <canvas id="networkCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;"></canvas>
-    
-    <!-- Geometric Patterns -->
-    <div style="position: absolute; top: 20%; right: 10%; width: 400px; height: 400px; background: linear-gradient(135deg, rgba(168, 85, 247, 0.03), rgba(34, 197, 94, 0.02)); transform: rotate(45deg); border: 1px solid rgba(168, 85, 247, 0.08); z-index: 1;"></div>
-    <div style="position: absolute; bottom: 15%; left: 5%; width: 300px; height: 300px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.03), rgba(168, 85, 247, 0.02)); transform: rotate(-30deg); border: 1px solid rgba(34, 197, 94, 0.08); z-index: 1;"></div>
-    
-    <!-- Floating Grid Lines -->
-    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 60px 60px; z-index: 0; opacity: 0.4;"></div>
-    
-    <div class="container" style="position: relative; z-index: 10;">
-      <div class="hero-content" style="max-width: 900px; margin: 0 auto; text-align: center; padding-top: 80px;">
-        <!-- Main Description -->
-        <h1 style="font-size: 3.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 24px; color: white; animation: fadeInUp 1s ease-out 0.1s backwards;">
-          Autonomous Capital Execution<br>
-          <span style="background: linear-gradient(135deg, #a855f7, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">On-Chain Intelligence</span>
-        </h1>
-
-        <p style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 32px; line-height: 1.6; max-width: 700px; margin-left: auto; margin-right: auto; animation: fadeInUp 1s ease-out 0.4s backwards;">
-          Trade perpetuals, manage vaults, access institutional-grade research. Built on modular architecture with complete transparency.
-        </p>
-
-        <!-- Products Grid -->
-        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; max-width: 900px; margin: 0 auto 28px; animation: fadeInUp 1s ease-out 0.5s backwards;" class="products-grid">
-          <a href="perps.html" style="padding: 16px 12px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; text-decoration: none; transition: all 0.2s; text-align: center;" class="product-card">
-            <div style="font-size: 0.85rem; font-weight: 600; color: #a855f7; margin-bottom: 2px;">Perpetuals</div>
-            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.4);">Trading</div>
-          </a>
-          <a href="vaults.html" style="padding: 16px 12px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; text-decoration: none; transition: all 0.2s; text-align: center;" class="product-card">
-            <div style="font-size: 0.85rem; font-weight: 600; color: #22c55e; margin-bottom: 2px;">Vaults</div>
-            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.4);">Yield</div>
-          </a>
-          <a href="research-agent.html" style="padding: 16px 12px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; text-decoration: none; transition: all 0.2s; text-align: center;" class="product-card">
-            <div style="font-size: 0.85rem; font-weight: 600; color: #f97316; margin-bottom: 2px;">Research</div>
-            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.4);">Intelligence</div>
-          </a>
-          <a href="safe-yield.html" style="padding: 16px 12px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; text-decoration: none; transition: all 0.2s; text-align: center;" class="product-card">
-            <div style="font-size: 0.85rem; font-weight: 600; color: #fbbf24; margin-bottom: 2px;">Safe Yield</div>
-            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.4);">Curated</div>
-          </a>
-          <a href="delta-agent.html" style="padding: 16px 12px; background: rgba(168, 85, 247, 0.04); border: 1px solid rgba(168, 85, 247, 0.15); border-radius: 8px; text-decoration: none; transition: all 0.2s; text-align: center; position: relative;" class="product-card">
-            <div style="position: absolute; top: -6px; right: -6px; font-size: 0.5rem; background: linear-gradient(135deg, #a855f7, #22c55e); padding: 2px 6px; border-radius: 6px; color: white; font-weight: 700;">NEW</div>
-            <div style="font-size: 0.85rem; font-weight: 600; color: #a855f7; margin-bottom: 2px;">Delta Agent</div>
-            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.4);">Neutral</div>
-          </a>
-        </div>
-
-        <!-- CTA Buttons -->
-        <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 32px; animation: fadeInUp 1s ease-out 0.6s backwards;">
-          <a href="perps.html" style="padding: 10px 24px; background: linear-gradient(135deg, #a855f7, #22c55e); border: none; border-radius: 6px; color: white; font-weight: 600; font-size: 0.85rem; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 16px rgba(168, 85, 247, 0.25); display: inline-block;">
-            Launch App
-          </a>
-          <a href="vaults.html" style="padding: 10px 24px; background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: rgba(255, 255, 255, 0.7); font-weight: 500; font-size: 0.85rem; text-decoration: none; transition: all 0.2s; display: inline-block;">
-            View Docs
-          </a>
-        </div>
-
-        <!-- Supported Assets -->
-        <div style="text-align: center; padding: 20px 32px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 10px; backdrop-filter: blur(10px); max-width: 600px; margin: 0 auto; animation: fadeInUp 1s ease-out 0.7s backwards;">
-          <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.4); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">Supported Assets</div>
-          <div style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap;">
-            <span style="font-size: 1.1rem; font-weight: 700; color: #a855f7; font-family: 'JetBrains Mono', monospace;">ETH</span>
-            <span style="color: rgba(255, 255, 255, 0.2);">·</span>
-            <span style="font-size: 1.1rem; font-weight: 700; color: #f97316; font-family: 'JetBrains Mono', monospace;">BTC</span>
-            <span style="color: rgba(255, 255, 255, 0.2);">·</span>
-            <span style="font-size: 1.1rem; font-weight: 700; color: #06b6d4; font-family: 'JetBrains Mono', monospace;">SOL</span>
-            <span style="color: rgba(255, 255, 255, 0.2);">·</span>
-            <span style="font-size: 1.1rem; font-weight: 700; color: #22c55e; font-family: 'JetBrains Mono', monospace;">USDT</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Scroll Indicator -->
-    <div style="position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 10; animation: bounce 2s infinite;">
-      <div style="width: 30px; height: 50px; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 20px; position: relative;">
-        <div style="width: 6px; height: 10px; background: white; border-radius: 3px; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); animation: scrollDot 2s infinite;"></div>
-      </div>
-    </div>
-  </section>
-
-  <style>
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes bounce {
-      0%, 20%, 50%, 80%, 100% {
-        transform: translateX(-50%) translateY(0);
-      }
-      40% {
-        transform: translateX(-50%) translateY(-10px);
-      }
-      60% {
-        transform: translateX(-50%) translateY(-5px);
-      }
-    }
-
-    @keyframes scrollDot {
-      0% {
-        opacity: 0;
-        top: 8px;
-      }
-      50% {
-        opacity: 1;
-      }
-      100% {
-        opacity: 0;
-        top: 32px;
-      }
-    }
-  </style>
-
-  <!-- Strategy Builder CTA -->
-  <section id="strategy-cta" style="background: #09090b; padding: 60px 0; border-top: 1px solid rgba(255, 255, 255, 0.05);">
-    <div class="container">
-      <div style="max-width: 800px; margin: 0 auto; text-align: center;">
-        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #a855f7; margin-bottom: 16px;">
-          <span style="width: 6px; height: 6px; background: #22c55e; border-radius: 50%;"></span>
-          Build Your Strategy
-        </div>
-        
-        <h2 style="font-size: 2.2rem; font-weight: 700; margin-bottom: 12px; color: white; line-height: 1.2;">
-          Design. Deploy. <span style="background: linear-gradient(135deg, #a855f7, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Dominate.</span>
-        </h2>
-        
-        <p style="font-size: 1rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 24px; line-height: 1.6; max-width: 600px; margin-left: auto; margin-right: auto;">
-          Create custom trading strategies with transparent on-chain execution. Configure risk parameters and let autonomous agents handle the rest.
-        </p>
-
-        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-          <a href="#sandbox" style="padding: 12px 28px; background: linear-gradient(135deg, #a855f7, #22c55e); border-radius: 8px; color: white; font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 16px rgba(168, 85, 247, 0.3);">
-            Launch Strategy Builder
-          </a>
-          <a href="delta-agent.html" style="padding: 12px 28px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: rgba(255, 255, 255, 0.7); font-weight: 500; font-size: 0.9rem; text-decoration: none; transition: all 0.2s;">
-            Delta Neutral →
-          </a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <script>
-    // Network Animation Canvas
-    const canvas = document.getElementById('networkCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const particles = [];
-    const particleCount = 100;
-    const connectionDistance = 150;
-
-    class Particle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.vx = (Math.random() - 0.5) * 0.5;
-        this.vy = (Math.random() - 0.5) * 0.5;
-        this.radius = Math.random() * 2 + 1;
-      }
-
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-
-        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-      }
-
-      draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fill();
-      }
-    }
-
-    // Initialize particles
-    for (let i = 0; i < particleCount; i++) {
-      particles.push(new Particle());
-    }
-
-    function connectParticles() {
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < connectionDistance) {
-            const opacity = (1 - distance / connectionDistance) * 0.15;
-            ctx.beginPath();
-            ctx.strokeStyle = `rgba(168, 85, 247, ${opacity})`;
-            ctx.lineWidth = 1;
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.stroke();
-          }
-        }
-      }
-    }
-
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <h1>Autonomous Capital Execution<br><span>On-Chain Intelligence</span></h1>
+      <p>Trade perpetuals, manage vaults, access institutional-grade research. Built on modular architecture with complete transparency.</p>
       
-      particles.forEach(particle => {
-        particle.update();
-        particle.draw();
-      });
+      <div class="products-grid">
+        <a href="perps.html" class="product-card">
+          <div class="name" style="color: #a855f7;">Perpetuals</div>
+          <div class="sub">Trading</div>
+        </a>
+        <a href="vaults.html" class="product-card">
+          <div class="name" style="color: #22c55e;">Vaults</div>
+          <div class="sub">Yield</div>
+        </a>
+        <a href="research-agent.html" class="product-card">
+          <div class="name" style="color: #f97316;">Research</div>
+          <div class="sub">Intelligence</div>
+        </a>
+        <a href="safe-yield.html" class="product-card">
+          <div class="name" style="color: #fbbf24;">Safe Yield</div>
+          <div class="sub">Curated</div>
+        </a>
+        <a href="delta-agent.html" class="product-card new">
+          <span class="badge">NEW</span>
+          <div class="name" style="color: #a855f7;">Delta Agent</div>
+          <div class="sub">Neutral</div>
+        </a>
+      </div>
+      
+      <div class="cta-buttons">
+        <a href="perps.html" class="btn-primary">Launch App</a>
+        <a href="#features" class="btn-secondary">Learn More</a>
+      </div>
+      
+      <div class="assets-bar">
+        <span class="label">Supported:</span>
+        <span class="asset" style="color: #a855f7;">ETH</span>
+        <span class="dot">·</span>
+        <span class="asset" style="color: #f97316;">BTC</span>
+        <span class="dot">·</span>
+        <span class="asset" style="color: #06b6d4;">SOL</span>
+        <span class="dot">·</span>
+        <span class="asset" style="color: #22c55e;">USDT</span>
+      </div>
+    </div>
+  </section>
 
-      connectParticles();
-      requestAnimationFrame(animate);
-    }
-
-    animate();
-
-    // Resize canvas on window resize
-    window.addEventListener('resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
-
-    // Scroll-triggered animations
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -100px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
-        }
-      });
-    }, observerOptions);
-
-    // Observe all sections - skip hero and strategy-cta (always visible)
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('section').forEach(section => {
-        if (section.id && (section.id === 'hero' || section.id === 'strategy-cta')) {
-          // Always visible - main sections
-          section.style.opacity = '1';
-        } else {
-          section.style.opacity = '0';
-          section.style.transform = 'translateY(30px)';
-          section.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out';
-          observer.observe(section);
-        }
-      });
-    });
-  </script>
-
-  <style>
-    /* Product card hover effects */
-    .product-card {
-      position: relative;
-      overflow: hidden;
-    }
-
-    .product-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), transparent);
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .product-card:hover::before {
-      opacity: 1;
-    }
-
-    .product-card:hover {
-      transform: translateY(-2px);
-      border-color: rgba(255, 255, 255, 0.12);
-      background: rgba(255, 255, 255, 0.03);
-    }
-  </style>
-
-  <!-- NX-Perps CTA Section - Compact -->
-  <section id="nx-perps-cta" style="background: #09090b; padding: 60px 0; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+  <section class="features" id="features">
     <div class="container">
-      <div style="max-width: 900px; margin: 0 auto; text-align: center;">
-        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.2); border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #f97316; margin-bottom: 16px;">
-          <span style="font-size: 0.9rem;">🔥</span>
-          Perpetual Trading Live
+      <h2 class="section-title"><span>Why nexxore?</span></h2>
+      <p class="section-desc">Institutional-grade infrastructure for the next generation of DeFi.</p>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="icon" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.05));">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3>On-Chain Transparency</h3>
+          <p>Every trade, every strategy, fully verifiable on-chain. No black boxes.</p>
         </div>
-        
-        <h2 style="font-size: 2.2rem; font-weight: 700; margin-bottom: 12px; line-height: 1.2;">
-          <span style="background: linear-gradient(135deg, #a855f7, #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">NX-Perps</span>
-        </h2>
-        
-        <p style="font-size: 1rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 28px; line-height: 1.6; max-width: 600px; margin-left: auto; margin-right: auto;">
-          Trade with <span style="color: #f97316; font-weight: 600;">50x leverage</span> on a fully decentralized, transparent perpetual exchange. On-chain settlement, zero counterparty risk.
-        </p>
-
-        <!-- Stats Row -->
-        <div style="display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 28px;">
-          <div style="text-align: center; padding: 12px 20px; background: rgba(168, 85, 247, 0.08); border-radius: 10px; border: 1px solid rgba(168, 85, 247, 0.15);">
-            <div style="font-size: 0.65rem; color: rgba(255, 255, 255, 0.4); margin-bottom: 4px; text-transform: uppercase;">Open Interest</div>
-            <div style="font-size: 1.1rem; font-weight: 700; color: #a855f7; font-family: 'JetBrains Mono', monospace;">$0.00</div>
+        <div class="feature-card">
+          <div class="icon" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.05));">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
           </div>
-          <div style="text-align: center; padding: 12px 20px; background: rgba(249, 115, 22, 0.08); border-radius: 10px; border: 1px solid rgba(249, 115, 22, 0.15);">
-            <div style="font-size: 0.65rem; color: rgba(255, 255, 255, 0.4); margin-bottom: 4px; text-transform: uppercase;">24h Volume</div>
-            <div style="font-size: 1.1rem; font-weight: 700; color: #f97316; font-family: 'JetBrains Mono', monospace;">$0.00</div>
-          </div>
-          <div style="text-align: center; padding: 12px 20px; background: rgba(34, 197, 94, 0.08); border-radius: 10px; border: 1px solid rgba(34, 197, 94, 0.15);">
-            <div style="font-size: 0.65rem; color: rgba(255, 255, 255, 0.4); margin-bottom: 4px; text-transform: uppercase;">LP TVL</div>
-            <div style="font-size: 1.1rem; font-weight: 700; color: #22c55e; font-family: 'JetBrains Mono', monospace;">$0.00</div>
-          </div>
-          <div style="text-align: center; padding: 12px 20px; background: rgba(6, 182, 212, 0.08); border-radius: 10px; border: 1px solid rgba(6, 182, 212, 0.15);">
-            <div style="font-size: 0.65rem; color: rgba(255, 255, 255, 0.4); margin-bottom: 4px; text-transform: uppercase;">Max Leverage</div>
-            <div style="font-size: 1.1rem; font-weight: 700; color: #06b6d4; font-family: 'JetBrains Mono', monospace;">50x</div>
-          </div>
+          <h3>24/7 Autonomous Agents</h3>
+          <p>AI-powered agents execute strategies around the clock without intervention.</p>
         </div>
-
-        <!-- Supported Assets -->
-        <div style="margin-bottom: 24px;">
-          <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.4);">Trade: </span>
-          <span style="font-size: 0.9rem; font-weight: 600; color: #a855f7; margin: 0 8px;">ETH</span>
-          <span style="color: rgba(255, 255, 255, 0.2);">·</span>
-          <span style="font-size: 0.9rem; font-weight: 600; color: #f97316; margin: 0 8px;">BTC</span>
-          <span style="color: rgba(255, 255, 255, 0.2);">·</span>
-          <span style="font-size: 0.9rem; font-weight: 600; color: #06b6d4; margin: 0 8px;">SOL</span>
-          <span style="color: rgba(255, 255, 255, 0.2);">·</span>
-          <span style="font-size: 0.9rem; font-weight: 600; color: #22c55e; margin: 0 8px;">ARB</span>
-        </div>
-
-        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-          <a href="perps.html" style="padding: 12px 28px; background: linear-gradient(135deg, #a855f7, #f97316); border-radius: 8px; color: white; font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 16px rgba(168, 85, 247, 0.3);">
-            🚀 Start Trading
-          </a>
-          <a href="perps.html#lp" style="padding: 12px 28px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: rgba(255, 255, 255, 0.7); font-weight: 500; font-size: 0.9rem; text-decoration: none; transition: all 0.2s;">
-            Become LP →
-          </a>
+        <div class="feature-card">
+          <div class="icon" style="background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(249, 115, 22, 0.05));">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <h3>Lightning Execution</h3>
+          <p>Sub-second order matching with minimal slippage and MEV protection.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Workflow Section -->
-  <section id="workflow" class="workflow-section" style="position: relative; padding: 70px 0; background: rgba(0, 0, 0, 0.5); overflow: hidden;">
-    <!-- Background Geometric Elements -->
-    <div style="position: absolute; top: 15%; right: 8%; width: 200px; height: 200px; background: rgba(168, 85, 247, 0.03); transform: rotate(30deg); border: 1px solid rgba(168, 85, 247, 0.08); z-index: 0;"></div>
-    <div style="position: absolute; bottom: 20%; left: 5%; width: 180px; height: 180px; background: rgba(34, 197, 94, 0.03); transform: rotate(-20deg); border: 1px solid rgba(34, 197, 94, 0.08); z-index: 0;"></div>
-    
-    <div class="container" style="position: relative; z-index: 1;">
-      <div class="workflow-diagram">
-        <div class="workflow-card">
-          <div class="workflow-icon" style="background:linear-gradient(135deg,#9333ea,#c084fc)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56M15 10l-3-3m0 0l-3 3m3-3v13"/></svg>
-          </div>
-          <h3>COLLATERAL</h3>
-          <h4>Deposit Assets</h4>
-          <p>Users deposit various digital assets into a secure vault to back their stablecoin minting.</p>
+  <section class="perps">
+    <div class="container">
+      <div class="perps-badge">🔥 Live Now</div>
+      <h2 class="section-title"><span>NX-Perps</span></h2>
+      <p class="section-desc">Trade with 50x leverage on a fully decentralized perpetual exchange.</p>
+      
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="label">Open Interest</div>
+          <div class="value" style="color: #a855f7;">$0.00</div>
         </div>
-        <div class="workflow-arrow">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+        <div class="stat-card">
+          <div class="label">24h Volume</div>
+          <div class="value" style="color: #f97316;">$0.00</div>
         </div>
-        <div class="workflow-card">
-          <div class="workflow-icon" style="background:linear-gradient(135deg,#a855f7,#c084fc)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><text x="12" y="15" font-size="7" text-anchor="middle" fill="currentColor" font-family="Inter">n</text></svg>
-          </div>
-          <h3>nUSD</h3>
-          <h4>Mint Stablecoin</h4>
-          <p>Based on the deposited collateral, users can mint nUSD, a decentralized, algorithmically stabilized stablecoin.</p>
+        <div class="stat-card">
+          <div class="label">LP TVL</div>
+          <div class="value" style="color: #22c55e;">$0.00</div>
         </div>
-        <div class="workflow-arrow">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+        <div class="stat-card">
+          <div class="label">Max Leverage</div>
+          <div class="value" style="color: #06b6d4;">50x</div>
         </div>
-        <div class="workflow-card">
-          <div class="workflow-icon" style="background:linear-gradient(135deg,#14b8a6,#5eead4)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-          </div>
-          <h3>STRATEGY SANDBOX</h3>
-          <h4>Configure Strategies</h4>
-          <p>Users utilize an intuitive interface to design, test, and configure automated trading or investment strategies.</p>
-        </div>
-        <div class="workflow-arrow">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
-        </div>
-        <div class="workflow-card">
-          <div class="workflow-icon" style="background:linear-gradient(135deg,#f97316,#fb923c)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="7" width="12" height="9" rx="2"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/><path d="M9 18v1M15 18v1"/></svg>
-          </div>
-          <h3>AGENTS</h3>
-          <h4>Deploy Automation</h4>
-          <p>Configured strategies are deployed as autonomous agents that execute trades and manage assets 24/7.</p>
-        </div>
-        <div class="workflow-arrow">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
-        </div>
-        <div class="workflow-card">
-          <div class="workflow-icon" style="background:linear-gradient(135deg,#22c55e,#86efac)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17h18M7 13v4M12 9v8M17 5v12"/></svg>
-          </div>
-          <h3>PORTFOLIO</h3>
-          <h4>Track Performance</h4>
-          <p>Users monitor the real-time performance, value, and allocation of their assets and automated strategies in a comprehensive dashboard.</p>
-        </div>
+      </div>
+      
+      <div class="cta-buttons">
+        <a href="perps.html" class="btn-primary">🚀 Start Trading</a>
+        <a href="perps.html#lp" class="btn-secondary">Become LP →</a>
       </div>
     </div>
   </section>
 
-  <section class="mission-section">
+  <section class="agents">
     <div class="container">
-      <blockquote class="mission-quote">
-        <p><strong>Mission:</strong> Democratize access to institutional-grade yield strategies via on-chain collateralization and autonomous agents.</p>
-      </blockquote>
-    </div>
-  </section>
-  
-  <section id="nusd" class="nusd-section" style="padding: 80px 0; background: rgba(0, 0, 0, 0.2);">
-    <div class="container">
-      <div class="section-header" style="text-align: center; max-width: 900px; margin: 0 auto 48px;">
-        <h2 class="section-headline" style="font-size: 2.2rem; margin-bottom: 12px; background: linear-gradient(135deg, #a855f7, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Mint nUSD — Unlock liquidity without selling assets</h2>
-        <p class="section-copy" style="font-size: 1.05rem; color: rgba(255, 255, 255, 0.6);">Deposit collateral, mint nUSD, and deploy capital into strategies instantly.</p>
-      </div>
-      <div class="benefits-grid">
-        <div class="benefit-card">
-          <div class="benefit-number">01</div>
-          <h3>Mint nUSD Instantly</h3>
-          <p>Unlock liquidity without selling underlying assets. Maintain exposure while deploying capital.</p>
-        </div>
-        <div class="benefit-card">
-          <div class="benefit-number">02</div>
-          <h3>Automate Execution</h3>
-          <p>Agents monitor and act nonstop. No manual intervention, 24/7 autonomous execution.</p>
-        </div>
-        <div class="benefit-card">
-          <div class="benefit-number">03</div>
-          <h3>Optimize Risk & Yield</h3>
-          <p>Portfolio health monitoring and dynamic rebalancing. Maximize returns while managing risk.</p>
-        </div>
-      </div>
-      <div style="text-align:center;margin-top:32px">
-        <a href="#" class="btn btn-primary">Launch nUSD App →</a>
-      </div>
-    </div>
-  </section>
-  
-  <section id="agents" class="agents-section">
-    <div class="container">
-      <div class="section-header" style="margin-bottom: 40px;">
-        <h2 class="section-headline" style="font-size: 2.2rem; background: linear-gradient(135deg, #a855f7, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Agent Terminal Preview</h2>
-        <p class="section-copy" style="font-size: 1.05rem; color: rgba(255, 255, 255, 0.6);">Autonomous agents execute strategies 24/7 — preview agent types below.</p>
-      </div>
-
+      <h2 class="section-title"><span>Agent Terminal</span></h2>
+      <p class="section-desc">Autonomous agents execute strategies 24/7 with institutional precision.</p>
+      
       <div class="agents-grid">
-        <div class="agent-card" title="Optimizes fills and rebalances positions."><div class="agent-icon"><img src="frontend/assets/icons/bolt.svg" alt="Precision Execution" class="icon-svg"/></div><div class="agent-title">Precision Execution</div><div class="agent-sub">Trading Agent — Minimizes slippage and MEV</div></div>
-        <div class="agent-card" title="Scans protocols and rotates capital."><div class="agent-icon"><img src="frontend/assets/icons/rotate.svg" alt="Yield Engine" class="icon-svg"/></div><div class="agent-title">Yield Engine</div><div class="agent-sub">DeFi Strategy Agent — Auto-compounds and reallocates</div></div>
-        <a href="research-agent.html" class="agent-card agent-card-clickable" title="Alerts before markets react based on signals. Click to explore live research dashboard." style="text-decoration: none; color: inherit; cursor: pointer;"><div class="agent-icon"><img src="frontend/assets/icons/search.svg" alt="Info Edge" class="icon-svg"/></div><div class="agent-title">Info Edge</div><div class="agent-sub">Research/Alpha Agent — Sentiment & trend signals</div><div style="margin-top: 8px; font-size: 0.7rem; color: #a855f7; font-weight: 600;">View Dashboard →</div></a>
-        <div class="agent-card" title="Event-driven tactical plays with controlled risk."><div class="agent-icon"><img src="frontend/assets/icons/target.svg" alt="Tactical Plays" class="icon-svg"/></div><div class="agent-title">Tactical Plays</div><div class="agent-sub">Degen Agent — High-convex setups</div></div>
-      </div>
-    </div>
-  </section>
-  
-  <section id="sandbox" class="sandbox-section" style="padding: 80px 0; background: rgba(0, 0, 0, 0.3);">
-    <div class="container">
-      <div class="section-header" style="text-align: center; margin-bottom: 48px;">
-        <h2 class="section-headline" style="font-size: 2.5rem; font-weight: 700; margin-bottom: 12px; background: linear-gradient(135deg, #a855f7, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Strategy Builder</h2>
-        <p class="section-copy" style="font-size: 1.3rem; color: rgba(255, 255, 255, 0.9); margin-bottom: 8px; font-weight: 600;">Design. Deploy. Dominate.</p>
-        <p class="section-copy" style="margin-top: 12px; max-width: 700px; margin-left: auto; margin-right: auto; font-size: 1rem; color: rgba(255, 255, 255, 0.6); line-height: 1.6;">Create custom trading strategies with transparent on-chain execution. No code required — just configure your risk parameters and let autonomous agents handle the rest.</p>
-      </div>
-
-      <div class="sandbox-grid" id="sandboxGrid">
-        <div class="strategy-card" tabindex="0" data-strategy="safe">
-          <div class="strategy-header">
-            <div class="strategy-icon"><img src="frontend/assets/icons/dot-green.svg" alt="safe" class="icon-svg"/></div>
-            <div>
-              <div class="strategy-name">Safe Yield</div>
-              <div class="strategy-sub">Capital Preservation Mandate</div>
-            </div>
+        <div class="agent-card">
+          <div class="icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           </div>
-          <div class="strategy-preview">
-            <div class="strategy-meta"><strong>Risk:</strong> Low</div>
-            <div class="strategy-status">Deployed: $0</div>
-          </div>
-          <div class="strategy-expandable">
-            <div class="strategy-objective"><strong>Objective:</strong> Stable yield with minimal volatility</div>
-            <ul class="strategy-mix">
-              <li>Blue-chip lending</li>
-              <li>Over-collateralized stable strategies</li>
-              <li>Conservative rebalancing logic</li>
-            </ul>
-            <div class="strategy-live">Target Volatility: &lt; X% — Execution Status: Inactive</div>
-            <div class="strategy-cue">Designed for treasuries & long-term allocators</div>
-            <div class="strategy-actions">
-              <button class="btn btn-primary btn-sm view-logic">View Strategy Logic</button>
-            </div>
-          </div>
+          <h4>Precision Execution</h4>
+          <p>Trading Agent — Minimizes slippage</p>
         </div>
-
-        <div class="strategy-card" tabindex="0" data-strategy="balanced">
-          <div class="strategy-header">
-            <div class="strategy-icon"><img src="frontend/assets/icons/rotate.svg" alt="balanced" class="icon-svg"/></div>
-            <div>
-              <div class="strategy-name">Balanced Realloc</div>
-              <div class="strategy-sub">Risk-Adjusted Yield Optimization</div>
-            </div>
+        <div class="agent-card">
+          <div class="icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
           </div>
-          <div class="strategy-preview">
-            <div class="strategy-meta"><strong>Risk:</strong> Medium</div>
-            <div class="strategy-status">Deployed: $0</div>
-          </div>
-          <div class="strategy-expandable">
-            <div class="strategy-objective"><strong>Objective:</strong> Optimize yield while managing drawdowns</div>
-            <ul class="strategy-mix">
-              <li>Yield rotation across protocols</li>
-              <li>Delta-neutral components</li>
-              <li>Dynamic capital reallocation</li>
-            </ul>
-            <div class="strategy-live">Sharpe Target: &gt; X — Execution Status: Inactive</div>
-            <div class="strategy-cue">Built for active capital managers</div>
-            <div class="strategy-actions">
-              <button class="btn btn-primary btn-sm view-logic">View Strategy Logic</button>
-            </div>
-          </div>
+          <h4>Yield Engine</h4>
+          <p>DeFi Agent — Auto-compounds</p>
         </div>
-
-        <div class="strategy-card" tabindex="0" data-strategy="oppor">
-          <div class="strategy-header">
-            <div class="strategy-icon"><img src="frontend/assets/icons/chart.svg" alt="opportunistic" class="icon-svg"/></div>
-            <div>
-              <div class="strategy-name">Opportunistic Alpha</div>
-              <div class="strategy-sub">Event-Driven Alpha Capture</div>
-            </div>
+        <a href="research-agent.html" class="agent-card">
+          <div class="icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </div>
-          <div class="strategy-preview">
-            <div class="strategy-meta"><strong>Risk:</strong> High</div>
-            <div class="strategy-status">Deployed: $0</div>
+          <h4>Info Edge</h4>
+          <p>Research Agent — Alpha signals</p>
+        </a>
+        <div class="agent-card">
+          <div class="icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
           </div>
-          <div class="strategy-expandable">
-            <div class="strategy-objective"><strong>Objective:</strong> Exploit short-term inefficiencies</div>
-            <ul class="strategy-mix">
-              <li>Basis & funding arbitrage</li>
-              <li>Volatility-driven trades</li>
-              <li>Liquidity dislocation strategies</li>
-            </ul>
-            <div class="strategy-live">Max Drawdown Guardrails: Enabled — Execution Status: Inactive</div>
-            <div class="strategy-cue">Best suited for tactical deployment</div>
-            <div class="strategy-actions">
-              <button class="btn btn-primary btn-sm view-logic">View Strategy Logic</button>
-            </div>
-          </div>
+          <h4>Tactical Plays</h4>
+          <p>Degen Agent — High-convex setups</p>
         </div>
-
-        <div class="strategy-card" tabindex="0" data-strategy="degen">
-          <div class="strategy-header">
-            <div class="strategy-icon"><img src="frontend/assets/icons/bolt.svg" alt="degen" class="icon-svg"/></div>
-            <div>
-              <div class="strategy-name">Tactical Degen</div>
-              <div class="strategy-sub">High-Conviction, High-Variance</div>
-            </div>
-          </div>
-          <div class="strategy-preview">
-            <div class="strategy-meta"><strong>Risk:</strong> Very High</div>
-            <div class="strategy-status">Deployed: $0</div>
-          </div>
-          <div class="strategy-expandable">
-            <div class="strategy-objective"><strong>Objective:</strong> Asymmetric upside capture</div>
-            <ul class="strategy-mix">
-              <li>Leverage-aware directional trades</li>
-              <li>Narrative & momentum strategies</li>
-              <li>Experimental agent logic</li>
-            </ul>
-            <div class="strategy-live">Risk Controls: Custom — Execution Status: Inactive</div>
-            <div class="strategy-cue">For advanced users only</div>
-            <div class="strategy-actions">
-              <button class="btn btn-primary btn-sm view-logic">View Strategy Logic</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="trust-signals" style="margin-top: 40px; text-align: center; max-width: 800px; margin-left: auto; margin-right: auto; color: var(--muted); padding: 24px; background: rgba(255, 255, 255, 0.02); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.04);">
-        <p style="margin: 0; font-size: 1rem; line-height: 1.6;"><strong style="color: rgba(255, 255, 255, 0.9);">All strategies execute on-chain with deterministic logic.</strong> No black boxes. No discretionary intervention.</p>
-      </div>
-    </div>
-  </section><section id="waitlist" class="waitlist-section">
-    <div class="container">
-      <div class="waitlist-content">
-        <h2 class="section-headline">Be the first to earn with nexxore</h2>
-        <p class="section-copy">Early users get priority rewards.</p>
-        <form class="waitlist-form" id="waitlistForm"><div class="form-group"><input type="email" id="email" name="email" placeholder="Enter your email" required></div><button type="submit" class="btn btn-primary btn-full">Join the Waitlist</button></form>
-        <p class="form-disclaimer">We'll notify you when new features launch and never spam your inbox.</p>
       </div>
     </div>
   </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand" style="display:flex;align-items:center;gap:12px">
-                    <svg style="height:36px;width:auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160"><defs><linearGradient id="footerLogoGrad" x1="0" x2="1"><stop offset="0" stop-color="#00d4ff"/><stop offset="1" stop-color="#0066ff"/></linearGradient></defs><g transform="translate(40,40) scale(0.9)"><circle cx="50" cy="40" r="28" stroke="url(#footerLogoGrad)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#footerLogoGrad)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#footerLogoGrad)" stroke-width="6" fill="none" opacity="0.85"/></g><g transform="translate(150,110)"><text x="0" y="0" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="56" fill="currentColor">nexxore</text></g></svg>
-                </div>
+  <section class="waitlist" id="waitlist">
+    <div class="container">
+      <h2 class="section-title"><span>Join the Waitlist</span></h2>
+      <p class="section-desc">Be the first to access new features and earn priority rewards.</p>
+      
+      <form class="waitlist-form" id="waitlistForm">
+        <input type="email" placeholder="Enter your email" required>
+        <button type="submit">Join</button>
+      </form>
+      <p style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.4); margin-top: 12px;">We'll never spam your inbox.</p>
+    </div>
+  </section>
 
-                <div class="footer-links">
-                    <div class="footer-column">
-                        <h4>Products</h4>
-                        <a href="#agents">Agent Terminal</a>
-                        <a href="#sandbox">Strategy Builder</a>
-                    </div>
-                    <div class="footer-column">
-                        <h4>Resources</h4>
-                        <a href="#" target="_blank">Docs</a>
-                        <a href="#" target="_blank">Blog</a>
-                        <a href="#" target="_blank">Support</a>
-                    </div>
-                    <div class="footer-column">
-                        <h4>Community</h4>
-                        <a href="#" target="_blank">Discord</a>
-                        <a href="https://x.com/nexxore" target="_blank">X (Twitter)</a>
-                        <a href="#" target="_blank">Telegram</a>
-                    </div>
-                    <div class="footer-column">
-                        <h4>Legal</h4>
-                        <a href="#">Terms</a>
-                        <a href="#">Privacy</a>
-                        <a href="#">Audit</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="footer-bottom">
-                <p>&copy; 2025 nexxore. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Strategy Modal -->
-    <div id="strategyModal" class="modal" role="dialog" aria-labelledby="modalTitle" aria-hidden="true">
-      <div class="modal-overlay"></div>
-      <div class="modal-content">
-        <button class="modal-close" aria-label="Close modal">&times;</button>
-        <h2 id="modalTitle" class="modal-title">Strategy Details</h2>
-        <div class="modal-body">
-          <p>Loading strategy information...</p>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-outline" id="modalCancel">Cancel</button>
-          <button class="btn btn-primary" id="modalConfirm">Confirm</button>
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" style="height: 32px;">
+          <defs><linearGradient id="footerGrad" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs>
+          <g transform="translate(40,40) scale(0.9)"><circle cx="50" cy="40" r="28" stroke="url(#footerGrad)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#footerGrad)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#footerGrad)" stroke-width="6" fill="none" opacity="0.85"/></g>
+          <g transform="translate(150,110)"><text x="0" y="0" font-family="Inter, sans-serif" font-weight="700" font-size="56" fill="currentColor">nexxore</text></g>
+        </svg>
+        
+        <div class="footer-links">
+          <div class="footer-column">
+            <h4>Products</h4>
+            <a href="perps.html">Perpetuals</a>
+            <a href="vaults.html">Vaults</a>
+            <a href="research-agent.html">Research</a>
+          </div>
+          <div class="footer-column">
+            <h4>Resources</h4>
+            <a href="#">Docs</a>
+            <a href="#">Blog</a>
+            <a href="#">Support</a>
+          </div>
+          <div class="footer-column">
+            <h4>Community</h4>
+            <a href="#">Discord</a>
+            <a href="https://x.com/nexxore" target="_blank">X (Twitter)</a>
+            <a href="#">Telegram</a>
+          </div>
         </div>
       </div>
+      
+      <div class="footer-bottom">
+        <p>© 2025 nexxore. All rights reserved.</p>
+      </div>
     </div>
-
-    <!-- JavaScript -->
-    <script src="frontend/js/animations.js"></script>
-    <script src="frontend/js/walletConnect.js"></script>
-    <script src="frontend/js/main.js"></script>
+  </footer>
 </body>
 </html>
