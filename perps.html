@@ -388,9 +388,9 @@
       <div class="order-header">
         <span class="order-title">Place Order</span>
         <div class="order-type-toggle">
-          <button class="order-type-btn active">Market</button>
-          <button class="order-type-btn">Limit</button>
-          <button class="order-type-btn">Stop</button>
+          <button class="order-type-btn active" data-type="market">Market</button>
+          <button class="order-type-btn" data-type="limit">Limit</button>
+          <button class="order-type-btn" data-type="stop">Stop</button>
         </div>
       </div>
 
@@ -403,6 +403,30 @@
           <span class="label">Short</span>
           <span class="desc">Sell / Go Down</span>
         </button>
+      </div>
+
+      <!-- Limit Price Input (hidden by default) -->
+      <div class="input-group" id="limitPriceGroup" style="display: none;">
+        <div class="input-header">
+          <span class="input-label">Limit Price</span>
+          <span class="input-max" id="limitPriceHint">Current: $--</span>
+        </div>
+        <div class="input-wrapper">
+          <input type="text" id="limitPriceInput" class="input-field" placeholder="0.00" autocomplete="off">
+          <span class="input-suffix">USD</span>
+        </div>
+      </div>
+
+      <!-- Stop Price Input (hidden by default) -->
+      <div class="input-group" id="stopPriceGroup" style="display: none;">
+        <div class="input-header">
+          <span class="input-label">Stop Price</span>
+          <span class="input-max" id="stopPriceHint">Trigger when price reaches</span>
+        </div>
+        <div class="input-wrapper">
+          <input type="text" id="stopPriceInput" class="input-field" placeholder="0.00" autocomplete="off">
+          <span class="input-suffix">USD</span>
+        </div>
       </div>
 
       <div class="input-group">
@@ -434,15 +458,15 @@
       <div class="order-summary">
         <div class="summary-row">
           <span class="summary-label">Position Size</span>
-          <span class="summary-value">0.00 ETH</span>
+          <span class="summary-value" id="positionSize">0.00 ETH</span>
         </div>
         <div class="summary-row">
           <span class="summary-label">Entry Price</span>
-          <span class="summary-value">$4,812.35</span>
+          <span class="summary-value" id="entryPrice">$--</span>
         </div>
         <div class="summary-row">
           <span class="summary-label">Liquidation Price</span>
-          <span class="summary-value red">$0.00</span>
+          <span class="summary-value red" id="liqPrice">$--</span>
         </div>
         <div class="summary-row">
           <span class="summary-label">Trading Fee</span>
@@ -566,39 +590,67 @@
     let chart = null;
     let candleSeries = null;
     let currentMarket = 'ETH';
+    let currentTimeframe = '1h';
     
     // Market configuration
     const marketConfig = {
-      ETH: { name: 'Ethereum', basePrice: 4650, targetPrice: 4812, decimals: 2, icon: 'ETH', gradient: 'linear-gradient(135deg, #627eea, #8c9eff)' },
-      BTC: { name: 'Bitcoin', basePrice: 98000, targetPrice: 102500, decimals: 0, icon: 'BTC', gradient: 'linear-gradient(135deg, #f7931a, #ffb347)' },
-      SOL: { name: 'Solana', basePrice: 295, targetPrice: 312, decimals: 2, icon: 'SOL', gradient: 'linear-gradient(135deg, #9945ff, #14f195)' }
+      ETH: { name: 'Ethereum', symbol: 'ETHUSDT', decimals: 2, icon: 'ETH', gradient: 'linear-gradient(135deg, #627eea, #8c9eff)' },
+      BTC: { name: 'Bitcoin', symbol: 'BTCUSDT', decimals: 0, icon: 'BTC', gradient: 'linear-gradient(135deg, #f7931a, #ffb347)' },
+      SOL: { name: 'Solana', symbol: 'SOLUSDT', decimals: 2, icon: 'SOL', gradient: 'linear-gradient(135deg, #9945ff, #14f195)' }
     };
     
-    // Generate chart data for a specific market
-    function generateChartData(market) {
+    // Timeframe mapping for Binance API
+    const timeframeMap = {
+      '1m': '1m',
+      '5m': '5m', 
+      '15m': '15m',
+      '1H': '1h',
+      '4H': '4h',
+      '1D': '1d'
+    };
+    
+    // Fetch real OHLCV data from Binance
+    async function fetchChartData(market, timeframe) {
       const config = marketConfig[market];
+      const interval = timeframeMap[timeframe] || '1h';
+      const url = `https://api.binance.com/api/v3/klines?symbol=${config.symbol}&interval=${interval}&limit=200`;
+      
+      try {
+        console.log(`📊 Fetching ${market} ${interval} chart data...`);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const klines = await response.json();
+        const data = klines.map(k => ({
+          time: Math.floor(k[0] / 1000),
+          open: parseFloat(k[1]),
+          high: parseFloat(k[2]),
+          low: parseFloat(k[3]),
+          close: parseFloat(k[4])
+        }));
+        
+        console.log(`✅ Loaded ${data.length} candles for ${market}`);
+        return data;
+      } catch (err) {
+        console.error(`❌ Chart data fetch error:`, err);
+        return generateFallbackData(market);
+      }
+    }
+    
+    // Fallback data generator if API fails
+    function generateFallbackData(market) {
+      const basePrice = market === 'BTC' ? 100000 : market === 'SOL' ? 250 : 3500;
       const data = [];
       const now = Math.floor(Date.now() / 1000);
-      let time = now - 150 * 3600;
-      let price = config.basePrice;
+      let time = now - 200 * 3600;
+      let price = basePrice;
       
-      for (let i = 0; i < 150; i++) {
-        const trend = (config.targetPrice - config.basePrice) / 150;
-        const volatility = (Math.random() - 0.48) * 0.025;
-        const change = price * volatility + trend;
+      for (let i = 0; i < 200; i++) {
+        const change = price * (Math.random() - 0.5) * 0.02;
         const open = price, close = price + change;
-        const high = Math.max(open, close) * (1 + Math.random() * 0.006);
-        const low = Math.min(open, close) * (1 - Math.random() * 0.006);
-        const roundedTime = Math.floor(time);
-        
-        data.push({ 
-          time: roundedTime, 
-          open: parseFloat(open.toFixed(config.decimals)), 
-          high: parseFloat(high.toFixed(config.decimals)), 
-          low: parseFloat(low.toFixed(config.decimals)), 
-          close: parseFloat(close.toFixed(config.decimals)) 
-        });
-        
+        const high = Math.max(open, close) * (1 + Math.random() * 0.005);
+        const low = Math.min(open, close) * (1 - Math.random() * 0.005);
+        data.push({ time: Math.floor(time), open, high, low, close });
         time += 3600;
         price = close;
       }
@@ -626,23 +678,33 @@
     }
     
     // Switch market and update chart
-    function switchMarket(market) {
+    async function switchMarket(market) {
       if (!chart || !candleSeries) return;
       currentMarket = market;
       
       // Update chart header
       updateChartHeaderUI(market);
       
-      // Generate and set new data
-      const data = generateChartData(market);
+      // Fetch and set new data
+      const data = await fetchChartData(market, currentTimeframe);
       candleSeries.setData(data);
       chart.timeScale().fitContent();
+      
+      // Update price scale for proper y-axis
+      const config = marketConfig[market];
+      candleSeries.applyOptions({
+        priceFormat: {
+          type: 'price',
+          precision: config.decimals,
+          minMove: config.decimals === 0 ? 1 : 0.01
+        }
+      });
       
       console.log(`📊 Switched to ${market} chart`);
     }
 
     // Initialize Chart
-    function initChart() {
+    async function initChart() {
       const chartContainer = document.getElementById('tradingChart');
       if (!chartContainer) {
         console.error('Chart container not found');
@@ -672,7 +734,7 @@
         layout: { background: { type: 'solid', color: '#111114' }, textColor: 'rgba(255,255,255,0.6)' },
         grid: { vertLines: { color: 'rgba(255,255,255,0.05)' }, horzLines: { color: 'rgba(255,255,255,0.05)' } },
         crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-        rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)', scaleMargins: { top: 0.1, bottom: 0.2 } },
+        rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)', scaleMargins: { top: 0.1, bottom: 0.2 }, autoScale: true },
         timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true, secondsVisible: false },
       });
 
@@ -680,10 +742,11 @@
         upColor: '#22c55e', downColor: '#ef4444',
         borderUpColor: '#22c55e', borderDownColor: '#ef4444',
         wickUpColor: '#22c55e', wickDownColor: '#ef4444',
+        priceFormat: { type: 'price', precision: 2, minMove: 0.01 }
       });
 
-      // Generate initial ETH data
-      const data = generateChartData('ETH');
+      // Fetch real ETH data from Binance
+      const data = await fetchChartData('ETH', '1H');
       candleSeries.setData(data);
       chart.timeScale().fitContent();
 
@@ -701,6 +764,18 @@
       setTimeout(resizeChart, 500);
       
       console.log('✅ Chart initialized successfully');
+    }
+    
+    // Switch timeframe
+    async function switchTimeframe(tf) {
+      if (!chart || !candleSeries) return;
+      currentTimeframe = tf;
+      
+      const data = await fetchChartData(currentMarket, tf);
+      candleSeries.setData(data);
+      chart.timeScale().fitContent();
+      
+      console.log(`⏱️ Switched to ${tf} timeframe`);
     }
     
     // Initialize chart when DOM is ready
@@ -737,6 +812,78 @@
       });
     });
 
+    // Order type switching (Market/Limit/Stop)
+    let currentOrderType = 'market';
+    document.querySelectorAll('.order-type-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.order-type-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentOrderType = this.dataset.type;
+        
+        const limitGroup = document.getElementById('limitPriceGroup');
+        const stopGroup = document.getElementById('stopPriceGroup');
+        const limitHint = document.getElementById('limitPriceHint');
+        
+        // Get current price
+        const currentPrice = priceData[currentMarket]?.price || 0;
+        const decimals = currentMarket === 'BTC' ? 0 : 2;
+        
+        if (currentOrderType === 'limit') {
+          limitGroup.style.display = 'block';
+          stopGroup.style.display = 'none';
+          limitHint.textContent = 'Current: ' + formatPrice(currentPrice, decimals);
+          document.getElementById('limitPriceInput').placeholder = currentPrice.toFixed(decimals);
+        } else if (currentOrderType === 'stop') {
+          limitGroup.style.display = 'none';
+          stopGroup.style.display = 'block';
+          document.getElementById('stopPriceInput').placeholder = currentPrice.toFixed(decimals);
+        } else {
+          limitGroup.style.display = 'none';
+          stopGroup.style.display = 'none';
+        }
+        
+        updateOrderSummary();
+      });
+    });
+    
+    // Update order summary based on inputs
+    function updateOrderSummary() {
+      const amount = parseFloat(document.getElementById('amountInput').value) || 0;
+      const leverage = parseInt(document.getElementById('leverageSlider').value) || 10;
+      const currentPrice = priceData[currentMarket]?.price || 0;
+      const decimals = currentMarket === 'BTC' ? 0 : 2;
+      
+      // Calculate position size
+      const positionValue = amount * leverage;
+      const positionSize = currentPrice > 0 ? positionValue / currentPrice : 0;
+      
+      // Calculate liquidation price (simplified)
+      const isLong = document.querySelector('.direction-btn.long.active');
+      const liqPercent = 1 / leverage;
+      const liqPrice = isLong 
+        ? currentPrice * (1 - liqPercent + 0.01) 
+        : currentPrice * (1 + liqPercent - 0.01);
+      
+      // Get entry price based on order type
+      let entryPrice = currentPrice;
+      if (currentOrderType === 'limit') {
+        entryPrice = parseFloat(document.getElementById('limitPriceInput').value) || currentPrice;
+      } else if (currentOrderType === 'stop') {
+        entryPrice = parseFloat(document.getElementById('stopPriceInput').value) || currentPrice;
+      }
+      
+      // Update UI
+      document.getElementById('positionSize').textContent = positionSize.toFixed(4) + ' ' + currentMarket;
+      document.getElementById('entryPrice').textContent = formatPrice(entryPrice, decimals);
+      document.getElementById('liqPrice').textContent = formatPrice(liqPrice, decimals);
+    }
+    
+    // Add input listeners for real-time calculation
+    document.getElementById('amountInput').addEventListener('input', updateOrderSummary);
+    document.getElementById('leverageSlider').addEventListener('input', updateOrderSummary);
+    document.getElementById('limitPriceInput')?.addEventListener('input', updateOrderSummary);
+    document.getElementById('stopPriceInput')?.addEventListener('input', updateOrderSummary);
+
     // Tab handlers - Market switching
     document.querySelectorAll('.market-tab').forEach(tab => {
       tab.addEventListener('click', function() {
@@ -746,18 +893,17 @@
         if (market) switchMarket(market);
       });
     });
+    
+    // Timeframe switching
     document.querySelectorAll('.tf-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
+        const tf = this.textContent.trim();
+        switchTimeframe(tf);
       });
     });
-    document.querySelectorAll('.order-type-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.order-type-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-      });
-    });
+    
     document.querySelectorAll('.section-tab').forEach(tab => {
       tab.addEventListener('click', function() {
         document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
