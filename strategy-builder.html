@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strategy Builder — nexxore</title>
+  <meta name="description" content="Build and deploy custom DeFi strategies with on-chain transparency">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --bg-primary: #000000;
+      --bg-secondary: #050505;
+      --bg-card: rgba(255, 255, 255, 0.02);
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --text-muted: rgba(255, 255, 255, 0.4);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.15);
+      /* Strategy Colors */
+      --safe-green: #22c55e;
+      --safe-green-bg: rgba(34, 197, 94, 0.08);
+      --balanced-blue: #3b82f6;
+      --balanced-blue-bg: rgba(59, 130, 246, 0.08);
+      --aggressive-purple: #a855f7;
+      --aggressive-purple-bg: rgba(168, 85, 247, 0.08);
+      --degen-red: #ef4444;
+      --degen-red-bg: rgba(239, 68, 68, 0.08);
+      --accent-gold: #f59e0b;
+      --accent-cyan: #06b6d4;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(20px);
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .back-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.75rem;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--text-primary); }
+
+    .header-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .connect-btn {
+      padding: 8px 20px;
+      background: var(--text-primary);
+      color: var(--bg-primary);
+      border: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .connect-btn:hover { background: rgba(255,255,255,0.9); }
+
+    /* Main Layout */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr 380px;
+      gap: 1px;
+      background: var(--border-color);
+      min-height: calc(100vh - 60px);
+    }
+
+    @media (max-width: 1200px) {
+      .main-layout { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--bg-primary);
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .panel-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Strategy Templates */
+    .template-card {
+      padding: 20px;
+      margin-bottom: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .template-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--border-color);
+      transition: background 0.2s;
+    }
+    .template-card:hover {
+      border-color: var(--border-hover);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .template-card.selected {
+      border-color: var(--balanced-blue);
+    }
+    .template-card.selected::before {
+      background: var(--balanced-blue);
+    }
+
+    .template-card.safe::before { background: var(--safe-green); }
+    .template-card.balanced::before { background: var(--balanced-blue); }
+    .template-card.aggressive::before { background: var(--aggressive-purple); }
+    .template-card.degen::before { background: var(--degen-red); }
+
+    .template-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .template-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .template-risk {
+      font-size: 0.6rem;
+      padding: 3px 8px;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+    .template-risk.low {
+      background: var(--safe-green-bg);
+      color: var(--safe-green);
+    }
+    .template-risk.medium {
+      background: var(--balanced-blue-bg);
+      color: var(--balanced-blue);
+    }
+    .template-risk.high {
+      background: var(--aggressive-purple-bg);
+      color: var(--aggressive-purple);
+    }
+    .template-risk.extreme {
+      background: var(--degen-red-bg);
+      color: var(--degen-red);
+    }
+
+    .template-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .template-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 0.75rem;
+    }
+
+    .template-stat {
+      font-family: var(--font-mono);
+    }
+    .template-stat .label {
+      color: var(--text-muted);
+      margin-right: 4px;
+    }
+    .template-stat .value {
+      color: var(--text-primary);
+    }
+
+    /* Builder Canvas */
+    .builder-canvas {
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .canvas-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .canvas-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .canvas-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* Strategy Flow */
+    .strategy-flow {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .flow-step {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 24px;
+      position: relative;
+    }
+
+    .flow-step::after {
+      content: '↓';
+      position: absolute;
+      bottom: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+    .flow-step:last-child::after { display: none; }
+
+    .step-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .step-number {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .step-type {
+      font-size: 0.65rem;
+      padding: 4px 10px;
+      background: var(--balanced-blue-bg);
+      color: var(--balanced-blue);
+      font-weight: 500;
+    }
+
+    .step-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .step-config {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .config-item {
+      padding: 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .config-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .config-value {
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+    }
+
+    .config-select {
+      width: 100%;
+      padding: 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      font-family: var(--font-body);
+      cursor: pointer;
+    }
+    .config-select:focus {
+      outline: none;
+      border-color: var(--balanced-blue);
+    }
+
+    /* Add Step Button */
+    .add-step-btn {
+      width: 100%;
+      padding: 16px;
+      background: transparent;
+      border: 2px dashed var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 16px;
+    }
+    .add-step-btn:hover {
+      border-color: var(--balanced-blue);
+      color: var(--balanced-blue);
+    }
+
+    /* Configuration Panel */
+    .config-panel {
+      border-left: 1px solid var(--border-color);
+    }
+
+    .config-section {
+      margin-bottom: 24px;
+    }
+
+    .config-section-title {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      font-family: var(--font-mono);
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: var(--balanced-blue);
+    }
+
+    .slider-group {
+      margin-bottom: 20px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .slider-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .slider-value {
+      font-size: 0.85rem;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+    }
+
+    .slider {
+      width: 100%;
+      height: 4px;
+      background: var(--border-color);
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--text-primary);
+      cursor: pointer;
+    }
+
+    /* Risk Meter */
+    .risk-meter {
+      margin: 24px 0;
+      padding: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+    }
+
+    .risk-meter-title {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .risk-bar {
+      height: 8px;
+      background: linear-gradient(90deg, var(--safe-green), var(--accent-gold), var(--degen-red));
+      border-radius: 4px;
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .risk-indicator {
+      position: absolute;
+      top: -4px;
+      width: 16px;
+      height: 16px;
+      background: var(--text-primary);
+      border-radius: 50%;
+      transform: translateX(-50%);
+      transition: left 0.3s;
+      box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+
+    .risk-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    /* Summary Stats */
+    .summary-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border-color);
+      margin: 24px 0;
+    }
+
+    .summary-stat {
+      background: var(--bg-primary);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .summary-stat-label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .summary-stat-value {
+      font-size: 1.25rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+    }
+
+    .summary-stat-value.green { color: var(--safe-green); }
+    .summary-stat-value.blue { color: var(--balanced-blue); }
+    .summary-stat-value.purple { color: var(--aggressive-purple); }
+
+    /* Deploy Button */
+    .deploy-section {
+      margin-top: auto;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .deploy-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--balanced-blue);
+      color: #000;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .deploy-btn:hover {
+      background: #2563eb;
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+    }
+
+    .deploy-note {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 12px;
+    }
+
+    /* Scrollbar */
+    .panel::-webkit-scrollbar { width: 4px; }
+    .panel::-webkit-scrollbar-track { background: transparent; }
+    .panel::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <a href="index.html" class="back-link">← Back</a>
+      <div class="header-title">Strategy Builder</div>
+    </div>
+    <button class="connect-btn">Connect Wallet</button>
+  </header>
+
+  <!-- Main Layout -->
+  <main class="main-layout">
+    <!-- Strategy Templates -->
+    <div class="panel">
+      <div class="panel-title">Select Risk Appetite</div>
+      <div style="display:flex;gap:10px;margin-bottom:18px;">
+        <button class="risk-btn" data-risk="low" style="background:var(--safe-green-bg);color:var(--safe-green);">Low</button>
+        <button class="risk-btn" data-risk="medium" style="background:var(--balanced-blue-bg);color:var(--balanced-blue);">Medium</button>
+        <button class="risk-btn" data-risk="high" style="background:var(--aggressive-purple-bg);color:var(--aggressive-purple);">High</button>
+        <button class="risk-btn" data-risk="extreme" style="background:var(--degen-red-bg);color:var(--degen-red);">Very High</button>
+      </div>
+      <div id="template-list"></div>
+    </div>
+
+      <div class="template-card">
+        <div class="template-header">
+          <span class="template-name">Custom Strategy</span>
+          <span class="template-risk" style="background: rgba(255,255,255,0.05); color: var(--text-muted);">Custom</span>
+        </div>
+        <div class="template-desc">Build from scratch with full control</div>
+        <div class="template-stats">
+          <div class="template-stat">
+            <span class="label">APY:</span>
+            <span class="value">Variable</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Builder Canvas -->
+    <div class="panel builder-canvas">
+      <div class="canvas-header">
+        <h1 class="canvas-title">Safe Yield Strategy</h1>
+        <p class="canvas-subtitle">Configure your capital preservation strategy</p>
+      </div>
+
+      <div class="strategy-flow">
+        <div class="flow-step">
+          <div class="step-header">
+            <span class="step-number">Step 1</span>
+            <span class="step-type">Entry</span>
+          </div>
+          <div class="step-title">Deposit & Mint</div>
+          <div class="step-config">
+            <div class="config-item">
+              <div class="config-label">Collateral</div>
+              <select class="config-select">
+                <option>ETH</option>
+                <option>WBTC</option>
+                <option>USDC</option>
+                <option>DAI</option>
+              </select>
+            </div>
+            <div class="config-item">
+              <div class="config-label">Output</div>
+              <div class="config-value">nUSD</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-header">
+            <span class="step-number">Step 2</span>
+            <span class="step-type">Allocation</span>
+          </div>
+          <div class="step-title">Protocol Distribution</div>
+          <div class="step-config">
+            <div class="config-item">
+              <div class="config-label">Aave v3</div>
+              <div class="config-value" style="color: var(--safe-green);">40%</div>
+            </div>
+            <div class="config-item">
+              <div class="config-label">Compound</div>
+              <div class="config-value" style="color: var(--safe-green);">30%</div>
+            </div>
+            <div class="config-item">
+              <div class="config-label">MakerDAO</div>
+              <div class="config-value" style="color: var(--safe-green);">20%</div>
+            </div>
+            <div class="config-item">
+              <div class="config-label">Reserve</div>
+              <div class="config-value" style="color: var(--text-muted);">10%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-header">
+            <span class="step-number">Step 3</span>
+            <span class="step-type">Rebalance</span>
+          </div>
+          <div class="step-title">Auto-Rebalancing Rules</div>
+          <div class="step-config">
+            <div class="config-item">
+              <div class="config-label">Frequency</div>
+              <select class="config-select">
+                <option>Weekly</option>
+                <option>Daily</option>
+                <option>On Drift > 5%</option>
+              </select>
+            </div>
+            <div class="config-item">
+              <div class="config-label">Max Slippage</div>
+              <div class="config-value">0.5%</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="add-step-btn">+ Add Strategy Step</button>
+      </div>
+    </div>
+
+    <!-- Configuration Panel -->
+    <div class="panel config-panel">
+      <div class="panel-title">Configuration</div>
+
+      <div class="config-section">
+        <div class="config-section-title">Position Size</div>
+        <div class="input-group">
+          <label class="input-label">Deposit Amount</label>
+          <input type="text" class="input-field" placeholder="0.00" value="10,000">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Currency</label>
+          <select class="config-select">
+            <option>USDC</option>
+            <option>USDT</option>
+            <option>DAI</option>
+            <option>ETH</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <div class="config-section-title">Risk Parameters</div>
+        <div class="slider-group">
+          <div class="slider-header">
+            <span class="slider-label">Max Leverage</span>
+            <span class="slider-value">1.0x</span>
+          </div>
+          <input type="range" class="slider" min="1" max="5" value="1" step="0.5">
+        </div>
+        <div class="slider-group">
+          <div class="slider-header">
+            <span class="slider-label">Stop Loss</span>
+            <span class="slider-value">-5%</span>
+          </div>
+          <input type="range" class="slider" min="2" max="20" value="5">
+        </div>
+        <div class="slider-group">
+          <div class="slider-header">
+            <span class="slider-label">Take Profit</span>
+            <span class="slider-value">+15%</span>
+          </div>
+          <input type="range" class="slider" min="5" max="50" value="15">
+        </div>
+      </div>
+
+      <div class="risk-meter">
+        <div class="risk-meter-title">Overall Risk Level</div>
+        <div class="risk-bar">
+          <div class="risk-indicator" style="left: 15%;"></div>
+        </div>
+        <div class="risk-labels">
+          <span>Conservative</span>
+          <span>Moderate</span>
+          <span>Aggressive</span>
+        </div>
+      </div>
+
+      <div class="summary-stats">
+        <div class="summary-stat">
+          <div class="summary-stat-label">Est. APY</div>
+          <div class="summary-stat-value green">6.8%</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-label">Max DD</div>
+          <div class="summary-stat-value">-5.2%</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-label">Sharpe</div>
+          <div class="summary-stat-value blue">1.84</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-label">Risk Score</div>
+          <div class="summary-stat-value green">Low</div>
+        </div>
+      </div>
+
+      <div class="deploy-section">
+        <button class="deploy-btn">Deploy Strategy</button>
+        <p class="deploy-note">All strategies execute on-chain with deterministic logic</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Template selection
+    // Dynamic strategy builder logic
+    const templates = [
+      {
+        name: 'Safe Yield',
+        risk: 'low',
+        riskLabel: 'Low Risk',
+        desc: 'Capital preservation with blue-chip lending protocols',
+        apy: '5-8%',
+        dd: '~5%'
+      },
+      {
+        name: 'Balanced Realloc',
+        risk: 'medium',
+        riskLabel: 'Medium',
+        desc: 'Risk-adjusted yield optimization across protocols',
+        apy: '12-18%',
+        dd: '~15%'
+      },
+      {
+        name: 'Opportunistic Alpha',
+        risk: 'high',
+        riskLabel: 'High',
+        desc: 'Event-driven alpha capture with leverage',
+        apy: '25-40%',
+        dd: '~30%'
+      },
+      {
+        name: 'Tactical Degen',
+        risk: 'extreme',
+        riskLabel: 'Extreme',
+        desc: 'High-conviction, high-variance plays',
+        apy: '50%+',
+        dd: '~50%'
+      }
+    ];
+    const templateList = document.getElementById('template-list');
+    function renderTemplates(risk) {
+      templateList.innerHTML = templates.filter(t => !risk || t.risk === risk).map(t => `
+        <div class="template-card ${t.risk}">
+          <div class="template-header">
+            <span class="template-name">${t.name}</span>
+            <span class="template-risk ${t.risk}">${t.riskLabel}</span>
+          </div>
+          <div class="template-desc">${t.desc}</div>
+          <div class="template-stats">
+            <div class="template-stat"><span class="label">APY:</span><span class="value">${t.apy}</span></div>
+            <div class="template-stat"><span class="label">DD:</span><span class="value">${t.dd}</span></div>
+          </div>
+        </div>
+      `).join('');
+    }
+    renderTemplates();
+    document.querySelectorAll('.risk-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        document.querySelectorAll('.risk-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        renderTemplates(btn.dataset.risk);
+      });
+    });
+
+    // Slider value updates
+    document.querySelectorAll('.slider-group').forEach(group => {
+      const slider = group.querySelector('.slider');
+      const valueDisplay = group.querySelector('.slider-value');
+      const label = group.querySelector('.slider-label').textContent;
+      
+      slider.addEventListener('input', () => {
+        if (label.includes('Leverage')) {
+          valueDisplay.textContent = slider.value + 'x';
+        } else if (label.includes('Stop')) {
+          valueDisplay.textContent = '-' + slider.value + '%';
+        } else if (label.includes('Profit')) {
+          valueDisplay.textContent = '+' + slider.value + '%';
+        }
+        
+        // Update risk indicator
+        updateRiskMeter();
+      });
+    });
+
+    function updateRiskMeter() {
+      const leverage = parseFloat(document.querySelectorAll('.slider')[0].value);
+      const stopLoss = parseFloat(document.querySelectorAll('.slider')[1].value);
+      
+      // Simple risk calculation
+      const risk = Math.min(((leverage - 1) * 20) + (20 - stopLoss), 100);
+      document.querySelector('.risk-indicator').style.left = risk + '%';
+    }
+  </script>
+</body>
+</html>

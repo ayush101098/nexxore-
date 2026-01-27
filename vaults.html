@@ -3,280 +3,472 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vaults — Nexxore DeFi Ecosystem</title>
+  <title>Vaults — nexxore</title>
   <meta name="description" content="Choose your vault strategy: Safe Yield or Advanced Realloc">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/wallet.css">
-  
-  <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
-</head>
-<body style="background: #09090b; color: white;">
-  <nav class="navbar" style="backdrop-filter: blur(20px); background: rgba(9, 9, 11, 0.7); border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
-    <div class="container" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 24px;">
-      <div class="nav-brand"><a href="/" class="brand-link"><svg class="site-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160"><defs><linearGradient id="logoGrad" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs><g transform="translate(40,40) scale(0.9)"><circle cx="50" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/></g><g transform="translate(150,110)"><text x="0" y="0" font-family="Space Grotesk, Inter, system-ui, sans-serif" font-weight="700" font-size="56" fill="currentColor">nexxore</text></g></svg></a></div>
-      
-      <div class="nav-links" style="display: flex; align-items: center; gap: 8px;">
-        <a href="index.html" class="btn btn-outline" style="margin-right: 10px;">Home</a>
-        <a href="perps.html" class="btn btn-outline" style="margin-right: 10px;">Perps</a>
-        <button id="connectWalletBtn" class="btn btn-primary">Connect Wallet</button>
-      </div>
-    </div>
-  </nav>
-
-  <section style="padding: 120px 20px; min-height: 100vh;">
-    <div class="container" style="max-width: 1200px; margin: 0 auto;">
-      <div style="text-align: center; margin-bottom: 80px;">
-        <h1 style="font-size: 3.5rem; font-weight: 800; margin-bottom: 20px; background: linear-gradient(135deg, #a855f7, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-          Choose Your Vault Strategy
-        </h1>
-        <p style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.7); max-width: 700px; margin: 0 auto;">
-          Select a vault strategy that matches your risk profile and yield expectations.
-        </p>
-      </div>
-
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 40px; max-width: 1000px; margin: 0 auto;">
-        
-        <!-- Safe Yield Vault -->
-        <a href="safe-yield.html" style="text-decoration: none; display: block; background: rgba(255, 255, 255, 0.03); border: 2px solid rgba(34, 197, 94, 0.3); border-radius: 20px; padding: 48px; transition: all 0.3s; position: relative; overflow: hidden;">
-          <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(34, 197, 94, 0.1), transparent); pointer-events: none;"></div>
-          
-          <div style="position: relative; z-index: 2;">
-            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
-              <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
-                🛡️
-              </div>
-              <div>
-                <h2 style="font-size: 2rem; font-weight: 700; color: white; margin: 0;">Safe Yield</h2>
-                <div style="color: #22c55e; font-weight: 600; font-size: 0.9rem;">LOW RISK</div>
-              </div>
-            </div>
-
-            <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: 32px; line-height: 1.6; font-size: 1.05rem;">
-              Capital preservation focused strategy with stable yields from blue-chip lending protocols and over-collateralized positions.
-            </p>
-
-            <div style="display: grid; gap: 16px; margin-bottom: 32px;">
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="color: #22c55e; font-size: 1.2rem;">✓</span>
-                <span style="color: rgba(255, 255, 255, 0.8);">Conservative rebalancing logic</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="color: #22c55e; font-size: 1.2rem;">✓</span>
-                <span style="color: rgba(255, 255, 255, 0.8);">Minimal volatility exposure</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="color: #22c55e; font-size: 1.2rem;">✓</span>
-                <span style="color: rgba(255, 255, 255, 0.8);">Stable, predictable returns</span>
-              </div>
-            </div>
-
-            <div style="padding: 20px; background: rgba(34, 197, 94, 0.1); border-radius: 12px; margin-bottom: 24px;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                  <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 4px;">Target APY</div>
-                  <div style="font-size: 2rem; font-weight: 700; color: #22c55e; font-family: 'JetBrains Mono', monospace;">5-8%</div>
-                </div>
-                <div>
-                  <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 4px;">Max Drawdown</div>
-                  <div style="font-size: 2rem; font-weight: 700; color: #22c55e; font-family: 'JetBrains Mono', monospace;">~5%</div>
-                </div>
-              </div>
-            </div>
-
-            <div style="padding: 16px 32px; background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 10px; color: white; font-weight: 700; text-align: center; font-size: 1.1rem;">
-              Enter Safe Yield Vault →
-            </div>
-          </div>
-        </a>
-
-        <!-- Advanced Realloc Vault -->
-        <a href="advanced-realloc.html" style="text-decoration: none; display: block; background: rgba(255, 255, 255, 0.03); border: 2px solid rgba(249, 115, 22, 0.3); border-radius: 20px; padding: 48px; transition: all 0.3s; position: relative; overflow: hidden;">
-          <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(249, 115, 22, 0.1), transparent); pointer-events: none;"></div>
-          
-          <div style="position: relative; z-index: 2;">
-            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
-              <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
-                ⚙️
-              </div>
-              <div>
-                <h2 style="font-size: 2rem; font-weight: 700; color: white; margin: 0;">Advanced Realloc</h2>
-                <div style="color: #f97316; font-weight: 600; font-size: 0.9rem;">HIGHER YIELD</div>
-              </div>
-            </div>
-
-            <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: 32px; line-height: 1.6; font-size: 1.05rem;">
-              Dynamic reallocation strategy that actively seeks yield opportunities across DeFi protocols with sophisticated risk management.
-            </p>
-
-            <div style="display: grid; gap: 16px; margin-bottom: 32px;">
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="color: #f97316; font-size: 1.2rem;">✓</span>
-                <span style="color: rgba(255, 255, 255, 0.8);">Active yield optimization</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="color: #f97316; font-size: 1.2rem;">✓</span>
-                <span style="color: rgba(255, 255, 255, 0.8);">Multi-protocol exposure</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="color: #f97316; font-size: 1.2rem;">✓</span>
-                <span style="color: rgba(255, 255, 255, 0.8);">Automated rebalancing</span>
-              </div>
-            </div>
-
-            <div style="padding: 20px; background: rgba(249, 115, 22, 0.1); border-radius: 12px; margin-bottom: 24px;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                  <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 4px;">Target APY</div>
-                  <div style="font-size: 2rem; font-weight: 700; color: #f97316; font-family: 'JetBrains Mono', monospace;">12-18%</div>
-                </div>
-                <div>
-                  <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 4px;">Max Drawdown</div>
-                  <div style="font-size: 2rem; font-weight: 700; color: #f97316; font-family: 'JetBrains Mono', monospace;">~15%</div>
-                </div>
-              </div>
-            </div>
-
-            <div style="padding: 16px 32px; background: linear-gradient(135deg, #f97316, #ea580c); border-radius: 10px; color: white; font-weight: 700; text-align: center; font-size: 1.1rem;">
-              Enter Advanced Vault →
-            </div>
-          </div>
-        </a>
-
-      </div>
-
-      <!-- Comparison Table -->
-      <div style="margin-top: 80px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 16px; padding: 48px; max-width: 900px; margin-left: auto; margin-right: auto;">
-        <h3 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 32px; text-align: center;">Strategy Comparison</h3>
-        
-        <table style="width: 100%; border-collapse: collapse;">
-          <thead>
-            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
-              <th style="text-align: left; padding: 16px; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Feature</th>
-              <th style="text-align: center; padding: 16px; color: #22c55e; font-weight: 700;">Safe Yield</th>
-              <th style="text-align: center; padding: 16px; color: #f97316; font-weight: 700;">Advanced Realloc</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-              <td style="padding: 16px; color: rgba(255, 255, 255, 0.8);">Risk Level</td>
-              <td style="text-align: center; padding: 16px; color: #22c55e;">Low</td>
-              <td style="text-align: center; padding: 16px; color: #f97316;">Medium</td>
-            </tr>
-            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-              <td style="padding: 16px; color: rgba(255, 255, 255, 0.8);">Rebalancing Frequency</td>
-              <td style="text-align: center; padding: 16px;">Weekly</td>
-              <td style="text-align: center; padding: 16px;">Daily</td>
-            </tr>
-            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-              <td style="padding: 16px; color: rgba(255, 255, 255, 0.8);">Protocol Exposure</td>
-              <td style="text-align: center; padding: 16px;">2-3 Blue Chips</td>
-              <td style="text-align: center; padding: 16px;">5-8 Protocols</td>
-            </tr>
-            <tr>
-              <td style="padding: 16px; color: rgba(255, 255, 255, 0.8);">Min. Deposit</td>
-              <td style="text-align: center; padding: 16px;">$100</td>
-              <td style="text-align: center; padding: 16px;">$500</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <footer style="background: rgba(9,9,11,0.5); padding: 48px 0; margin-top: 64px; border-top: 1px solid rgba(255,255,255,0.06);">
-    <div class="container">
-      <div style="text-align: center; color: rgba(255,255,255,0.6);">
-        <p>&copy; 2026 Nexxore. Building the future of DeFi.</p>
-      </div>
-    </div>
-  </footer>
-
-  <script src="js/wallet.js"></script>
   <style>
-    a[href="safe-yield.html"]:hover,
-    a[href="advanced-realloc.html"]:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 20px 60px rgba(168, 85, 247, 0.2);
-      border-color: rgba(168, 85, 247, 0.4);
+    :root {
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --bg-primary: #000000;
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --text-muted: rgba(255, 255, 255, 0.4);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.15);
+      /* Vault Colors */
+      --safe-green: #22c55e;
+      --safe-green-bg: rgba(34, 197, 94, 0.08);
+      --safe-green-border: rgba(34, 197, 94, 0.2);
+      --advanced-purple: #a855f7;
+      --advanced-purple-bg: rgba(168, 85, 247, 0.08);
+      --advanced-purple-border: rgba(168, 85, 247, 0.2);
+      --accent-blue: #3b82f6;
+      --accent-gold: #f59e0b;
     }
     
-    /* Mobile Responsive Styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      background: var(--bg-primary);
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .back-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.75rem;
+    }
+    .back-link:hover { color: var(--text-primary); }
+
+    .header-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .connect-btn {
+      padding: 8px 20px;
+      background: var(--text-primary);
+      color: var(--bg-primary);
+      border: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Main Content */
+    .main {
+      padding: 80px 24px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .page-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .page-desc {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Vaults Grid */
+    .vaults-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border-color);
+    }
+
     @media (max-width: 768px) {
-      section > div.container > div:first-child h1 {
-        font-size: 2.5rem !important;
-      }
-      
-      section > div.container > div:first-child p {
-        font-size: 1rem !important;
-      }
-      
-      section > div.container > div[style*="grid-template-columns"] {
-        grid-template-columns: 1fr !important;
-        gap: 24px !important;
-      }
-      
-      a[href="safe-yield.html"],
-      a[href="advanced-realloc.html"] {
-        padding: 32px 24px !important;
-      }
-      
-      a[href="safe-yield.html"] h2,
-      a[href="advanced-realloc.html"] h2 {
-        font-size: 1.75rem !important;
-      }
-      
-      a[href="safe-yield.html"] p,
-      a[href="advanced-realloc.html"] p {
-        font-size: 0.95rem !important;
-      }
-      
-      .container > div[style*="margin-top: 80px"] {
-        margin-top: 48px !important;
-        padding: 32px 20px !important;
-      }
-      
-      .container > div[style*="margin-top: 80px"] h3 {
-        font-size: 1.5rem !important;
-      }
-      
-      table {
-        font-size: 0.85rem !important;
-      }
-      
-      th, td {
-        padding: 12px 8px !important;
-      }
+      .vaults-grid { grid-template-columns: 1fr; }
+    }
+
+    .vault-card {
+      background: var(--bg-primary);
+      padding: 48px 40px;
+      text-decoration: none;
+      display: block;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
     }
     
-    @media (max-width: 480px) {
-      section {
-        padding: 80px 16px !important;
-      }
-      
-      section > div.container > div:first-child h1 {
-        font-size: 2rem !important;
-      }
-      
-      a[href="safe-yield.html"] h2,
-      a[href="advanced-realloc.html"] h2 {
-        font-size: 1.5rem !important;
-      }
-      
-      a[href="safe-yield.html"] > div > div > div[style*=\"display: flex; justify-content: space-between\"] {
-        flex-direction: column !important;
-        gap: 16px !important;
-      }
-      
-      a[href="advanced-realloc.html"] > div > div > div[style*=\"display: flex; justify-content: space-between\"] {
-        flex-direction: column !important;
-        gap: 16px !important;
-      }
+    .vault-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .vault-card:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    
+    .vault-card:hover::before {
+      opacity: 1;
+    }
+    
+    .vault-card.safe-yield:hover {
+      background: var(--safe-green-bg);
+    }
+    .vault-card.safe-yield::before {
+      background: linear-gradient(90deg, transparent, var(--safe-green), transparent);
+    }
+    
+    .vault-card.advanced:hover {
+      background: var(--advanced-purple-bg);
+    }
+    .vault-card.advanced::before {
+      background: linear-gradient(90deg, transparent, var(--advanced-purple), transparent);
+    }
+
+    .vault-header {
+      margin-bottom: 24px;
+    }
+
+    .vault-risk {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .vault-name {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .vault-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .vault-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .vault-features {
+      margin-bottom: 32px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .feature-check {
+      color: var(--text-muted);
+    }
+
+    .vault-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border-color);
+      margin-bottom: 32px;
+    }
+
+    .vault-stat {
+      background: var(--bg-primary);
+      padding: 16px;
+    }
+
+    .stat-label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+    }
+    
+    .safe-yield .stat-value {
+      color: var(--safe-green);
+    }
+    
+    .advanced .stat-value {
+      color: var(--advanced-purple);
+    }
+
+    .vault-cta {
+      display: block;
+      padding: 14px 24px;
+      text-align: center;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .vault-cta:hover {
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+    
+    .safe-yield .vault-cta {
+      border-color: var(--safe-green-border);
+      color: var(--safe-green);
+    }
+    .safe-yield .vault-cta:hover {
+      background: var(--safe-green);
+      color: #000;
+      border-color: var(--safe-green);
+    }
+    
+    .advanced .vault-cta {
+      border-color: var(--advanced-purple-border);
+      color: var(--advanced-purple);
+    }
+    .advanced .vault-cta:hover {
+      background: var(--advanced-purple);
+      color: #000;
+      border-color: var(--advanced-purple);
+    }
+
+    /* Comparison Section */
+    .comparison-section {
+      margin-top: 64px;
+      padding-top: 64px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .comparison-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--border-color);
+    }
+
+    @media (max-width: 600px) {
+      .comparison-grid { grid-template-columns: 1fr; }
+    }
+
+    .comparison-cell {
+      background: var(--bg-primary);
+      padding: 16px 20px;
+      text-align: center;
+    }
+
+    .comparison-cell.header {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .comparison-cell.label {
+      text-align: left;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .comparison-cell.value {
+      font-size: 0.85rem;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
     }
   </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <a href="index.html" class="back-link">← Back</a>
+      <div class="header-title">Vaults</div>
+    </div>
+    <button class="connect-btn">Connect Wallet</button>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+    <div class="container">
+      <div class="page-header">
+        <h1 class="page-title">Choose Your Strategy</h1>
+        <p class="page-desc">Select a vault strategy that matches your risk profile and yield expectations.</p>
+      </div>
+
+      <div class="vaults-grid">
+        <!-- Safe Yield -->
+        <a href="safe-yield.html" class="vault-card safe-yield">
+          <div class="vault-header">
+            <div class="vault-risk" style="color: var(--safe-green);">● Low Risk</div>
+            <h2 class="vault-name">Safe Yield</h2>
+            <div class="vault-sub">Capital Preservation</div>
+          </div>
+          
+          <p class="vault-desc">Conservative strategy focused on stable yields from blue-chip lending protocols and over-collateralized positions.</p>
+          
+          <div class="vault-features">
+            <div class="feature-item">
+              <span class="feature-check">→</span>
+              <span>Conservative rebalancing</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-check">→</span>
+              <span>Minimal volatility exposure</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-check">→</span>
+              <span>Stable, predictable returns</span>
+            </div>
+          </div>
+
+          <div class="vault-stats">
+            <div class="vault-stat">
+              <div class="stat-label">Target APY</div>
+              <div class="stat-value">5-8%</div>
+            </div>
+            <div class="vault-stat">
+              <div class="stat-label">Max Drawdown</div>
+              <div class="stat-value">~5%</div>
+            </div>
+          </div>
+
+          <div class="vault-cta">Enter Safe Yield →</div>
+        </a>
+
+        <!-- Advanced Realloc -->
+        <a href="advanced-realloc.html" class="vault-card advanced">
+          <div class="vault-header">
+            <div class="vault-risk" style="color: var(--advanced-purple);">◆ Higher Yield</div>
+            <h2 class="vault-name">Advanced Realloc</h2>
+            <div class="vault-sub">Active Optimization</div>
+          </div>
+          
+          <p class="vault-desc">Dynamic strategy that actively seeks yield opportunities across DeFi protocols with sophisticated risk management.</p>
+          
+          <div class="vault-features">
+            <div class="feature-item">
+              <span class="feature-check">→</span>
+              <span>Active yield optimization</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-check">→</span>
+              <span>Multi-protocol exposure</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-check">→</span>
+              <span>Automated rebalancing</span>
+            </div>
+          </div>
+
+          <div class="vault-stats">
+            <div class="vault-stat">
+              <div class="stat-label">Target APY</div>
+              <div class="stat-value">12-18%</div>
+            </div>
+            <div class="vault-stat">
+              <div class="stat-label">Max Drawdown</div>
+              <div class="stat-value">~15%</div>
+            </div>
+          </div>
+
+          <div class="vault-cta">Enter Advanced Vault →</div>
+        </a>
+      </div>
+
+      <!-- Comparison -->
+      <div class="comparison-section">
+        <h3 class="comparison-title">Strategy Comparison</h3>
+        <div class="comparison-grid">
+          <div class="comparison-cell header">Metric</div>
+          <div class="comparison-cell header">Safe Yield</div>
+          <div class="comparison-cell header">Advanced</div>
+          
+          <div class="comparison-cell label">Risk Level</div>
+          <div class="comparison-cell value">Low</div>
+          <div class="comparison-cell value">Medium-High</div>
+          
+          <div class="comparison-cell label">Target APY</div>
+          <div class="comparison-cell value">5-8%</div>
+          <div class="comparison-cell value">12-18%</div>
+          
+          <div class="comparison-cell label">Rebalancing</div>
+          <div class="comparison-cell value">Weekly</div>
+          <div class="comparison-cell value">Dynamic</div>
+          
+          <div class="comparison-cell label">Protocol Exposure</div>
+          <div class="comparison-cell value">Blue-chip only</div>
+          <div class="comparison-cell value">Diversified</div>
+          
+          <div class="comparison-cell label">Ideal For</div>
+          <div class="comparison-cell value">Treasuries</div>
+          <div class="comparison-cell value">Active capital</div>
+        </div>
+      </div>
+    </div>
+  </main>
 </body>
 </html>
