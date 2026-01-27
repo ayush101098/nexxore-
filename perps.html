@@ -109,7 +109,7 @@
 
     /* Chart Container */
     .chart-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; height: 450px; position: relative; }
-    #tradingChart { width: 100%; height: 100%; position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+    #tradingChart { width: 100%; height: 100%; }
 
     /* Chart Stats Row */
     .chart-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
@@ -550,14 +550,27 @@
     // Initialize Chart
     function initChart() {
       const chartContainer = document.getElementById('tradingChart');
-      if (!chartContainer || typeof LightweightCharts === 'undefined') {
-        console.error('Chart container or LightweightCharts not found');
+      if (!chartContainer) {
+        console.error('Chart container not found');
         return;
       }
       
-      // Get actual dimensions
-      const width = chartContainer.clientWidth || 800;
-      const height = chartContainer.clientHeight || 450;
+      // Check if LightweightCharts is available
+      if (typeof LightweightCharts === 'undefined') {
+        console.error('LightweightCharts library not loaded');
+        chartContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ef4444;font-size:0.85rem;">Chart library failed to load</div>';
+        return;
+      }
+      
+      // Clear loading message
+      chartContainer.innerHTML = '';
+      
+      // Get actual dimensions from parent container
+      const parentContainer = chartContainer.parentElement;
+      const width = parentContainer ? parentContainer.clientWidth - 2 : 800;
+      const height = 448;
+      
+      console.log('Creating chart with dimensions:', width, 'x', height);
       
       const chart = LightweightCharts.createChart(chartContainer, {
         width: width,
@@ -626,14 +639,18 @@
 
       // Resize handler
       const resizeChart = () => {
-        const newWidth = chartContainer.clientWidth || 800;
-        const newHeight = chartContainer.clientHeight || 450;
+        const parentContainer = chartContainer.parentElement;
+        const newWidth = parentContainer ? parentContainer.clientWidth - 2 : 800;
+        const newHeight = 448;
         chart.applyOptions({ width: newWidth, height: newHeight });
       };
       window.addEventListener('resize', resizeChart);
       
       // Initial resize after a small delay to ensure DOM is ready
       setTimeout(resizeChart, 100);
+      setTimeout(resizeChart, 500);
+      
+      console.log('✅ Chart initialized successfully');
     }
     
     // Initialize chart when DOM is ready
