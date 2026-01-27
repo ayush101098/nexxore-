@@ -130,6 +130,32 @@
     .timeline-title { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 8px; }
     .timeline-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
     
+    /* Pricing Section */
+    .pricing-section { padding: 80px 24px; background: var(--bg-elevated); }
+    .pricing-section .container { max-width: 900px; margin: 0 auto; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 48px; }
+    .pricing-card { padding: 32px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; position: relative; transition: all 0.3s; }
+    .pricing-card:hover { border-color: rgba(168, 85, 247, 0.3); transform: translateY(-4px); }
+    .pricing-card.featured { border-color: var(--accent); }
+    .pricing-card.featured::before { content: 'RECOMMENDED'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); padding: 6px 16px; background: var(--accent); border-radius: 20px; font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; }
+    .pricing-badge { display: inline-block; padding: 6px 14px; background: rgba(168, 85, 247, 0.1); border-radius: 20px; font-size: 0.7rem; font-weight: 600; color: var(--accent); margin-bottom: 16px; }
+    .pricing-card h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
+    .pricing-price { display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px; }
+    .pricing-price .amount { font-size: 2.5rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .pricing-price .period { font-size: 0.9rem; color: var(--text-muted); }
+    .pricing-desc { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
+    .pricing-features { list-style: none; margin-bottom: 28px; }
+    .pricing-features li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: var(--text-secondary); }
+    .pricing-features li:last-child { border-bottom: none; }
+    .pricing-features li svg { width: 18px; height: 18px; color: var(--accent-secondary); flex-shrink: 0; }
+    .pricing-features li.disabled { opacity: 0.4; }
+    .pricing-features li.disabled svg { color: var(--text-muted); }
+    .pricing-btn { width: 100%; padding: 14px 24px; background: var(--accent); border: none; border-radius: 10px; color: white; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .pricing-btn:hover { background: #9333ea; transform: translateY(-2px); }
+    .pricing-btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+    .pricing-btn.secondary:hover { background: var(--bg-elevated); border-color: var(--accent); color: var(--text); }
+    .pricing-note { text-align: center; margin-top: 32px; font-size: 0.8rem; color: var(--text-muted); }
+    
     /* CTA */
     .cta-section { padding: 80px 24px; text-align: center; }
     .cta-section .container { max-width: 600px; margin: 0 auto; }
@@ -152,6 +178,7 @@
       .schema-block { grid-column: span 1; }
       .pipeline-row { flex-direction: column; }
       .cta-buttons { flex-direction: column; align-items: center; }
+      .pricing-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -516,69 +543,105 @@
     </div>
   </section>
 
-  <!-- Build Timeline -->
-  <section class="timeline-section">
+  <!-- Pricing / Access -->
+  <section class="pricing-section" id="pricing">
     <div class="container">
-      <h2 class="section-title">2-Week Execution Plan</h2>
-      <p class="section-desc">From zero to autonomous alpha generation</p>
+      <h2 class="section-title">Get Access to Agents</h2>
+      <p class="section-desc">Unlock autonomous alpha generation with our agent system. Simple, transparent pricing.</p>
       
-      <div class="timeline">
-        <div class="timeline-item">
-          <div class="timeline-dot"></div>
-          <div class="timeline-content">
-            <div class="timeline-days">Day 1–2</div>
-            <div class="timeline-title">Research Agent</div>
-            <div class="timeline-desc">cookie.fun + Twitter ingestion. Hypothesis JSON output. Feature extraction pipeline.</div>
+      <div class="pricing-grid">
+        <!-- Free Tier -->
+        <div class="pricing-card">
+          <div class="pricing-badge">Free Tier</div>
+          <h3>Explorer</h3>
+          <div class="pricing-price">
+            <span class="amount">$0</span>
+            <span class="period">/ month</span>
           </div>
+          <p class="pricing-desc">Get started with basic access to understand the system.</p>
+          <ul class="pricing-features">
+            <li>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              View agent architecture
+            </li>
+            <li>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              Research Agent (read-only)
+            </li>
+            <li>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              Daily market summaries
+            </li>
+            <li class="disabled">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Portfolio Optimiser
+            </li>
+            <li class="disabled">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Execution Agent
+            </li>
+            <li class="disabled">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Performance Analytics
+            </li>
+          </ul>
+          <button class="pricing-btn secondary">Get Started Free</button>
         </div>
         
-        <div class="timeline-item">
-          <div class="timeline-dot"></div>
-          <div class="timeline-content">
-            <div class="timeline-days">Day 3–4</div>
-            <div class="timeline-title">Portfolio Optimiser</div>
-            <div class="timeline-desc">Markowitz implementation. Stablecoin buffer logic. Risk budget constraints.</div>
+        <!-- Pro Tier -->
+        <div class="pricing-card featured">
+          <div class="pricing-badge">Full Access</div>
+          <h3>Agent Pro</h3>
+          <div class="pricing-price">
+            <span class="amount">$10</span>
+            <span class="period">/ month</span>
           </div>
-        </div>
-        
-        <div class="timeline-item">
-          <div class="timeline-dot"></div>
-          <div class="timeline-content">
-            <div class="timeline-days">Day 5–6</div>
-            <div class="timeline-title">Hyperliquid Testnet</div>
-            <div class="timeline-desc">Single asset execution first. Order state management. Failure recovery.</div>
-          </div>
-        </div>
-        
-        <div class="timeline-item">
-          <div class="timeline-dot"></div>
-          <div class="timeline-content">
-            <div class="timeline-days">Day 7–10</div>
-            <div class="timeline-title">Integration & Testing</div>
-            <div class="timeline-desc">Connect all agents. End-to-end flow testing. Edge case handling.</div>
-          </div>
-        </div>
-        
-        <div class="timeline-item">
-          <div class="timeline-dot"></div>
-          <div class="timeline-content">
-            <div class="timeline-days">Day 11–14</div>
-            <div class="timeline-title">Performance Agent & Feedback</div>
-            <div class="timeline-desc">Metrics dashboard. Strategy scoring. Feedback loop implementation. This is where Nexxore learns.</div>
-          </div>
+          <p class="pricing-desc">Full access to all four agents with autonomous execution capabilities.</p>
+          <ul class="pricing-features">
+            <li>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <strong>Research Agent</strong> — Full hypothesis feed
+            </li>
+            <li>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <strong>Portfolio Optimiser</strong> — Custom weights
+            </li>
+            <li>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <strong>Execution Agent</strong> — Hyperliquid integration
+            </li>
+            <li>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <strong>Performance Agent</strong> — Full analytics
+            </li>
+            <li>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              Real-time alerts & notifications
+            </li>
+            <li>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              Priority support & Discord access
+            </li>
+          </ul>
+          <button class="pricing-btn">Get Full Access — $10/mo</button>
         </div>
       </div>
+      
+      <p class="pricing-note">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 6px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Cancel anytime. No lock-in. Pay with crypto or card.
+      </p>
     </div>
   </section>
 
   <!-- CTA -->
   <section class="cta-section">
     <div class="container">
-      <h2>Ready to Build the Future of DeFi?</h2>
-      <p>Join the waitlist for early access to Nexxore's autonomous agent system.</p>
+      <h2>Ready to Automate Your Alpha?</h2>
+      <p>Join hundreds of traders using Nexxore's autonomous agent system.</p>
       <div class="cta-buttons">
-        <a href="index.html#waitlist" class="btn-primary btn-large">Join Waitlist</a>
-        <a href="https://github.com/nexxore" class="btn-secondary btn-large" target="_blank">View on GitHub</a>
+        <a href="#pricing" class="btn-primary btn-large">Get Access Now</a>
+        <a href="index.html" class="btn-secondary btn-large">Back to Home</a>
       </div>
     </div>
   </section>
