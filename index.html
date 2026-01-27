@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>nexxore — DeFi Ecosystem</title>
+  <link rel="icon" type="image/svg+xml" href="frontend/assets/icons/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -395,8 +396,8 @@
         <div class="perps-left">
           <div class="perps-price">
             <span class="symbol">ETH/USD</span>
-            <span class="price">$3,245.80</span>
-            <span class="change up">+2.4%</span>
+            <span class="price" id="ethPrice">$--</span>
+            <span class="change up" id="ethChange">--%</span>
           </div>
           <div class="stats-row">
             <div class="stat-card">
@@ -540,5 +541,29 @@
       </div>
     </div>
   </footer>
+
+  <script>
+    // Real-time ETH price fetcher
+    async function fetchEthPrice() {
+      try {
+        const res = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT');
+        const data = await res.json();
+        const price = parseFloat(data.lastPrice);
+        const change = parseFloat(data.priceChangePercent);
+        
+        document.getElementById('ethPrice').textContent = '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        
+        const changeEl = document.getElementById('ethChange');
+        changeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+        changeEl.className = 'change ' + (change >= 0 ? 'up' : 'down');
+      } catch (err) {
+        console.log('Price fetch error:', err);
+      }
+    }
+    
+    // Fetch on load and every 10 seconds
+    fetchEthPrice();
+    setInterval(fetchEthPrice, 10000);
+  </script>
 </body>
 </html>
