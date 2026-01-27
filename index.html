@@ -105,7 +105,7 @@
     /* Perps */
     .perps { border-top: 1px solid var(--border); }
     .perps-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 20px; font-size: 0.7rem; font-weight: 600; color: var(--accent-secondary); margin-bottom: 16px; }
-    .perps-content { display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; align-items: center; max-width: 900px; margin: 0 auto 28px; }
+    .perps-content { display: grid; grid-template-columns: 1fr 1.4fr; gap: 28px; align-items: center; max-width: 900px; margin: 0 auto 28px; }
     .perps-left { text-align: left; }
     .perps-price { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
     .perps-price .symbol { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
@@ -117,25 +117,19 @@
     .stat-card { padding: 12px 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; text-align: center; min-width: 100px; }
     .stat-card .label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
     .stat-card .value { font-size: 0.95rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
-    /* Mini Chart */
-    .mini-chart { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; height: 200px; position: relative; overflow: hidden; }
-    .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .chart-pair { font-size: 0.8rem; font-weight: 600; color: var(--text); }
-    .chart-timeframes { display: flex; gap: 4px; }
-    .chart-tf { padding: 4px 8px; font-size: 0.65rem; background: transparent; border: none; color: var(--text-muted); cursor: pointer; border-radius: 4px; transition: all 0.2s; }
-    .chart-tf.active { background: rgba(168, 85, 247, 0.2); color: var(--accent); }
-    .chart-canvas { position: relative; height: 140px; display: flex; align-items: flex-end; justify-content: space-between; gap: 3px; padding: 0 4px; }
-    .candle { display: flex; flex-direction: column; align-items: center; width: 8px; position: relative; }
-    .candle .wick { width: 1px; background: currentColor; }
-    .candle .body { width: 6px; border-radius: 1px; min-height: 4px; }
-    .candle.green { color: #22c55e; }
-    .candle.green .body { background: #22c55e; }
-    .candle.red { color: #ef4444; }
-    .candle.red .body { background: #ef4444; }
-    .chart-grid { position: absolute; top: 28px; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
-    .chart-grid-line { height: 1px; background: rgba(255,255,255,0.03); }
-    @keyframes chartPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-    .mini-chart::after { content: ''; position: absolute; top: 0; right: 0; width: 60px; height: 100%; background: linear-gradient(90deg, transparent, var(--bg-card)); pointer-events: none; }
+    /* Chart */
+    .chart-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; }
+    .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .chart-info { display: flex; align-items: center; gap: 12px; }
+    .chart-pair { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+    .chart-price-sm { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--accent-secondary); }
+    .chart-timeframes { display: flex; gap: 2px; background: var(--bg-elevated); padding: 3px; border-radius: 6px; }
+    .chart-tf { padding: 5px 10px; font-size: 0.7rem; background: transparent; border: none; color: var(--text-muted); cursor: pointer; border-radius: 4px; transition: all 0.2s; font-weight: 500; }
+    .chart-tf.active { background: var(--bg-card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .chart-svg { width: 100%; height: 140px; display: block; }
+    .chart-line { fill: none; stroke: #22c55e; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .chart-area { fill: url(#chartGradient); }
+    .chart-dot { fill: #22c55e; filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.5)); }
     
     /* Agents */
     .agents { background: var(--bg-elevated); }
@@ -424,59 +418,33 @@
           </div>
         </div>
         
-        <div class="mini-chart">
+        <div class="chart-container">
           <div class="chart-header">
-            <span class="chart-pair">ETH-PERP</span>
+            <div class="chart-info">
+              <span class="chart-pair">ETH-PERP</span>
+              <span class="chart-price-sm">$3,245.80</span>
+            </div>
             <div class="chart-timeframes">
               <button class="chart-tf">1H</button>
               <button class="chart-tf active">4H</button>
               <button class="chart-tf">1D</button>
             </div>
           </div>
-          <div class="chart-grid">
-            <div class="chart-grid-line"></div>
-            <div class="chart-grid-line"></div>
-            <div class="chart-grid-line"></div>
-            <div class="chart-grid-line"></div>
-          </div>
-          <div class="chart-canvas" id="miniChart"></div>
+          <svg class="chart-svg" viewBox="0 0 400 140" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(34, 197, 94, 0.3)"/>
+                <stop offset="100%" stop-color="rgba(34, 197, 94, 0)"/>
+              </linearGradient>
+            </defs>
+            <path class="chart-area" d="M0,100 C20,95 40,80 60,85 C80,90 100,70 120,65 C140,60 160,75 180,70 C200,65 220,50 240,55 C260,60 280,45 300,40 C320,35 340,50 360,35 C380,20 400,25 400,25 L400,140 L0,140 Z"/>
+            <path class="chart-line" d="M0,100 C20,95 40,80 60,85 C80,90 100,70 120,65 C140,60 160,75 180,70 C200,65 220,50 240,55 C260,60 280,45 300,40 C320,35 340,50 360,35 C380,20 400,25 400,25"/>
+            <circle class="chart-dot" cx="400" cy="25" r="4"/>
+          </svg>
         </div>
       </div>
     </div>
   </section>
-  
-  <script>
-    // Generate mini candlestick chart
-    (function() {
-      const canvas = document.getElementById('miniChart');
-      if (!canvas) return;
-      const candles = [];
-      let basePrice = 65;
-      for (let i = 0; i < 28; i++) {
-        const change = (Math.random() - 0.48) * 12;
-        const open = basePrice;
-        const close = basePrice + change;
-        const high = Math.max(open, close) + Math.random() * 5;
-        const low = Math.min(open, close) - Math.random() * 5;
-        candles.push({ open, close, high, low, isGreen: close >= open });
-        basePrice = close;
-      }
-      const maxH = Math.max(...candles.map(c => c.high));
-      const minL = Math.min(...candles.map(c => c.low));
-      const range = maxH - minL;
-      const chartH = 130;
-      candles.forEach(c => {
-        const div = document.createElement('div');
-        div.className = 'candle ' + (c.isGreen ? 'green' : 'red');
-        const wickTop = ((maxH - c.high) / range) * chartH;
-        const wickH = ((c.high - c.low) / range) * chartH;
-        const bodyTop = ((maxH - Math.max(c.open, c.close)) / range) * chartH;
-        const bodyH = Math.max(4, (Math.abs(c.close - c.open) / range) * chartH);
-        div.innerHTML = `<div class="wick" style="height:${wickH}px;margin-top:${wickTop}px;"></div><div class="body" style="height:${bodyH}px;position:absolute;top:${bodyTop}px;"></div>`;
-        canvas.appendChild(div);
-      });
-    })();
-  </script>
 
   <section class="agents">
     <div class="container">
