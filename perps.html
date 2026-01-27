@@ -4,687 +4,1065 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NX-Perps — Perpetuals Trading | nexxore</title>
-  <meta name="description" content="Trade perpetuals with on-chain transparency. No CEX risk. Modular architecture.">
-  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
   
   <style>
     :root {
-      --font-body: 'Inter', -apple-system, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-      --bg-primary: #000000;
-      --bg-secondary: #050505;
-      --bg-card: rgba(255, 255, 255, 0.02);
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card: #16161f;
+      --bg-elevated: #1a1a24;
       --text-primary: #ffffff;
-      --text-secondary: rgba(255, 255, 255, 0.6);
-      --text-muted: rgba(255, 255, 255, 0.4);
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --text-muted: rgba(255, 255, 255, 0.45);
       --border-color: rgba(255, 255, 255, 0.08);
       --border-hover: rgba(255, 255, 255, 0.15);
-      /* Trading Colors */
-      --long-green: #22c55e;
-      --long-green-bg: rgba(34, 197, 94, 0.1);
-      --long-green-border: rgba(34, 197, 94, 0.3);
-      --short-red: #ef4444;
-      --short-red-bg: rgba(239, 68, 68, 0.1);
-      --short-red-border: rgba(239, 68, 68, 0.3);
-      --accent-blue: #3b82f6;
+      --long-green: #00d26a;
+      --long-green-glow: rgba(0, 210, 106, 0.4);
+      --long-green-bg: rgba(0, 210, 106, 0.08);
+      --short-red: #ff4757;
+      --short-red-glow: rgba(255, 71, 87, 0.4);
+      --short-red-bg: rgba(255, 71, 87, 0.08);
+      --accent-blue: #4f8eff;
       --accent-purple: #a855f7;
-      --warning-yellow: #f59e0b;
+      --accent-cyan: #00d4ff;
+      --warning-orange: #ff9500;
+      --gradient-primary: linear-gradient(135deg, #a855f7, #00d26a);
+      --gradient-blue: linear-gradient(135deg, #4f8eff, #00d4ff);
     }
     
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     body {
-      font-family: var(--font-body);
+      font-family: 'Inter', -apple-system, sans-serif;
       background: var(--bg-primary);
       color: var(--text-secondary);
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 24px;
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 20px var(--long-green-glow); }
+      50% { box-shadow: 0 0 40px var(--long-green-glow); }
+    }
+    @keyframes priceUp {
+      0% { background: var(--long-green-bg); }
+      100% { background: transparent; }
+    }
+    @keyframes priceDown {
+      0% { background: var(--short-red-bg); }
+      100% { background: transparent; }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .animate-in { animation: fadeIn 0.5s ease-out forwards; }
+    .animate-slide { animation: slideIn 0.4s ease-out forwards; }
 
     /* Header */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 14px 24px;
+      padding: 12px 24px;
+      background: linear-gradient(180deg, var(--bg-secondary), var(--bg-primary));
       border-bottom: 1px solid var(--border-color);
-      background: var(--bg-primary);
       position: sticky;
       top: 0;
       z-index: 100;
+      backdrop-filter: blur(20px);
     }
 
-    .header-left {
+    .header-left { display: flex; align-items: center; gap: 24px; }
+
+    .logo {
       display: flex;
       align-items: center;
-      gap: 20px;
-    }
-
-    .back-link {
-      color: var(--text-muted);
+      gap: 10px;
       text-decoration: none;
-      font-size: 0.75rem;
-      transition: color 0.15s;
     }
-    .back-link:hover { color: var(--text-primary); }
-
-    .header-title {
-      font-size: 1rem;
-      font-weight: 600;
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--gradient-primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: white;
+    }
+    .logo-text {
+      font-size: 1.1rem;
+      font-weight: 700;
       color: var(--text-primary);
     }
 
-    .header-right {
+    .nav-links { display: flex; gap: 8px; }
+    .nav-link {
+      padding: 8px 16px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .nav-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+    .nav-link.active { color: var(--text-primary); background: rgba(255,255,255,0.08); }
+
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    .network-badge {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(0, 210, 106, 0.1);
+      border: 1px solid rgba(0, 210, 106, 0.2);
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--long-green);
     }
-
-    .status-badge {
-      padding: 5px 12px;
-      border: 1px solid var(--border-color);
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-muted);
+    .network-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--long-green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
     }
 
     .connect-btn {
-      padding: 8px 20px;
-      background: var(--text-primary);
-      color: var(--bg-primary);
+      padding: 10px 24px;
+      background: var(--gradient-primary);
+      color: white;
       border: none;
-      font-size: 0.75rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
     }
-    .connect-btn:hover { background: rgba(255,255,255,0.9); }
+    .connect-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(168, 85, 247, 0.4);
+    }
 
     /* Stats Bar */
     .stats-bar {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 1px;
-      background: var(--border-color);
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .stat-card {
-      background: var(--bg-primary);
-      padding: 16px 20px;
-      text-align: center;
-    }
-
-    .stat-label {
-      font-size: 0.6rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
-    }
-
-    .stat-value {
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      font-family: var(--font-mono);
-    }
-
-    /* Market Selector */
-    .market-selector {
       display: flex;
-      gap: 0;
-      padding: 0;
+      justify-content: center;
+      gap: 2px;
+      padding: 16px 24px;
+      background: var(--bg-secondary);
       border-bottom: 1px solid var(--border-color);
       overflow-x: auto;
     }
 
-    .market-btn {
-      padding: 14px 24px;
-      background: transparent;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: var(--font-body);
-      white-space: nowrap;
+    .stat-item {
+      padding: 12px 28px;
+      text-align: center;
+      background: var(--bg-card);
+      border-radius: 12px;
+      min-width: 140px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
     }
-    .market-btn:hover { color: var(--text-secondary); }
-    .market-btn.active {
+    .stat-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--gradient-primary);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .stat-item:hover::before { opacity: 1; }
+    .stat-item:hover { background: var(--bg-elevated); transform: translateY(-2px); }
+
+    .stat-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 1.1rem;
+      font-weight: 700;
       color: var(--text-primary);
-      border-bottom-color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .stat-value.green { color: var(--long-green); }
+    .stat-value.cyan { color: var(--accent-cyan); }
+
+    /* Market Tabs */
+    .market-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 12px 24px;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-color);
+      overflow-x: auto;
     }
 
-    /* Main Grid */
-    .main-grid {
+    .market-tab {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      min-width: 160px;
+    }
+    .market-tab:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-elevated);
+    }
+    .market-tab.active {
+      background: var(--bg-elevated);
+      border-color: var(--accent-purple);
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+    }
+
+    .market-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.7rem;
+    }
+    .market-icon.eth { background: linear-gradient(135deg, #627eea, #8c9eff); }
+    .market-icon.btc { background: linear-gradient(135deg, #f7931a, #ffb347); }
+    .market-icon.sol { background: linear-gradient(135deg, #9945ff, #14f195); }
+    .market-icon.arb { background: linear-gradient(135deg, #28a0f0, #96bedc); }
+
+    .market-info { flex: 1; }
+    .market-name { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); }
+    .market-pair { font-size: 0.7rem; color: var(--text-muted); }
+
+    .market-price { text-align: right; }
+    .market-price-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .market-change {
+      font-size: 0.7rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .market-change.up { color: var(--long-green); }
+    .market-change.down { color: var(--short-red); }
+
+    /* Main Layout */
+    .main-layout {
       display: grid;
-      grid-template-columns: 1fr 360px;
-      gap: 1px;
-      background: var(--border-color);
+      grid-template-columns: 1fr 380px;
       min-height: calc(100vh - 200px);
     }
 
-    @media (max-width: 1024px) {
-      .main-grid { grid-template-columns: 1fr; }
+    @media (max-width: 1100px) {
+      .main-layout { grid-template-columns: 1fr; }
     }
 
-    /* Chart Panel */
-    .chart-panel {
-      background: var(--bg-primary);
+    /* Chart Section */
+    .chart-section {
       padding: 20px;
+      background: var(--bg-primary);
+      animation: fadeIn 0.5s ease-out;
     }
 
     .chart-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
       flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .chart-title {
-      display: flex;
-      align-items: center;
       gap: 16px;
     }
 
-    .chart-symbol {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
+    .chart-title-section { display: flex; align-items: center; gap: 20px; }
 
+    .chart-asset {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .chart-asset-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #627eea, #8c9eff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 15px rgba(98, 126, 234, 0.3);
+    }
+    .chart-asset-name { font-size: 1.3rem; font-weight: 700; color: var(--text-primary); }
+    .chart-asset-pair { font-size: 0.8rem; color: var(--text-muted); }
+
+    .live-price-display {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
     .live-price {
-      font-size: 1.5rem;
-      font-weight: 600;
-      font-family: var(--font-mono);
+      font-size: 2rem;
+      font-weight: 700;
       color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      transition: all 0.3s;
     }
+    .live-price.flash-up { animation: priceUp 0.5s ease-out; }
+    .live-price.flash-down { animation: priceDown 0.5s ease-out; }
 
-    .price-change {
-      font-size: 0.75rem;
-      padding: 4px 8px;
-      font-family: var(--font-mono);
+    .price-change-badge {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
     }
-    .price-change.positive {
+    .price-change-badge.up {
       background: var(--long-green-bg);
-      border: 1px solid var(--long-green-border);
       color: var(--long-green);
+      border: 1px solid rgba(0, 210, 106, 0.3);
     }
-    .price-change.negative {
+    .price-change-badge.down {
       background: var(--short-red-bg);
-      border: 1px solid var(--short-red-border);
       color: var(--short-red);
+      border: 1px solid rgba(255, 71, 87, 0.3);
     }
 
-    .timeframe-selector {
+    .chart-controls { display: flex; gap: 8px; }
+
+    .timeframe-btns {
       display: flex;
       gap: 2px;
+      background: var(--bg-card);
+      padding: 4px;
+      border-radius: 8px;
     }
-
-    .timeframe-btn {
-      padding: 6px 12px;
+    .tf-btn {
+      padding: 8px 14px;
       background: transparent;
-      border: 1px solid var(--border-color);
-      color: var(--text-muted);
-      font-size: 0.7rem;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: var(--font-body);
-    }
-    .timeframe-btn:hover { color: var(--text-secondary); border-color: var(--border-hover); }
-    .timeframe-btn.active {
-      background: rgba(255,255,255,0.05);
-      color: var(--text-primary);
-      border-color: var(--border-hover);
-    }
-
-    #tradingChart {
-      width: 100%;
-      height: 400px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-    }
-
-    .chart-stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
-      background: var(--border-color);
-      margin-top: 16px;
-    }
-
-    .chart-stat {
-      background: var(--bg-primary);
-      padding: 12px;
-      text-align: center;
-    }
-
-    .chart-stat-label {
-      font-size: 0.6rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-
-    .chart-stat-value {
-      font-size: 0.85rem;
-      font-family: var(--font-mono);
-      color: var(--text-primary);
-    }
-
-    /* Order Panel */
-    .order-panel {
-      background: var(--bg-primary);
-      padding: 20px;
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .panel-title {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .position-tabs {
-      display: flex;
-      gap: 0;
-      margin-bottom: 20px;
-      background: var(--border-color);
-    }
-
-    .position-tab {
-      flex: 1;
-      padding: 10px;
-      background: var(--bg-primary);
       border: none;
       color: var(--text-muted);
       font-size: 0.75rem;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.15s;
-      font-family: var(--font-body);
+      border-radius: 6px;
+      transition: all 0.2s;
     }
-    .position-tab:hover { color: var(--text-secondary); }
-    .position-tab.active {
-      color: var(--text-primary);
-      background: rgba(255,255,255,0.03);
-    }
-    .position-tab.active.long {
-      color: var(--long-green);
-      background: var(--long-green-bg);
-    }
-    .position-tab.active.short {
-      color: var(--short-red);
-      background: var(--short-red-bg);
+    .tf-btn:hover { color: var(--text-secondary); }
+    .tf-btn.active {
+      background: var(--accent-purple);
+      color: white;
+      box-shadow: 0 2px 10px rgba(168, 85, 247, 0.3);
     }
 
-    .input-group {
-      margin-bottom: 16px;
+    .chart-type-btns {
+      display: flex;
+      gap: 2px;
+      background: var(--bg-card);
+      padding: 4px;
+      border-radius: 8px;
     }
-
-    .input-label {
-      display: block;
-      font-size: 0.7rem;
+    .chart-type-btn {
+      padding: 8px 12px;
+      background: transparent;
+      border: none;
       color: var(--text-muted);
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+    .chart-type-btn:hover { color: var(--text-secondary); }
+    .chart-type-btn.active { background: rgba(255,255,255,0.1); color: var(--text-primary); }
 
-    .input-field {
-      width: 100%;
-      padding: 12px;
+    /* Chart Container */
+    .chart-container {
+      position: relative;
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      font-size: 0.9rem;
-      font-family: var(--font-mono);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
     }
-    .input-field:focus {
-      outline: none;
-      border-color: var(--border-hover);
-    }
-    .input-field::placeholder { color: var(--text-muted); }
 
-    .leverage-display {
+    #tradingChart {
+      width: 100%;
+      height: 480px;
+    }
+
+    .chart-overlay {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .chart-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(10, 10, 15, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 8px;
+      font-size: 0.7rem;
+    }
+    .indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .indicator-dot.ma20 { background: var(--accent-cyan); }
+    .indicator-dot.ma50 { background: var(--warning-orange); }
+
+    /* Chart Stats */
+    .chart-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .chart-stat-card {
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .chart-stat-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    .chart-stat-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .chart-stat-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Order Panel */
+    .order-panel {
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border-color);
+      padding: 20px;
+      animation: slideIn 0.4s ease-out;
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .order-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .order-type-toggle {
+      display: flex;
+      gap: 2px;
+      background: var(--bg-card);
+      padding: 4px;
+      border-radius: 8px;
+    }
+    .order-type-btn {
+      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .order-type-btn:hover { color: var(--text-secondary); }
+    .order-type-btn.active {
+      background: rgba(255,255,255,0.1);
+      color: var(--text-primary);
+    }
+
+    /* Direction Toggle */
+    .direction-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .direction-btn {
+      padding: 16px;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .direction-btn .icon {
+      font-size: 1.2rem;
+    }
+    .direction-btn .label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .direction-btn .desc {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    .direction-btn.long:hover, .direction-btn.long.active {
+      border-color: var(--long-green);
+      background: var(--long-green-bg);
+      box-shadow: 0 0 30px var(--long-green-glow);
+    }
+    .direction-btn.long:hover .label, .direction-btn.long.active .label { color: var(--long-green); }
+
+    .direction-btn.short:hover, .direction-btn.short.active {
+      border-color: var(--short-red);
+      background: var(--short-red-bg);
+      box-shadow: 0 0 30px var(--short-red-glow);
+    }
+    .direction-btn.short:hover .label, .direction-btn.short.active .label { color: var(--short-red); }
+
+    /* Input Groups */
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 8px;
     }
 
-    .leverage-value {
-      font-size: 1rem;
-      font-weight: 600;
-      font-family: var(--font-mono);
+    .input-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .input-max {
+      font-size: 0.7rem;
+      color: var(--accent-cyan);
+      cursor: pointer;
+    }
+    .input-max:hover { text-decoration: underline; }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 14px 60px 14px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
       color: var(--text-primary);
+      font-size: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      transition: all 0.3s;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: var(--accent-purple);
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+    }
+    .input-field::placeholder { color: var(--text-muted); }
+
+    .input-suffix {
+      position: absolute;
+      right: 16px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Leverage Slider */
+    .leverage-section {
+      margin-bottom: 24px;
+    }
+
+    .leverage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .leverage-value-display {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .leverage-slider-container {
+      position: relative;
+      padding: 10px 0;
     }
 
     .leverage-slider {
       width: 100%;
-      height: 4px;
-      background: var(--border-color);
+      height: 8px;
+      background: var(--bg-card);
+      border-radius: 4px;
       -webkit-appearance: none;
       appearance: none;
       cursor: pointer;
     }
     .leverage-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
-      background: var(--text-primary);
+      width: 24px;
+      height: 24px;
+      background: var(--gradient-primary);
+      border-radius: 50%;
       cursor: pointer;
+      box-shadow: 0 2px 15px rgba(168, 85, 247, 0.5);
+      transition: transform 0.2s;
+    }
+    .leverage-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
     }
 
+    .leverage-marks {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+    .leverage-mark {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .leverage-mark:hover {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+
+    /* Order Summary */
     .order-summary {
-      background: var(--bg-secondary);
+      background: var(--bg-card);
       border: 1px solid var(--border-color);
+      border-radius: 12px;
       padding: 16px;
-      margin: 20px 0;
+      margin-bottom: 20px;
     }
 
     .summary-row {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 10px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .summary-row:last-child { border-bottom: none; }
+
+    .summary-label {
       font-size: 0.8rem;
-    }
-    .summary-row:last-child { margin-bottom: 0; }
-
-    .summary-label { color: var(--text-muted); }
-    .summary-value {
-      color: var(--text-primary);
-      font-family: var(--font-mono);
-    }
-
-    .btn-long {
-      width: 100%;
-      padding: 14px;
-      background: var(--long-green);
-      color: #000000;
-      border: none;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      margin-bottom: 8px;
-      transition: all 0.15s;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .btn-long:hover { 
-      background: #16a34a;
-      box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
-    }
-
-    .btn-short {
-      width: 100%;
-      padding: 14px;
-      background: var(--short-red);
-      color: #000000;
-      border: none;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .btn-short:hover { 
-      background: #dc2626;
-      box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
-    }
-
-    /* PnL Colors */
-    .pnl-positive {
-      color: var(--long-green) !important;
-    }
-    .pnl-negative {
-      color: var(--short-red) !important;
-    }
-    
-    /* Funding Rate Colors */
-    .funding-positive {
-      color: var(--long-green);
-    }
-    .funding-negative {
-      color: var(--short-red);
-    }
-
-    /* Leverage Warning */
-    .leverage-warning {
-      font-size: 0.7rem;
-      color: var(--warning-yellow);
-      margin-top: 8px;
-    }
-
-    /* Order Type Pills */
-    .order-type-pills {
-      display: flex;
-      gap: 2px;
-      margin-bottom: 16px;
-    }
-    
-    .order-type-pill {
-      flex: 1;
-      padding: 8px;
-      background: transparent;
-      border: 1px solid var(--border-color);
       color: var(--text-muted);
-      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .summary-value {
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+    }
+    .summary-value.green { color: var(--long-green); }
+    .summary-value.red { color: var(--short-red); }
+
+    /* Submit Buttons */
+    .submit-btn {
+      width: 100%;
+      padding: 18px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.15s;
-      text-align: center;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      overflow: hidden;
     }
-    .order-type-pill:hover {
-      border-color: var(--border-hover);
-      color: var(--text-secondary);
+
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
     }
-    .order-type-pill.active {
-      background: rgba(59, 130, 246, 0.1);
-      border-color: var(--accent-blue);
-      color: var(--accent-blue);
+    .submit-btn:hover::before { left: 100%; }
+
+    .submit-btn.long {
+      background: linear-gradient(135deg, #00d26a, #00a854);
+      color: #000;
+      box-shadow: 0 4px 20px var(--long-green-glow);
+    }
+    .submit-btn.long:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--long-green-glow);
+    }
+
+    .submit-btn.short {
+      background: linear-gradient(135deg, #ff4757, #e63946);
+      color: #fff;
+      box-shadow: 0 4px 20px var(--short-red-glow);
+    }
+    .submit-btn.short:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--short-red-glow);
     }
 
     /* Positions Section */
     .positions-section {
       padding: 24px;
+      background: var(--bg-secondary);
       border-top: 1px solid var(--border-color);
     }
 
-    .section-title {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 16px;
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
     }
 
-    .data-table {
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-card);
+      padding: 4px;
+      border-radius: 8px;
+    }
+    .section-tab {
+      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .section-tab:hover { color: var(--text-secondary); }
+    .section-tab.active {
+      background: rgba(255,255,255,0.1);
+      color: var(--text-primary);
+    }
+
+    .positions-table {
       width: 100%;
       border-collapse: collapse;
     }
 
-    .data-table th {
+    .positions-table th {
       text-align: left;
-      padding: 10px 12px;
-      font-size: 0.6rem;
+      padding: 12px 16px;
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: var(--text-muted);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .positions-table th:first-child { border-radius: 8px 0 0 0; }
+    .positions-table th:last-child { border-radius: 0 8px 0 0; }
+
+    .positions-table td {
+      padding: 16px;
+      font-size: 0.85rem;
       border-bottom: 1px solid var(--border-color);
     }
 
-    .data-table td {
-      padding: 14px 12px;
-      font-size: 0.8rem;
-      font-family: var(--font-mono);
-      border-bottom: 1px solid var(--border-color);
-      color: var(--text-primary);
+    .position-asset {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
+    .position-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .position-direction {
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .position-direction.long {
+      background: var(--long-green-bg);
+      color: var(--long-green);
+    }
+    .position-direction.short {
+      background: var(--short-red-bg);
+      color: var(--short-red);
+    }
+
+    .pnl-value { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+    .pnl-value.positive { color: var(--long-green); }
+    .pnl-value.negative { color: var(--short-red); }
 
     .empty-state {
       text-align: center;
-      padding: 48px 20px;
+      padding: 60px 20px;
+      background: var(--bg-card);
+      border-radius: 12px;
+    }
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+    .empty-text {
       color: var(--text-muted);
-      font-size: 0.85rem;
+      font-size: 0.9rem;
+      margin-bottom: 16px;
     }
 
-    /* LP Vaults Section */
+    /* LP Vaults */
     .vaults-section {
-      padding: 24px;
+      padding: 40px 24px;
+      background: var(--bg-primary);
       border-top: 1px solid var(--border-color);
+    }
+
+    .vaults-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .vaults-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .vaults-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
     }
 
     .vaults-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1px;
-      background: var(--border-color);
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
     .vault-card {
-      background: var(--bg-primary);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
       padding: 24px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .vault-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient-primary);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .vault-card:hover::before { opacity: 1; }
+    .vault-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     }
 
     .vault-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
+      align-items: flex-start;
+      margin-bottom: 20px;
     }
 
-    .vault-name {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--text-primary);
+    .vault-info { display: flex; align-items: center; gap: 12px; }
+    .vault-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
     }
+    .vault-icon.eth { background: linear-gradient(135deg, #627eea, #8c9eff); }
+    .vault-icon.usdc { background: linear-gradient(135deg, #2775ca, #4da2ff); }
+    .vault-icon.btc { background: linear-gradient(135deg, #f7931a, #ffb347); }
+
+    .vault-name { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+    .vault-type { font-size: 0.75rem; color: var(--text-muted); }
 
     .vault-apy {
-      font-size: 1.2rem;
-      font-weight: 600;
-      font-family: var(--font-mono);
-      color: var(--text-primary);
+      text-align: right;
+    }
+    .vault-apy-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; }
+    .vault-apy-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--long-green);
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .vault-stats {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
+      gap: 16px;
+      margin-bottom: 20px;
     }
-
+    .vault-stat-item {
+      padding: 12px;
+      background: var(--bg-elevated);
+      border-radius: 8px;
+    }
     .vault-stat-label {
-      font-size: 0.6rem;
+      font-size: 0.65rem;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
       margin-bottom: 4px;
     }
-
     .vault-stat-value {
-      font-size: 0.85rem;
-      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 600;
       color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .vault-btn {
       width: 100%;
-      padding: 10px;
+      padding: 14px;
       background: transparent;
       border: 1px solid var(--border-color);
+      border-radius: 10px;
       color: var(--text-secondary);
-      font-size: 0.75rem;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .vault-btn:hover {
-      border-color: var(--border-hover);
-      color: var(--text-primary);
-    }
-
-    /* Architecture Section */
-    .architecture-section {
-      padding: 48px 24px;
-      border-top: 1px solid var(--border-color);
-    }
-
-    .arch-header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-
-    .arch-title {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 8px;
-    }
-
-    .arch-desc {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-    }
-
-    .arch-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1px;
-      background: var(--border-color);
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-
-    .arch-card {
-      background: var(--bg-primary);
-      padding: 24px;
-    }
-
-    .arch-card-title {
       font-size: 0.85rem;
       font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
     }
-
-    .arch-card-desc {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      line-height: 1.5;
+    .vault-btn:hover {
+      background: var(--gradient-primary);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 4px 20px rgba(168, 85, 247, 0.3);
     }
 
     /* Responsive */
     @media (max-width: 768px) {
-      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .stats-bar { flex-wrap: wrap; justify-content: flex-start; }
+      .stat-item { min-width: calc(50% - 4px); }
       .chart-stats { grid-template-columns: repeat(2, 1fr); }
-      #tradingChart { height: 300px; }
+      #tradingChart { height: 350px; }
+      .market-tabs { padding: 12px; }
+      .market-tab { min-width: 140px; padding: 10px 14px; }
     }
   </style>
 </head>
@@ -692,84 +1070,164 @@
   <!-- Header -->
   <header class="header">
     <div class="header-left">
-      <a href="index.html" class="back-link">← Back</a>
-      <div class="header-title">NX-Perps</div>
+      <a href="index.html" class="logo">
+        <div class="logo-icon">NX</div>
+        <span class="logo-text">nexxore</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="perps.html" class="nav-link active">Perps</a>
+        <a href="vaults.html" class="nav-link">Vaults</a>
+        <a href="research-agent.html" class="nav-link">Research</a>
+      </nav>
     </div>
     <div class="header-right">
-      <span class="status-badge">Testnet</span>
+      <div class="network-badge">
+        <span class="network-dot"></span>
+        Arbitrum Sepolia
+      </div>
       <button class="connect-btn" id="connectWallet">Connect Wallet</button>
     </div>
   </header>
 
   <!-- Stats Bar -->
   <div class="stats-bar">
-    <div class="stat-card">
+    <div class="stat-item animate-in" style="animation-delay: 0.1s">
       <div class="stat-label">Open Interest</div>
       <div class="stat-value">$0.00</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-item animate-in" style="animation-delay: 0.15s">
       <div class="stat-label">24h Volume</div>
       <div class="stat-value">$0.00</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-item animate-in" style="animation-delay: 0.2s">
       <div class="stat-label">LP TVL</div>
-      <div class="stat-value">$0.00</div>
+      <div class="stat-value green">$0.00</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-item animate-in" style="animation-delay: 0.25s">
       <div class="stat-label">Funding Rate</div>
-      <div class="stat-value">0.0100%</div>
+      <div class="stat-value cyan">0.0100%</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-item animate-in" style="animation-delay: 0.3s">
       <div class="stat-label">Max Leverage</div>
-      <div class="stat-value">50x</div>
+      <div class="stat-value">50×</div>
     </div>
   </div>
 
-  <!-- Market Selector -->
-  <div class="market-selector">
-    <button class="market-btn active" data-market="ETH">ETH-USD</button>
-    <button class="market-btn" data-market="BTC">BTC-USD</button>
-    <button class="market-btn" data-market="SOL">SOL-USD</button>
-    <button class="market-btn" data-market="ARB">ARB-USD</button>
-    <button class="market-btn" data-market="LINK">LINK-USD</button>
+  <!-- Market Tabs -->
+  <div class="market-tabs">
+    <div class="market-tab active" data-market="ETH">
+      <div class="market-icon eth">ETH</div>
+      <div class="market-info">
+        <div class="market-name">Ethereum</div>
+        <div class="market-pair">ETH-USD</div>
+      </div>
+      <div class="market-price">
+        <div class="market-price-value">$3,245.67</div>
+        <div class="market-change up">+2.34%</div>
+      </div>
+    </div>
+    <div class="market-tab" data-market="BTC">
+      <div class="market-icon btc">BTC</div>
+      <div class="market-info">
+        <div class="market-name">Bitcoin</div>
+        <div class="market-pair">BTC-USD</div>
+      </div>
+      <div class="market-price">
+        <div class="market-price-value">$97,234.12</div>
+        <div class="market-change up">+1.87%</div>
+      </div>
+    </div>
+    <div class="market-tab" data-market="SOL">
+      <div class="market-icon sol">SOL</div>
+      <div class="market-info">
+        <div class="market-name">Solana</div>
+        <div class="market-pair">SOL-USD</div>
+      </div>
+      <div class="market-price">
+        <div class="market-price-value">$198.45</div>
+        <div class="market-change down">-0.92%</div>
+      </div>
+    </div>
+    <div class="market-tab" data-market="ARB">
+      <div class="market-icon arb">ARB</div>
+      <div class="market-info">
+        <div class="market-name">Arbitrum</div>
+        <div class="market-pair">ARB-USD</div>
+      </div>
+      <div class="market-price">
+        <div class="market-price-value">$1.23</div>
+        <div class="market-change up">+3.45%</div>
+      </div>
+    </div>
   </div>
 
-  <!-- Main Trading Interface -->
-  <div class="main-grid">
-    <!-- Chart Panel -->
-    <div class="chart-panel">
+  <!-- Main Layout -->
+  <div class="main-layout">
+    <!-- Chart Section -->
+    <div class="chart-section">
       <div class="chart-header">
-        <div class="chart-title">
-          <span class="chart-symbol">ETH-USD</span>
-          <span class="live-price" id="livePrice">$3,245.67</span>
-          <span class="price-change">+2.34%</span>
+        <div class="chart-title-section">
+          <div class="chart-asset">
+            <div class="chart-asset-icon">ETH</div>
+            <div>
+              <div class="chart-asset-name">Ethereum</div>
+              <div class="chart-asset-pair">Perpetual / USDC</div>
+            </div>
+          </div>
+          <div class="live-price-display">
+            <span class="live-price" id="livePrice">$3,245.67</span>
+            <span class="price-change-badge up">+2.34%</span>
+          </div>
         </div>
-        <div class="timeframe-selector">
-          <button class="timeframe-btn" data-tf="1m">1m</button>
-          <button class="timeframe-btn" data-tf="5m">5m</button>
-          <button class="timeframe-btn" data-tf="15m">15m</button>
-          <button class="timeframe-btn active" data-tf="1h">1H</button>
-          <button class="timeframe-btn" data-tf="4h">4H</button>
-          <button class="timeframe-btn" data-tf="1d">1D</button>
+        <div class="chart-controls">
+          <div class="timeframe-btns">
+            <button class="tf-btn" data-tf="1m">1m</button>
+            <button class="tf-btn" data-tf="5m">5m</button>
+            <button class="tf-btn" data-tf="15m">15m</button>
+            <button class="tf-btn active" data-tf="1h">1H</button>
+            <button class="tf-btn" data-tf="4h">4H</button>
+            <button class="tf-btn" data-tf="1d">1D</button>
+          </div>
+          <div class="chart-type-btns">
+            <button class="chart-type-btn active" title="Candlestick">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="8" width="4" height="8"/><rect x="10" y="4" width="4" height="16"/><rect x="17" y="10" width="4" height="6"/></svg>
+            </button>
+            <button class="chart-type-btn" title="Line">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18L9 12L13 16L21 8"/></svg>
+            </button>
+          </div>
         </div>
       </div>
 
-      <div id="tradingChart"></div>
+      <div class="chart-container">
+        <div id="tradingChart"></div>
+        <div class="chart-overlay">
+          <div class="chart-indicator">
+            <span class="indicator-dot ma20"></span>
+            <span>MA(20): $3,198.45</span>
+          </div>
+          <div class="chart-indicator">
+            <span class="indicator-dot ma50"></span>
+            <span>MA(50): $3,156.23</span>
+          </div>
+        </div>
+      </div>
 
       <div class="chart-stats">
-        <div class="chart-stat">
+        <div class="chart-stat-card">
           <div class="chart-stat-label">24h High</div>
-          <div class="chart-stat-value">$3,312.45</div>
+          <div class="chart-stat-value" style="color: var(--long-green);">$3,312.45</div>
         </div>
-        <div class="chart-stat">
+        <div class="chart-stat-card">
           <div class="chart-stat-label">24h Low</div>
-          <div class="chart-stat-value">$3,156.23</div>
+          <div class="chart-stat-value" style="color: var(--short-red);">$3,156.23</div>
         </div>
-        <div class="chart-stat">
+        <div class="chart-stat-card">
           <div class="chart-stat-label">Index Price</div>
           <div class="chart-stat-value">$3,244.89</div>
         </div>
-        <div class="chart-stat">
+        <div class="chart-stat-card">
           <div class="chart-stat-label">Mark Price</div>
           <div class="chart-stat-value">$3,245.12</div>
         </div>
@@ -778,27 +1236,54 @@
 
     <!-- Order Panel -->
     <div class="order-panel">
-      <div class="panel-header">
-        <span class="panel-title">Place Order</span>
-      </div>
-
-      <div class="position-tabs">
-        <button class="position-tab active">Market</button>
-        <button class="position-tab">Limit</button>
-        <button class="position-tab">Stop</button>
-      </div>
-
-      <div class="input-group">
-        <label class="input-label">Size (USDC)</label>
-        <input type="text" class="input-field" placeholder="0.00" id="orderSize">
-      </div>
-
-      <div class="input-group">
-        <div class="leverage-display">
-          <span class="input-label">Leverage</span>
-          <span class="leverage-value" id="leverageValue">10x</span>
+      <div class="order-header">
+        <span class="order-title">Place Order</span>
+        <div class="order-type-toggle">
+          <button class="order-type-btn active">Market</button>
+          <button class="order-type-btn">Limit</button>
+          <button class="order-type-btn">Stop</button>
         </div>
-        <input type="range" class="leverage-slider" min="1" max="50" value="10" id="leverageSlider">
+      </div>
+
+      <div class="direction-toggle">
+        <button class="direction-btn long active">
+          <span class="icon">📈</span>
+          <span class="label">Long</span>
+          <span class="desc">Buy / Go Up</span>
+        </button>
+        <button class="direction-btn short">
+          <span class="icon">📉</span>
+          <span class="label">Short</span>
+          <span class="desc">Sell / Go Down</span>
+        </button>
+      </div>
+
+      <div class="input-group">
+        <div class="input-header">
+          <span class="input-label">Amount</span>
+          <span class="input-max">Max: 0.00 USDC</span>
+        </div>
+        <div class="input-wrapper">
+          <input type="text" class="input-field" placeholder="0.00" id="orderAmount">
+          <span class="input-suffix">USDC</span>
+        </div>
+      </div>
+
+      <div class="leverage-section">
+        <div class="leverage-header">
+          <span class="input-label">Leverage</span>
+          <span class="leverage-value-display" id="leverageDisplay">10×</span>
+        </div>
+        <div class="leverage-slider-container">
+          <input type="range" class="leverage-slider" min="1" max="50" value="10" id="leverageSlider">
+        </div>
+        <div class="leverage-marks">
+          <span class="leverage-mark" data-lev="1">1×</span>
+          <span class="leverage-mark" data-lev="5">5×</span>
+          <span class="leverage-mark" data-lev="10">10×</span>
+          <span class="leverage-mark" data-lev="25">25×</span>
+          <span class="leverage-mark" data-lev="50">50×</span>
+        </div>
       </div>
 
       <div class="order-summary">
@@ -812,194 +1297,350 @@
         </div>
         <div class="summary-row">
           <span class="summary-label">Liquidation Price</span>
-          <span class="summary-value">$0.00</span>
+          <span class="summary-value red">$0.00</span>
         </div>
         <div class="summary-row">
-          <span class="summary-label">Fee</span>
+          <span class="summary-label">Trading Fee</span>
           <span class="summary-value">0.05%</span>
         </div>
       </div>
 
-      <button class="btn-long">Long ETH</button>
-      <button class="btn-short">Short ETH</button>
+      <button class="submit-btn long" id="submitOrder">Long ETH</button>
     </div>
   </div>
 
   <!-- Positions Section -->
   <div class="positions-section">
-    <h3 class="section-title">Open Positions</h3>
+    <div class="section-header">
+      <h3 class="section-title">
+        <span>📊</span> Positions & Orders
+      </h3>
+      <div class="section-tabs">
+        <button class="section-tab active">Positions (0)</button>
+        <button class="section-tab">Open Orders (0)</button>
+        <button class="section-tab">History</button>
+      </div>
+    </div>
+
     <div class="empty-state">
-      No open positions. Connect wallet to start trading.
+      <div class="empty-icon">📭</div>
+      <div class="empty-text">No open positions</div>
+      <p style="font-size: 0.8rem; color: var(--text-muted);">Connect your wallet and start trading to see your positions here</p>
     </div>
   </div>
 
   <!-- LP Vaults Section -->
-  <div class="vaults-section" id="lp-vaults">
-    <h3 class="section-title">LP Vaults</h3>
+  <div class="vaults-section" id="lp">
+    <div class="vaults-header">
+      <h2 class="vaults-title">Liquidity Provider Vaults</h2>
+      <p class="vaults-desc">Earn yield by providing liquidity to traders. Auto-compounding rewards.</p>
+    </div>
+
     <div class="vaults-grid">
       <div class="vault-card">
         <div class="vault-header">
-          <span class="vault-name">ETH Vault</span>
-          <span class="vault-apy">12.4% APY</span>
+          <div class="vault-info">
+            <div class="vault-icon eth">ETH</div>
+            <div>
+              <div class="vault-name">ETH Vault</div>
+              <div class="vault-type">Delta-Neutral LP</div>
+            </div>
+          </div>
+          <div class="vault-apy">
+            <div class="vault-apy-label">APY</div>
+            <div class="vault-apy-value">12.4%</div>
+          </div>
         </div>
         <div class="vault-stats">
-          <div>
+          <div class="vault-stat-item">
             <div class="vault-stat-label">TVL</div>
             <div class="vault-stat-value">$0.00</div>
           </div>
-          <div>
+          <div class="vault-stat-item">
             <div class="vault-stat-label">Utilization</div>
             <div class="vault-stat-value">0%</div>
           </div>
         </div>
-        <button class="vault-btn">Deposit</button>
+        <button class="vault-btn">Deposit ETH</button>
       </div>
-      <div class="vault-card">
-        <div class="vault-header">
-          <span class="vault-name">USDC Vault</span>
-          <span class="vault-apy">8.2% APY</span>
-        </div>
-        <div class="vault-stats">
-          <div>
-            <div class="vault-stat-label">TVL</div>
-            <div class="vault-stat-value">$0.00</div>
-          </div>
-          <div>
-            <div class="vault-stat-label">Utilization</div>
-            <div class="vault-stat-value">0%</div>
-          </div>
-        </div>
-        <button class="vault-btn">Deposit</button>
-      </div>
-      <div class="vault-card">
-        <div class="vault-header">
-          <span class="vault-name">BTC Vault</span>
-          <span class="vault-apy">10.8% APY</span>
-        </div>
-        <div class="vault-stats">
-          <div>
-            <div class="vault-stat-label">TVL</div>
-            <div class="vault-stat-value">$0.00</div>
-          </div>
-          <div>
-            <div class="vault-stat-label">Utilization</div>
-            <div class="vault-stat-value">0%</div>
-          </div>
-        </div>
-        <button class="vault-btn">Deposit</button>
-      </div>
-    </div>
-  </div>
 
-  <!-- Architecture Section -->
-  <div class="architecture-section">
-    <div class="arch-header">
-      <h2 class="arch-title">Protocol Architecture</h2>
-      <p class="arch-desc">Modular on-chain perpetuals with transparent execution</p>
-    </div>
-    <div class="arch-grid">
-      <div class="arch-card">
-        <div class="arch-card-title">Price Oracle</div>
-        <div class="arch-card-desc">Multi-source price feeds with manipulation resistance and latency optimization</div>
+      <div class="vault-card">
+        <div class="vault-header">
+          <div class="vault-info">
+            <div class="vault-icon usdc">USDC</div>
+            <div>
+              <div class="vault-name">USDC Vault</div>
+              <div class="vault-type">Stable LP</div>
+            </div>
+          </div>
+          <div class="vault-apy">
+            <div class="vault-apy-label">APY</div>
+            <div class="vault-apy-value">8.2%</div>
+          </div>
+        </div>
+        <div class="vault-stats">
+          <div class="vault-stat-item">
+            <div class="vault-stat-label">TVL</div>
+            <div class="vault-stat-value">$0.00</div>
+          </div>
+          <div class="vault-stat-item">
+            <div class="vault-stat-label">Utilization</div>
+            <div class="vault-stat-value">0%</div>
+          </div>
+        </div>
+        <button class="vault-btn">Deposit USDC</button>
       </div>
-      <div class="arch-card">
-        <div class="arch-card-title">Matching Engine</div>
-        <div class="arch-card-desc">On-chain order matching with MEV protection and fair execution</div>
-      </div>
-      <div class="arch-card">
-        <div class="arch-card-title">Funding Mechanism</div>
-        <div class="arch-card-desc">Self-balancing funding rates that converge mark to index price</div>
-      </div>
-      <div class="arch-card">
-        <div class="arch-card-title">Liquidation Engine</div>
-        <div class="arch-card-desc">Progressive liquidations with LP backstop for systemic protection</div>
+
+      <div class="vault-card">
+        <div class="vault-header">
+          <div class="vault-info">
+            <div class="vault-icon btc">BTC</div>
+            <div>
+              <div class="vault-name">BTC Vault</div>
+              <div class="vault-type">Delta-Neutral LP</div>
+            </div>
+          </div>
+          <div class="vault-apy">
+            <div class="vault-apy-label">APY</div>
+            <div class="vault-apy-value">10.8%</div>
+          </div>
+        </div>
+        <div class="vault-stats">
+          <div class="vault-stat-item">
+            <div class="vault-stat-label">TVL</div>
+            <div class="vault-stat-value">$0.00</div>
+          </div>
+          <div class="vault-stat-item">
+            <div class="vault-stat-label">Utilization</div>
+            <div class="vault-stat-value">0%</div>
+          </div>
+        </div>
+        <button class="vault-btn">Deposit BTC</button>
       </div>
     </div>
   </div>
 
   <script>
-    // Chart initialization
+    // Initialize TradingView-style Chart
     const chartContainer = document.getElementById('tradingChart');
     if (chartContainer && typeof LightweightCharts !== 'undefined') {
       const chart = LightweightCharts.createChart(chartContainer, {
         layout: {
-          background: { type: 'solid', color: '#050505' },
-          textColor: 'rgba(255, 255, 255, 0.4)',
+          background: { type: 'solid', color: '#12121a' },
+          textColor: 'rgba(255, 255, 255, 0.5)',
         },
         grid: {
-          vertLines: { color: 'rgba(255, 255, 255, 0.04)' },
-          horzLines: { color: 'rgba(255, 255, 255, 0.04)' },
+          vertLines: { color: 'rgba(255, 255, 255, 0.03)' },
+          horzLines: { color: 'rgba(255, 255, 255, 0.03)' },
         },
         crosshair: {
           mode: LightweightCharts.CrosshairMode.Normal,
+          vertLine: {
+            color: 'rgba(168, 85, 247, 0.5)',
+            width: 1,
+            style: 2,
+            labelBackgroundColor: '#a855f7',
+          },
+          horzLine: {
+            color: 'rgba(168, 85, 247, 0.5)',
+            width: 1,
+            style: 2,
+            labelBackgroundColor: '#a855f7',
+          },
         },
         rightPriceScale: {
-          borderColor: 'rgba(255, 255, 255, 0.08)',
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          scaleMargins: { top: 0.1, bottom: 0.2 },
         },
         timeScale: {
-          borderColor: 'rgba(255, 255, 255, 0.08)',
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          timeVisible: true,
+          secondsVisible: false,
         },
       });
 
+      // Candlestick series with vibrant colors
       const candleSeries = chart.addCandlestickSeries({
-        upColor: 'rgba(255, 255, 255, 0.9)',
-        downColor: 'rgba(255, 255, 255, 0.3)',
-        borderUpColor: 'rgba(255, 255, 255, 0.9)',
-        borderDownColor: 'rgba(255, 255, 255, 0.3)',
-        wickUpColor: 'rgba(255, 255, 255, 0.6)',
-        wickDownColor: 'rgba(255, 255, 255, 0.2)',
+        upColor: '#00d26a',
+        downColor: '#ff4757',
+        borderUpColor: '#00d26a',
+        borderDownColor: '#ff4757',
+        wickUpColor: '#00d26a',
+        wickDownColor: '#ff4757',
       });
 
-      // Sample data
-      const data = [];
-      let time = new Date('2024-01-01').getTime() / 1000;
-      let price = 3200;
-      for (let i = 0; i < 100; i++) {
-        const open = price;
-        const change = (Math.random() - 0.5) * 50;
-        const close = price + change;
-        const high = Math.max(open, close) + Math.random() * 20;
-        const low = Math.min(open, close) - Math.random() * 20;
-        data.push({ time, open, high, low, close });
-        time += 3600;
-        price = close;
-      }
+      // Volume series
+      const volumeSeries = chart.addHistogramSeries({
+        color: '#4f8eff',
+        priceFormat: { type: 'volume' },
+        priceScaleId: '',
+        scaleMargins: { top: 0.85, bottom: 0 },
+      });
+
+      // MA20 line
+      const ma20Series = chart.addLineSeries({
+        color: '#00d4ff',
+        lineWidth: 2,
+        crosshairMarkerVisible: false,
+        priceLineVisible: false,
+      });
+
+      // MA50 line
+      const ma50Series = chart.addLineSeries({
+        color: '#ff9500',
+        lineWidth: 2,
+        crosshairMarkerVisible: false,
+        priceLineVisible: false,
+      });
+
+      // Generate realistic price data
+      const generateData = () => {
+        const data = [];
+        const volumeData = [];
+        const ma20Data = [];
+        const ma50Data = [];
+        let time = new Date('2024-01-01').getTime() / 1000;
+        let price = 3200;
+        const prices = [];
+
+        for (let i = 0; i < 150; i++) {
+          const volatility = 0.02;
+          const drift = 0.0002;
+          const random = (Math.random() - 0.5) * 2;
+          const change = price * (drift + volatility * random);
+          
+          const open = price;
+          const close = price + change;
+          const high = Math.max(open, close) * (1 + Math.random() * 0.01);
+          const low = Math.min(open, close) * (1 - Math.random() * 0.01);
+          
+          data.push({ time, open, high, low, close });
+          prices.push(close);
+          
+          // Volume
+          const volume = Math.random() * 5000000 + 1000000;
+          volumeData.push({
+            time,
+            value: volume,
+            color: close > open ? 'rgba(0, 210, 106, 0.3)' : 'rgba(255, 71, 87, 0.3)',
+          });
+          
+          // Moving averages
+          if (prices.length >= 20) {
+            const ma20 = prices.slice(-20).reduce((a, b) => a + b) / 20;
+            ma20Data.push({ time, value: ma20 });
+          }
+          if (prices.length >= 50) {
+            const ma50 = prices.slice(-50).reduce((a, b) => a + b) / 50;
+            ma50Data.push({ time, value: ma50 });
+          }
+          
+          time += 3600;
+          price = close;
+        }
+        return { data, volumeData, ma20Data, ma50Data };
+      };
+
+      const { data, volumeData, ma20Data, ma50Data } = generateData();
       candleSeries.setData(data);
+      volumeSeries.setData(volumeData);
+      ma20Series.setData(ma20Data);
+      ma50Series.setData(ma50Data);
       chart.timeScale().fitContent();
+
+      // Responsive resize
+      window.addEventListener('resize', () => {
+        chart.applyOptions({ width: chartContainer.clientWidth });
+      });
     }
 
     // Leverage slider
     const leverageSlider = document.getElementById('leverageSlider');
-    const leverageValue = document.getElementById('leverageValue');
+    const leverageDisplay = document.getElementById('leverageDisplay');
     if (leverageSlider) {
       leverageSlider.addEventListener('input', function() {
-        leverageValue.textContent = this.value + 'x';
+        leverageDisplay.textContent = this.value + '×';
       });
     }
 
-    // Market selector
-    document.querySelectorAll('.market-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
+    // Leverage marks
+    document.querySelectorAll('.leverage-mark').forEach(mark => {
+      mark.addEventListener('click', function() {
+        const lev = this.dataset.lev;
+        leverageSlider.value = lev;
+        leverageDisplay.textContent = lev + '×';
       });
     });
 
-    // Timeframe selector
-    document.querySelectorAll('.timeframe-btn').forEach(btn => {
+    // Direction toggle
+    document.querySelectorAll('.direction-btn').forEach(btn => {
       btn.addEventListener('click', function() {
-        document.querySelectorAll('.timeframe-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.direction-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
+        
+        const submitBtn = document.getElementById('submitOrder');
+        if (this.classList.contains('long')) {
+          submitBtn.className = 'submit-btn long';
+          submitBtn.textContent = 'Long ETH';
+        } else {
+          submitBtn.className = 'submit-btn short';
+          submitBtn.textContent = 'Short ETH';
+        }
       });
     });
 
-    // Position tabs
-    document.querySelectorAll('.position-tab').forEach(tab => {
+    // Market tabs
+    document.querySelectorAll('.market-tab').forEach(tab => {
       tab.addEventListener('click', function() {
-        document.querySelectorAll('.position-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.market-tab').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
       });
     });
+
+    // Timeframe buttons
+    document.querySelectorAll('.tf-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Order type toggle
+    document.querySelectorAll('.order-type-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.order-type-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Section tabs
+    document.querySelectorAll('.section-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Chart type buttons
+    document.querySelectorAll('.chart-type-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Simulated live price updates
+    let currentPrice = 3245.67;
+    setInterval(() => {
+      const change = (Math.random() - 0.5) * 5;
+      currentPrice += change;
+      const priceEl = document.getElementById('livePrice');
+      if (priceEl) {
+        priceEl.textContent = '$' + currentPrice.toFixed(2);
+        priceEl.classList.remove('flash-up', 'flash-down');
+        priceEl.classList.add(change > 0 ? 'flash-up' : 'flash-down');
+      }
+    }, 2000);
   </script>
 </body>
 </html>
