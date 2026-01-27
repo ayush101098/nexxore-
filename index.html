@@ -8,99 +8,134 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #09090b; color: white; font-family: 'Inter', sans-serif; }
+    :root {
+      --bg: #08080a;
+      --bg-elevated: #0f0f12;
+      --bg-card: #131318;
+      --text: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --text-muted: rgba(255, 255, 255, 0.4);
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #a855f7;
+      --accent-secondary: #22c55e;
+    }
     
-    .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(9, 9, 11, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.06); padding: 14px 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    
+    .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(8, 8, 10, 0.9); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 14px 0; }
     .navbar .container { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
     .nav-links { display: flex; align-items: center; gap: 12px; }
     
     .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 100px 24px 60px; position: relative; }
-    .hero-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 30% 20%, rgba(168, 85, 247, 0.08), transparent 50%), radial-gradient(circle at 70% 80%, rgba(34, 197, 94, 0.06), transparent 50%); z-index: 0; }
+    .hero-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 50% 0%, rgba(168, 85, 247, 0.06), transparent 60%); z-index: 0; }
     .hero-content { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
-    .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 700; margin-bottom: 16px; line-height: 1.2; }
-    .hero h1 span { background: linear-gradient(135deg, #a855f7, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .hero p { font-size: 1.1rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; margin-bottom: 16px; line-height: 1.2; color: var(--text); }
+    .hero h1 span { background: linear-gradient(135deg, var(--accent), var(--accent-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero p { font-size: 1.05rem; color: var(--text-secondary); margin-bottom: 36px; max-width: 560px; margin-left: auto; margin-right: auto; line-height: 1.6; }
     
-    .products-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 28px; }
-    .product-card { padding: 14px 10px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; text-decoration: none; text-align: center; transition: all 0.2s; }
-    .product-card:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
-    .product-card .name { font-size: 0.8rem; font-weight: 600; margin-bottom: 2px; }
-    .product-card .sub { font-size: 0.65rem; color: rgba(255, 255, 255, 0.4); }
-    .product-card.new { background: rgba(168, 85, 247, 0.05); border-color: rgba(168, 85, 247, 0.2); position: relative; }
-    .product-card .badge { position: absolute; top: -5px; right: -5px; font-size: 0.5rem; background: linear-gradient(135deg, #a855f7, #22c55e); padding: 2px 5px; border-radius: 4px; color: white; font-weight: 700; }
+    /* Products - Clean monochrome with subtle hover accent */
+    .products-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 32px; }
+    .product-card { padding: 18px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; text-decoration: none; text-align: center; transition: all 0.25s ease; }
+    .product-card:hover { background: var(--bg-elevated); border-color: rgba(168, 85, 247, 0.3); transform: translateY(-3px); }
+    .product-card .name { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .product-card .sub { font-size: 0.7rem; color: var(--text-muted); }
     
-    .cta-buttons { display: flex; gap: 12px; justify-content: center; margin-bottom: 28px; }
-    .btn-primary { padding: 12px 28px; background: linear-gradient(135deg, #a855f7, #22c55e); border: none; border-radius: 8px; color: white; font-weight: 600; font-size: 0.9rem; text-decoration: none; box-shadow: 0 4px 16px rgba(168, 85, 247, 0.3); transition: all 0.2s; }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4); }
-    .btn-secondary { padding: 12px 28px; background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: rgba(255, 255, 255, 0.7); font-weight: 500; font-size: 0.9rem; text-decoration: none; transition: all 0.2s; }
-    .btn-secondary:hover { background: rgba(255, 255, 255, 0.05); }
+    .cta-buttons { display: flex; gap: 12px; justify-content: center; margin-bottom: 32px; }
+    .btn-primary { padding: 14px 32px; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: all 0.25s ease; }
+    .btn-primary:hover { background: #9333ea; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(168, 85, 247, 0.3); }
+    .btn-secondary { padding: 14px 32px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text-secondary); font-weight: 500; font-size: 0.9rem; text-decoration: none; transition: all 0.25s ease; }
+    .btn-secondary:hover { background: var(--bg-elevated); border-color: rgba(255, 255, 255, 0.15); color: var(--text); }
     
-    .assets-bar { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 16px 24px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 10px; }
-    .assets-bar .label { font-size: 0.7rem; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: 1px; }
-    .assets-bar .asset { font-size: 1rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
-    .assets-bar .dot { color: rgba(255, 255, 255, 0.2); }
+    .assets-bar { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 14px 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; }
+    .assets-bar .label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    .assets-bar .asset { font-size: 0.9rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text-secondary); }
+    .assets-bar .dot { color: rgba(255, 255, 255, 0.15); }
     
-    section { padding: 60px 24px; text-align: center; }
+    section { padding: 70px 24px; text-align: center; }
     section .container { max-width: 1000px; margin: 0 auto; }
-    .section-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 12px; }
-    .section-title span { background: linear-gradient(135deg, #a855f7, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .section-desc { font-size: 1rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto; }
+    .section-title { font-size: 1.6rem; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+    .section-title span { background: linear-gradient(135deg, var(--accent), var(--accent-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .section-desc { font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 36px; max-width: 520px; margin-left: auto; margin-right: auto; }
     
-    .features { background: rgba(0, 0, 0, 0.3); }
-    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .feature-card { padding: 24px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; text-align: center; }
-    .feature-card .icon { width: 48px; height: 48px; margin: 0 auto 16px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-    .feature-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; color: white; }
-    .feature-card p { font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); line-height: 1.5; }
+    /* Features */
+    .features { background: var(--bg-elevated); }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .feature-card { padding: 28px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center; transition: all 0.25s ease; }
+    .feature-card:hover { border-color: rgba(168, 85, 247, 0.2); transform: translateY(-2px); }
+    .feature-card .icon { width: 48px; height: 48px; margin: 0 auto 16px; background: rgba(168, 85, 247, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .feature-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+    .feature-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
     
-    .perps { border-top: 1px solid rgba(255, 255, 255, 0.05); }
-    .perps-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.2); border-radius: 20px; font-size: 0.7rem; font-weight: 600; color: #f97316; margin-bottom: 16px; }
-    .stats-row { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
-    .stat-card { padding: 12px 20px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; text-align: center; }
-    .stat-card .label { font-size: 0.6rem; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; margin-bottom: 4px; }
-    .stat-card .value { font-size: 1.1rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    /* Strategy Builder & Delta Neutral CTA */
+    .builders-section { background: var(--bg); border-top: 1px solid var(--border); }
+    .builders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 900px; margin: 0 auto; }
+    .builder-card { padding: 32px 28px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; text-align: left; transition: all 0.3s ease; position: relative; overflow: hidden; }
+    .builder-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-secondary)); opacity: 0; transition: opacity 0.3s; }
+    .builder-card:hover { border-color: rgba(168, 85, 247, 0.3); transform: translateY(-4px); }
+    .builder-card:hover::before { opacity: 1; }
+    .builder-icon { width: 44px; height: 44px; background: rgba(168, 85, 247, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .builder-card h3 { font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .builder-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; }
+    .builder-features { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .builder-feature { font-size: 0.7rem; padding: 6px 12px; background: rgba(255, 255, 255, 0.05); border-radius: 20px; color: var(--text-secondary); }
+    .builder-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text-secondary); font-size: 0.8rem; font-weight: 500; text-decoration: none; transition: all 0.2s; }
+    .builder-btn:hover { background: var(--accent); border-color: var(--accent); color: white; }
     
-    .agents { background: rgba(0, 0, 0, 0.2); }
-    .agents-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-    .agent-card { padding: 20px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; text-align: center; transition: all 0.2s; text-decoration: none; color: inherit; display: block; }
-    .agent-card:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.1); }
-    .agent-card .icon { width: 40px; height: 40px; margin: 0 auto 12px; background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(34, 197, 94, 0.1)); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-    .agent-card h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; color: white; }
-    .agent-card p { font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); }
+    /* Perps */
+    .perps { border-top: 1px solid var(--border); }
+    .perps-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 20px; font-size: 0.7rem; font-weight: 600; color: var(--accent-secondary); margin-bottom: 16px; }
+    .stats-row { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+    .stat-card { padding: 14px 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; text-align: center; min-width: 120px; }
+    .stat-card .label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .stat-card .value { font-size: 1.1rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
     
-    .waitlist { background: linear-gradient(180deg, rgba(168, 85, 247, 0.05), rgba(34, 197, 94, 0.03)); border-top: 1px solid rgba(255, 255, 255, 0.05); }
-    .waitlist-form { display: flex; gap: 12px; justify-content: center; max-width: 400px; margin: 0 auto; }
-    .waitlist-form input { flex: 1; padding: 12px 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: white; font-size: 0.9rem; }
-    .waitlist-form input::placeholder { color: rgba(255, 255, 255, 0.4); }
-    .waitlist-form button { padding: 12px 24px; background: linear-gradient(135deg, #a855f7, #22c55e); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    /* Agents */
+    .agents { background: var(--bg-elevated); }
+    .agents-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .agent-card { padding: 22px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center; transition: all 0.25s ease; text-decoration: none; color: inherit; display: block; }
+    .agent-card:hover { border-color: rgba(168, 85, 247, 0.3); transform: translateY(-3px); }
+    .agent-card .icon { width: 40px; height: 40px; margin: 0 auto 12px; background: rgba(168, 85, 247, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .agent-card h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+    .agent-card p { font-size: 0.7rem; color: var(--text-muted); }
     
-    footer { padding: 40px 24px 24px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+    /* Waitlist */
+    .waitlist { background: var(--bg); border-top: 1px solid var(--border); }
+    .waitlist-form { display: flex; gap: 12px; justify-content: center; max-width: 420px; margin: 0 auto; }
+    .waitlist-form input { flex: 1; padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.9rem; transition: border-color 0.2s; }
+    .waitlist-form input:focus { outline: none; border-color: var(--accent); }
+    .waitlist-form input::placeholder { color: var(--text-muted); }
+    .waitlist-form button { padding: 14px 28px; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .waitlist-form button:hover { background: #9333ea; }
+    
+    /* Footer */
+    footer { padding: 48px 24px 28px; border-top: 1px solid var(--border); }
     footer .container { max-width: 1000px; margin: 0 auto; }
-    .footer-content { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 40px; margin-bottom: 32px; }
-    .footer-links { display: flex; gap: 48px; }
-    .footer-column h4 { font-size: 0.8rem; font-weight: 600; color: rgba(255, 255, 255, 0.5); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .footer-column a { display: block; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); text-decoration: none; margin-bottom: 8px; transition: color 0.2s; }
-    .footer-column a:hover { color: white; }
-    .footer-bottom { text-align: center; font-size: 0.8rem; color: rgba(255, 255, 255, 0.4); padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+    .footer-content { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 40px; margin-bottom: 36px; }
+    .footer-links { display: flex; gap: 56px; }
+    .footer-column h4 { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .footer-column a { display: block; font-size: 0.85rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 10px; transition: color 0.2s; }
+    .footer-column a:hover { color: var(--text); }
+    .footer-bottom { text-align: center; font-size: 0.8rem; color: var(--text-muted); padding-top: 28px; border-top: 1px solid var(--border); }
     
+    @media (max-width: 900px) {
+      .builders-grid { grid-template-columns: 1fr; }
+    }
     @media (max-width: 768px) {
       .products-grid { grid-template-columns: repeat(2, 1fr); }
-      .products-grid .product-card:last-child { grid-column: span 2; }
       .features-grid { grid-template-columns: 1fr; }
       .agents-grid { grid-template-columns: repeat(2, 1fr); }
-      .stats-row { gap: 10px; }
-      .stat-card { padding: 10px 14px; }
-      .footer-links { gap: 24px; flex-wrap: wrap; }
+      .stats-row { gap: 8px; }
+      .stat-card { padding: 12px 16px; min-width: 100px; }
+      .footer-links { gap: 32px; flex-wrap: wrap; }
       .cta-buttons { flex-direction: column; align-items: center; }
       .waitlist-form { flex-direction: column; }
     }
-    
     @media (max-width: 480px) {
-      .hero h1 { font-size: 1.8rem; }
-      .products-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .hero h1 { font-size: 1.75rem; }
+      .products-grid { gap: 8px; }
       .agents-grid { grid-template-columns: 1fr; }
-      .assets-bar { flex-wrap: wrap; gap: 10px; }
+      .assets-bar { flex-wrap: wrap; gap: 12px; }
     }
   </style>
 </head>
@@ -115,7 +150,7 @@
         </svg>
       </a>
       <div class="nav-links">
-        <a href="https://x.com/nexxore" target="_blank" style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;">
+        <a href="https://x.com/nexxore" target="_blank" style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
         </a>
         <a href="#waitlist" class="btn-primary" style="padding: 10px 20px; font-size: 0.85rem;">Join Waitlist</a>
@@ -131,25 +166,20 @@
       
       <div class="products-grid">
         <a href="perps.html" class="product-card">
-          <div class="name" style="color: #a855f7;">Perpetuals</div>
-          <div class="sub">Trading</div>
+          <div class="name">Perpetuals</div>
+          <div class="sub">50x Leverage Trading</div>
         </a>
         <a href="vaults.html" class="product-card">
-          <div class="name" style="color: #22c55e;">Vaults</div>
-          <div class="sub">Yield</div>
+          <div class="name">Vaults</div>
+          <div class="sub">Yield Strategies</div>
         </a>
         <a href="research-agent.html" class="product-card">
-          <div class="name" style="color: #f97316;">Research</div>
-          <div class="sub">Intelligence</div>
+          <div class="name">Research</div>
+          <div class="sub">Alpha Intelligence</div>
         </a>
-        <a href="safe-yield.html" class="product-card">
-          <div class="name" style="color: #fbbf24;">Safe Yield</div>
-          <div class="sub">Curated</div>
-        </a>
-        <a href="delta-agent.html" class="product-card new">
-          <span class="badge">NEW</span>
-          <div class="name" style="color: #a855f7;">Delta Agent</div>
-          <div class="sub">Neutral</div>
+        <a href="delta-agent.html" class="product-card">
+          <div class="name">Agents</div>
+          <div class="sub">Autonomous Trading</div>
         </a>
       </div>
       
@@ -160,13 +190,13 @@
       
       <div class="assets-bar">
         <span class="label">Supported:</span>
-        <span class="asset" style="color: #a855f7;">ETH</span>
+        <span class="asset">ETH</span>
         <span class="dot">·</span>
-        <span class="asset" style="color: #f97316;">BTC</span>
+        <span class="asset">BTC</span>
         <span class="dot">·</span>
-        <span class="asset" style="color: #06b6d4;">SOL</span>
+        <span class="asset">SOL</span>
         <span class="dot">·</span>
-        <span class="asset" style="color: #22c55e;">USDT</span>
+        <span class="asset">USDT</span>
       </div>
     </div>
   </section>
@@ -178,22 +208,22 @@
       
       <div class="features-grid">
         <div class="feature-card">
-          <div class="icon" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.05));">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <div class="icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
           <h3>On-Chain Transparency</h3>
-          <p>Every trade, every strategy, fully verifiable on-chain. No black boxes.</p>
+          <p>Every trade and strategy is fully verifiable on-chain. No black boxes.</p>
         </div>
         <div class="feature-card">
-          <div class="icon" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.05));">
+          <div class="icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
           </div>
           <h3>24/7 Autonomous Agents</h3>
           <p>AI-powered agents execute strategies around the clock without intervention.</p>
         </div>
         <div class="feature-card">
-          <div class="icon" style="background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(249, 115, 22, 0.05));">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <div class="icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           </div>
           <h3>Lightning Execution</h3>
           <p>Sub-second order matching with minimal slippage and MEV protection.</p>
@@ -202,34 +232,78 @@
     </div>
   </section>
 
+  <!-- Strategy Builder & Delta Neutral CTAs -->
+  <section class="builders-section">
+    <div class="container">
+      <h2 class="section-title"><span>Build Your Strategy</span></h2>
+      <p class="section-desc">Create sophisticated trading strategies with our no-code builders.</p>
+      
+      <div class="builders-grid">
+        <div class="builder-card">
+          <div class="builder-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          </div>
+          <h3>Strategy Builder</h3>
+          <p>Design custom trading strategies with visual building blocks. Set conditions, triggers, and execution parameters.</p>
+          <div class="builder-features">
+            <span class="builder-feature">Visual Builder</span>
+            <span class="builder-feature">Backtesting</span>
+            <span class="builder-feature">Risk Controls</span>
+          </div>
+          <a href="strategy-builder.html" class="builder-btn">
+            Open Builder
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        
+        <div class="builder-card">
+          <div class="builder-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+          <h3>Delta Neutral Builder</h3>
+          <p>Construct market-neutral positions that profit regardless of price direction. Automated hedging and rebalancing.</p>
+          <div class="builder-features">
+            <span class="builder-feature">Auto-Hedge</span>
+            <span class="builder-feature">Yield Farming</span>
+            <span class="builder-feature">Risk Metrics</span>
+          </div>
+          <a href="delta-neutral.html" class="builder-btn">
+            Open Builder
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="perps">
     <div class="container">
-      <div class="perps-badge">🔥 Live Now</div>
+      <div class="perps-badge">● Live</div>
       <h2 class="section-title"><span>NX-Perps</span></h2>
-      <p class="section-desc">Trade with 50x leverage on a fully decentralized perpetual exchange.</p>
+      <p class="section-desc">Trade with up to 50x leverage on a fully decentralized perpetual exchange.</p>
       
       <div class="stats-row">
         <div class="stat-card">
           <div class="label">Open Interest</div>
-          <div class="value" style="color: #a855f7;">$0.00</div>
+          <div class="value">$0.00</div>
         </div>
         <div class="stat-card">
           <div class="label">24h Volume</div>
-          <div class="value" style="color: #f97316;">$0.00</div>
+          <div class="value">$0.00</div>
         </div>
         <div class="stat-card">
           <div class="label">LP TVL</div>
-          <div class="value" style="color: #22c55e;">$0.00</div>
+          <div class="value">$0.00</div>
         </div>
         <div class="stat-card">
           <div class="label">Max Leverage</div>
-          <div class="value" style="color: #06b6d4;">50x</div>
+          <div class="value">50×</div>
         </div>
       </div>
       
       <div class="cta-buttons">
-        <a href="perps.html" class="btn-primary">🚀 Start Trading</a>
-        <a href="perps.html#lp" class="btn-secondary">Become LP →</a>
+        <a href="perps.html" class="btn-primary">Start Trading</a>
+        <a href="perps.html#lp" class="btn-secondary">Provide Liquidity</a>
       </div>
     </div>
   </section>
@@ -245,28 +319,28 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           </div>
           <h4>Precision Execution</h4>
-          <p>Trading Agent — Minimizes slippage</p>
+          <p>Trading Agent</p>
         </div>
         <div class="agent-card">
           <div class="icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
           </div>
           <h4>Yield Engine</h4>
-          <p>DeFi Agent — Auto-compounds</p>
+          <p>DeFi Agent</p>
         </div>
         <a href="research-agent.html" class="agent-card">
           <div class="icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </div>
           <h4>Info Edge</h4>
-          <p>Research Agent — Alpha signals</p>
+          <p>Research Agent</p>
         </a>
         <div class="agent-card">
           <div class="icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
           </div>
           <h4>Tactical Plays</h4>
-          <p>Degen Agent — High-convex setups</p>
+          <p>Degen Agent</p>
         </div>
       </div>
     </div>
@@ -281,7 +355,7 @@
         <input type="email" placeholder="Enter your email" required>
         <button type="submit">Join</button>
       </form>
-      <p style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.4); margin-top: 12px;">We'll never spam your inbox.</p>
+      <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 14px;">We respect your privacy.</p>
     </div>
   </section>
 
