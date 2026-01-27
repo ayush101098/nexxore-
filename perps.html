@@ -588,13 +588,8 @@
         wickUpColor: '#22c55e', wickDownColor: '#ef4444',
       });
 
-      const volumeSeries = chart.addHistogramSeries({
-        color: '#a855f7', priceFormat: { type: 'volume' }, priceScaleId: '',
-        scaleMargins: { top: 0.85, bottom: 0 },
-      });
-
       // Generate data with proper timestamps - ETH price ~$4,800 for Jan 2026
-      const data = [], volumeData = [];
+      const data = [];
       const now = Math.floor(Date.now() / 1000);
       let time = now - 150 * 3600;
       let price = 4650; // Starting price that trends up to current
@@ -616,18 +611,12 @@
           low: parseFloat(low.toFixed(2)), 
           close: parseFloat(close.toFixed(2)) 
         });
-        volumeData.push({ 
-          time: roundedTime, 
-          value: Math.floor(Math.random() * 3000000 + 500000), 
-          color: close > open ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)' 
-        });
         
         time += 3600;
         price = close;
       }
       
       candleSeries.setData(data);
-      volumeSeries.setData(volumeData);
       chart.timeScale().fitContent();
       
       // Update live price display
