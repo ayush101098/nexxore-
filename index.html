@@ -67,6 +67,26 @@
     .feature-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: var(--text); }
     .feature-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
     
+    /* Strategy Templates */
+    .templates-section { background: var(--bg); border-top: 1px solid var(--border); }
+    .templates-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; max-width: 1000px; margin: 0 auto; }
+    .template-card { padding: 20px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; text-align: center; transition: all 0.25s ease; text-decoration: none; cursor: pointer; }
+    .template-card:hover { border-color: rgba(168, 85, 247, 0.3); transform: translateY(-3px); }
+    .template-card.safe { border-color: rgba(34, 197, 94, 0.3); }
+    .template-card.balanced { border-color: rgba(245, 158, 11, 0.3); }
+    .template-card.aggressive { border-color: rgba(239, 68, 68, 0.3); }
+    .template-card.degen { border-color: rgba(168, 85, 247, 0.3); }
+    .template-name { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .template-risk { font-size: 0.65rem; padding: 4px 10px; border-radius: 12px; font-weight: 600; margin-bottom: 10px; display: inline-block; }
+    .template-risk.low { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+    .template-risk.medium { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .template-risk.high { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .template-risk.extreme { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+    .template-desc { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4; }
+    .template-stats { display: flex; justify-content: space-around; gap: 8px; }
+    .template-stat .label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; }
+    .template-stat .value { font-size: 0.8rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text-secondary); }
+    
     /* Strategy Builder & Delta Neutral CTA */
     .builders-section { background: var(--bg); border-top: 1px solid var(--border); }
     .builders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 900px; margin: 0 auto; }
@@ -120,8 +140,10 @@
     
     @media (max-width: 900px) {
       .builders-grid { grid-template-columns: 1fr; }
+      .templates-grid { grid-template-columns: repeat(3, 1fr); }
     }
     @media (max-width: 768px) {
+      .templates-grid { grid-template-columns: repeat(2, 1fr); }
       .products-grid { grid-template-columns: repeat(2, 1fr); }
       .features-grid { grid-template-columns: 1fr; }
       .agents-grid { grid-template-columns: repeat(2, 1fr); }
@@ -228,6 +250,65 @@
           <h3>Lightning Execution</h3>
           <p>Sub-second order matching with minimal slippage and MEV protection.</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Strategy Templates -->
+  <section class="templates-section">
+    <div class="container">
+      <h2 class="section-title"><span>Strategy Templates</span></h2>
+      <p class="section-desc">Pre-built strategies optimized for different risk profiles and yield targets.</p>
+      
+      <div class="templates-grid">
+        <a href="safe-yield.html" class="template-card safe">
+          <div class="template-name">Safe Yield</div>
+          <span class="template-risk low">Low Risk</span>
+          <div class="template-desc">Blue-chip lending protocols</div>
+          <div class="template-stats">
+            <div class="template-stat"><span class="label">APY</span><span class="value">5-8%</span></div>
+            <div class="template-stat"><span class="label">DD</span><span class="value">~5%</span></div>
+          </div>
+        </a>
+        
+        <a href="advanced-realloc.html" class="template-card balanced">
+          <div class="template-name">Balanced Realloc</div>
+          <span class="template-risk medium">Medium</span>
+          <div class="template-desc">Risk-adjusted optimization</div>
+          <div class="template-stats">
+            <div class="template-stat"><span class="label">APY</span><span class="value">12-18%</span></div>
+            <div class="template-stat"><span class="label">DD</span><span class="value">~15%</span></div>
+          </div>
+        </a>
+        
+        <div class="template-card aggressive">
+          <div class="template-name">Opportunistic Alpha</div>
+          <span class="template-risk high">High</span>
+          <div class="template-desc">Event-driven with leverage</div>
+          <div class="template-stats">
+            <div class="template-stat"><span class="label">APY</span><span class="value">25-40%</span></div>
+            <div class="template-stat"><span class="label">DD</span><span class="value">~30%</span></div>
+          </div>
+        </div>
+        
+        <div class="template-card degen">
+          <div class="template-name">Tactical Degen</div>
+          <span class="template-risk extreme">Extreme</span>
+          <div class="template-desc">High-variance plays</div>
+          <div class="template-stats">
+            <div class="template-stat"><span class="label">APY</span><span class="value">50%+</span></div>
+            <div class="template-stat"><span class="label">DD</span><span class="value">~50%</span></div>
+          </div>
+        </div>
+        
+        <a href="strategy-builder.html" class="template-card">
+          <div class="template-name">Custom Strategy</div>
+          <span class="template-risk" style="background: rgba(255,255,255,0.05); color: var(--text-muted);">Custom</span>
+          <div class="template-desc">Build from scratch</div>
+          <div class="template-stats">
+            <div class="template-stat"><span class="label">APY</span><span class="value">Variable</span></div>
+          </div>
+        </a>
       </div>
     </div>
   </section>
