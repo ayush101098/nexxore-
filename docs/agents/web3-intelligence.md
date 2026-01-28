@@ -1,310 +1,226 @@
 # Web3 Intelligence Agent
 
+Read how the Web3 Intelligence Agent works: smart contract analysis, security scoring, honeypot detection, and on-chain risk assessment.
+
+---
+
 ## Overview
 
-The Web3 Intelligence Agent provides deep on-chain analysis, token contract auditing, and blockchain data insights. It helps you understand what's happening under the hood — from smart contract security to holder distribution.
+The Web3 Intelligence Agent provides deep on-chain analysis, token contract auditing, and blockchain data insights. It helps you understand what's happening under the hood—from smart contract security to holder distribution.
+
+Before any capital is deployed to interact with a new asset, the Web3 Intelligence Agent scans for risks to protect user funds.
 
 ---
 
 ## Features
 
-### 🔍 Token Contract Analysis
-Comprehensive smart contract review:
-- Ownership analysis
-- Mint/burn functions
-- Tax mechanisms
-- Proxy patterns
-- Rug pull indicators
+### Token Contract Analysis
 
-### 📊 Holder Distribution
-Understand who holds what:
-- Top holders percentage
-- Whale concentration
-- Team/dev wallets
-- Exchange holdings
-- Distribution changes over time
+Comprehensive smart contract review covering:
 
-### 🔐 Security Scoring
-Risk assessment for tokens:
-- Contract verification status
-- Liquidity lock status
-- Honeypot detection
-- Similar contract analysis
-- Audit history
+| Check | Description |
+|-------|-------------|
+| Ownership | Who controls the contract, renounced or active |
+| Mint Function | Can new tokens be created (inflation risk) |
+| Tax Mechanisms | Buy/sell taxes, hidden fees |
+| Proxy Patterns | Upgradeable contracts (can behavior change?) |
+| Pause Functions | Can trading be halted by owner |
+| Blacklist Functions | Can wallets be blocked from trading |
 
-### 🐋 Whale Tracking
-Monitor large holders:
-- Accumulation patterns
-- Distribution events
-- Wallet labeling
-- Activity timelines
+---
 
-### 📈 Liquidity Analysis
-DEX liquidity health:
-- Pool depth
-- Liquidity trends
-- Impermanent loss risk
-- LP holder distribution
+### Security Scoring
+
+Risk assessment for tokens on a 0-100 scale:
+
+| Score | Rating | Recommendation |
+|-------|--------|----------------|
+| 90-100 | Excellent | Safe for deployment |
+| 70-89 | Good | Acceptable with monitoring |
+| 50-69 | Caution | Reduced exposure only |
+| 25-49 | High Risk | Avoid or minimal exposure |
+| 0-24 | Critical | Do not interact |
+
+**Scoring Factors:**
+
+| Factor | Weight | Description |
+|--------|--------|-------------|
+| Contract Verification | 15% | Is source code public on Etherscan |
+| Liquidity Lock | 20% | Is LP locked and for how long |
+| Ownership Status | 15% | Renounced, multisig, or single owner |
+| Holder Distribution | 15% | Concentration in top wallets |
+| Audit Status | 15% | Third-party security audit |
+| Code Analysis | 20% | Automated vulnerability scanning |
+
+---
+
+### Honeypot Detection
+
+Automated detection of tokens where you can buy but cannot sell:
+
+| Check | What It Detects |
+|-------|-----------------|
+| Sell Tax Analysis | Hidden 100% sell taxes |
+| Transfer Restrictions | Blacklist-based blocking |
+| Approval Manipulation | Contracts that revoke approvals |
+| Liquidity Traps | Pools that can be drained |
+
+**Result:** Clear Pass/Fail with explanation if honeypot detected.
+
+---
+
+### Holder Distribution
+
+Understand who holds the token:
+
+| Metric | Description |
+|--------|-------------|
+| Top 10 Holders | Percentage held by largest wallets |
+| Top 50 Holders | Broader concentration metric |
+| Exchange Holdings | Tokens held on CEXs |
+| Team Wallets | Identified dev/team allocations |
+| Whale Concentration | Risk of single-wallet dumps |
+
+**Risk Thresholds:**
+
+| Metric | Green | Yellow | Red |
+|--------|-------|--------|-----|
+| Top 10 | < 30% | 30-50% | > 50% |
+| Single Wallet | < 10% | 10-20% | > 20% |
+
+---
+
+### Liquidity Analysis
+
+DEX liquidity health assessment:
+
+| Metric | Description |
+|--------|-------------|
+| Pool Depth | Total liquidity in USD |
+| Primary DEX | Which exchange has most liquidity |
+| LP Lock Status | Locked, unlocked, or burned |
+| Lock Duration | How long until LP unlocks |
+| Liquidity Trend | Growing or declining over time |
+
+**Minimum Requirements for Nexxore Deployment:**
+
+| Metric | Requirement |
+|--------|-------------|
+| Pool Depth | > $500K |
+| LP Locked | > 80% |
+| Lock Duration | > 6 months |
+
+---
+
+### Rug Pull Risk Assessment
+
+Comprehensive rug pull indicator analysis:
+
+| Indicator | Risk Signal |
+|-----------|-------------|
+| Unlocked Liquidity | High |
+| Owner can mint | High |
+| No contract verification | High |
+| < 100 holders | Medium |
+| < 7 days old | Medium |
+| Team holds > 20% | Medium |
+| No social presence | Low-Medium |
+
+**Overall Risk Grade:** A (Lowest) to F (Highest)
 
 ---
 
 ## Token Analysis Report
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  TOKEN ANALYSIS: $EXAMPLE                                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  CONTRACT INFO                                                  │
-│  ├─ Address: 0x1234...5678                                     │
-│  ├─ Chain: Ethereum                                            │
-│  ├─ Verified: ✅ Yes                                           │
-│  ├─ Proxy: ❌ No                                               │
-│  └─ Compiler: Solidity 0.8.19                                  │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  SECURITY SCORE: 78/100 🟢                                      │
-│                                                                 │
-│  ✅ Contract verified on Etherscan                              │
-│  ✅ No mint function (fixed supply)                             │
-│  ✅ Liquidity locked for 12 months                              │
-│  ⚠️ 15% held by top 10 wallets                                  │
-│  ⚠️ Owner can pause transfers                                   │
-│  ❌ No audit from major firm                                    │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  HOLDER DISTRIBUTION                                            │
-│                                                                 │
-│  Top 10 Holders: 35%                                           │
-│  Top 50 Holders: 58%                                           │
-│  Top 100 Holders: 72%                                          │
-│                                                                 │
-│  Exchanges: 22%                                                │
-│  Known Whales: 18%                                             │
-│  Team Wallets: 8%                                              │
-│  Other: 52%                                                    │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  LIQUIDITY ANALYSIS                                            │
-│                                                                 │
-│  Primary DEX: Uniswap V3                                       │
-│  Pool Depth: $2.4M                                             │
-│  24h Volume: $850K                                             │
-│  Liquidity Trend: ↗️ +12% (7d)                                 │
-│  LP Locked: 85% until 2025-06                                  │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  RECOMMENDATION                                                 │
-│                                                                 │
-│  Risk Level: MEDIUM                                            │
-│  Concerns: Centralized ownership, no audit                     │
-│  Positives: Locked liquidity, verified contract                │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
+When you request analysis of a token, you receive a structured report:
 
----
+### Contract Information
 
-## Risk Indicators
+| Field | Example Value |
+|-------|---------------|
+| Address | 0x1234...5678 |
+| Chain | Ethereum |
+| Verified | Yes |
+| Proxy | No |
+| Compiler | Solidity 0.8.19 |
 
-### 🔴 High Risk Signals
-- Unverified contract
-- Mint function accessible
-- No liquidity lock
-- Honeypot detected
-- 50%+ held by single wallet
-- Proxy contract (can be changed)
-- Known scam patterns
+### Security Assessment
 
-### 🟡 Medium Risk Signals
-- No audit
-- High ownership concentration
-- Unlocked team tokens
-- Low liquidity
-- Recent contract deployment
-- Owner can pause
+| Check | Status |
+|-------|--------|
+| Contract verified | ✓ Pass |
+| No mint function | ✓ Pass |
+| Liquidity locked | ✓ Pass (12 months) |
+| Ownership | ⚠ Active (not renounced) |
+| Pause function | ⚠ Present |
+| Third-party audit | ✗ None |
 
-### 🟢 Low Risk Signals
-- Verified contract
-- Third-party audit
-- Locked liquidity
-- Distributed holdings
-- Renounced ownership
-- Long track record
+### Holder Distribution
 
----
+| Category | Percentage |
+|----------|------------|
+| Top 10 Holders | 35% |
+| Top 50 Holders | 58% |
+| Exchanges | 22% |
+| Known Whales | 18% |
+| Team Wallets | 8% |
 
-## Honeypot Detection
+### Liquidity Summary
 
-Identify tokens that can't be sold:
+| Metric | Value |
+|--------|-------|
+| Primary DEX | Uniswap V3 |
+| Pool Depth | $2.4M |
+| 24h Volume | $850K |
+| LP Locked | 85% until 2025-06 |
 
-```
-HONEYPOT CHECK RESULTS
-─────────────────────────────────────
+### Final Score
 
-Buy Simulation:  ✅ Success
-Sell Simulation: ❌ Failed
-
-Reason: Transfer blocked for non-whitelisted addresses
-
-🔴 WARNING: This token appears to be a HONEYPOT
-   Do NOT buy — you won't be able to sell
-```
-
----
-
-## Wallet Analysis
-
-Track any wallet's on-chain activity:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  WALLET ANALYSIS: 0xabcd...1234                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  OVERVIEW                                                       │
-│  ├─ Total Value: $2.4M                                         │
-│  ├─ # of Tokens: 24                                            │
-│  ├─ First Tx: 2021-03-15                                       │
-│  ├─ Last Tx: 2h ago                                            │
-│  └─ Label: Likely Fund/Whale                                   │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  TOP HOLDINGS                                                   │
-│                                                                 │
-│  1. ETH      │ 450.2   │ $1.48M   │ 62%                        │
-│  2. USDC     │ 420,000 │ $420K    │ 17%                        │
-│  3. LINK     │ 12,500  │ $175K    │ 7%                         │
-│  4. UNI      │ 18,200  │ $128K    │ 5%                         │
-│  5. AAVE     │ 850     │ $102K    │ 4%                         │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  RECENT ACTIVITY (7d)                                          │
-│                                                                 │
-│  • Bought 50 ETH @ $3,280                     │ 2h ago         │
-│  • Swapped 10K USDC → ARB                     │ 1d ago         │
-│  • Deposited 200 ETH to Aave                  │ 3d ago         │
-│  • Withdrew 500 LINK from Binance             │ 5d ago         │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Use Cases
-
-### 1. New Token Research
-Before buying any new token:
-1. Enter contract address
-2. Review security score
-3. Check holder distribution
-4. Verify liquidity lock
-5. Run honeypot check
-
-### 2. Whale Watching
-Follow smart money:
-1. Add whale addresses to watchlist
-2. Get alerts on movements
-3. Analyze their portfolios
-4. Identify accumulation patterns
-
-### 3. Project Due Diligence
-Deep dive into protocols:
-1. Analyze all related contracts
-2. Map token flows
-3. Identify team wallets
-4. Track treasury movements
-
-### 4. Portfolio Monitoring
-Understand your holdings:
-1. Security score for each token
-2. Liquidity health check
-3. Holder concentration changes
-4. Contract upgrade alerts
-
----
-
-## Data Sources
-
-| Source | Data |
-|--------|------|
-| Etherscan/Block Explorers | Contract code, transactions |
-| DEX APIs | Liquidity, trading data |
-| Token Lists | Known safe tokens |
-| Audit Databases | Security reports |
-| Wallet Labels | Known entities |
-| Scam Databases | Flagged contracts |
+| Category | Score |
+|----------|-------|
+| Contract Security | 82/100 |
+| Liquidity Health | 75/100 |
+| Holder Distribution | 68/100 |
+| **Overall** | **75/100** 🟢 |
 
 ---
 
 ## Supported Chains
 
-- ✅ Ethereum
-- ✅ BSC
-- ✅ Polygon
-- ✅ Arbitrum
-- ✅ Optimism
-- ✅ Base
-- ✅ Solana
-- 🔄 More coming...
+| Chain | Status |
+|-------|--------|
+| Ethereum | Full support |
+| Arbitrum | Full support |
+| BSC | Full support |
+| Polygon | Full support |
+| Optimism | Coming soon |
+| Base | Coming soon |
 
 ---
 
-## API Access (Coming Soon)
+## Integration with Other Agents
 
-```javascript
-// Analyze a token
-const analysis = await nexxore.web3Intel.analyzeToken({
-  address: '0x1234...5678',
-  chain: 'ethereum'
-});
-
-console.log(analysis.securityScore); // 78
-console.log(analysis.isHoneypot);    // false
-console.log(analysis.holders.top10); // 35%
-
-// Analyze a wallet
-const wallet = await nexxore.web3Intel.analyzeWallet({
-  address: '0xabcd...1234',
-  chain: 'ethereum'
-});
-
-console.log(wallet.totalValue);      // $2,400,000
-console.log(wallet.recentActivity);  // [...]
-```
+| Agent | Integration |
+|-------|-------------|
+| Alpha Agent | Security score gates signal generation |
+| Execution Agent | Only routes to verified contracts |
+| Risk Agent | Security score affects position limits |
 
 ---
 
-## Best Practices
+## Use Cases
 
-1. **Always verify contracts** — Never buy unverified tokens
-2. **Check before you buy** — 30 seconds of research can save you
-3. **Watch for red flags** — If something seems off, it probably is
-4. **Follow the whales** — But understand why, not just what
-5. **Monitor your holdings** — Security status can change
-
----
-
-## Common Scam Patterns
-
-| Pattern | Description | Detection |
-|---------|-------------|-----------|
-| Honeypot | Can buy but not sell | Sell simulation fails |
-| Rug Pull | Liquidity removed | LP not locked |
-| Mint Exploit | Unlimited supply creation | Uncapped mint function |
-| Fee Trap | High/increasing fees | Fee > 10% on transfer |
-| Proxy Swap | Contract replaced with malicious version | Upgradeable proxy |
+| Use Case | How Web3 Intel Helps |
+|----------|----------------------|
+| New Token Evaluation | Full security report before buying |
+| Portfolio Audit | Scan existing holdings for risks |
+| Airdrop Safety | Verify claim contracts aren't malicious |
+| LP Decisions | Assess liquidity pool risks |
 
 ---
 
 ## Next Steps
 
-- [Research Agent →](./research-agent.md)
 - [Alpha Agent →](./alpha-agent.md)
-- [Getting Started Guide →](../guides/getting-started.md)
+- [Research Agent →](./research-agent.md)
+- [Agent Overview →](./overview.md)

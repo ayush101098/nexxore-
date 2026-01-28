@@ -1,70 +1,100 @@
-# Nexxore Agents Overview
+# Agent Overview
+
+Read how Nexxore's autonomous AI agents work: the agent swarm architecture, roles and responsibilities, and how they coordinate to execute strategies.
+
+---
 
 ## What Are Nexxore Agents?
 
-Nexxore Agents are **autonomous AI programs** that run 24/7 to:
-- Monitor markets and on-chain data
+Nexxore Agents are autonomous AI programs that run 24/7 to:
+
+- Monitor markets and on-chain data in real-time
 - Identify opportunities and risks
 - Execute strategies and rebalancing
-- Generate research and insights
+- Generate research and actionable insights
 
-Unlike traditional DeFi bots that follow simple rules, Nexxore agents use AI to make intelligent decisions in complex, changing market conditions.
+Unlike traditional DeFi bots that follow simple if-then rules, Nexxore agents use AI to make intelligent decisions in complex, changing market conditions.
+
+---
+
+## The Agent Swarm
+
+Nexxore operates a coordinated swarm of specialized agents, each with distinct responsibilities:
+
+| Agent | Role | Primary Function |
+|-------|------|------------------|
+| **Research Agent** | The Analyst | Market intelligence, news synthesis, trend detection |
+| **Alpha Agent** | The Strategist | Trading signal generation, entry/exit recommendations |
+| **Web3 Intelligence Agent** | The Auditor | Contract analysis, security scoring, rug pull detection |
+| **Execution Agent** | The Trader | Order routing, slippage minimization, venue selection |
+| **Risk Agent** | The Guardian | CVaR monitoring, drawdown enforcement, position limits |
 
 ---
 
 ## Agent Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    NEXXORE AGENT SYSTEM                         │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────────┐                                           │
-│  │  DATA SOURCES   │                                           │
-│  │  • On-chain     │                                           │
-│  │  • Price feeds  │                                           │
-│  │  • News/Social  │────┐                                      │
-│  │  • Whale alerts │    │                                      │
-│  └─────────────────┘    │                                      │
-│                         ▼                                       │
-│  ┌──────────────────────────────────────┐                      │
-│  │           LLM ENGINE                 │                      │
-│  │  • Analysis & reasoning              │                      │
-│  │  • Pattern recognition               │                      │
-│  │  • Decision making                   │                      │
-│  └──────────────────────────────────────┘                      │
-│                         │                                       │
-│                         ▼                                       │
-│  ┌─────────────────┬─────────────────┬─────────────────┐       │
-│  │ RESEARCH AGENT  │  ALPHA AGENT    │  WEB3 INTEL     │       │
-│  │                 │                 │                 │       │
-│  │ Market analysis │ Trade signals   │ Token analysis  │       │
-│  │ News synthesis  │ Entry/exit      │ Contract audit  │       │
-│  │ Trend detection │ Risk mgmt       │ Whale tracking  │       │
-│  └─────────────────┴─────────────────┴─────────────────┘       │
-│                         │                                       │
-│                         ▼                                       │
-│  ┌──────────────────────────────────────┐                      │
-│  │         EXECUTION LAYER              │                      │
-│  │  • Smart contract calls              │                      │
-│  │  • Multi-chain support               │                      │
-│  │  • Transaction optimization          │                      │
-│  └──────────────────────────────────────┘                      │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
+### Data Layer
+
+All agents draw from a shared data layer that includes:
+
+| Source | Data Type |
+|--------|-----------|
+| On-chain | Transactions, wallet balances, contract events |
+| Price Feeds | Real-time prices from CEXs and DEXs |
+| News/Social | Crypto news, Twitter sentiment, Discord activity |
+| Whale Alerts | Large transaction monitoring |
+| DeFi Analytics | TVL, yields, protocol metrics |
+
+### LLM Engine
+
+At the core of each agent is a Large Language Model (LLM) that provides:
+
+- Analysis and reasoning capabilities
+- Pattern recognition across data streams
+- Natural language synthesis for reports
+- Decision-making under uncertainty
+
+### Execution Layer
+
+Agents execute actions through:
+
+- Smart contract calls (ERC-20 approvals, swaps, positions)
+- Multi-chain support (Arbitrum, Ethereum, future chains)
+- Transaction optimization (gas estimation, MEV protection)
+
+---
+
+## Agent Coordination
+
+Agents don't operate in isolation—they coordinate through a shared messaging layer:
+
+| Flow | Description |
+|------|-------------|
+| Research → Alpha | Market analysis informs signal generation |
+| Alpha → Execution | Signals trigger trade execution |
+| Web3 Intel → All | Security scores gate asset exposure |
+| Risk → All | Risk limits override all other agents |
+
+### Example Workflow
+
+1. **Research Agent** detects unusual whale accumulation in ETH
+2. **Web3 Intelligence** confirms no smart contract risks
+3. **Alpha Agent** generates a long signal with 72% confidence
+4. **Risk Agent** approves position size within CVaR limits
+5. **Execution Agent** routes order to GMX for best fill
 
 ---
 
 ## Available Agents
 
-### 🔬 Research Agent
-**Purpose:** Market intelligence and analysis
+### Research Agent
 
-Provides:
+Market intelligence and analysis system.
+
+**Provides:**
 - Live crypto news aggregation
-- Top gainers and losers
-- Whale movement tracking
+- Top gainers and losers tracking
+- Whale movement alerts
 - Smart money wallet monitoring
 - Fear & Greed index
 - DeFi TVL analytics
@@ -74,160 +104,63 @@ Provides:
 
 ---
 
-### 🎯 Alpha Agent
-**Purpose:** Trading signal generation
+### Alpha Agent
 
-Provides:
+Trading signal generation engine.
+
+**Provides:**
 - Entry and exit signals
 - Risk/reward analysis
 - Position sizing recommendations
 - Multi-timeframe analysis
-- Backtested strategies
+- Confidence scoring
 
 [Learn more →](./alpha-agent.md)
 
 ---
 
-### 🌐 Web3 Intelligence Agent
-**Purpose:** On-chain data analysis
+### Web3 Intelligence Agent
 
-Provides:
+On-chain data analysis and security auditing.
+
+**Provides:**
 - Token contract analysis
 - Liquidity monitoring
-- Holder distribution
-- Smart contract audits
-- New token detection
-- Rug pull risk scoring
+- Holder distribution analysis
+- Honeypot and rug pull detection
+- Security scoring (0-100)
 
 [Learn more →](./web3-intelligence.md)
 
 ---
 
-## How Agents Work
-
-### 1. Data Ingestion
-Agents continuously pull data from:
-- **Price APIs:** Binance, CoinGecko, DefiLlama
-- **On-chain:** Etherscan, blockchain RPCs
-- **News:** CryptoCompare, major outlets
-- **Social:** Twitter/X sentiment
-- **Whale Alerts:** Large transaction monitoring
-
-### 2. Analysis
-The LLM engine processes data to:
-- Identify patterns and trends
-- Synthesize news into actionable insights
-- Detect anomalies and opportunities
-- Assess risk levels
-
-### 3. Output
-Agents produce:
-- Dashboard updates
-- Alert notifications
-- Research reports
-- Trade signals
-- Automated actions (if enabled)
-
----
-
-## Agent Capabilities
-
-| Capability | Research | Alpha | Web3 Intel |
-|------------|----------|-------|------------|
-| Price tracking | ✅ | ✅ | ✅ |
-| News analysis | ✅ | ⚪ | ⚪ |
-| Trade signals | ⚪ | ✅ | ⚪ |
-| On-chain analysis | ⚪ | ⚪ | ✅ |
-| Whale tracking | ✅ | ⚪ | ✅ |
-| Risk scoring | ⚪ | ✅ | ✅ |
-| Auto-execution | ⚪ | ✅ | ⚪ |
-
----
-
-## Trust & Transparency
-
-### On-Chain Verification
-Every agent decision that results in a transaction is verifiable on-chain.
-
-### Audit Logs
-Full logs of agent reasoning and actions are available.
-
-### Human Override
-Users can always override agent decisions or pause automation.
-
-### No Custody
-Agents execute through smart contracts — they never have custody of user funds.
-
----
-
-## Using Agents
-
-### Dashboard Access
-Access all agents through the Nexxore dashboard:
-- Research Agent: `/research-agent.html`
-- Alpha Agent: `/alpha-agent.html`
-- Web3 Intel: `/web3-intel.html`
-
-### API Access
-Programmatic access via API (coming soon):
-```javascript
-const nexxore = new NexxoreSDK(apiKey);
-
-// Get research insights
-const insights = await nexxore.research.getInsights();
-
-// Get alpha signals
-const signals = await nexxore.alpha.getSignals('ETH');
-
-// Get token analysis
-const analysis = await nexxore.web3Intel.analyzeToken(contractAddress);
-```
-
-### Notifications
-Configure alerts via:
-- Telegram
-- Discord
-- Email
-- In-app notifications
-
----
-
 ## Agent Performance
 
-### Research Agent Metrics
-- **News coverage:** 50+ sources
-- **Update frequency:** Real-time
-- **Whale detection:** <5 min latency
+Agents are continuously monitored for performance:
 
-### Alpha Agent Metrics
-- **Signal accuracy:** 68% win rate (backtested)
-- **Avg risk/reward:** 1:2.5
-- **Signals per day:** 3-8
-
-### Web3 Intel Metrics
-- **Contracts analyzed:** 10,000+
-- **Rug detection rate:** 94%
-- **Analysis time:** <30 seconds
+| Metric | Description |
+|--------|-------------|
+| **Uptime** | Agent availability (target: 99.9%) |
+| **Latency** | Time from signal to execution |
+| **Accuracy** | Signal win rate over time |
+| **Risk Adherence** | Compliance with CVaR limits |
 
 ---
 
-## Roadmap
+## Technical Specifications
 
-### Current
-- ✅ Research Agent v1
-- ✅ Alpha Agent v1
-- ✅ Web3 Intelligence v1
-
-### Coming Soon
-- 🔄 Multi-chain expansion
-- 🔄 Custom agent training
-- 🔄 Agent marketplace
-- 🔄 Social trading integration
+| Specification | Value |
+|---------------|-------|
+| Update Frequency | Every block (~12s on Ethereum) |
+| Supported Chains | Arbitrum, Ethereum (more coming) |
+| LLM Provider | OpenAI GPT-4 / Anthropic Claude |
+| Execution Venues | GMX, Uniswap, 1inch |
 
 ---
 
 ## Next Steps
 
-- [Research Agent Details →](./research-agent.md)
-- [Alpha Agent Details →](./alpha-agent.md)
-- [Web3 Intelligence Details →](./web3-intelligence.md)
+- [Research Agent →](./research-agent.md)
+- [Alpha Agent →](./alpha-agent.md)
+- [Web3 Intelligence →](./web3-intelligence.md)
+- [Risk Framework →](../framework/risk-framework.md)
