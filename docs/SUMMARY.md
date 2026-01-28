@@ -3,6 +3,7 @@
 ## Overview
 
 * [Introduction](README.md)
+* [Whitepaper](whitepaper.md)
 * [How Nexxore Works](how-it-works.md)
 * [nUSD Stablecoin](nusd.md)
 
@@ -19,6 +20,12 @@
 * [Alpha Agent](agents/alpha-agent.md)
 * [Web3 Intelligence](agents/web3-intelligence.md)
 
+## Framework
+
+* [Mathematical Risk Framework](framework/risk-framework.md)
+* [Capital Flow & Lifecycle](framework/capital-flow.md)
+
 ## Guides
 
 * [Getting Started](guides/getting-started.md)
+* [Roadmap](guides/roadmap.md)

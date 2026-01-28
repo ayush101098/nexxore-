@@ -1,48 +1,103 @@
 # Nexxore Documentation
 
-> **AI-Native DeFi Infrastructure for Autonomous Yield Generation**
+> **The AI-Native Execution Layer for Decentralized Capital**
 
-Welcome to the official Nexxore documentation. This guide covers all aspects of the Nexxore protocol, from perpetual vaults to AI-powered agents.
+Welcome to the official Nexxore documentation. This guide covers all aspects of the Nexxore protocol, from delta-neutral vaults to AI-powered agents.
 
 ---
 
 ## What is Nexxore?
 
-Nexxore is a next-generation DeFi protocol that combines:
-- **AI-powered autonomous agents** for research, trading, and alpha generation
-- **Delta-neutral yield strategies** for sustainable, market-neutral returns
-- **On-chain transparency** with fully verifiable execution
-- **nUSD synthetic stablecoin** backed by productive collateral
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         N E X X O R E                           │
+│                                                                 │
+│              Built for Quants. Accessible to All.               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   Nexxore is a modular DeFi protocol designed to bridge the     │
+│   gap between institutional quantitative finance and on-chain   │
+│   markets.                                                      │
+│                                                                 │
+│   ┌─────────────────────────────────────────────────────────┐  │
+│   │                                                         │  │
+│   │   "We do not just offer yield; we offer a rigorous,     │  │
+│   │    verifiable operating system for decentralized        │  │
+│   │    capital."                                            │  │
+│   │                                                         │  │
+│   └─────────────────────────────────────────────────────────┘  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+Nexxore combines:
+- **🤖 AI-powered autonomous agents** for research, trading, and alpha generation
+- **⚖️ Delta-neutral yield strategies** for sustainable, market-neutral returns
+- **🔍 On-chain transparency** with fully verifiable execution
+- **💵 nUSD productive stablecoin** backed by hedged collateral
+
+---
+
+## Core Features
+
+```
+┌───────────────┐     ┌───────────────┐     ┌───────────────┐
+│  🤖 AGENT     │     │  ⚖️ DELTA     │     │  💵 nUSD      │
+│    SWARM      │     │   NEUTRAL     │     │   STABLE      │
+│               │     │               │     │               │
+│ AI-powered    │     │ Market-neutral│     │ Productive    │
+│ execution     │     │ yield capture │     │ stablecoin    │
+└───────────────┘     └───────────────┘     └───────────────┘
+```
 
 ---
 
 ## Documentation Structure
 
-### 📚 Core Concepts
-- [Introduction](./introduction.md)
-- [How Nexxore Works](./how-it-works.md)
-- [nUSD Stablecoin](./nusd.md)
+### 📚 Overview
+- [Whitepaper](./whitepaper.md) — Full protocol specification
+- [How Nexxore Works](./how-it-works.md) — Architecture overview
+- [nUSD Stablecoin](./nusd.md) — The productive stable unit
 
 ### 💰 Products
-- [Perpetual Vaults](./products/perps-vaults.md)
-- [Strategy Sandbox](./products/strategy-sandbox.md)
-- [Delta Neutral Builder](./products/delta-neutral.md)
+- [Perpetual Vaults](./products/perps-vaults.md) — Yield-generating vaults
+- [Strategy Sandbox](./products/strategy-sandbox.md) — Build custom strategies
+- [Delta Neutral Builder](./products/delta-neutral.md) — Create DN positions
 
 ### 🤖 Nexxore Agents
-- [Agent Overview](./agents/overview.md)
-- [Research Agent](./agents/research-agent.md)
-- [Alpha Agent](./agents/alpha-agent.md)
-- [Web3 Intelligence Agent](./agents/web3-intelligence.md)
+- [Agent Overview](./agents/overview.md) — The AI swarm
+- [Research Agent](./agents/research-agent.md) — Market intelligence
+- [Alpha Agent](./agents/alpha-agent.md) — Signal generation
+- [Web3 Intelligence](./agents/web3-intelligence.md) — Security & auditing
 
-### 🔧 Technical
-- [Architecture](./technical/architecture.md)
-- [Smart Contracts](./technical/contracts.md)
-- [API Reference](./technical/api.md)
+### 📐 Framework
+- [Mathematical Risk Framework](./framework/risk-framework.md) — Sharpe, CVaR, VaR
+- [Capital Flow & Lifecycle](./framework/capital-flow.md) — How capital moves
 
 ### 📖 Guides
-- [Getting Started](./guides/getting-started.md)
-- [Connecting Your Wallet](./guides/wallet-connect.md)
-- [Your First Strategy](./guides/first-strategy.md)
+- [Getting Started](./guides/getting-started.md) — First steps
+- [Roadmap](./guides/roadmap.md) — Development timeline
+
+---
+
+## Quick Start
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    GET STARTED IN 3 STEPS                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. CONNECT WALLET                                              │
+│     └─ MetaMask, WalletConnect, or Coinbase Wallet              │
+│                                                                 │
+│  2. CHOOSE A VAULT                                              │
+│     └─ Delta-Neutral, Moderate Alpha, or Custom                 │
+│                                                                 │
+│  3. DEPOSIT & EARN                                              │
+│     └─ Agents handle execution automatically                    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -56,6 +111,39 @@ Nexxore is a next-generation DeFi protocol that combines:
 
 ---
 
+## The Nexxore Advantage
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    WHY NEXXORE?                                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  FROM TRADFI                                            │   │
+│  │  ✓ Risk-adjusted frameworks (Sharpe, CVaR, VaR)         │   │
+│  │  ✓ Quantitative rigour                                  │   │
+│  │  ✓ Institutional-grade tooling                          │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  FROM DEFI                                              │   │
+│  │  ✓ Non-custodial settlement                             │   │
+│  │  ✓ Full transparency                                    │   │
+│  │  ✓ Composability                                        │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  NEXXORE INNOVATION                                     │   │
+│  │  ✓ AI agent swarm for 24/7 autonomous execution         │   │
+│  │  ✓ Delta-neutral strategies for stable yield            │   │
+│  │  ✓ nUSD productive stablecoin                           │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Support
 
 For questions and support:
@@ -66,3 +154,5 @@ For questions and support:
 ---
 
 *Built with ❤️ by the Nexxore team*
+
+**Nexxore: Built for Quants. Accessible to All.**
