@@ -51,7 +51,7 @@ Our mission extends beyond creating a protocol—it's about fostering a system t
 
 ## Connect
 
-Follow us on [X (Twitter)](https://x.com/nexxore_) for the latest updates.
+Follow us on [X (Twitter)](https://x.com/nexxore) for the latest updates.
 
 ---
 
