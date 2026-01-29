@@ -49,22 +49,9 @@ Our mission extends beyond creating a protocol—it's about fostering a system t
 
 ---
 
-## Quick Links
+## Connect
 
-| Resource | Link |
-|----------|------|
-| Launch App | [nexxore.vercel.app](https://nexxore.vercel.app) |
-| GitHub | [github.com/ayush101098/nexxore-](https://github.com/ayush101098/nexxore-) |
-| Twitter | [@nexxore_](https://twitter.com/nexxore_) |
-
----
-
-## Support
-
-For questions and support:
-- Join our Discord community
-- Open an issue on GitHub
-- Reach out on Twitter
+Follow us on [X (Twitter)](https://x.com/nexxore_) for the latest updates.
 
 ---
 
