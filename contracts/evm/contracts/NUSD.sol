@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title nUSD - Nexxore Synthetic Dollar
@@ -88,13 +88,14 @@ contract NUSD is ERC20, ERC20Burnable, AccessControl, Pausable {
     }
 
     /**
-     * @dev Hook to check pause state
+     * @dev Hook to check pause state before transfers
+     * OZ v5 uses _update instead of _beforeTokenTransfer
      */
-    function _beforeTokenTransfer(
+    function _update(
         address from,
         address to,
-        uint256 amount
+        uint256 value
     ) internal override whenNotPaused {
-        super._beforeTokenTransfer(from, to, amount);
+        super._update(from, to, value);
     }
 }

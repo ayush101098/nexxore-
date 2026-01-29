@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Safe Yield Vault — Nexxore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --bg-primary: #000000;
+      --bg-card: #0a0a0a;
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --text-muted: rgba(255, 255, 255, 0.4);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --safe-green: #22c55e;
+      --safe-green-bg: rgba(34, 197, 94, 0.1);
+      --safe-green-border: rgba(34, 197, 94, 0.3);
+      --purple: #a855f7;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .header-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--safe-green);
+    }
+    
+    .connect-btn {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, var(--purple), var(--safe-green));
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .connect-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+    }
+    
+    .connect-btn.connected {
+      background: var(--safe-green-bg);
+      border: 1px solid var(--safe-green-border);
+    }
+    
+    .main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    
+    @media (max-width: 768px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .card-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+    
+    .badge {
+      padding: 4px 12px;
+      background: var(--safe-green-bg);
+      border: 1px solid var(--safe-green-border);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: var(--safe-green);
+    }
+    
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+    
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    
+    .stat-value {
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+    
+    .stat-value.green { color: var(--safe-green); }
+    .stat-value.purple { color: var(--purple); }
+    
+    .input-group {
+      margin-bottom: 16px;
+    }
+    
+    .input-group label {
+      display: block;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: 8px;
+    }
+    
+    .input-wrapper {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .input-wrapper input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 12px 16px;
+      color: white;
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      outline: none;
+    }
+    
+    .input-wrapper .max-btn {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .input-wrapper .max-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+    }
+    
+    .action-btn {
+      width: 100%;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, var(--purple), var(--safe-green));
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(168, 85, 247, 0.3);
+    }
+    
+    .action-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .action-btn.secondary {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-color);
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .tab {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .tab.active {
+      background: var(--safe-green-bg);
+      border-color: var(--safe-green-border);
+      color: var(--safe-green);
+    }
+    
+    .network-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    
+    .network-badge .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--safe-green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .warning-box {
+      display: none;
+      padding: 12px 16px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      color: #ef4444;
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+    }
+    
+    .success-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 16px 24px;
+      background: var(--safe-green-bg);
+      border: 1px solid var(--safe-green-border);
+      border-radius: 12px;
+      color: var(--safe-green);
+      font-weight: 500;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+    
+    .success-toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    .wallet-info {
+      display: none;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .wallet-info.connected {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <a href="index.html" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="width: 28px; height: 28px;">
+          <defs><linearGradient id="logoGrad" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs>
+          <g transform="translate(10,15) scale(0.8)"><circle cx="50" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/></g>
+        </svg>
+        <span style="color: white; font-weight: 600; font-size: 0.95rem;">nexxore</span>
+      </a>
+      <div class="header-title">Safe Yield Vault</div>
+    </div>
+    
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div class="network-badge" id="networkBadge" style="display: none;">
+        <span class="dot"></span>
+        <span id="networkName">--</span>
+      </div>
+      <div class="wallet-info" id="walletInfo">
+        <span id="walletAddress" style="font-family: var(--font-mono); font-size: 0.875rem;">--</span>
+      </div>
+      <button id="connectWalletBtn" class="connect-btn">Connect Wallet</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Page Title -->
+    <div style="margin-bottom: 32px;">
+      <h1 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 8px;">Safe Yield USDC Vault</h1>
+      <p style="color: var(--text-secondary);">Earn stable yields on your USDC through automated DeFi strategies</p>
+    </div>
+
+    <div class="grid">
+      <!-- Vault Stats Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Vault Overview</h2>
+          <span class="badge">Live</span>
+        </div>
+        
+        <div class="stat-row">
+          <span class="stat-label">Total Value Locked</span>
+          <span class="stat-value green" id="tvl">$0.00</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Your Shares</span>
+          <span class="stat-value" id="userShares">0.00</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Share Value</span>
+          <span class="stat-value green" id="shareValue">$0.00</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Your USDC Balance</span>
+          <span class="stat-value" id="usdcBalance">0.00</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">APY</span>
+          <span class="stat-value green">8-12%</span>
+        </div>
+      </div>
+
+      <!-- Deposit/Withdraw Card -->
+      <div class="card">
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('deposit')">Deposit</button>
+          <button class="tab" onclick="switchTab('withdraw')">Withdraw</button>
+        </div>
+
+        <!-- Deposit Form -->
+        <div id="depositForm">
+          <div class="input-group">
+            <label>Amount (USDC)</label>
+            <div class="input-wrapper">
+              <input type="number" id="depositAmount" placeholder="0.00" step="0.01" min="0">
+              <button class="max-btn" onclick="setMaxDeposit()">MAX</button>
+            </div>
+          </div>
+          <button class="action-btn" id="depositBtn" onclick="handleDeposit()" disabled>Connect Wallet</button>
+        </div>
+
+        <!-- Withdraw Form -->
+        <div id="withdrawForm" style="display: none;">
+          <div class="input-group">
+            <label>Amount (USDC)</label>
+            <div class="input-wrapper">
+              <input type="number" id="withdrawAmount" placeholder="0.00" step="0.01" min="0">
+              <button class="max-btn" onclick="setMaxWithdraw()">MAX</button>
+            </div>
+          </div>
+          <button class="action-btn" id="withdrawBtn" onclick="handleWithdraw()" disabled>Connect Wallet</button>
+        </div>
+      </div>
+
+      <!-- nUSD Minting Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">nUSD Collateral</h2>
+          <span class="badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.3); color: #a855f7;">ETH → nUSD</span>
+        </div>
+
+        <div class="stat-row">
+          <span class="stat-label">ETH Locked</span>
+          <span class="stat-value" id="ethLocked">0.00 ETH</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">nUSD Debt</span>
+          <span class="stat-value" id="nusdDebt">0.00 nUSD</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Current LTV</span>
+          <span class="stat-value" id="currentLtv">0%</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Available to Mint</span>
+          <span class="stat-value purple" id="availableMint">0.00 nUSD</span>
+        </div>
+
+        <div id="liquidation-warning" class="warning-box">
+          ⚠️ Position at risk of liquidation! Repay debt or add collateral.
+        </div>
+
+        <div class="input-group" style="margin-top: 16px;">
+          <label>Deposit ETH Collateral</label>
+          <div class="input-wrapper">
+            <input type="number" id="ethAmount" placeholder="0.00" step="0.01" min="0">
+            <button class="max-btn">ETH</button>
+          </div>
+        </div>
+        <button class="action-btn secondary" onclick="handleDepositETH()" disabled id="depositEthBtn">Deposit ETH</button>
+
+        <div class="input-group" style="margin-top: 16px;">
+          <label>Mint nUSD</label>
+          <div class="input-wrapper">
+            <input type="number" id="nusdAmount" placeholder="0.00" step="0.01" min="0">
+            <button class="max-btn" onclick="setMaxMint()">MAX</button>
+          </div>
+        </div>
+        <button class="action-btn" onclick="handleMintNUSD()" disabled id="mintBtn">Mint nUSD</button>
+      </div>
+
+      <!-- Your Balances Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Your Balances</h2>
+        </div>
+
+        <div class="stat-row">
+          <span class="stat-label">ETH</span>
+          <span class="stat-value" id="ethBalance">0.00</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">USDC</span>
+          <span class="stat-value" id="usdcBalanceFull">0.00</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">nUSD</span>
+          <span class="stat-value purple" id="nusdBalance">0.00</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Vault Shares</span>
+          <span class="stat-value green" id="vaultSharesFull">0.00</span>
+        </div>
+
+        <button class="action-btn secondary" onclick="refreshBalances()" style="margin-top: 16px;">
+          🔄 Refresh Balances
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Success Toast -->
+  <div class="success-toast" id="toast">Transaction successful!</div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script src="frontend/js/vaultIntegration.js"></script>
+  
+  <script>
+    let isConnected = false;
+    let currentTab = 'deposit';
+
+    // Switch tabs
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.tab:nth-child(${tab === 'deposit' ? 1 : 2})`).classList.add('active');
+      document.getElementById('depositForm').style.display = tab === 'deposit' ? 'block' : 'none';
+      document.getElementById('withdrawForm').style.display = tab === 'withdraw' ? 'block' : 'none';
+    }
+
+    // Connect wallet
+    document.getElementById('connectWalletBtn').addEventListener('click', async () => {
+      try {
+        const btn = document.getElementById('connectWalletBtn');
+        btn.textContent = 'Connecting...';
+        
+        const result = await vaultManager.connect();
+        
+        isConnected = true;
+        btn.textContent = formatAddress(result.address);
+        btn.classList.add('connected');
+        
+        document.getElementById('networkBadge').style.display = 'flex';
+        document.getElementById('networkName').textContent = result.network === 'sepolia' ? 'Sepolia' : 'Localhost';
+        
+        // Enable buttons
+        document.getElementById('depositBtn').disabled = false;
+        document.getElementById('depositBtn').textContent = 'Deposit USDC';
+        document.getElementById('withdrawBtn').disabled = false;
+        document.getElementById('withdrawBtn').textContent = 'Withdraw USDC';
+        document.getElementById('depositEthBtn').disabled = false;
+        document.getElementById('mintBtn').disabled = false;
+        
+        await refreshBalances();
+        
+        showToast('Wallet connected!');
+      } catch (error) {
+        console.error(error);
+        document.getElementById('connectWalletBtn').textContent = 'Connect Wallet';
+        alert('Error: ' + error.message);
+      }
+    });
+
+    // Refresh all balances
+    async function refreshBalances() {
+      if (!isConnected) return;
+      
+      try {
+        const vaultStats = await vaultManager.getVaultStats();
+        const position = await vaultManager.getCollateralPosition();
+        
+        // Update vault stats
+        document.getElementById('tvl').textContent = `$${vaultStats.totalAssets}`;
+        document.getElementById('userShares').textContent = vaultStats.userShares;
+        document.getElementById('shareValue').textContent = `$${vaultStats.userShareValue}`;
+        document.getElementById('usdcBalance').textContent = vaultStats.userUSDCBalance;
+        
+        // Update collateral stats
+        document.getElementById('ethLocked').textContent = `${position.collateralETH} ETH`;
+        document.getElementById('nusdDebt').textContent = `${position.debtNUSD} nUSD`;
+        document.getElementById('currentLtv').textContent = `${position.currentLTV}%`;
+        document.getElementById('availableMint').textContent = `${position.maxMintable} nUSD`;
+        
+        // Update balances
+        document.getElementById('ethBalance').textContent = `${parseFloat(position.ethBalance).toFixed(4)} ETH`;
+        document.getElementById('usdcBalanceFull').textContent = `${vaultStats.userUSDCBalance} USDC`;
+        document.getElementById('nusdBalance').textContent = `${position.nusdBalance} nUSD`;
+        document.getElementById('vaultSharesFull').textContent = vaultStats.userShares;
+        
+        // Liquidation warning
+        document.getElementById('liquidation-warning').style.display = position.isLiquidatable ? 'block' : 'none';
+        
+      } catch (error) {
+        console.error('Error refreshing:', error);
+      }
+    }
+
+    // Vault operations
+    async function handleDeposit() {
+      const amount = document.getElementById('depositAmount').value;
+      if (!amount || parseFloat(amount) <= 0) {
+        alert('Enter a valid amount');
+        return;
+      }
+      
+      try {
+        document.getElementById('depositBtn').textContent = 'Processing...';
+        await vaultManager.depositToVault(amount);
+        showToast(`Deposited ${amount} USDC!`);
+        document.getElementById('depositAmount').value = '';
+        await refreshBalances();
+      } catch (error) {
+        console.error(error);
+        alert('Error: ' + error.message);
+      } finally {
+        document.getElementById('depositBtn').textContent = 'Deposit USDC';
+      }
+    }
+
+    async function handleWithdraw() {
+      const amount = document.getElementById('withdrawAmount').value;
+      if (!amount || parseFloat(amount) <= 0) {
+        alert('Enter a valid amount');
+        return;
+      }
+      
+      try {
+        document.getElementById('withdrawBtn').textContent = 'Processing...';
+        await vaultManager.withdrawFromVault(amount);
+        showToast(`Withdrew ${amount} USDC!`);
+        document.getElementById('withdrawAmount').value = '';
+        await refreshBalances();
+      } catch (error) {
+        console.error(error);
+        alert('Error: ' + error.message);
+      } finally {
+        document.getElementById('withdrawBtn').textContent = 'Withdraw USDC';
+      }
+    }
+
+    async function handleDepositETH() {
+      const amount = document.getElementById('ethAmount').value;
+      if (!amount || parseFloat(amount) <= 0) {
+        alert('Enter a valid amount');
+        return;
+      }
+      
+      try {
+        document.getElementById('depositEthBtn').textContent = 'Processing...';
+        await vaultManager.depositETHCollateral(amount);
+        showToast(`Deposited ${amount} ETH as collateral!`);
+        document.getElementById('ethAmount').value = '';
+        await refreshBalances();
+      } catch (error) {
+        console.error(error);
+        alert('Error: ' + error.message);
+      } finally {
+        document.getElementById('depositEthBtn').textContent = 'Deposit ETH';
+      }
+    }
+
+    async function handleMintNUSD() {
+      const amount = document.getElementById('nusdAmount').value;
+      if (!amount || parseFloat(amount) <= 0) {
+        alert('Enter a valid amount');
+        return;
+      }
+      
+      try {
+        document.getElementById('mintBtn').textContent = 'Processing...';
+        await vaultManager.mintNUSD(amount);
+        showToast(`Minted ${amount} nUSD!`);
+        document.getElementById('nusdAmount').value = '';
+        await refreshBalances();
+      } catch (error) {
+        console.error(error);
+        alert('Error: ' + error.message);
+      } finally {
+        document.getElementById('mintBtn').textContent = 'Mint nUSD';
+      }
+    }
+
+    // Max buttons
+    async function setMaxDeposit() {
+      if (!isConnected) return;
+      const stats = await vaultManager.getVaultStats();
+      document.getElementById('depositAmount').value = stats.userUSDCBalance;
+    }
+
+    async function setMaxWithdraw() {
+      if (!isConnected) return;
+      const stats = await vaultManager.getVaultStats();
+      document.getElementById('withdrawAmount').value = stats.userShareValue;
+    }
+
+    async function setMaxMint() {
+      if (!isConnected) return;
+      const position = await vaultManager.getCollateralPosition();
+      document.getElementById('nusdAmount').value = position.maxMintable;
+    }
+
+    // Toast notification
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+  </script>
+</body>
+</html>

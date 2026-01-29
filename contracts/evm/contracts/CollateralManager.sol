@@ -2,11 +2,11 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 import "./NUSD.sol";
 
@@ -353,6 +353,11 @@ contract CollateralManager is AccessControl, ReentrancyGuard, Pausable {
         require(!supportedCollateral[token], "Already supported");
         supportedCollateral[token] = true;
         collateralTokens.push(token);
+        priceFeeds[token] = AggregatorV3Interface(priceFeed);
+    }
+
+    function setPriceFeed(address token, address priceFeed) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(supportedCollateral[token], "Token not supported");
         priceFeeds[token] = AggregatorV3Interface(priceFeed);
     }
 
