@@ -496,6 +496,82 @@
       border-radius: 10px;
     }
 
+    /* Narratives, Airdrops, Macro */
+    .narrative-card,
+    .airdrop-card,
+    .macro-card {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    .narrative-card:last-child,
+    .airdrop-card:last-child,
+    .macro-card:last-child {
+      border-bottom: none;
+    }
+
+    .narrative-header,
+    .airdrop-header,
+    .macro-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .narrative-name,
+    .airdrop-name,
+    .macro-title {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    .momentum-badge,
+    .airdrop-status,
+    .macro-impact {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .narrative-desc,
+    .airdrop-desc,
+    .macro-desc {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .narrative-stats {
+      display: flex;
+      gap: 12px;
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+
+    .airdrop-value {
+      font-size: 0.7rem;
+      color: var(--green);
+      margin-top: 6px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .news-item {
       background: var(--surface);
       padding: 14px;
@@ -926,6 +1002,17 @@
       </div>
     </div>
 
+    <!-- Hot Narratives Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span style="color: #f59e0b;">🔥</span> Hot Narratives
+        </div>
+        <div class="panel-badge" id="narrativeCount">-- Active</div>
+      </div>
+      <div class="insights-list" id="narrativesContainer"></div>
+    </div>
+
     <!-- Hypothesis Intelligence Panel -->
     <div class="panel full-width">
       <div class="panel-header">
@@ -1041,6 +1128,55 @@
           <div style="margin-top: 12px; font-size: 0.7rem; color: var(--text-muted); line-height: 1.4;">
             Signals blend narrative strength, derivatives positioning, on-chain activity, and social momentum.
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Airdrops Panel -->
+    <div class="panel full-width">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span style="color: #22c55e;">🎯</span> Airdrops
+        </div>
+        <div class="panel-badge">Opportunities</div>
+      </div>
+      <div class="two-col">
+        <div>
+          <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 10px;">Active Farming</div>
+          <div id="activeAirdropsFront"></div>
+        </div>
+        <div>
+          <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 10px;">Upcoming / Recent</div>
+          <div id="upcomingAirdropsFront"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Macro Panel -->
+    <div class="panel full-width">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span style="color: #3b82f6;">🌐</span> Macro Pulse
+        </div>
+        <div class="panel-badge">This Week</div>
+      </div>
+      <div class="two-col">
+        <div>
+          <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 10px;">Macro Events</div>
+          <div id="macroEventsFront"></div>
+        </div>
+        <div>
+          <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 10px;">Market Sentiment</div>
+          <div style="padding: 6px 0 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+              <span style="font-size: 0.7rem; color: var(--text-muted);">Fear & Greed Index</span>
+              <span style="font-size: 1rem; font-weight: 600; color: var(--text); font-family: 'JetBrains Mono', monospace;">72</span>
+            </div>
+            <div style="height: 4px; background: var(--border);">
+              <div style="width: 72%; height: 100%; background: var(--green);"></div>
+            </div>
+          </div>
+          <table class="data-table" id="macroSentimentTableFront"></table>
         </div>
       </div>
     </div>
@@ -1200,6 +1336,85 @@
       pnl: [1.2, 1.8, 1.6, 2.1, 2.4, 2.7]
     };
 
+    const narrativesData = [
+      {
+        name: 'AI x Crypto',
+        momentum: 'Strong',
+        desc: 'AI agents, decentralized compute, and AI-powered DeFi protocols',
+        protocols: 'Protocols: Fetch.ai, Bittensor, Autonolas',
+        stats: ['+34% 7D', '12 protocols', '$2.4B TVL']
+      },
+      {
+        name: 'RWA Tokenization',
+        momentum: 'Strong',
+        desc: 'Real-world assets on-chain: treasuries, real estate, credit',
+        protocols: 'Protocols: Ondo, Centrifuge, Maple',
+        stats: ['+28% 7D', '8 protocols', '$8.1B TVL']
+      },
+      {
+        name: 'Bitcoin L2s',
+        momentum: 'Rising',
+        desc: 'Bitcoin DeFi via Stacks, BOB, Merlin Chain',
+        protocols: 'Protocols: Stacks, BOB, Merlin',
+        stats: ['+52% 7D', '15 protocols', '$1.8B TVL']
+      },
+      {
+        name: 'Restaking',
+        momentum: 'Stable',
+        desc: 'EigenLayer ecosystem, liquid restaking tokens',
+        protocols: 'Protocols: EigenLayer, Ether.fi, Renzo',
+        stats: ['+8% 7D', '18 protocols', '$15.2B TVL']
+      },
+      {
+        name: 'Solana DeFi',
+        momentum: 'Rising',
+        desc: 'Jupiter, Raydium, Kamino leading Solana summer',
+        protocols: 'Protocols: Jupiter, Raydium, Kamino',
+        stats: ['+42% 7D', '25 protocols', '$6.8B TVL']
+      }
+    ];
+
+    const activeAirdropsData = [
+      { name: 'Monad', status: 'Testnet', desc: 'High-perf EVM L1 - testnet activity, Discord engagement', value: 'Est. $2,000 - $25,000' },
+      { name: 'Berachain', status: 'Testnet', desc: 'PoL consensus L1 - bArtio, NFTs, DeFi usage', value: 'Est. $5,000 - $50,000' },
+      { name: 'Hyperliquid', status: 'Points', desc: 'Perp DEX - trading volume, LP provision, referrals', value: 'Est. $1,000 - $20,000' },
+      { name: 'Grass', status: 'Points', desc: 'Decentralized bandwidth - run node, earn points', value: 'Est. $500 - $5,000' },
+      { name: 'Movement', status: 'Testnet', desc: 'Move-based L2 - testnet interactions, bridge usage', value: 'Est. $1,000 - $15,000' },
+      { name: 'ZKsync', status: 'Season', desc: 'L2 quests, liquidity provision, governance participation', value: 'Est. $700 - $12,000' },
+      { name: 'Linea', status: 'Points', desc: 'Bridge volume, on-chain activity, ecosystem dApps', value: 'Est. $600 - $9,000' },
+      { name: 'Scroll', status: 'Season', desc: 'L2 swaps, LP provisioning, governance badges', value: 'Est. $500 - $8,000' }
+    ];
+
+    const upcomingAirdropsData = [
+      { name: 'Pump.fun', status: 'Rumored', desc: 'Solana memecoin launcher - trading, launches, volume', value: 'Est. TBD - High Volume' },
+      { name: 'Magic Eden', status: 'Soon', desc: 'Multi-chain NFT marketplace - diamonds program active', value: 'Est. $500 - $10,000' },
+      { name: 'Initia', status: 'Testnet', desc: 'Interwoven rollup network - testnet missions', value: 'Est. $1,000 - $12,000' },
+      { name: 'Eclipse', status: 'Mainnet', desc: 'SVM L2 on Ethereum - bridge, DeFi usage', value: 'Est. $500 - $8,000' },
+      { name: 'Abstract', status: 'Points', desc: 'ZK L2 - bridge, portal interactions, XP earning', value: 'Est. $500 - $7,000' },
+      { name: 'Mode', status: 'Incentives', desc: 'L2 DeFi quests, liquidity mining, lending activity', value: 'Est. $400 - $6,000' },
+      { name: 'Sophon', status: 'Coming', desc: 'ZK ecosystem tasks, node waitlist, social verification', value: 'Est. TBD - Medium' }
+    ];
+
+    const macroEventsData = [
+      { title: 'FOMC Meeting', impact: 'High', desc: 'Fed rate decision - markets pricing forward guidance' },
+      { title: 'CPI Data', impact: 'High', desc: 'US inflation - critical for risk appetite' },
+      { title: 'ETF Flows', impact: 'Medium', desc: 'Weekly BTC/ETH ETF flows - institutional demand' },
+      { title: 'Jobs Report', impact: 'Medium', desc: 'Non-farm payrolls - labor market health' },
+      { title: 'BoJ Policy Decision', impact: 'Medium', desc: 'Yield curve guidance, FX implications for risk assets' },
+      { title: 'US Treasury Auctions', impact: 'Medium', desc: '10Y/30Y supply - watch bid-to-cover ratios' },
+      { title: 'China PMI', impact: 'Low', desc: 'Manufacturing momentum, global growth pulse' }
+    ];
+
+    const macroSentimentData = [
+      { label: 'BTC Dominance', value: '54.2%' },
+      { label: 'Total Crypto MCap', value: '$2.4T' },
+      { label: 'DeFi TVL', value: '$182B' },
+      { label: 'Stablecoin MCap', value: '$158B' },
+      { label: 'US 10Y Yield', value: '4.12%' },
+      { label: 'DXY Index', value: '102.8' },
+      { label: 'Global Liquidity', value: '+1.4% MoM' }
+    ];
+
     let hypothesisConfidenceChart;
     let hypothesisPerformanceChart;
 
@@ -1214,6 +1429,84 @@
       renderTimeline();
       renderHypothesisPerformance();
       updateHypothesisTimestamp();
+    }
+
+    function renderNarrativesPanel() {
+      const container = document.getElementById('narrativesContainer');
+      const count = document.getElementById('narrativeCount');
+      if (!container) return;
+
+      if (count) count.textContent = `${narrativesData.length} Active`;
+      container.innerHTML = narrativesData.map(item => `
+        <div class="narrative-card">
+          <div class="narrative-header">
+            <span class="narrative-name">${item.name}</span>
+            <span class="momentum-badge">${item.momentum}</span>
+          </div>
+          <div class="narrative-desc">${item.desc}</div>
+          <div class="narrative-desc">${item.protocols}</div>
+          <div class="narrative-stats">
+            ${item.stats.map(stat => `<span>${stat}</span>`).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderAirdropsPanel() {
+      const active = document.getElementById('activeAirdropsFront');
+      const upcoming = document.getElementById('upcomingAirdropsFront');
+
+      if (active) {
+        active.innerHTML = activeAirdropsData.map(item => `
+          <div class="airdrop-card">
+            <div class="airdrop-header">
+              <span class="airdrop-name">${item.name}</span>
+              <span class="airdrop-status">${item.status}</span>
+            </div>
+            <div class="airdrop-desc">${item.desc}</div>
+            <div class="airdrop-value">${item.value}</div>
+          </div>
+        `).join('');
+      }
+
+      if (upcoming) {
+        upcoming.innerHTML = upcomingAirdropsData.map(item => `
+          <div class="airdrop-card">
+            <div class="airdrop-header">
+              <span class="airdrop-name">${item.name}</span>
+              <span class="airdrop-status">${item.status}</span>
+            </div>
+            <div class="airdrop-desc">${item.desc}</div>
+            <div class="airdrop-value">${item.value}</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function renderMacroPanel() {
+      const events = document.getElementById('macroEventsFront');
+      const table = document.getElementById('macroSentimentTableFront');
+
+      if (events) {
+        events.innerHTML = macroEventsData.map(item => `
+          <div class="macro-card">
+            <div class="macro-header">
+              <span class="macro-title">${item.title}</span>
+              <span class="macro-impact">${item.impact}</span>
+            </div>
+            <div class="macro-desc">${item.desc}</div>
+          </div>
+        `).join('');
+      }
+
+      if (table) {
+        table.innerHTML = macroSentimentData.map(item => `
+          <tr>
+            <td>${item.label}</td>
+            <td style="text-align: right;"><span class="tvl-value">${item.value}</span></td>
+          </tr>
+        `).join('');
+      }
     }
 
     function renderHypotheses() {
@@ -1676,6 +1969,9 @@
     // Initial load
     updateOnChainAnalytics();
     renderHypothesisDashboard();
+    renderNarrativesPanel();
+    renderAirdropsPanel();
+    renderMacroPanel();
     loadInsights();
     loadNews();
     loadTrending();
@@ -1683,6 +1979,11 @@
     // Auto-refresh
     setInterval(updateOnChainAnalytics, 10000); // Every 10 seconds
     setInterval(renderHypothesisDashboard, 60000); // Every 60 seconds
+    setInterval(() => {
+      renderNarrativesPanel();
+      renderAirdropsPanel();
+      renderMacroPanel();
+    }, 5 * 60 * 1000); // Every 5 minutes
     setInterval(() => {
       loadInsights();
       loadNews();

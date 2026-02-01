@@ -1064,7 +1064,7 @@
             <div class="panel-title">🎯 Active Farming</div>
             <span class="panel-badge">Points Live</span>
           </div>
-          <div class="scrollable">
+          <div class="scrollable" id="activeAirdrops">
             <div class="airdrop-card">
               <div class="airdrop-header">
                 <span class="airdrop-name">Monad</span>
@@ -1137,7 +1137,7 @@
             <div class="panel-title">⏳ Upcoming / Recent</div>
             <span class="panel-badge">Track</span>
           </div>
-          <div class="scrollable">
+          <div class="scrollable" id="upcomingAirdrops">
             <div class="airdrop-card">
               <div class="airdrop-header">
                 <span class="airdrop-name">Pump.fun</span>
@@ -1207,7 +1207,7 @@
             <div class="panel-title">Macro Events</div>
             <span class="panel-badge">This Week</span>
           </div>
-          <div class="scrollable">
+          <div class="scrollable" id="macroEvents">
             <div class="macro-card">
               <div class="macro-header">
                 <span class="macro-title">FOMC Meeting</span>
@@ -1273,7 +1273,7 @@
               <div style="width: 72%; height: 100%; background: var(--text-secondary);"></div>
             </div>
           </div>
-          <table class="data-table">
+          <table class="data-table" id="macroSentimentTable">
             <tr>
               <td>BTC Dominance</td>
               <td style="text-align: right;"><span class="tvl-value">54.2%</span></td>
@@ -1339,6 +1339,105 @@
       if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
       if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
       return Math.floor(seconds / 86400) + 'd ago';
+    }
+
+    // ===== AIRDROP & MACRO DATA =====
+    const activeAirdropsData = [
+      { name: 'Monad', status: 'Testnet', desc: 'High-perf EVM L1 - testnet activity, Discord engagement', value: 'Est. $2,000 - $25,000' },
+      { name: 'Berachain', status: 'Testnet', desc: 'PoL consensus L1 - bArtio, NFTs, DeFi usage', value: 'Est. $5,000 - $50,000' },
+      { name: 'Hyperliquid', status: 'Points', desc: 'Perp DEX - trading volume, LP provision, referrals', value: 'Est. $1,000 - $20,000' },
+      { name: 'Grass', status: 'Points', desc: 'Decentralized bandwidth - run node, earn points', value: 'Est. $500 - $5,000' },
+      { name: 'Movement', status: 'Testnet', desc: 'Move-based L2 - testnet interactions, bridge usage', value: 'Est. $1,000 - $15,000' },
+      { name: 'ZKsync', status: 'Season', desc: 'L2 quests, liquidity provision, governance participation', value: 'Est. $700 - $12,000' },
+      { name: 'Linea', status: 'Points', desc: 'Bridge volume, on-chain activity, ecosystem dApps', value: 'Est. $600 - $9,000' },
+      { name: 'Scroll', status: 'Season', desc: 'L2 swaps, LP provisioning, governance badges', value: 'Est. $500 - $8,000' }
+    ];
+
+    const upcomingAirdropsData = [
+      { name: 'Pump.fun', status: 'Rumored', desc: 'Solana memecoin launcher - trading, launches, volume', value: 'Est. TBD - High Volume' },
+      { name: 'Magic Eden', status: 'Soon', desc: 'Multi-chain NFT marketplace - diamonds program active', value: 'Est. $500 - $10,000' },
+      { name: 'Initia', status: 'Testnet', desc: 'Interwoven rollup network - testnet missions', value: 'Est. $1,000 - $12,000' },
+      { name: 'Eclipse', status: 'Mainnet', desc: 'SVM L2 on Ethereum - bridge, DeFi usage', value: 'Est. $500 - $8,000' },
+      { name: 'Abstract', status: 'Points', desc: 'ZK L2 - bridge, portal interactions, XP earning', value: 'Est. $500 - $7,000' },
+      { name: 'Mode', status: 'Incentives', desc: 'L2 DeFi quests, liquidity mining, lending activity', value: 'Est. $400 - $6,000' },
+      { name: 'Sophon', status: 'Coming', desc: 'ZK ecosystem tasks, node waitlist, social verification', value: 'Est. TBD - Medium' }
+    ];
+
+    const macroEventsData = [
+      { title: 'FOMC Meeting', impact: 'High', desc: 'Fed rate decision - markets pricing forward guidance' },
+      { title: 'CPI Data', impact: 'High', desc: 'US inflation - critical for risk appetite' },
+      { title: 'ETF Flows', impact: 'Medium', desc: 'Weekly BTC/ETH ETF flows - institutional demand' },
+      { title: 'Jobs Report', impact: 'Medium', desc: 'Non-farm payrolls - labor market health' },
+      { title: 'BoJ Policy Decision', impact: 'Medium', desc: 'Yield curve guidance, FX implications for risk assets' },
+      { title: 'US Treasury Auctions', impact: 'Medium', desc: '10Y/30Y supply - watch bid-to-cover ratios' },
+      { title: 'China PMI', impact: 'Low', desc: 'Manufacturing momentum, global growth pulse' }
+    ];
+
+    const macroSentimentData = [
+      { label: 'BTC Dominance', value: '54.2%' },
+      { label: 'Total Crypto MCap', value: '$2.4T' },
+      { label: 'DeFi TVL', value: '$182B' },
+      { label: 'Stablecoin MCap', value: '$158B' },
+      { label: 'US 10Y Yield', value: '4.12%' },
+      { label: 'DXY Index', value: '102.8' },
+      { label: 'Global Liquidity', value: '+1.4% MoM' }
+    ];
+
+    function renderAirdrops() {
+      const activeContainer = document.getElementById('activeAirdrops');
+      const upcomingContainer = document.getElementById('upcomingAirdrops');
+
+      if (activeContainer) {
+        activeContainer.innerHTML = activeAirdropsData.map(item => `
+          <div class="airdrop-card">
+            <div class="airdrop-header">
+              <span class="airdrop-name">${item.name}</span>
+              <span class="airdrop-status">${item.status}</span>
+            </div>
+            <div class="airdrop-desc">${item.desc}</div>
+            <div class="airdrop-value">${item.value}</div>
+          </div>
+        `).join('');
+      }
+
+      if (upcomingContainer) {
+        upcomingContainer.innerHTML = upcomingAirdropsData.map(item => `
+          <div class="airdrop-card">
+            <div class="airdrop-header">
+              <span class="airdrop-name">${item.name}</span>
+              <span class="airdrop-status">${item.status}</span>
+            </div>
+            <div class="airdrop-desc">${item.desc}</div>
+            <div class="airdrop-value">${item.value}</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function renderMacro() {
+      const eventsContainer = document.getElementById('macroEvents');
+      const sentimentTable = document.getElementById('macroSentimentTable');
+
+      if (eventsContainer) {
+        eventsContainer.innerHTML = macroEventsData.map(item => `
+          <div class="macro-card">
+            <div class="macro-header">
+              <span class="macro-title">${item.title}</span>
+              <span class="macro-impact">${item.impact}</span>
+            </div>
+            <div class="macro-desc">${item.desc}</div>
+          </div>
+        `).join('');
+      }
+
+      if (sentimentTable) {
+        sentimentTable.innerHTML = macroSentimentData.map(item => `
+          <tr>
+            <td>${item.label}</td>
+            <td style="text-align: right;"><span class="tvl-value">${item.value}</span></td>
+          </tr>
+        `).join('');
+      }
     }
 
     // ===== HYPOTHESIS DASHBOARD DATA =====
@@ -2092,6 +2191,8 @@
       ]);
 
       renderHypothesisDashboard();
+      renderAirdrops();
+      renderMacro();
       
       btn.textContent = 'Refresh';
       console.log('✅ All data refreshed');
@@ -2110,6 +2211,8 @@
     // Initialize all data on page load
     document.addEventListener('DOMContentLoaded', () => {
       renderHypothesisDashboard();
+      renderAirdrops();
+      renderMacro();
       refreshData();
       
       // Auto-refresh every 60 seconds
