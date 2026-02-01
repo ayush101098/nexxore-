@@ -15,5 +15,18 @@
     <a href="deposit-new.html">→ Go to Deposit</a><br>
     <a href="vault-new.html">→ Go to Vault</a><br>
     <a href="start.html">→ Go to Start</a>
+<script>
+    document.querySelectorAll('a[href$=".html"]').forEach(link => {
+        const href = link.getAttribute('href');
+        if (!href) return;
+        const [path, hash] = href.split('#');
+        const cleaned = path.replace(/\.html$/, '');
+        link.setAttribute('href', hash ? `${cleaned}#${hash}` : cleaned);
+    });
+    if (window.location.pathname.endsWith('.html')) {
+        const cleanPath = window.location.pathname.replace(/\.html$/, '');
+        window.history.replaceState({}, '', cleanPath + window.location.search + window.location.hash);
+    }
+</script>
 </body>
 </html>
