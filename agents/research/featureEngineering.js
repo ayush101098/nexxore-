@@ -226,6 +226,159 @@ class FeatureEngineering {
     }
 
     /**
+     * Step 4: Comprehensive Momentum Indicators
+     */
+    calculateMomentumIndicators(prices = [], volumes = []) {
+        if (!prices || prices.length < 50) {
+            return {
+                emaMomentum: 0,
+                rsi: 50,
+                macd: 0,
+                macdSignal: 0,
+                macdHistogram: 0,
+                volumeMomentum: 0,
+                breakoutScore: 0,
+                atr: 0,
+                bbWidth: 0,
+                roc3d: 0,
+                roc7d: 0,
+                roc14d: 0,
+                compositeMomentum: 0
+            };
+        }
+
+        const ema7 = this.calculateEMA(prices, 7);
+        const ema21 = this.calculateEMA(prices, 21);
+        const emaMomentum = this.normalize((ema7 - ema21) / ema21 * 100, -10, 10);
+
+        const rsi = this.calculateRSI(prices, 14);
+        const { macd, signal, histogram } = this.calculateMACD(prices, 12, 26, 9);
+
+        const volumeMomentum = this.calculateVolumeMomentum(volumes);
+        const breakoutScore = this.calculateBreakoutScore(prices);
+        const atr = this.calculateATR(prices, 14);
+        const bbWidth = this.calculateBollingerWidth(prices, 20, 2);
+
+        const roc3d = this.calculateROC(prices, 3);
+        const roc7d = this.calculateROC(prices, 7);
+        const roc14d = this.calculateROC(prices, 14);
+
+        const compositeMomentum = this.normalize(
+            (emaMomentum * 0.2) +
+            (this.normalize((rsi - 50), -50, 50) * 0.15) +
+            (this.normalize(macd, -5, 5) * 0.2) +
+            (volumeMomentum * 0.15) +
+            (breakoutScore * 0.15) +
+            (this.normalize(roc7d, -20, 20) * 0.15),
+            -1, 1
+        );
+
+        return {
+            emaMomentum,
+            rsi,
+            macd,
+            macdSignal: signal,
+            macdHistogram: histogram,
+            volumeMomentum,
+            breakoutScore,
+            atr,
+            bbWidth,
+            roc3d,
+            roc7d,
+            roc14d,
+            compositeMomentum
+        };
+    }
+
+    calculateEMA(prices, period) {
+        const k = 2 / (period + 1);
+        let ema = prices[0];
+        for (let i = 1; i < prices.length; i++) {
+            ema = prices[i] * k + ema * (1 - k);
+        }
+        return ema;
+    }
+
+    calculateRSI(prices, period = 14) {
+        let gains = 0;
+        let losses = 0;
+        for (let i = 1; i <= period; i++) {
+            const diff = prices[i] - prices[i - 1];
+            if (diff >= 0) gains += diff; else losses -= diff;
+        }
+        gains /= period;
+        losses /= period;
+        let rs = losses === 0 ? 100 : gains / losses;
+        let rsi = 100 - (100 / (1 + rs));
+        for (let i = period + 1; i < prices.length; i++) {
+            const diff = prices[i] - prices[i - 1];
+            gains = (gains * (period - 1) + (diff > 0 ? diff : 0)) / period;
+            losses = (losses * (period - 1) + (diff < 0 ? -diff : 0)) / period;
+            rs = losses === 0 ? 100 : gains / losses;
+            rsi = 100 - (100 / (1 + rs));
+        }
+        return rsi;
+    }
+
+    calculateMACD(prices, fast = 12, slow = 26, signal = 9) {
+        const emaFast = this.calculateEMA(prices, fast);
+        const emaSlow = this.calculateEMA(prices, slow);
+        const macd = emaFast - emaSlow;
+        const macdSeries = prices.map((_, i) => {
+            const slice = prices.slice(0, i + 1);
+            return this.calculateEMA(slice, fast) - this.calculateEMA(slice, slow);
+        });
+        const signalLine = this.calculateEMA(macdSeries, signal);
+        return { macd, signal: signalLine, histogram: macd - signalLine };
+    }
+
+    calculateVolumeMomentum(volumes = []) {
+        if (!volumes || volumes.length < 7) return 0;
+        const current = volumes[volumes.length - 1];
+        const avg = volumes.slice(-7).reduce((s, v) => s + v, 0) / 7;
+        return this.normalize(Math.log1p(current / Math.max(avg, 1)), 0, 1.5);
+    }
+
+    calculateBreakoutScore(prices = []) {
+        if (prices.length < 50) return 0;
+        const current = prices[prices.length - 1];
+        const ma20 = this.calculateMA(prices, 20);
+        const ma50 = this.calculateMA(prices, 50);
+        const above = (current > ma20 ? 0.5 : 0) + (current > ma50 ? 0.5 : 0);
+        return above;
+    }
+
+    calculateATR(prices = [], period = 14) {
+        if (prices.length < period + 1) return 0;
+        let trs = [];
+        for (let i = 1; i < prices.length; i++) {
+            const high = Math.max(prices[i], prices[i - 1]);
+            const low = Math.min(prices[i], prices[i - 1]);
+            trs.push(high - low);
+        }
+        const slice = trs.slice(-period);
+        return slice.reduce((s, v) => s + v, 0) / period;
+    }
+
+    calculateBollingerWidth(prices = [], period = 20, mult = 2) {
+        if (prices.length < period) return 0;
+        const slice = prices.slice(-period);
+        const mean = slice.reduce((s, v) => s + v, 0) / period;
+        const variance = slice.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / period;
+        const std = Math.sqrt(variance);
+        const upper = mean + mult * std;
+        const lower = mean - mult * std;
+        return (upper - lower) / mean;
+    }
+
+    calculateROC(prices = [], days = 3) {
+        if (prices.length <= days) return 0;
+        const current = prices[prices.length - 1];
+        const past = prices[prices.length - 1 - days];
+        return ((current - past) / past) * 100;
+    }
+
+    /**
      * Calculate sentiment features
      */
     calculateSentimentFeatures(fearGreed, category, categoryData) {

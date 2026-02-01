@@ -18,6 +18,7 @@ class AlertSystem {
     this.config = {
       minAlphaScore: 70,
       minSentimentChange: 0.5,
+      minHypothesisConfidence: 0.7,
       checkIntervalMs: 300000, // 5 min
       ...config
     };
@@ -147,6 +148,27 @@ class AlertSystem {
       metadata: event
     };
     
+    return await this.dispatch(alert);
+  }
+
+  /**
+   * Create hypothesis alert
+   */
+  async createHypothesisAlert(payload) {
+    const confidence = payload.confidence ?? payload?.metadata?.hypothesis?.confidence ?? 0;
+    if (confidence < this.config.minHypothesisConfidence) return;
+
+    const alert = {
+      id: `hypothesis_${Date.now()}`,
+      type: payload.type || 'hypothesis_signal',
+      severity: payload.severity || (confidence >= 0.85 ? 'critical' : 'high'),
+      title: payload.title || '🧠 Hypothesis Alert',
+      message: payload.message || 'High-confidence hypothesis detected.',
+      action: payload.action || 'review_hypothesis',
+      timestamp: new Date().toISOString(),
+      metadata: payload.metadata || payload
+    };
+
     return await this.dispatch(alert);
   }
   

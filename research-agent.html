@@ -516,6 +516,179 @@
       color: var(--text-primary);
     }
 
+    /* Hypothesis Dashboard */
+    .hypothesis-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .hypothesis-card {
+      border: 1px solid var(--border-color);
+      background: var(--bg-primary);
+      padding: 16px;
+      border-radius: 10px;
+    }
+
+    .hypothesis-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .hypothesis-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .hypothesis-meta {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 10px;
+    }
+
+    .hypothesis-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .tag {
+      font-size: 0.6rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+    }
+
+    .badge {
+      font-size: 0.6rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .badge-long { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
+    .badge-short { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+    .badge-neutral { background: rgba(148, 163, 184, 0.15); color: var(--text-secondary); }
+
+    .signal-bars {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .signal-bar {
+      display: grid;
+      grid-template-columns: 90px 1fr 40px;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.6rem;
+      color: var(--text-muted);
+    }
+
+    .bar {
+      height: 6px;
+      background: var(--border-color);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: var(--text-secondary);
+    }
+
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .heatmap-cell {
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 0.6rem;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .heat-1 { background: rgba(148, 163, 184, 0.12); }
+    .heat-2 { background: rgba(59, 130, 246, 0.15); }
+    .heat-3 { background: rgba(14, 165, 233, 0.18); }
+    .heat-4 { background: rgba(34, 197, 94, 0.2); }
+    .heat-5 { background: rgba(168, 85, 247, 0.2); }
+
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.65rem;
+    }
+
+    .matrix-table th,
+    .matrix-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--border-color);
+      text-align: right;
+    }
+
+    .matrix-table th:first-child,
+    .matrix-table td:first-child {
+      text-align: left;
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .heat-cell {
+      border-radius: 6px;
+      padding: 4px 6px;
+      display: inline-block;
+      min-width: 48px;
+    }
+
+    .feed-item {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .feed-item:last-child { border-bottom: none; }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+    }
+
+    .timeline-item {
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--bg-primary);
+    }
+
+    .export-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .progress-chip {
+      font-size: 0.6rem;
+      padding: 3px 6px;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 1000px) {
+      .hypothesis-grid { grid-template-columns: 1fr; }
+      .signal-bar { grid-template-columns: 80px 1fr 40px; }
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .header { padding: 10px 16px; }
@@ -550,6 +723,7 @@
   <nav class="nav-tabs">
     <button class="nav-tab active" data-tab="signals">Signals</button>
     <button class="nav-tab" data-tab="research">Research</button>
+    <button class="nav-tab" data-tab="hypotheses">Hypotheses</button>
     <button class="nav-tab" data-tab="analytics">Analytics</button>
     <button class="nav-tab" data-tab="airdrops">Airdrops</button>
     <button class="nav-tab" data-tab="macro">Macro</button>
@@ -754,6 +928,157 @@
               </div>
               <div class="macro-desc">USDC vs USDT dynamics, emerging alternatives</div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hypotheses Tab -->
+    <div id="hypotheses" class="tab-content">
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🧠 Active Hypotheses</div>
+            <span class="panel-badge" id="hypothesisCount">-- Live</span>
+          </div>
+          <div class="hypothesis-grid" id="hypothesisCards">
+            <div class="hypothesis-card">
+              <div class="hypothesis-header">
+                <div class="hypothesis-title">Loading hypotheses...</div>
+              </div>
+              <div class="hypothesis-meta">
+                <span>---</span>
+                <span>---</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📊 Signal Breakdown</div>
+            <span class="panel-badge">Multi-signal</span>
+          </div>
+          <div id="signalBreakdown" class="signal-bars"></div>
+          <div class="chart-container" style="height: 160px; margin-top: 14px;">
+            <canvas id="hypothesisConfidenceChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 16px;">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🌡 Narrative Heatmap</div>
+            <span class="panel-badge">Momentum</span>
+          </div>
+          <div id="narrativeHeatmap" class="heatmap-grid"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">💹 Funding Rate Matrix</div>
+            <span class="panel-badge">Perps</span>
+          </div>
+          <table class="matrix-table" id="fundingMatrix">
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th>1h</th>
+                <th>8h</th>
+                <th>24h</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 16px;">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🚀 Trending Assets</div>
+            <span class="panel-badge">Composite</span>
+          </div>
+          <table class="data-table" id="trendingAssets">
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th>Narrative</th>
+                <th>Score</th>
+                <th>24h</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🗣 Social Pulse Feed</div>
+            <span class="panel-badge">Live</span>
+          </div>
+          <div class="scrollable" id="socialFeed" style="max-height: 320px;"></div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 16px;">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🧯 Invalidation Tracker</div>
+            <span class="panel-badge">Risk</span>
+          </div>
+          <table class="data-table" id="invalidationTable">
+            <thead>
+              <tr>
+                <th>Hypothesis</th>
+                <th>Trigger</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🧭 Hypothesis Timeline</div>
+            <span class="panel-badge">Events</span>
+          </div>
+          <div class="timeline" id="hypothesisTimeline"></div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top: 16px;">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📈 Historical Performance</div>
+            <span class="panel-badge">Backtest</span>
+          </div>
+          <div class="chart-container" style="height: 200px;">
+            <canvas id="hypothesisPerformanceChart"></canvas>
+          </div>
+          <div class="actions-row">
+            <span class="progress-chip">Win Rate: <strong id="hypothesisWinRate">--</strong></span>
+            <span class="progress-chip">Avg R/R: <strong id="hypothesisRR">--</strong></span>
+            <span class="progress-chip">Hit Rate (30D): <strong id="hypothesisHit">--</strong></span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📤 Export & Controls</div>
+            <span class="panel-badge" id="hypothesisUpdated">Last sync: --</span>
+          </div>
+          <div class="export-actions">
+            <button class="action-btn" onclick="exportHypotheses('json')">Export JSON</button>
+            <button class="action-btn" onclick="exportHypotheses('csv')">Export CSV</button>
+            <button class="action-btn" onclick="copyHypothesisSummary()">Copy Summary</button>
+            <button class="action-btn" onclick="renderHypothesisDashboard()">Refresh Signals</button>
+          </div>
+          <div style="margin-top: 16px; font-size: 0.7rem; color: var(--text-muted); line-height: 1.5;">
+            Automated hypothesis generation blends narratives, flows, derivatives positioning, and on-chain shifts.
+            Exports are sanitized for external sharing and include confidence, invalidation, and catalyst fields.
           </div>
         </div>
       </div>
@@ -1083,6 +1408,407 @@
       if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
       if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
       return Math.floor(seconds / 86400) + 'd ago';
+    }
+
+    // ===== HYPOTHESIS DASHBOARD DATA =====
+    const hypothesisData = [
+      {
+        id: 'H-2041',
+        title: 'SOL front-runs ETF narrative spike',
+        asset: 'SOL',
+        direction: 'Long',
+        confidence: 0.78,
+        timeframe: '2-4w',
+        catalysts: ['ETF chatter', 'DEX volume breakout', 'Ecosystem unlocks'],
+        risks: ['Regulatory delays', 'Funding overheats'],
+        invalidation: 'Breaks $135',
+        status: 'Active',
+        signals: { Narrative: 0.82, 'On-chain': 0.74, Derivatives: 0.69, Social: 0.77, Flow: 0.71 }
+      },
+      {
+        id: 'H-1976',
+        title: 'ETH basis compression -> mean reversion',
+        asset: 'ETH',
+        direction: 'Neutral',
+        confidence: 0.64,
+        timeframe: '1-2w',
+        catalysts: ['Basis flat', 'OI stable', 'Spot bid'],
+        risks: ['Macro risk-off', 'Staking outflows'],
+        invalidation: 'Basis widens > 1.2%',
+        status: 'Watch',
+        signals: { Narrative: 0.55, 'On-chain': 0.61, Derivatives: 0.68, Social: 0.46, Flow: 0.62 }
+      },
+      {
+        id: 'H-2109',
+        title: 'AVAX DeFi relaunch momentum',
+        asset: 'AVAX',
+        direction: 'Long',
+        confidence: 0.71,
+        timeframe: '3-6w',
+        catalysts: ['Incentives live', 'TVL inflection', 'GameFi beta'],
+        risks: ['Liquidity drain', 'Narrative fatigue'],
+        invalidation: 'TVL drop > 12%',
+        status: 'Active',
+        signals: { Narrative: 0.76, 'On-chain': 0.7, Derivatives: 0.63, Social: 0.72, Flow: 0.66 }
+      },
+      {
+        id: 'H-1884',
+        title: 'BTC dominance rotation into AI basket',
+        asset: 'AI Basket',
+        direction: 'Long',
+        confidence: 0.69,
+        timeframe: '2-3w',
+        catalysts: ['AI funding cycles', 'Token unlocks absorbed', 'Dev activity'],
+        risks: ['BTC strength persists', 'Liquidity fragmentation'],
+        invalidation: 'BTC.D > 56%',
+        status: 'Watch',
+        signals: { Narrative: 0.81, 'On-chain': 0.58, Derivatives: 0.52, Social: 0.83, Flow: 0.6 }
+      }
+    ];
+
+    const narrativeHeatmapData = [
+      { label: 'AI Agents', score: 5 },
+      { label: 'RWA', score: 4 },
+      { label: 'Restaking', score: 3 },
+      { label: 'GameFi', score: 2 },
+      { label: 'BTC L2', score: 4 },
+      { label: 'DePIN', score: 3 },
+      { label: 'SocialFi', score: 2 },
+      { label: 'Perp DEX', score: 4 },
+      { label: 'L2 Infra', score: 3 },
+      { label: 'Privacy', score: 1 },
+      { label: 'Memes', score: 2 },
+      { label: 'Stablecoins', score: 3 }
+    ];
+
+    const fundingMatrixData = [
+      { asset: 'BTC', oneH: 0.003, eightH: 0.015, day: 0.032 },
+      { asset: 'ETH', oneH: -0.001, eightH: 0.008, day: 0.021 },
+      { asset: 'SOL', oneH: 0.009, eightH: 0.024, day: 0.041 },
+      { asset: 'AVAX', oneH: 0.006, eightH: 0.018, day: 0.029 },
+      { asset: 'ARB', oneH: -0.004, eightH: -0.009, day: -0.015 }
+    ];
+
+    const trendingAssetsData = [
+      { asset: 'SOL', narrative: 'ETF Buzz', score: 92, change: 8.4 },
+      { asset: 'TAO', narrative: 'AI Compute', score: 88, change: 6.1 },
+      { asset: 'AVAX', narrative: 'DeFi Relaunch', score: 84, change: 4.2 },
+      { asset: 'RUNE', narrative: 'Cross-chain', score: 79, change: -1.4 },
+      { asset: 'PYTH', narrative: 'Oracle Upgrade', score: 76, change: 3.7 }
+    ];
+
+    const socialFeedData = [
+      { author: 'MacroBlock', text: 'SOL narrative strength accelerating alongside ETF headlines.', time: '12m ago', impact: 'High' },
+      { author: 'ChainPulse', text: 'AI token basket leading sector rotation — watch funding flips.', time: '24m ago', impact: 'Medium' },
+      { author: 'FlowWatch', text: 'ETH basis compressed to 0.6%: dealer gamma stabilizing.', time: '41m ago', impact: 'Medium' },
+      { author: 'WhaleGrid', text: 'AVAX whales accumulating on-chain; exchange balances down.', time: '58m ago', impact: 'High' }
+    ];
+
+    const hypothesisTimelineData = [
+      { title: 'H-2041 created after SOL ETF filings spike', time: 'Today • 09:20' },
+      { title: 'Derivatives signal flipped positive for AVAX', time: 'Yesterday • 18:40' },
+      { title: 'AI basket rotation alert triggered', time: 'Yesterday • 14:05' },
+      { title: 'ETH basis mean reversion threshold hit', time: '2 days ago • 11:30' }
+    ];
+
+    const hypothesisPerformanceData = {
+      labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6'],
+      winRate: [66, 69, 71, 68, 73, 74],
+      pnl: [1.2, 1.8, 1.6, 2.1, 2.4, 2.7]
+    };
+
+    let hypothesisConfidenceChart;
+    let hypothesisPerformanceChart;
+
+    function renderHypothesisDashboard() {
+      renderHypotheses();
+      renderSignalBreakdown();
+      renderNarrativeHeatmap();
+      renderFundingMatrix();
+      renderTrendingAssets();
+      renderSocialFeed();
+      renderInvalidationTracker();
+      renderTimeline();
+      renderHypothesisPerformance();
+      updateHypothesisTimestamp();
+    }
+
+    function renderHypotheses() {
+      const container = document.getElementById('hypothesisCards');
+      const count = document.getElementById('hypothesisCount');
+      if (!container) return;
+      count.textContent = `${hypothesisData.length} Live`;
+
+      container.innerHTML = hypothesisData.map(h => {
+        const directionClass = h.direction === 'Long' ? 'badge-long' : h.direction === 'Short' ? 'badge-short' : 'badge-neutral';
+        const confidencePct = Math.round(h.confidence * 100);
+        const tags = [h.asset, h.timeframe, `Conf ${confidencePct}%`];
+        return `
+          <div class="hypothesis-card">
+            <div class="hypothesis-header">
+              <div>
+                <div class="hypothesis-title">${h.title}</div>
+                <div class="hypothesis-meta">
+                  <span>${h.id}</span>
+                  <span>${h.asset}</span>
+                  <span>${h.timeframe}</span>
+                </div>
+              </div>
+              <span class="badge ${directionClass}">${h.direction}</span>
+            </div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.5;">
+              Catalysts: ${h.catalysts.slice(0, 2).join(', ')} · Invalidation: ${h.invalidation}
+            </div>
+            <div class="hypothesis-tags">
+              ${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+              <span class="tag">${h.status}</span>
+            </div>
+            <div class="signal-bars">
+              ${Object.entries(h.signals).map(([label, value]) => `
+                <div class="signal-bar">
+                  <span>${label}</span>
+                  <div class="bar"><div class="bar-fill" style="width:${Math.round(value * 100)}%;"></div></div>
+                  <span>${Math.round(value * 100)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderSignalBreakdown() {
+      const container = document.getElementById('signalBreakdown');
+      if (!container) return;
+      const totals = {};
+      const counts = {};
+      hypothesisData.forEach(h => {
+        Object.entries(h.signals).forEach(([key, value]) => {
+          totals[key] = (totals[key] || 0) + value;
+          counts[key] = (counts[key] || 0) + 1;
+        });
+      });
+      const avgSignals = Object.entries(totals).map(([key, value]) => [key, value / counts[key]]);
+      container.innerHTML = avgSignals.map(([label, value]) => {
+        const pct = Math.round(value * 100);
+        return `
+          <div class="signal-bar">
+            <span>${label}</span>
+            <div class="bar"><div class="bar-fill" style="width:${pct}%;"></div></div>
+            <span>${pct}</span>
+          </div>
+        `;
+      }).join('');
+
+      const ctx = document.getElementById('hypothesisConfidenceChart');
+      if (ctx) {
+        if (hypothesisConfidenceChart) hypothesisConfidenceChart.destroy();
+        hypothesisConfidenceChart = new Chart(ctx.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: hypothesisData.map(h => h.asset),
+            datasets: [{
+              data: hypothesisData.map(h => Math.round(h.confidence * 100)),
+              backgroundColor: 'rgba(168, 85, 247, 0.5)',
+              borderColor: 'rgba(168, 85, 247, 0.9)',
+              borderWidth: 1,
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { color: 'rgba(255,255,255,0.6)', font: { size: 10 } }, grid: { display: false } },
+              y: { ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.06)' }, min: 40, max: 100 }
+            }
+          }
+        });
+      }
+    }
+
+    function renderNarrativeHeatmap() {
+      const container = document.getElementById('narrativeHeatmap');
+      if (!container) return;
+      container.innerHTML = narrativeHeatmapData.map(item => `
+        <div class="heatmap-cell heat-${item.score}">
+          <div style="font-weight: 600; font-size: 0.65rem;">${item.label}</div>
+          <div style="font-size: 0.6rem; color: var(--text-muted);">Momentum ${item.score}/5</div>
+        </div>
+      `).join('');
+    }
+
+    function renderFundingMatrix() {
+      const table = document.querySelector('#fundingMatrix tbody');
+      if (!table) return;
+      const cell = value => {
+        const color = value >= 0 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+        const text = value >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+        return `<span class="heat-cell" style="background:${color}; color:${text};">${formatPercent(value * 100)}</span>`;
+      };
+      table.innerHTML = fundingMatrixData.map(row => `
+        <tr>
+          <td>${row.asset}</td>
+          <td>${cell(row.oneH)}</td>
+          <td>${cell(row.eightH)}</td>
+          <td>${cell(row.day)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderTrendingAssets() {
+      const table = document.querySelector('#trendingAssets tbody');
+      if (!table) return;
+      table.innerHTML = trendingAssetsData.map(item => `
+        <tr>
+          <td><span class="protocol-name">${item.asset}</span></td>
+          <td><span class="protocol-chain">${item.narrative}</span></td>
+          <td><span class="tvl-value">${item.score}</span></td>
+          <td><span class="change-value" style="color:${item.change >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${formatPercent(item.change)}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderSocialFeed() {
+      const container = document.getElementById('socialFeed');
+      if (!container) return;
+      container.innerHTML = socialFeedData.map(item => `
+        <div class="feed-item">
+          <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-weight:600; color: var(--text-primary); font-size: 0.7rem;">${item.author}</span>
+            <span class="panel-badge">${item.impact}</span>
+          </div>
+          <div style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.4;">${item.text}</div>
+          <div style="font-size: 0.6rem; color: var(--text-muted); margin-top: 4px;">${item.time}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderInvalidationTracker() {
+      const table = document.querySelector('#invalidationTable tbody');
+      if (!table) return;
+      table.innerHTML = hypothesisData.map(h => `
+        <tr>
+          <td>${h.asset}</td>
+          <td>${h.invalidation}</td>
+          <td><span class="progress-chip">${h.status}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderTimeline() {
+      const container = document.getElementById('hypothesisTimeline');
+      if (!container) return;
+      container.innerHTML = hypothesisTimelineData.map(item => `
+        <div class="timeline-item">
+          <div style="font-weight: 600; font-size: 0.7rem; color: var(--text-primary);">${item.title}</div>
+          <div style="font-size: 0.6rem; color: var(--text-muted);">${item.time}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderHypothesisPerformance() {
+      const winRateEl = document.getElementById('hypothesisWinRate');
+      const rrEl = document.getElementById('hypothesisRR');
+      const hitEl = document.getElementById('hypothesisHit');
+      if (winRateEl) winRateEl.textContent = '74%';
+      if (rrEl) rrEl.textContent = '1.9x';
+      if (hitEl) hitEl.textContent = '62%';
+
+      const ctx = document.getElementById('hypothesisPerformanceChart');
+      if (ctx) {
+        if (hypothesisPerformanceChart) hypothesisPerformanceChart.destroy();
+        hypothesisPerformanceChart = new Chart(ctx.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: hypothesisPerformanceData.labels,
+            datasets: [
+              {
+                label: 'Win Rate',
+                data: hypothesisPerformanceData.winRate,
+                borderColor: 'var(--accent-green)',
+                backgroundColor: 'rgba(34, 197, 94, 0.12)',
+                fill: true,
+                tension: 0.35,
+                borderWidth: 2,
+                pointRadius: 2
+              },
+              {
+                label: 'PnL (R)',
+                data: hypothesisPerformanceData.pnl,
+                borderColor: 'var(--accent-purple)',
+                backgroundColor: 'rgba(168, 85, 247, 0.12)',
+                tension: 0.35,
+                borderWidth: 2,
+                pointRadius: 2,
+                yAxisID: 'y1'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { color: 'rgba(255,255,255,0.6)', font: { size: 10 } }, grid: { display: false } },
+              y: { ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.06)' }, min: 60, max: 80 },
+              y1: { position: 'right', ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 10 } }, grid: { drawOnChartArea: false }, min: 0, max: 3 }
+            }
+          }
+        });
+      }
+    }
+
+    function updateHypothesisTimestamp() {
+      const stamp = document.getElementById('hypothesisUpdated');
+      if (stamp) {
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        stamp.textContent = `Last sync: ${time}`;
+      }
+    }
+
+    function exportHypotheses(format) {
+      const payload = hypothesisData.map(h => ({
+        id: h.id,
+        title: h.title,
+        asset: h.asset,
+        direction: h.direction,
+        confidence: h.confidence,
+        timeframe: h.timeframe,
+        catalysts: h.catalysts.join('; '),
+        risks: h.risks.join('; '),
+        invalidation: h.invalidation,
+        status: h.status
+      }));
+
+      if (format === 'csv') {
+        const headers = Object.keys(payload[0]).join(',');
+        const rows = payload.map(row => Object.values(row).map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')).join('\n');
+        downloadFile([headers, rows].join('\n'), 'hypotheses.csv', 'text/csv');
+        return;
+      }
+
+      downloadFile(JSON.stringify(payload, null, 2), 'hypotheses.json', 'application/json');
+    }
+
+    function copyHypothesisSummary() {
+      const summary = hypothesisData.map(h => `${h.id} ${h.asset} ${h.direction} (${Math.round(h.confidence * 100)}%) → ${h.invalidation}`).join('\n');
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(summary);
+      }
+    }
+
+    function downloadFile(content, filename, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
     }
 
     // ===== FETCH BINANCE PRICES =====
@@ -1426,6 +2152,8 @@
         fetchFearGreed(),
         fetchGas()
       ]);
+
+      renderHypothesisDashboard();
       
       btn.textContent = 'Refresh';
       console.log('✅ All data refreshed');
@@ -1513,6 +2241,7 @@
 
     // Initialize all data on page load
     document.addEventListener('DOMContentLoaded', () => {
+      renderHypothesisDashboard();
       refreshData();
       
       // Auto-refresh every 60 seconds

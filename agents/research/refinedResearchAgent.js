@@ -9,6 +9,28 @@
  */
 
 const { OrthogonalDataCollector } = require('./orthogonalCollectors');
+const { AlphaFactoryIngestionPipeline } = require('./alphaFactory/dataIngestionPipeline');
+const { CookieNarrativeIntelligence } = require('./alphaFactory/narrativeIntelligence');
+const { TwitterIntelligence } = require('./alphaFactory/twitterIntelligence');
+const { DerivativesIntelligence } = require('./alphaFactory/derivativesIntelligence');
+const { SocialMomentumScorer } = require('./alphaFactory/socialMomentum');
+const { OnChainSignals } = require('./alphaFactory/onChainSignals');
+const { NarrativeClusteringEngine } = require('./alphaFactory/narrativeClustering');
+const { HypothesisEngine } = require('./alphaFactory/hypothesisEngine');
+const { buildHypothesisSchema } = require('./alphaFactory/hypothesisSchema');
+const { ProcessingPipeline } = require('./alphaFactory/processingPipeline');
+const { BacktestEngine } = require('./alphaFactory/backtestEngine');
+const { AdaptiveLearningEngine } = require('./alphaFactory/adaptiveLearning');
+const { HumanInLoopRefinement } = require('./alphaFactory/humanInLoopRefinement');
+const { HypothesisAlertingEngine } = require('./alphaFactory/hypothesisAlerts');
+const { IntegrationHub } = require('./alphaFactory/integrationHub');
+const { LLMReasoningEngine } = require('./alphaFactory/llmReasoning');
+const { ExperimentalSignalsLab } = require('./alphaFactory/experimentalSignals');
+const { WorkflowOrchestrator } = require('./alphaFactory/workflowOrchestrator');
+const { AuditTrail } = require('./alphaFactory/auditTrail');
+const { QualityGate } = require('./alphaFactory/qualityGate');
+const { MetricsReporter } = require('./alphaFactory/metricsReporter');
+const AlertSystem = require('../shared/alertSystem');
 const { SignalTransformation } = require('./signalTransformation');
 const { SIGNAL_TYPES, SIGNAL_WEIGHTS, CONFIDENCE_LEVELS, TIME_HORIZONS } = require('./signalTypes');
 
@@ -16,6 +38,27 @@ class RefinedResearchAgent {
     constructor(config = {}) {
         this.dataCollector = new OrthogonalDataCollector();
         this.signalTransform = new SignalTransformation();
+        this.ingestionPipeline = new AlphaFactoryIngestionPipeline(config.ingestion || {});
+        this.narrativeIntel = new CookieNarrativeIntelligence();
+        this.twitterIntel = new TwitterIntelligence(config.twitterIntel || {});
+        this.derivativesIntel = new DerivativesIntelligence(config.derivativesIntel || {});
+        this.socialMomentum = new SocialMomentumScorer();
+        this.onchainSignals = new OnChainSignals();
+        this.narrativeClustering = new NarrativeClusteringEngine(config.narrativeClustering || {});
+        this.hypothesisEngine = new HypothesisEngine(config.hypothesisEngine || {});
+        this.processingPipeline = new ProcessingPipeline(config.processingPipeline || {});
+        this.backtestEngine = new BacktestEngine(config.backtestEngine || {});
+        this.adaptiveLearning = new AdaptiveLearningEngine(config.adaptiveLearning || {});
+        this.humanRefinement = new HumanInLoopRefinement(config.humanRefinement || {});
+        this.alertSystem = new AlertSystem(config.alertSystem || {});
+        this.hypothesisAlerting = new HypothesisAlertingEngine(config.hypothesisAlerting || {});
+        this.integrationHub = new IntegrationHub(config.integrationHub || {});
+        this.llmReasoning = new LLMReasoningEngine(config.llmReasoning || {});
+        this.experimentalSignals = new ExperimentalSignalsLab(config.experimentalSignals || {});
+        this.workflow = new WorkflowOrchestrator(config.workflow || {});
+        this.auditTrail = new AuditTrail(config.auditTrail || {});
+        this.qualityGate = new QualityGate(config.qualityGate || {});
+        this.metricsReporter = new MetricsReporter(config.metricsReporter || {});
         
         this.config = {
             minConfidence: config.minConfidence || 0.50,
@@ -25,6 +68,308 @@ class RefinedResearchAgent {
         };
 
         this.analysisHistory = [];
+    }
+
+    /**
+     * Alpha Factory: Multi-source ingestion snapshot
+     */
+    async collectAlphaFactorySnapshot({ twitterAccounts = [] } = {}) {
+        await this.ingestionPipeline.init();
+        this.ingestionPipeline.connectPriceFeeds();
+        const snapshot = await this.ingestionPipeline.fetchSnapshot({ twitterAccounts });
+        const narrativeClusters = this.narrativeIntel.update(snapshot.cookie || []);
+        const twitterAnalysis = this.twitterIntel.analyze(snapshot.twitter || []);
+                const priceMap = new Map((snapshot.priceFeeds || []).map(p => [p.asset, p]));
+
+                const derivativesAnalysis = Object.keys(snapshot.fundingRates || {}).reduce((acc, asset) => {
+                    const fundingRates = snapshot.fundingRates[asset] || {};
+                    const openInterest = snapshot.openInterest?.[asset] || {};
+                    const perpPrice = priceMap.get(asset)?.close || priceMap.get(asset + '_PERP')?.close || 0;
+                    const spotPrice = priceMap.get(asset + '_SPOT')?.close || perpPrice;
+                    const prices = {
+                        perp: perpPrice,
+                        spot: spotPrice,
+                        changePct: 0
+                    };
+                    acc[asset] = this.derivativesIntel.analyze({ fundingRates, openInterest: { current: openInterest.binance || 0, previous: 0 }, prices });
+                    return acc;
+                }, {});
+        const socialMomentum = this.socialMomentum.analyze(
+            { ...twitterAnalysis, tweets: snapshot.twitter || [] },
+            narrativeClusters
+        );
+
+        const onchainAnalysis = this.onchainSignals.analyze(snapshot.onchain || {});
+        const narrativeThemes = this.narrativeClustering.analyze({
+            cookieItems: snapshot.cookie || [],
+            socialMentions: snapshot.twitter || []
+        });
+
+        const experimental = this.experimentalSignals.evaluate({
+            snapshot,
+            narrativeThemes,
+            derivativesAnalysis,
+            socialMomentum,
+            onchainAnalysis
+        });
+
+        const firstDerivatives = Object.values(derivativesAnalysis || {})[0] || {};
+                const hypothesis = this.hypothesisEngine.build({
+            asset: Object.keys(derivativesAnalysis || {})[0] || 'UNKNOWN',
+            signals: {
+                technical: 0.55,
+                funding: this._normalizeSignal(firstDerivatives.fundingSkew, -2, 2),
+                social: socialMomentum.compositeScore || 0.5,
+                oi: this._normalizeSignal(firstDerivatives.oiChangePct || 0, -20, 20)
+            },
+            indicators: {
+                fundingSkew: firstDerivatives.fundingSkew || 0,
+                momentum: socialMomentum.compositeScore || 0,
+                basis: firstDerivatives.basisPct || 0,
+                rsi: 50,
+                atr: 2,
+                socialMomentum: socialMomentum.compositeScore || 0
+            }
+        });
+
+                const reasoning = await this.llmReasoning.synthesize({
+                    hypothesis,
+                    signals: {
+                        technical: hypothesis.compositeScore,
+                        social: socialMomentum.compositeScore,
+                        funding: this._normalizeSignal(firstDerivatives.fundingSkew, -2, 2),
+                        oi: this._normalizeSignal(firstDerivatives.oiChangePct || 0, -20, 20),
+                        narrative: (narrativeThemes?.themes?.[0]?.momentumScore || 0)
+                    },
+                    narratives: narrativeThemes?.themes || [],
+                    derivatives: firstDerivatives,
+                    social: socialMomentum,
+                    onchain: onchainAnalysis
+                });
+
+                const quality = this.qualityGate.evaluate({
+                    hypothesis,
+                    signals: {
+                        technical: hypothesis.compositeScore,
+                        social: socialMomentum.compositeScore,
+                        funding: this._normalizeSignal(firstDerivatives.fundingSkew, -2, 2),
+                        oi: this._normalizeSignal(firstDerivatives.oiChangePct || 0, -20, 20),
+                        narrative: (narrativeThemes?.themes?.[0]?.momentumScore || 0)
+                    },
+                    risks: hypothesis?.risks || []
+                });
+
+                const structuredHypothesis = buildHypothesisSchema({
+                    asset: hypothesis.asset,
+                    market: `${hypothesis.asset}-PERP`,
+                    bias: hypothesis.bias,
+                    strategy: hypothesis.strategy,
+                    timeHorizon: hypothesis.timeHorizon,
+                    entryRange: 'TBD',
+                    target: 'TBD',
+                    stopLoss: 'TBD',
+                    signals: {
+                        technical: hypothesis.compositeScore,
+                        social: socialMomentum.compositeScore,
+                        funding: this._normalizeSignal(firstDerivatives.fundingSkew, -2, 2),
+                        oi: this._normalizeSignal(firstDerivatives.oiChangePct || 0, -20, 20),
+                        narrative: (narrativeThemes?.themes?.[0]?.momentumScore || 0)
+                    },
+                    confidence: hypothesis.confidence,
+                    invalidations: [
+                        'Funding flips negative',
+                        'Price breaks below 20D VWAP',
+                        'Social momentum < 0.3',
+                        'OI contracts > 10% in 24h'
+                    ],
+                    expectedMove: 'TBD',
+                    positionSizing: '2-3% of portfolio',
+                    related: [],
+                    provenance: {
+                        sources: ['cookie.fun', 'twitter', 'binance', 'bybit', 'okx', 'defillama'],
+                        model_version: 'alpha-factory-v1'
+                    },
+                    summary: 'Auto-generated hypothesis pending enrichment.',
+                    rationale: reasoning
+                });
+
+        const result = {
+            ...snapshot,
+            narrativeClusters,
+                        twitterAnalysis,
+            derivativesAnalysis,
+            socialMomentum,
+            onchainAnalysis,
+            narrativeThemes,
+            hypothesis,
+            structuredHypothesis,
+            reasoning
+            ,experimental
+            ,quality
+        };
+
+        this.auditTrail.record('alpha_factory_snapshot', {
+            asset: hypothesis.asset,
+            confidence: hypothesis.confidence,
+            hypothesis: structuredHypothesis,
+            reasoning
+        });
+
+        this.metricsReporter.record({
+            confidence: hypothesis.confidence,
+            signalStrength: hypothesis.compositeScore,
+            qualityPassRate: quality?.passed ? 1 : 0
+        });
+
+        return result;
+    }
+
+    /**
+     * Prompt 11: Event-driven processing pipeline
+     */
+    async processSignalBatch(rawEvents = []) {
+        rawEvents.forEach(e => this.processingPipeline.ingest(e));
+
+        return this.processingPipeline.processBatch(async (buffer) => {
+            const normalized = buffer.map(e => ({
+                ...e,
+                normalizedAt: new Date().toISOString()
+            }));
+
+            const output = {
+                processedAt: new Date().toISOString(),
+                count: normalized.length,
+                metrics: this.processingPipeline.metrics
+            };
+
+            return output;
+        });
+    }
+
+    /**
+     * Prompt 12: Backtesting framework
+     */
+    runBacktest({ hypotheses = [], priceSeries = [] } = {}) {
+        return this.backtestEngine.backtest(hypotheses, priceSeries);
+    }
+
+    /**
+     * Prompt 13: Adaptive learning updates
+     */
+    updateModelPerformance({ winRate, sharpe, outcome, signals }) {
+        if (typeof winRate === 'number' && typeof sharpe === 'number') {
+            this.adaptiveLearning.recordPerformance({ winRate, sharpe });
+        }
+        if (typeof outcome === 'number' && signals) {
+            this.adaptiveLearning.updateWeights({ outcome, signals });
+        }
+        return {
+            weights: this.adaptiveLearning.getWeights(),
+            driftDetected: this.adaptiveLearning.detectDrift()
+        };
+    }
+
+    /**
+     * Prompt 15: Human-in-the-loop refinement
+     */
+    requestHumanReview(hypothesis, context = {}) {
+        return this.humanRefinement.enqueueHypothesis(hypothesis, context);
+    }
+
+    applyHumanFeedback({ id, reviewer, decision, edits, notes, confidenceDelta, tags } = {}) {
+        return this.humanRefinement.submitReview({ id, reviewer, decision, edits, notes, confidenceDelta, tags });
+    }
+
+    /**
+     * Prompt 16: Hypothesis alerting & monitoring
+     */
+    registerAlertHandler(type, handler) {
+        this.alertSystem.registerHandler(type, handler);
+    }
+
+    async evaluateHypothesisAlerts(hypotheses = [], context = {}) {
+        const alerts = this.hypothesisAlerting.evaluate(hypotheses, context);
+        const results = [];
+
+        for (const alert of alerts) {
+            const dispatched = await this.alertSystem.createHypothesisAlert(alert);
+            if (dispatched) results.push(dispatched);
+        }
+
+        return results;
+    }
+
+    /**
+     * Prompt 17: Integration hub for downstream systems
+     */
+    registerIntegration(type, handler) {
+        this.integrationHub.registerHandler(type, handler);
+    }
+
+    addWebhookIntegration(url, headers = {}) {
+        this.integrationHub.addWebhookTarget(url, headers);
+    }
+
+    async publishIntegrations(payload, meta = {}) {
+        return this.integrationHub.dispatch(payload, meta);
+    }
+
+    /**
+     * Prompt 18: Reasoning synthesis on demand
+     */
+    async generateReasoning({ hypothesis, signals, narratives, derivatives, social, onchain } = {}) {
+        return this.llmReasoning.synthesize({ hypothesis, signals, narratives, derivatives, social, onchain });
+    }
+
+    /**
+     * Prompt 19: Experimental signals lab
+     */
+    registerExperimentalSignal(name, fn, meta = {}) {
+        return this.experimentalSignals.registerSignal(name, fn, meta);
+    }
+
+    runExperimentalSignals(context = {}) {
+        return this.experimentalSignals.evaluate(context);
+    }
+
+    /**
+     * Prompt 20: End-to-end workflow
+     */
+    async runEndToEndWorkflow({ twitterAccounts = [], context = {} } = {}) {
+        const result = await this.workflow.run({ agent: this, twitterAccounts, context });
+        this.auditTrail.record('workflow_run', { context, resultSummary: {
+            hypotheses: result.hypotheses?.length || 0,
+            alerts: result.alerts?.length || 0
+        }});
+        return result;
+    }
+
+    /**
+     * Prompt 23: Metrics & reporting
+     */
+    recordMetrics(sample = {}) {
+        return this.metricsReporter.record(sample);
+    }
+
+    getMetricsSummary({ limit } = {}) {
+        return this.metricsReporter.summary({ limit });
+    }
+
+    /**
+     * Prompt 21: Audit trail access
+     */
+    recordAuditEvent(type, payload = {}, meta = {}) {
+        return this.auditTrail.record(type, payload, meta);
+    }
+
+    getAuditTrail({ type, limit } = {}) {
+        return this.auditTrail.list({ type, limit });
+    }
+
+    _normalizeSignal(value, min, max) {
+        if (max === min) return 0.5;
+        const normalized = (value - min) / (max - min);
+        return Math.max(0, Math.min(1, normalized));
     }
 
     /**
