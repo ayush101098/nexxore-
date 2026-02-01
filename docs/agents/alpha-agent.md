@@ -6,7 +6,7 @@ Read how the Alpha Agent works: signal generation, entry/exit recommendations, c
 
 ## Overview
 
-The Alpha Agent generates actionable trading signals by analyzing market data, on-chain metrics, and technical indicators. It identifies high-probability setups and provides entry, exit, and risk management recommendations.
+The Alpha Agent generates actionable trading signals by analyzing market data, on-chain metrics, and technical indicators. It identifies high-probability setups and provides entry, exit, and risk management CNAME  docs  hosting.gitbook.iodig CAA docs.nexxore.xyzrecommendations.
 
 ---
 

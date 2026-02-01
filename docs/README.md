@@ -1,3 +1,5 @@
+![Nexxore Logo](logo.svg)
+
 # Welcome
 
 Nexxore is the first AI-native execution layer for decentralized capital, creating sustainable yield opportunities through autonomous agent-driven strategies. Read the documentation to learn more.
