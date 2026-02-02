@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexxore — Stablecoin Hub</title>
+  <meta name="description" content="Unified stablecoin dashboard, de-peg insurance, stablecoin perps, and yield vaults." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #08080a;
+      --panel: #111114;
+      --panel-soft: #14141a;
+      --border: rgba(255,255,255,0.08);
+      --text: #fff;
+      --muted: rgba(255,255,255,0.6);
+      --dim: rgba(255,255,255,0.4);
+      --accent: #a855f7;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Inter, system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    .header { padding: 18px 28px; border-bottom: 1px solid var(--border); display:flex; justify-content: space-between; align-items:center; }
+    .logo { display:flex; align-items:center; gap:10px; text-decoration:none; color: var(--text); }
+    .logo span { font-weight: 700; }
+    .cta { padding: 8px 14px; background: var(--accent); color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.85rem; }
+    .container { max-width: 1300px; margin: 0 auto; padding: 24px; }
+    .hero { background: linear-gradient(135deg, rgba(168,85,247,0.15), rgba(34,197,94,0.1)); border:1px solid var(--border); border-radius: 16px; padding: 24px; display:grid; gap: 14px; }
+    .hero h1 { font-size: 1.9rem; }
+    .hero p { color: var(--muted); line-height: 1.6; }
+    .stats { display:grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+    .stat { background: var(--panel); border:1px solid var(--border); padding: 12px; border-radius: 12px; }
+    .stat-label { font-size: 0.7rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 1.1rem; font-weight: 700; margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+    .panel { background: var(--panel); border:1px solid var(--border); border-radius: 14px; padding: 16px; }
+    .panel h3 { font-size: 1rem; margin-bottom: 12px; }
+    .panel p { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+    .table { width:100%; border-collapse: collapse; font-size: 0.8rem; }
+    .table th, .table td { padding: 8px; border-bottom:1px solid var(--border); text-align: left; color: var(--muted); }
+    .table th { color: var(--dim); font-size: 0.7rem; text-transform: uppercase; }
+    .badge { padding: 2px 8px; border-radius: 999px; font-size: 0.65rem; border:1px solid var(--border); color: var(--muted); }
+    .badge.green { color: var(--green); border-color: rgba(34,197,94,0.3); }
+    .badge.yellow { color: var(--yellow); border-color: rgba(245,158,11,0.3); }
+    .badge.red { color: var(--red); border-color: rgba(239,68,68,0.3); }
+    .section { margin-top: 22px; }
+    .section-title { font-size: 1.1rem; margin-bottom: 10px; }
+    .cards { display:grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .card { background: var(--panel-soft); border:1px solid var(--border); border-radius: 12px; padding: 12px; }
+    .card h4 { font-size: 0.9rem; margin-bottom: 6px; }
+    .list { display:grid; gap: 6px; color: var(--muted); font-size: 0.8rem; }
+    .cta-strip { margin-top: 16px; padding: 12px; border:1px solid rgba(168,85,247,0.3); border-radius: 12px; background: rgba(168,85,247,0.08); text-align:center; font-weight:600; }
+
+    @media (max-width: 960px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+      .grid { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="index" class="logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="width:28px;height:28px;"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs><g transform="translate(10,15) scale(0.8)"><circle cx="50" cy="40" r="28" stroke="url(#g)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#g)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#g)" stroke-width="6" fill="none" opacity="0.85"/></g></svg>
+      <span>nexxore</span>
+    </a>
+    <a class="cta" href="perps">Launch Perps</a>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Unified Stablecoin Dashboard & Hub</h1>
+      <p>One control center for stablecoin allocation, yield, peg safety, risk, insurance, and execution across all major chains.</p>
+      <div class="stats">
+        <div class="stat"><div class="stat-label">Total Stablecoins</div><div class="stat-value">$482.4M</div></div>
+        <div class="stat"><div class="stat-label">Weighted APY</div><div class="stat-value">7.8%</div></div>
+        <div class="stat"><div class="stat-label">Depeg Alerts</div><div class="stat-value">0 Active</div></div>
+        <div class="stat"><div class="stat-label">Chains</div><div class="stat-value">7</div></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h3>Portfolio Overview</h3>
+        <canvas id="allocationChart" height="180"></canvas>
+      </div>
+      <div class="panel">
+        <h3>Yield Aggregator</h3>
+        <table class="table">
+          <thead><tr><th>Protocol</th><th>Asset</th><th>APY</th><th>Chain</th></tr></thead>
+          <tbody>
+            <tr><td>Aave</td><td>USDC</td><td>6.4%</td><td>Ethereum</td></tr>
+            <tr><td>Morpho</td><td>USDT</td><td>7.1%</td><td>Arbitrum</td></tr>
+            <tr><td>Curve</td><td>FRAX</td><td>8.3%</td><td>Optimism</td></tr>
+            <tr><td>Compound</td><td>DAI</td><td>5.8%</td><td>Polygon</td></tr>
+            <tr><td>Venus</td><td>USDD</td><td>9.1%</td><td>BSC</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h3>Peg Monitoring</h3>
+        <table class="table">
+          <thead><tr><th>Stablecoin</th><th>Price</th><th>Deviation</th><th>Risk</th></tr></thead>
+          <tbody>
+            <tr><td>USDC</td><td>$1.0002</td><td>+0.02%</td><td><span class="badge green">Low</span></td></tr>
+            <tr><td>USDT</td><td>$0.9991</td><td>-0.09%</td><td><span class="badge green">Low</span></td></tr>
+            <tr><td>DAI</td><td>$1.0014</td><td>+0.14%</td><td><span class="badge yellow">Medium</span></td></tr>
+            <tr><td>FRAX</td><td>$0.9968</td><td>-0.32%</td><td><span class="badge yellow">Medium</span></td></tr>
+            <tr><td>USDD</td><td>$0.9925</td><td>-0.75%</td><td><span class="badge red">High</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h3>Risk Scoring & Alerts</h3>
+        <p>Automated alerts trigger when yields drop &gt;20% or depeg &gt;0.5%. Includes protocol risk, collateral health, and historical stability.</p>
+        <div class="cards" style="margin-top:12px;">
+          <div class="card"><h4>USDC</h4><div class="list"><div>Collateral: 102%</div><div>Risk: Low</div><div>History: Strong</div></div></div>
+          <div class="card"><h4>DAI</h4><div class="list"><div>Collateral: 155%</div><div>Risk: Medium</div><div>History: Stable</div></div></div>
+          <div class="card"><h4>USDD</h4><div class="list"><div>Collateral: 110%</div><div>Risk: High</div><div>History: Volatile</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Stablecoin De-Peg Insurance</h2>
+      <div class="grid">
+        <div class="panel">
+          <h3>Insurance Marketplace</h3>
+          <p>Coverage tiers with dynamic pricing from risk profile, volatility, and pool utilization.</p>
+          <table class="table">
+            <thead><tr><th>Tier</th><th>Trigger</th><th>Coverage</th></tr></thead>
+            <tbody>
+              <tr><td>Basic</td><td>&gt;5% for &gt;24h</td><td>Capital protection</td></tr>
+              <tr><td>Standard</td><td>&gt;2% for &gt;12h</td><td>Capital + yield buffer</td></tr>
+              <tr><td>Premium</td><td>&gt;1% for &gt;4h</td><td>Priority payouts</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h3>Claims & Underwriting</h3>
+          <div class="list">
+            <div>Oracle-based claims via multi-source median pricing (Chainlink, UMA, CEX/DEX feeds).</div>
+            <div>LPs underwrite pools and earn premiums; risk pooling across multiple stablecoins.</div>
+            <div>NFT-based policies, staking discounts, and claim history dashboard.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Underwriter (LP) Dashboard</h2>
+      <div class="cards">
+        <div class="card"><h4>Pool Overview</h4><div class="list"><div>TVL, utilization, premiums earned</div><div>Pending claims & queue</div></div></div>
+        <div class="card"><h4>Risk Metrics</h4><div class="list"><div>Exposure by stablecoin</div><div>Diversification score</div></div></div>
+        <div class="card"><h4>Performance</h4><div class="list"><div>APY = premiums - claims</div><div>Backtests vs UST/USDC events</div></div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Stablecoin Perpetuals & Volatility Desk</h2>
+      <div class="grid">
+        <div class="panel">
+          <h3>Stablecoin Perps Exchange</h3>
+          <div class="list">
+            <div>Pairs: USDT/USD, USDC/USD, DAI/USD, FRAX/USD, USDD/USD</div>
+            <div>Leverage up to 20x, isolated/cross margin</div>
+            <div>Peg-based funding rate with 8h intervals</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Volatility Trading Dashboard</h3>
+          <div class="list">
+            <div>Depeg probability model (7d, 30d)</div>
+            <div>Funding rate comparison & arbitrage scanner</div>
+            <div>Whale tracking, sentiment gauge, risk calendar</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Governance & Health Monitoring</h2>
+      <div class="grid">
+        <div class="panel">
+          <h3>Adaptive Stability Mechanism</h3>
+          <div class="list">
+            <div>Dynamic collateral ratio adjustments</div>
+            <div>Interest rate controller & redemption flows</div>
+            <div>Emergency shutdown circuit breakers</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Stablecoin Health Dashboard</h3>
+          <div class="list">
+            <div>Peg deviation tracker + collateral ratio</div>
+            <div>Reserve composition, mint/burn velocity</div>
+            <div>Liquidity depth, oracle latency, audits</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Yield Vaults & Risk Management</h2>
+      <div class="grid">
+        <div class="panel">
+          <h3>Multi-Strategy Yield Vaults</h3>
+          <div class="list">
+            <div>Conservative/Balanced/Aggressive tiers</div>
+            <div>Auto-compounding, rebalancing, gas optimization</div>
+            <div>Strategy transparency & withdrawal queues</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Risk Controls</h3>
+          <div class="list">
+            <div>Protocol whitelist, exposure limits, emergency exits</div>
+            <div>Smart contract insurance & oracle safeguards</div>
+            <div>Drawdown monitoring and user risk quiz</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Collateral & RWA Modules</h2>
+      <div class="grid">
+        <div class="panel">
+          <h3>Collateral Diversification</h3>
+          <div class="list">
+            <div>Crypto, staked assets, stablecoins, RWAs</div>
+            <div>Collateral ratios, liquidation engine, auctions</div>
+            <div>Stress testing & transparency portal</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>RWA Integration</h3>
+          <div class="list">
+            <div>Tokenized treasuries, real estate, commodities</div>
+            <div>KYC/AML, RWA oracles, legal framework</div>
+            <div>Yield passthrough and default handling</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Stablecoin FX Exchange & LP Farming</h2>
+      <div class="grid">
+        <div class="panel">
+          <h3>Multi-Currency Stablecoin Exchange</h3>
+          <div class="list">
+            <div>USD/EUR/GBP/JPY/CHF/AUD/CAD/CNY pairs</div>
+            <div>Curve-style stable swap + oracle FX rates</div>
+            <div>Spot swaps, limit orders, forward contracts</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Forex LP & Yield Farming</h3>
+          <div class="list">
+            <div>Fee + incentives APY breakdown</div>
+            <div>Impermanent loss protection for correlated pairs</div>
+            <div>Concentrated liquidity & multi-pool farming</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="cta-strip">UNIQUE, FIRST OF ITS KIND — HUMAN TRADING REVOLUTION BEGINS FROM HERE</div>
+  </main>
+
+  <script>
+    const ctx = document.getElementById('allocationChart');
+    if (ctx) {
+      new Chart(ctx.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: ['USDC', 'USDT', 'DAI', 'FRAX', 'USDD', 'Other'],
+          datasets: [{
+            data: [36, 28, 14, 9, 6, 7],
+            backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b', '#a855f7', '#ef4444', 'rgba(255,255,255,0.2)'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          plugins: { legend: { position: 'right', labels: { color: 'rgba(255,255,255,0.6)', font: { size: 10 } } } },
+          cutout: '60%'
+        }
+      });
+    }
+  </script>
+</body>
+</html>
