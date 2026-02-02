@@ -413,6 +413,32 @@
     .direction-btn.short:hover, .direction-btn.short.active { border-color: var(--short); background: var(--short-bg); }
     .direction-btn.short:hover .label, .direction-btn.short.active .label { color: var(--short); }
 
+    /* Execution Model */
+    .execution-model {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg-card);
+    }
+    .execution-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .execution-title { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .execution-toggle { display: flex; gap: 6px; }
+    .execution-btn {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 6px;
+      font-size: 0.65rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .execution-btn.active { color: var(--text); border-color: var(--accent); background: var(--accent-bg); }
+    .execution-metrics { display: grid; gap: 6px; font-size: 0.7rem; color: var(--text-secondary); }
+    .execution-row { display: flex; justify-content: space-between; }
+    .execution-row span:last-child { font-family: 'JetBrains Mono', monospace; color: var(--text); }
+
     /* Input Groups */
     .input-group { margin-bottom: 14px; }
     .input-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
@@ -1325,6 +1351,32 @@
           </button>
         </div>
 
+        <!-- Execution Model -->
+        <div class="execution-model">
+          <div class="execution-header">
+            <span class="execution-title">Execution Model</span>
+            <div class="execution-toggle">
+              <button class="execution-btn" data-model="amm">AMM</button>
+              <button class="execution-btn" data-model="clob">CLOB</button>
+              <button class="execution-btn active" data-model="hybrid">Nexxore Hybrid</button>
+            </div>
+          </div>
+          <div class="execution-metrics">
+            <div class="execution-row">
+              <span>Route Mix</span>
+              <span id="routeMix">--</span>
+            </div>
+            <div class="execution-row">
+              <span>Expected Slippage</span>
+              <span id="expectedSlippage">--</span>
+            </div>
+            <div class="execution-row">
+              <span>Liquidity Depth</span>
+              <span id="liquidityDepth">--</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Limit Price Input (hidden for market orders) -->
         <div class="input-group" id="limitPriceGroup" style="display: none;">
           <div class="input-header">
@@ -1432,8 +1484,16 @@
             <span class="summary-value" id="summarySize">0.00 ETH</span>
           </div>
           <div class="summary-row">
+            <span class="summary-label">Execution Model</span>
+            <span class="summary-value" id="summaryExecution">Hybrid</span>
+          </div>
+          <div class="summary-row">
             <span class="summary-label">Entry Price</span>
             <span class="summary-value" id="summaryEntry">$--</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Expected Slippage</span>
+            <span class="summary-value warning" id="summarySlippage">--</span>
           </div>
           <div class="summary-row">
             <span class="summary-label">Liquidation Price</span>
@@ -1831,6 +1891,7 @@
       currentTimeframe: '1h',
       currentOrderType: 'market',
       currentDirection: 'long',
+      currentExecutionModel: 'hybrid',
       chartMode: 'tv',
       leverage: 10,
       isWalletConnected: false,
@@ -1854,6 +1915,12 @@
       SOL: { price: 178.45, change: 3.21, high: 185.67, low: 172.34 }
     };
 
+    const liquidityProfiles = {
+      ETH: { ammDepth: 3200000, clobDepth: 5200000, ammFee: 0.0004, clobFee: 0.0002 },
+      BTC: { ammDepth: 4800000, clobDepth: 7800000, ammFee: 0.00035, clobFee: 0.00018 },
+      SOL: { ammDepth: 1800000, clobDepth: 2600000, ammFee: 0.0005, clobFee: 0.00025 }
+    };
+
     // Chart Variables
     let chart = null;
     let candleSeries = null;
@@ -1873,6 +1940,11 @@
       if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
       if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
       return num.toFixed(2);
+    }
+
+    function formatPct(value) {
+      const pct = value * 100;
+      return (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
     }
 
     function formatTime(date) {
@@ -2193,6 +2265,55 @@
     // ORDER MANAGEMENT
     // ==========================================
 
+    function computeExecutionPlan(notional, price) {
+      const profile = liquidityProfiles[state.currentMarket];
+      if (!profile || notional <= 0) {
+        return {
+          route: '—',
+          slippage: 0,
+          expectedPrice: price,
+          depth: 0,
+          feeRate: 0
+        };
+      }
+
+      const model = state.currentExecutionModel;
+      const ammDepth = profile.ammDepth;
+      const clobDepth = profile.clobDepth;
+      const ammFee = profile.ammFee;
+      const clobFee = profile.clobFee;
+
+      let ammFill = 0;
+      let clobFill = 0;
+
+      if (model === 'amm') {
+        ammFill = notional;
+      } else if (model === 'clob') {
+        clobFill = notional;
+      } else {
+        const clobTarget = Math.min(notional * 0.5, clobDepth * 0.7);
+        clobFill = Math.min(notional, clobTarget);
+        ammFill = Math.max(0, notional - clobFill);
+      }
+
+      const ammSlippage = ammFill > 0 ? Math.min(0.012, (ammFill / Math.max(ammDepth, 1)) * 0.004) : 0;
+      const clobSlippage = clobFill > 0 ? Math.min(0.006, (clobFill / Math.max(clobDepth, 1)) * 0.002) : 0;
+      const weightedSlippage = notional > 0 ? ((ammFill * ammSlippage) + (clobFill * clobSlippage)) / notional : 0;
+      const directionFactor = state.currentDirection === 'long' ? 1 : -1;
+      const expectedPrice = price * (1 + (weightedSlippage * directionFactor));
+      const route = `${Math.round((clobFill / Math.max(notional, 1)) * 100)}% CLOB / ${Math.round((ammFill / Math.max(notional, 1)) * 100)}% AMM`;
+      const depth = ammDepth + clobDepth;
+      const feeRate = notional > 0 ? ((ammFill * ammFee) + (clobFill * clobFee)) / notional : 0;
+
+      return {
+        route,
+        slippage: weightedSlippage,
+        expectedPrice,
+        depth,
+        feeRate
+      };
+    }
+
     function updateOrderSummary() {
       const amount = parseFloat(document.getElementById('amountInput').value) || 0;
       const leverage = state.leverage;
@@ -2203,7 +2324,12 @@
       const positionValue = amount * leverage;
       const positionSize = price > 0 ? positionValue / price : 0;
       const margin = amount;
-      const fee = positionValue * 0.0005;
+      const executionPlan = computeExecutionPlan(positionValue, price);
+      const fee = positionValue * (executionPlan.feeRate || 0.0005);
+
+      const isLimitType = ['limit', 'stop-limit'].includes(state.currentOrderType);
+      const limitValue = parseFloat(document.getElementById('limitPriceInput').value);
+      const entryPrice = isLimitType && limitValue ? limitValue : executionPlan.expectedPrice;
 
       // Liquidation price calculation
       const maintenanceMarginRatio = 0.005;
@@ -2213,10 +2339,28 @@
         : price * (1 + liqPriceAdjust);
 
       document.getElementById('summarySize').textContent = positionSize.toFixed(4) + ' ' + symbol;
-      document.getElementById('summaryEntry').textContent = formatPrice(price, decimals);
+      document.getElementById('summaryEntry').textContent = formatPrice(entryPrice, decimals);
       document.getElementById('summaryLiq').textContent = formatPrice(liqPrice, decimals);
       document.getElementById('summaryMargin').textContent = formatPrice(margin);
       document.getElementById('summaryFee').textContent = formatPrice(fee);
+
+      const executionLabel = state.currentExecutionModel === 'amm'
+        ? 'AMM'
+        : state.currentExecutionModel === 'clob'
+          ? 'CLOB'
+          : 'Hybrid';
+
+      const routeMixEl = document.getElementById('routeMix');
+      const slippageEl = document.getElementById('expectedSlippage');
+      const depthEl = document.getElementById('liquidityDepth');
+      const summaryExecutionEl = document.getElementById('summaryExecution');
+      const summarySlippageEl = document.getElementById('summarySlippage');
+
+      if (routeMixEl) routeMixEl.textContent = executionPlan.route;
+      if (slippageEl) slippageEl.textContent = formatPct(executionPlan.slippage);
+      if (depthEl) depthEl.textContent = `$${formatNumber(executionPlan.depth)}`;
+      if (summaryExecutionEl) summaryExecutionEl.textContent = executionLabel;
+      if (summarySlippageEl) summarySlippageEl.textContent = formatPct(executionPlan.slippage);
 
       // Update limit price hint
       document.getElementById('limitPriceHint').textContent = 'Current: ' + formatPrice(price, decimals);
@@ -2449,6 +2593,16 @@
         });
       });
 
+      // Execution model toggle
+      document.querySelectorAll('.execution-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.execution-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          state.currentExecutionModel = this.dataset.model;
+          updateOrderSummary();
+        });
+      });
+
       // Direction buttons
       document.querySelectorAll('.direction-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -2497,6 +2651,7 @@
 
       // Amount input
       document.getElementById('amountInput').addEventListener('input', updateOrderSummary);
+      document.getElementById('limitPriceInput').addEventListener('input', updateOrderSummary);
 
       // Quick amount buttons
       document.querySelectorAll('.quick-amount-btn').forEach(btn => {
