@@ -2446,32 +2446,74 @@
 
     function initTradingViewWidget(market, timeframe) {
       const container = document.getElementById('tradingviewChart');
-      if (!container || typeof TradingView === 'undefined') return;
+      if (!container) {
+        console.error('TradingView container not found');
+        return;
+      }
+      if (typeof TradingView === 'undefined') {
+        console.error('TradingView library not loaded');
+        return;
+      }
 
-      const symbol = `BINANCE:${markets[market].symbol}`;
+      // Map HyperLiquid symbols to TradingView format
+      const tvSymbolMap = {
+        BTC: 'BINANCE:BTCUSDT',
+        ETH: 'BINANCE:ETHUSDT',
+        SOL: 'BINANCE:SOLUSDT',
+        HYPE: 'BINANCE:BTCUSDT', // Fallback to BTC for new assets
+        ARB: 'BINANCE:ARBUSDT',
+        OP: 'BINANCE:OPUSDT',
+        AVAX: 'BINANCE:AVAXUSDT',
+        MATIC: 'BINANCE:MATICUSDT',
+        DOGE: 'BINANCE:DOGEUSDT',
+        LINK: 'BINANCE:LINKUSDT',
+        UNI: 'BINANCE:UNIUSDT',
+        ATOM: 'BINANCE:ATOMUSDT',
+        LTC: 'BINANCE:LTCUSDT',
+        BCH: 'BINANCE:BCHUSDT',
+        ETC: 'BINANCE:ETCUSDT',
+        FIL: 'BINANCE:FILUSDT',
+        APT: 'BINANCE:APTUSDT',
+        STX: 'BINANCE:STXUSDT',
+        INJ: 'BINANCE:INJUSDT',
+        TIA: 'BINANCE:TIAUSDT'
+      };
+
+      const symbol = tvSymbolMap[market] || 'BINANCE:BTCUSDT';
       const interval = tvIntervalMap[timeframe] || '60';
       container.innerHTML = '';
 
-      new TradingView.widget({
-        autosize: true,
-        symbol: symbol,
-        interval: interval,
-        timezone: 'Etc/UTC',
-        theme: 'dark',
-        style: '1',
-        locale: 'en',
-        toolbar_bg: '#111114',
-        enable_publishing: false,
-        hide_top_toolbar: false,
-        hide_legend: false,
-        container_id: 'tradingviewChart'
-      });
+      console.log(`📊 Initializing TradingView chart: ${symbol} @ ${interval}`);
+
+      try {
+        new TradingView.widget({
+          autosize: true,
+          symbol: symbol,
+          interval: interval,
+          timezone: 'Etc/UTC',
+          theme: 'dark',
+          style: '1',
+          locale: 'en',
+          toolbar_bg: '#111114',
+          enable_publishing: false,
+          hide_top_toolbar: false,
+          hide_legend: false,
+          container_id: 'tradingviewChart'
+        });
+        console.log('✅ TradingView widget created');
+      } catch (err) {
+        console.error('❌ TradingView widget creation failed:', err);
+      }
     }
 
     async function initChart() {
       const container = document.getElementById('tradingChart');
-      if (!container || typeof LightweightCharts === 'undefined') {
-        console.error('Chart initialization failed');
+      if (!container) {
+        console.error('Lightweight chart container not found');
+        return;
+      }
+      if (typeof LightweightCharts === 'undefined') {
+        console.error('LightweightCharts library not loaded');
         return;
       }
 
@@ -2479,57 +2521,89 @@
       const width = container.clientWidth;
       const height = container.clientHeight || 400;
 
-      chart = LightweightCharts.createChart(container, {
-        width,
-        height,
-        layout: { 
-          background: { type: 'solid', color: '#111114' }, 
-          textColor: 'rgba(255,255,255,0.6)' 
-        },
-        grid: { 
-          vertLines: { color: 'rgba(255,255,255,0.04)' }, 
-          horzLines: { color: 'rgba(255,255,255,0.04)' } 
-        },
-        crosshair: { 
-          mode: LightweightCharts.CrosshairMode.Normal,
-          vertLine: { color: 'rgba(168, 85, 247, 0.5)', width: 1, style: 2 },
-          horzLine: { color: 'rgba(168, 85, 247, 0.5)', width: 1, style: 2 }
-        },
-        rightPriceScale: { 
-          borderColor: 'rgba(255,255,255,0.08)',
-          scaleMargins: { top: 0.1, bottom: 0.2 }
-        },
-        timeScale: { 
-          borderColor: 'rgba(255,255,255,0.08)',
-          timeVisible: true,
-          secondsVisible: false
-        }
-      });
+      console.log(`📈 Initializing Lightweight chart: ${width}x${height}`);
 
-      candleSeries = chart.addCandlestickSeries({
-        upColor: '#22c55e',
-        downColor: '#ef4444',
-        borderUpColor: '#22c55e',
-        borderDownColor: '#ef4444',
-        wickUpColor: '#22c55e',
-        wickDownColor: '#ef4444'
-      });
-
-      // Load initial data
-      await loadChartData(state.currentMarket, state.currentTimeframe);
-
-      // Resize handler
-      const resizeObserver = new ResizeObserver(() => {
-        chart.applyOptions({ 
-          width: container.clientWidth,
-          height: container.clientHeight || 400
+      try {
+        chart = LightweightCharts.createChart(container, {
+          width,
+          height,
+          layout: { 
+            background: { type: 'solid', color: '#111114' }, 
+            textColor: 'rgba(255,255,255,0.6)' 
+          },
+          grid: { 
+            vertLines: { color: 'rgba(255,255,255,0.04)' }, 
+            horzLines: { color: 'rgba(255,255,255,0.04)' } 
+          },
+          crosshair: { 
+            mode: LightweightCharts.CrosshairMode.Normal,
+            vertLine: { color: 'rgba(168, 85, 247, 0.5)', width: 1, style: 2 },
+            horzLine: { color: 'rgba(168, 85, 247, 0.5)', width: 1, style: 2 }
+          },
+          rightPriceScale: { 
+            borderColor: 'rgba(255,255,255,0.08)',
+            scaleMargins: { top: 0.1, bottom: 0.2 }
+          },
+          timeScale: { 
+            borderColor: 'rgba(255,255,255,0.08)',
+            timeVisible: true,
+            secondsVisible: false
+          }
         });
-      });
-      resizeObserver.observe(container);
+
+        candleSeries = chart.addCandlestickSeries({
+          upColor: '#22c55e',
+          downColor: '#ef4444',
+          borderUpColor: '#22c55e',
+          borderDownColor: '#ef4444',
+          wickUpColor: '#22c55e',
+          wickDownColor: '#ef4444'
+        });
+
+        // Load initial data
+        await loadChartData(state.currentMarket, state.currentTimeframe);
+
+        // Resize handler
+        const resizeObserver = new ResizeObserver(() => {
+          chart.applyOptions({ 
+            width: container.clientWidth,
+            height: container.clientHeight || 400
+          });
+        });
+        resizeObserver.observe(container);
+
+        console.log('✅ Lightweight chart initialized');
+      } catch (err) {
+        console.error('❌ Lightweight chart initialization failed:', err);
+      }
     }
 
     async function loadChartData(market, timeframe) {
-      const symbol = markets[market].symbol;
+      // Map HyperLiquid symbols to Binance format for chart data
+      const binanceSymbolMap = {
+        BTC: 'BTCUSDT',
+        ETH: 'ETHUSDT',
+        SOL: 'SOLUSDT',
+        HYPE: 'BTCUSDT', // Use BTC as fallback
+        ARB: 'ARBUSDT',
+        OP: 'OPUSDT',
+        AVAX: 'AVAXUSDT',
+        MATIC: 'MATICUSDT',
+        DOGE: 'DOGEUSDT',
+        LINK: 'LINKUSDT',
+        UNI: 'UNIUSDT',
+        ATOM: 'ATOMUSDT',
+        LTC: 'LTCUSDT',
+        BCH: 'BCHUSDT',
+        ETC: 'ETCUSDT',
+        FIL: 'FILUSDT',
+        APT: 'APTUSDT',
+        STX: 'STXUSDT',
+        INJ: 'INJUSDT',
+        TIA: 'TIAUSDT'
+      };
+
+      const symbol = binanceSymbolMap[market] || 'BTCUSDT';
       const interval = timeframe;
       
       try {
@@ -3619,15 +3693,30 @@
     document.addEventListener('DOMContentLoaded', async function() {
       console.log('🚀 Initializing Nexxore Perps...');
       
-      // Initialize chart
-      await initChart();
-      initTradingViewWidget(state.currentMarket, state.currentTimeframe);
+      // Wait for external scripts to load
+      let retries = 0;
+      const waitForLibs = setInterval(() => {
+        if (typeof TradingView !== 'undefined' && typeof LightweightCharts !== 'undefined') {
+          clearInterval(waitForLibs);
+          console.log('✅ Chart libraries loaded');
+          
+          // Initialize chart
+          initChart();
+          initTradingViewWidget(state.currentMarket, state.currentTimeframe);
 
-      // Default to TradingView
-      const tv = document.getElementById('tradingviewChart');
-      const lite = document.getElementById('tradingChart');
-      if (tv) tv.style.display = 'block';
-      if (lite) lite.style.display = 'none';
+          // Default to TradingView
+          const tv = document.getElementById('tradingviewChart');
+          const lite = document.getElementById('tradingChart');
+          if (tv) tv.style.display = 'block';
+          if (lite) lite.style.display = 'none';
+        } else {
+          retries++;
+          if (retries > 50) {
+            clearInterval(waitForLibs);
+            console.error('❌ Chart libraries failed to load');
+          }
+        }
+      }, 100);
       
       // Render market tabs from config
       renderMarketTabs();
