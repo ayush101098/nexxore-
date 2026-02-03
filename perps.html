@@ -2956,7 +2956,7 @@
 
     function connectBinanceWebSocket() {
       try {
-        // Map all markets to Binance symbols for fallback pricing
+        // Map all markets to Binance symbols for fallback pricing (HYPE not on Binance)
         const binanceSymbols = ['btcusdt', 'ethusdt', 'solusdt', 'arbusdt', 'opusdt', 
           'avaxusdt', 'maticusdt', 'dogeusdt', 'linkusdt', 'uniusdt', 'atomusdt', 
           'ltcusdt', 'bchusdt', 'etcusdt', 'filusdt', 'aptusdt', 'stxusdt', 'injusdt', 'tiausdt'];
@@ -2967,7 +2967,11 @@
 
         ws.onmessage = (event) => {
           try {
-            const binanceSymbol = ticker.s?.toLowerCase();
+            const msg = JSON.parse(event.data);
+            const ticker = msg.data;
+            if (!ticker || !ticker.s) return;
+            
+            const binanceSymbol = ticker.s.toLowerCase();
             
             // Map Binance symbols to our market keys
             const symbolMap = {
@@ -3019,19 +3023,31 @@
 
     function updatePriceDisplays(symbol) {
       const data = priceData[symbol];
-      const decimals = markets[symbol].decimals;
-      const sym = markets[symbol].symbol.toLowerCase();
+      if (!data) {
+        console.warn(`No price data for ${symbol}`);
+        return;
+      }
+      
+      const market = markets[symbol];
+      if (!market) {
+        console.warn(`No market config for ${symbol}`);
+        return;
+      }
+      
+      const decimals = market.decimals;
+      const sym = market.symbol.toLowerCase();
       
       // Update market option in dropdown
-      const option = document.querySelector(`.market-option[data-market="${symbol}"]`);
-      if (option) {
-        const priceEl = option.querySelector('.market-price-value');
-        const changeEl = option.querySelector('.market-change');
-        if (priceEl) priceEl.textContent = formatPrice(data.price, decimals);
-        if (changeEl) {
-          changeEl.textContent = (data.change >= 0 ? '+' : '') + data.change.toFixed(2) + '%';
-          changeEl.className = 'market-change ' + (data.change >= 0 ? 'up' : 'down');
-        }
+      const priceEl = document.getElementById(`${sym}Price`);
+      const changeEl = document.getElementById(`${sym}Change`);
+      
+      if (priceEl) {
+        priceEl.textContent = formatPrice(data.price, decimals);
+      }
+      
+      if (changeEl) {
+        changeEl.textContent = (data.change >= 0 ? '+' : '') + data.change.toFixed(2) + '%';
+        changeEl.className = 'market-change ' + (data.change >= 0 ? 'up' : 'down');
       }
       
       // Update dropdown toggle if this is the selected market
@@ -3366,11 +3382,11 @@
           document.getElementById('selectedMarketPair').textContent = `${key}-PERP`;
           
           // Update price in toggle
-          const priceData = window.priceData?.[key] || { price: 0, change: 0 };
-          document.getElementById('selectedMarketPrice').textContent = formatPrice(priceData.price, market.decimals);
+          const currentPriceData = priceData[key] || { price: 0, change: 0 };
+          document.getElementById('selectedMarketPrice').textContent = formatPrice(currentPriceData.price, market.decimals);
           const changeEl = document.getElementById('selectedMarketChange');
-          changeEl.textContent = formatPct(priceData.change / 100);
-          changeEl.className = 'market-change ' + (priceData.change >= 0 ? 'up' : 'down');
+          changeEl.textContent = formatPct(currentPriceData.change / 100);
+          changeEl.className = 'market-change ' + (currentPriceData.change >= 0 ? 'up' : 'down');
           
           // Close dropdown and update UI
           dropdown.classList.remove('open');
@@ -3891,6 +3907,11 @@
       
       // Render market tabs from config
       renderMarketTabs();
+      
+      // Update all initial prices in dropdown
+      Object.keys(markets).forEach(key => {
+        updatePriceDisplays(key);
+      });
       
       // Setup event listeners
       setupEventListeners();
