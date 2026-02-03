@@ -501,6 +501,7 @@
       background: var(--bg-card);
       border-radius: 3px;
       -webkit-appearance: none;
+      appearance: none;
       cursor: pointer;
     }
     .leverage-slider::-webkit-slider-thumb {
@@ -574,7 +575,7 @@
     .tpsl-label { font-size: 0.75rem; color: var(--text-secondary); }
     .tpsl-inputs { display: none; gap: 8px; }
     .tpsl-inputs.show { display: grid; grid-template-columns: 1fr 1fr; }
-    .tpsl-input-group { }
+    .tpsl-input-group { display: flex; flex-direction: column; gap: 6px; }
     .tpsl-input-label { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
     .tpsl-input-label .dot { width: 6px; height: 6px; border-radius: 50%; }
     .tpsl-input-label .dot.tp { background: var(--long); }
@@ -854,7 +855,7 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
-    .margin-stat { }
+    .margin-stat { display: flex; flex-direction: column; }
     .margin-stat-label { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 2px; }
     .margin-stat-value { font-size: 0.85rem; font-weight: 600; color: var(--text); font-family: 'JetBrains Mono', monospace; }
 
@@ -924,7 +925,7 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
-    .funding-info-item { }
+    .funding-info-item { display: flex; flex-direction: column; gap: 2px; }
     .funding-info-label { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 2px; }
     .funding-info-value { font-size: 0.85rem; font-weight: 600; color: var(--text); font-family: 'JetBrains Mono', monospace; }
 
@@ -2939,11 +2940,7 @@
               priceData[marketKey].change = parseFloat(ticker.P);
               priceData[marketKey].high = parseFloat(ticker.h);
               priceData[marketKey].low = parseFloat(ticker.l);
-              updatePriceDisplays(marketKeyparseFloat(ticker.c);
-              priceData[symbol].change = parseFloat(ticker.P);
-              priceData[symbol].high = parseFloat(ticker.h);
-              priceData[symbol].low = parseFloat(ticker.l);
-              updatePriceDisplays(symbol);
+              updatePriceDisplays(marketKey);
             }
           } catch (e) {
             console.error('WS parse error:', e);
