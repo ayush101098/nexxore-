@@ -1,0 +1,36 @@
+FROM node:18-alpine
+
+# Install PostgreSQL client for health checks
+RUN apk add --no-cache postgresql-client
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files
+COPY backend/package*.json ./
+
+# Install dependencies
+RUN npm install --production
+
+# Copy perps service
+COPY backend/services/perps ./services/perps
+
+# Copy database schema
+COPY database/schema.sql ./database/
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /app
+
+USER nodejs
+
+# Expose ports
+EXPOSE 3010 3011
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3010/api/perps/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1))"
+
+# Start service
+CMD ["node", "services/perps/index.js"]
