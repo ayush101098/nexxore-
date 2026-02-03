@@ -1410,25 +1410,23 @@
         <!-- Execution Model -->
         <div class="execution-model">
           <div class="execution-header">
-            <span class="execution-title">Execution Model</span>
+            <span class="execution-title">Execution Route</span>
             <div class="execution-toggle">
-              <button class="execution-btn" data-model="amm">AMM</button>
-              <button class="execution-btn" data-model="clob">CLOB</button>
-              <button class="execution-btn active" data-model="hybrid">Nexxore Hybrid</button>
+              <button class="execution-btn active" data-model="hyperliquid" style="flex: 1; background: linear-gradient(135deg, #00d4ff, #0084ff); color: #000;">HyperLiquid</button>
             </div>
           </div>
           <div class="execution-metrics">
             <div class="execution-row">
-              <span>Route Mix</span>
-              <span id="routeMix">--</span>
+              <span>Exchange</span>
+              <span id="routeMix">HyperLiquid DEX</span>
             </div>
             <div class="execution-row">
-              <span>Expected Slippage</span>
-              <span id="expectedSlippage">--</span>
+              <span>Expected Fee</span>
+              <span id="expectedSlippage">0.02% - 0.06%</span>
             </div>
             <div class="execution-row">
-              <span>Liquidity Depth</span>
-              <span id="liquidityDepth">--</span>
+              <span>Liquidity Source</span>
+              <span id="liquidityDepth">HyperLiquid Order Book</span>
             </div>
           </div>
         </div>
@@ -1839,73 +1837,73 @@
           <thead>
             <tr>
               <th>Parameter</th>
-              <th>Nexxore Model (CLOB + AMM)</th>
+              <th>HyperLiquid Integration</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>Price Discovery</td>
-              <td>Mix of AMM liquidity and orderbook price discovery</td>
+              <td>HyperLiquid order book (CLOB + on-chain settlement)</td>
             </tr>
             <tr>
               <td>Slippage</td>
-              <td>Lower, mitigated by combining AMM liquidity</td>
+              <td>Low - deep liquidity from HyperLiquid exchange</td>
             </tr>
             <tr>
               <td>Trading Features</td>
-              <td>Advanced features with liquidity aggregation</td>
+              <td>Market/limit orders, leverage up to 50x, TP/SL</td>
             </tr>
             <tr>
               <td>Complexity</td>
-              <td>High, due to integration of AMM and CLOB mechanisms</td>
+              <td>Simple - API integration with existing exchange</td>
             </tr>
             <tr>
               <td>Liquidity</td>
-              <td>Enhanced through combining AMM and orderbook liquidity</td>
+              <td>Production-ready depth from HyperLiquid order books</td>
             </tr>
             <tr>
               <td>Transaction Cost</td>
-              <td>Medium, dependent on both AMM fees and blockchain fees</td>
+              <td>Zero gas fees - HyperLiquid handles settlement</td>
             </tr>
             <tr>
               <td>MEV Opportunity</td>
-              <td>Medium, mitigated by orderbook but still possible</td>
+              <td>None - centralized matching engine</td>
             </tr>
             <tr>
               <td>Impermanent Loss</td>
-              <td>Present if liquidity is pooled via AMM</td>
+              <td>Not applicable - order book model</td>
             </tr>
             <tr>
               <td>Order Latency</td>
-              <td>Medium, as it integrates on-chain and AMM mechanisms</td>
+              <td>Low - instant API execution</td>
             </tr>
             <tr>
               <td>Mechanism Overview</td>
-              <td>Combines CLOB with AMM for better liquidity & features</td>
+              <td>Direct integration with HyperLiquid perpetuals exchange</td>
             </tr>
             <tr>
               <td>Scalability</td>
-              <td>High, leveraging both CLOB scalability and AMM liquidity</td>
+              <td>High - leverages HyperLiquid infrastructure</td>
             </tr>
             <tr>
               <td>Custodianship</td>
-              <td>Non-custodial, users can directly trade from wallet</td>
+              <td>Non-custodial - users sign transactions with wallet</td>
             </tr>
             <tr>
               <td>Transparency</td>
-              <td>Medium to High, depending on transparency of AMM & CLOB</td>
+              <td>High - all trades visible on HyperLiquid explorer</td>
             </tr>
             <tr>
               <td>User Experience</td>
-              <td>Complex but offers best of both worlds</td>
+              <td>Seamless - zero gas, instant execution, 20 markets</td>
             </tr>
             <tr>
               <td>Market Efficiency</td>
-              <td>High, combines efficient order execution with pooled liquidity</td>
+              <td>High - taps into $100M+ liquidity pool</td>
             </tr>
           </tbody>
         </table>
-        <div class="model-tagline">UNIQUE, FIRST OF ITS KIND, HUMAN TRADING REVOLUTION BEGINS FROM HERE</div>
+        <div class="model-tagline">TRADING ON HYPERLIQUID - ZERO GAS, DEEP LIQUIDITY, 20 MARKETS</div>
       </div>
     </div>
   </div>
@@ -2080,18 +2078,42 @@
       symbolMarketMap[sym] = key;
     });
 
-    // Price Data Store
-    const priceData = {
-      ETH: { price: 3245.67, change: 2.34, high: 3312.45, low: 3156.78 },
-      BTC: { price: 97234.00, change: 1.87, high: 98456.00, low: 95234.00 },
-      SOL: { price: 178.45, change: 3.21, high: 185.67, low: 172.34 }
-    };
+    // Price Data Store - Initialize all 20 markets
+    const priceData = {};
+    Object.keys(markets).forEach(key => {
+      priceData[key] = { price: 0, change: 0, high: 0, low: 0 };
+    });
+    // Set initial estimates
+    priceData.BTC = { price: 97234.00, change: 1.87, high: 98456.00, low: 95234.00 };
+    priceData.ETH = { price: 3245.67, change: 2.34, high: 3312.45, low: 3156.78 };
+    priceData.SOL = { price: 178.45, change: 3.21, high: 185.67, low: 172.34 };
+    priceData.HYPE = { price: 25.34, change: 5.12, high: 26.78, low: 24.12 };
+    priceData.ARB = { price: 1.45, change: -1.23, high: 1.52, low: 1.41 };
+    priceData.OP = { price: 2.87, change: 0.89, high: 2.95, low: 2.78 };
+    priceData.AVAX = { price: 42.56, change: 2.11, high: 44.12, low: 41.23 };
+    priceData.MATIC = { price: 0.89, change: -0.45, high: 0.92, low: 0.87 };
+    priceData.DOGE = { price: 0.15, change: 3.45, high: 0.16, low: 0.14 };
+    priceData.LINK = { price: 18.67, change: 1.23, high: 19.12, low: 18.23 };
+    priceData.UNI = { price: 12.34, change: -0.67, high: 12.89, low: 12.01 };
+    priceData.ATOM = { price: 11.23, change: 0.98, high: 11.67, low: 10.89 };
+    priceData.LTC = { price: 89.45, change: 1.56, high: 91.23, low: 87.89 };
+    priceData.BCH = { price: 312.67, change: 0.34, high: 318.45, low: 308.12 };
+    priceData.ETC = { price: 28.34, change: -1.12, high: 29.12, low: 27.89 };
+    priceData.FIL = { price: 6.78, change: 2.34, high: 7.12, low: 6.45 };
+    priceData.APT = { price: 14.56, change: 3.21, high: 15.12, low: 14.01 };
+    priceData.STX = { price: 2.34, change: 1.89, high: 2.45, low: 2.28 };
+    priceData.INJ = { price: 34.67, change: 4.12, high: 36.23, low: 33.45 };
+    priceData.TIA = { price: 8.91, change: 2.67, high: 9.34, low: 8.67 };
 
-    const liquidityProfiles = {
-      ETH: { ammDepth: 3200000, clobDepth: 5200000, ammFee: 0.0004, clobFee: 0.0002 },
-      BTC: { ammDepth: 4800000, clobDepth: 7800000, ammFee: 0.00035, clobFee: 0.00018 },
-      SOL: { ammDepth: 1800000, clobDepth: 2600000, ammFee: 0.0005, clobFee: 0.00025 }
-    };
+    const liquidityProfiles = {};
+    Object.keys(markets).forEach(key => {
+      liquidityProfiles[key] = { 
+        ammDepth: 2000000 + Math.random() * 3000000, 
+        clobDepth: 3000000 + Math.random() * 5000000, 
+        ammFee: 0.0004, 
+        clobFee: 0.0002 
+      };
+    });
 
     // Chart Variables
     let chart = null;
@@ -2875,21 +2897,49 @@
 
     function connectBinanceWebSocket() {
       try {
-        const streams = 'ethusdt@ticker/btcusdt@ticker/solusdt@ticker';
+        // Map all markets to Binance symbols for fallback pricing
+        const binanceSymbols = ['btcusdt', 'ethusdt', 'solusdt', 'arbusdt', 'opusdt', 
+          'avaxusdt', 'maticusdt', 'dogeusdt', 'linkusdt', 'uniusdt', 'atomusdt', 
+          'ltcusdt', 'bchusdt', 'etcusdt', 'filusdt', 'aptusdt', 'stxusdt', 'injusdt', 'tiausdt'];
+        const streams = binanceSymbols.map(s => `${s}@ticker`).join('/');
         ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
 
         ws.onopen = () => console.log('✅ WebSocket connected');
 
         ws.onmessage = (event) => {
           try {
-            const msg = JSON.parse(event.data);
-            if (!msg.data) return;
-
-            const ticker = msg.data;
-            const symbol = ticker.s.replace('USDT', '');
-
-            if (priceData[symbol]) {
-              priceData[symbol].price = parseFloat(ticker.c);
+            const binanceSymbol = ticker.s?.toLowerCase();
+            
+            // Map Binance symbols to our market keys
+            const symbolMap = {
+              'btcusdt': 'BTC',
+              'ethusdt': 'ETH',
+              'solusdt': 'SOL',
+              'arbusdt': 'ARB',
+              'opusdt': 'OP',
+              'avaxusdt': 'AVAX',
+              'maticusdt': 'MATIC',
+              'dogeusdt': 'DOGE',
+              'linkusdt': 'LINK',
+              'uniusdt': 'UNI',
+              'atomusdt': 'ATOM',
+              'ltcusdt': 'LTC',
+              'bchusdt': 'BCH',
+              'etcusdt': 'ETC',
+              'filusdt': 'FIL',
+              'aptusdt': 'APT',
+              'stxusdt': 'STX',
+              'injusdt': 'INJ',
+              'tiausdt': 'TIA'
+            };
+            
+            const marketKey = symbolMap[binanceSymbol];
+            if (marketKey && priceData[marketKey]) {
+              priceData[marketKey].price = parseFloat(ticker.c);
+              priceData[marketKey].change = parseFloat(ticker.P);
+              priceData[marketKey].high = parseFloat(ticker.h);
+              priceData[marketKey].low = parseFloat(ticker.l);
+              updatePriceDisplays(marketKeyparseFloat(ticker.c);
               priceData[symbol].change = parseFloat(ticker.P);
               priceData[symbol].high = parseFloat(ticker.h);
               priceData[symbol].low = parseFloat(ticker.l);
