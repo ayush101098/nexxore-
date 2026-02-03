@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perps Test - Functional Verification</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0a0a0a;
+      color: #00ff00;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .test-section {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .test-header {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #00ffff;
+    }
+    .test-item {
+      padding: 10px;
+      margin: 5px 0;
+      background: #0f0f0f;
+      border-left: 3px solid #666;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .test-item.pass {
+      border-left-color: #00ff00;
+    }
+    .test-item.fail {
+      border-left-color: #ff0000;
+      color: #ff6666;
+    }
+    .test-item.warn {
+      border-left-color: #ffaa00;
+      color: #ffcc66;
+    }
+    .status {
+      font-weight: bold;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    .status.pass {
+      background: #004400;
+      color: #00ff00;
+    }
+    .status.fail {
+      background: #440000;
+      color: #ff6666;
+    }
+    .status.warn {
+      background: #443300;
+      color: #ffcc66;
+    }
+    .btn {
+      background: #00ffff;
+      color: #000;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 10px 5px;
+    }
+    .btn:hover {
+      background: #00cccc;
+    }
+    #console-output {
+      background: #000;
+      color: #0f0;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: monospace;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    .log-entry {
+      margin: 2px 0;
+      padding: 2px 0;
+    }
+    .log-error {
+      color: #ff6666;
+    }
+    .log-warn {
+      color: #ffcc66;
+    }
+    .log-info {
+      color: #66ccff;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Nexxore Perps - Functional Test Suite</h1>
+  
+  <div class="test-section">
+    <div class="test-header">⚡ Quick Actions</div>
+    <button class="btn" onclick="runAllTests()">Run All Tests</button>
+    <button class="btn" onclick="openPerpsPage()">Open Perps Page</button>
+    <button class="btn" onclick="clearConsole()">Clear Console</button>
+  </div>
+
+  <div class="test-section">
+    <div class="test-header">📋 Test Results</div>
+    <div id="test-results"></div>
+  </div>
+
+  <div class="test-section">
+    <div class="test-header">📟 Console Output</div>
+    <div id="console-output"></div>
+  </div>
+
+  <script>
+    let testResults = [];
+    let perpsWindow = null;
+
+    function log(message, type = 'info') {
+      const output = document.getElementById('console-output');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      output.appendChild(entry);
+      output.scrollTop = output.scrollHeight;
+    }
+
+    function clearConsole() {
+      document.getElementById('console-output').innerHTML = '';
+    }
+
+    function addTestResult(name, status, details = '') {
+      testResults.push({ name, status, details });
+      renderTestResults();
+    }
+
+    function renderTestResults() {
+      const container = document.getElementById('test-results');
+      container.innerHTML = testResults.map(test => `
+        <div class="test-item ${test.status}">
+          <span>${test.name} ${test.details ? `- ${test.details}` : ''}</span>
+          <span class="status ${test.status}">${test.status.toUpperCase()}</span>
+        </div>
+      `).join('');
+    }
+
+    function openPerpsPage() {
+      log('Opening perps.html in new window...', 'info');
+      perpsWindow = window.open('http://127.0.0.1:8080/perps.html', 'perps_test', 'width=1400,height=900');
+      
+      if (perpsWindow) {
+        log('✓ Window opened successfully', 'info');
+        
+        // Wait for page to load
+        setTimeout(() => {
+          log('Running automated tests on perps page...', 'info');
+          runAutomatedTests();
+        }, 3000);
+      } else {
+        log('✗ Failed to open window (popup blocked?)', 'error');
+        addTestResult('Window Open', 'fail', 'Popup may be blocked');
+      }
+    }
+
+    function runAutomatedTests() {
+      if (!perpsWindow || perpsWindow.closed) {
+        log('✗ Perps window not available', 'error');
+        return;
+      }
+
+      try {
+        const doc = perpsWindow.document;
+        
+        // Test 1: Check if dropdown exists
+        const dropdown = doc.getElementById('marketDropdown');
+        if (dropdown) {
+          addTestResult('Dropdown Element', 'pass', 'Found market dropdown');
+          log('✓ Dropdown element found', 'info');
+        } else {
+          addTestResult('Dropdown Element', 'fail', 'Dropdown not found');
+          log('✗ Dropdown element not found', 'error');
+        }
+
+        // Test 2: Check dropdown toggle
+        const toggle = doc.getElementById('marketDropdownToggle');
+        if (toggle) {
+          addTestResult('Dropdown Toggle', 'pass', 'Toggle element exists');
+          log('✓ Dropdown toggle found', 'info');
+        } else {
+          addTestResult('Dropdown Toggle', 'fail', 'Toggle not found');
+          log('✗ Dropdown toggle not found', 'error');
+        }
+
+        // Test 3: Check selected market display
+        const selectedName = doc.getElementById('selectedMarketName');
+        if (selectedName) {
+          const marketName = selectedName.textContent;
+          addTestResult('Selected Market', 'pass', `Default: ${marketName}`);
+          log(`✓ Selected market: ${marketName}`, 'info');
+        } else {
+          addTestResult('Selected Market', 'fail', 'Name element not found');
+          log('✗ Selected market name not found', 'error');
+        }
+
+        // Test 4: Check selected market price
+        const selectedPrice = doc.getElementById('selectedMarketPrice');
+        if (selectedPrice) {
+          const price = selectedPrice.textContent;
+          addTestResult('Market Price Display', 'pass', price);
+          log(`✓ Price display: ${price}`, 'info');
+        } else {
+          addTestResult('Market Price Display', 'fail', 'Price element not found');
+          log('✗ Price element not found', 'error');
+        }
+
+        // Test 5: Check dropdown menu
+        const menu = doc.getElementById('marketDropdownMenu');
+        if (menu) {
+          const options = menu.querySelectorAll('.market-option');
+          if (options.length === 20) {
+            addTestResult('Market Options', 'pass', `All 20 markets found`);
+            log(`✓ Found all 20 market options`, 'info');
+          } else {
+            addTestResult('Market Options', 'warn', `Found ${options.length}/20 markets`);
+            log(`⚠ Found ${options.length}/20 markets`, 'warn');
+          }
+        } else {
+          addTestResult('Market Options', 'fail', 'Menu not found');
+          log('✗ Dropdown menu not found', 'error');
+        }
+
+        // Test 6: Check market data structure
+        if (perpsWindow.markets) {
+          const marketCount = Object.keys(perpsWindow.markets).length;
+          addTestResult('Market Data', 'pass', `${marketCount} markets configured`);
+          log(`✓ Market data: ${marketCount} markets`, 'info');
+        } else {
+          addTestResult('Market Data', 'fail', 'markets object not found');
+          log('✗ markets object not found', 'error');
+        }
+
+        // Test 7: Check price data
+        if (perpsWindow.priceData) {
+          const priceCount = Object.keys(perpsWindow.priceData).length;
+          addTestResult('Price Data', 'pass', `${priceCount} markets have price data`);
+          log(`✓ Price data: ${priceCount} markets`, 'info');
+          
+          // Check if ETH has price
+          if (perpsWindow.priceData.ETH) {
+            const ethPrice = perpsWindow.priceData.ETH.price;
+            log(`  ETH price: $${ethPrice.toLocaleString()}`, 'info');
+          }
+        } else {
+          addTestResult('Price Data', 'fail', 'priceData not found');
+          log('✗ priceData object not found', 'error');
+        }
+
+        // Test 8: Check WebSocket state
+        if (perpsWindow.state) {
+          const wsConnected = perpsWindow.state.perpsWsConnected;
+          if (wsConnected) {
+            addTestResult('WebSocket', 'pass', 'Connected');
+            log('✓ WebSocket connected', 'info');
+          } else {
+            addTestResult('WebSocket', 'warn', 'Not connected (expected without backend)');
+            log('⚠ WebSocket not connected (expected)', 'warn');
+          }
+        }
+
+        // Test 9: Check chart elements
+        const chartContainer = doc.querySelector('.chart-container');
+        if (chartContainer) {
+          addTestResult('Chart Container', 'pass', 'Chart area exists');
+          log('✓ Chart container found', 'info');
+        } else {
+          addTestResult('Chart Container', 'fail', 'Chart not found');
+          log('✗ Chart container not found', 'error');
+        }
+
+        // Test 10: Check order panel
+        const orderPanel = doc.querySelector('.order-panel');
+        if (orderPanel) {
+          addTestResult('Order Panel', 'pass', 'Trading panel exists');
+          log('✓ Order panel found', 'info');
+        } else {
+          addTestResult('Order Panel', 'fail', 'Order panel not found');
+          log('✗ Order panel not found', 'error');
+        }
+
+        log('═══════════════════════════════════', 'info');
+        log('Automated tests completed!', 'info');
+        log('Check results above for details', 'info');
+
+      } catch (error) {
+        log(`✗ Error running tests: ${error.message}`, 'error');
+        addTestResult('Test Suite', 'fail', error.message);
+      }
+    }
+
+    function runAllTests() {
+      log('═══════════════════════════════════', 'info');
+      log('Starting full test suite...', 'info');
+      log('═══════════════════════════════════', 'info');
+      
+      testResults = [];
+      renderTestResults();
+      
+      // Test server connectivity
+      fetch('http://127.0.0.1:8080/perps.html', { method: 'HEAD' })
+        .then(response => {
+          if (response.ok) {
+            addTestResult('Server Status', 'pass', 'HTTP 200 OK');
+            log('✓ Server is running on port 8080', 'info');
+            
+            // Open page and run tests
+            openPerpsPage();
+          } else {
+            addTestResult('Server Status', 'fail', `HTTP ${response.status}`);
+            log(`✗ Server returned ${response.status}`, 'error');
+          }
+        })
+        .catch(error => {
+          addTestResult('Server Status', 'fail', 'Not running');
+          log('✗ Server not accessible. Start with: python3 -m http.server 8080', 'error');
+        });
+    }
+
+    // Initialize
+    log('Perps test suite ready', 'info');
+    log('Click "Run All Tests" to begin', 'info');
+  </script>
+</body>
+</html>
