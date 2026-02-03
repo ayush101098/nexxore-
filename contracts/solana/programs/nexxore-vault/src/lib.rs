@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
-declare_id!("NexxVau1t111111111111111111111111111111111");
+declare_id!("tnSQrV9qUgBP8G6pxHnJvasuCe3zh9eJyLGUbNN4Pwb");
 
 #[program]
 pub mod nexxore_vault {

@@ -9,6 +9,7 @@ const alphaScannerV2 = require('./alpha-scanner-v2.js');
 const researchRefined = require('./research-refined.js');
 const analyst = require('./analyst.js');
 const analytics = require('./analytics.js');
+const perps = require('./perps.js');
 
 module.exports = async (req, res) => {
   // CORS headers
@@ -92,6 +93,8 @@ module.exports = async (req, res) => {
     return analyst.getSentiment(req, res);
   } else if (pathname === '/api/analyst/full') {
     return analyst.getFullAnalysis(req, res);
+  } else if (pathname.startsWith('/api/perps')) {
+    return perps(req, res);
   } else {
     res.status(404).json({ error: 'Not Found' });
   }

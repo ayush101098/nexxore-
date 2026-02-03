@@ -47,6 +47,7 @@
     .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(8, 8, 10, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 14px 0; }
     .navbar .container { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
     .nav-links { display: flex; align-items: center; gap: 12px; }
+    .chain-select { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 12px; font-size: 0.75rem; }
     .btn-secondary { padding: 10px 20px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text-secondary); font-weight: 500; font-size: 0.85rem; text-decoration: none; transition: all 0.25s ease; }
     .btn-secondary:hover { background: var(--bg-elevated); border-color: rgba(255, 255, 255, 0.15); color: var(--text); }
     .btn-primary { padding: 10px 20px; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: 600; font-size: 0.85rem; text-decoration: none; transition: all 0.25s ease; }
@@ -231,6 +232,13 @@
         <span style="font-size: 1.1rem; font-weight: 700; color: white;">nexxore</span>
       </a>
       <div class="nav-links">
+        <select class="chain-select" id="chainSelect">
+          <option value="ethereum">Ethereum</option>
+          <option value="arbitrum">Arbitrum</option>
+          <option value="base">Base</option>
+          <option value="solana">Solana</option>
+          <option value="hyperliquid">Hyperliquid</option>
+        </select>
         <a href="index.html" class="btn-secondary">← Home</a>
         <a href="perps.html" class="btn-secondary">Trade</a>
         <a href="#" class="btn-primary">Connect Wallet</a>
@@ -775,6 +783,16 @@
       <div class="footer-bottom">© 2026 nexxore. Building the future of autonomous DeFi.</div>
     </div>
   </footer>
+  <script>
+    const chainSelect = document.getElementById('chainSelect');
+    if (chainSelect) {
+      const stored = localStorage.getItem('nexxoreChain');
+      if (stored) chainSelect.value = stored;
+      chainSelect.addEventListener('change', () => {
+        localStorage.setItem('nexxoreChain', chainSelect.value);
+      });
+    }
+  </script>
 <script>
   document.querySelectorAll('a[href$=".html"]').forEach(link => {
     const href = link.getAttribute('href');

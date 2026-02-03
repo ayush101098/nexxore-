@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://www.googletagmanager.com https://s3.tradingview.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src wss://stream.binance.com:9443 https://api.binance.com https://www.google-analytics.com https://api.coingecko.com; img-src 'self' data: https:; frame-src https://s.tradingview.com;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://www.googletagmanager.com https://s3.tradingview.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' wss://stream.binance.com:9443 https://api.binance.com https://www.google-analytics.com https://api.coingecko.com https://api.hyperliquid.xyz https://*.supabase.co https://relay.walletconnect.org https://rpc.walletconnect.org wss://relay.walletconnect.org; img-src 'self' data: https:; frame-src https://s.tradingview.com;">
   <title>NX-Perps — Perpetuals Trading | Nexxore</title>
   
   <!-- Google Analytics -->
@@ -33,6 +33,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
   <script src="https://s3.tradingview.com/tv.js"></script>
+  <script src="https://unpkg.com/ethers@6.9.0/dist/ethers.umd.min.js"></script>
+  <script src="https://unpkg.com/@walletconnect/ethereum-provider@2.11.1/dist/index.umd.js"></script>
+  <script src="https://unpkg.com/msgpack-lite@0.1.26/dist/msgpack.min.js"></script>
+  <script src="https://unpkg.com/@solana/web3.js@1.95.4/lib/index.iife.min.js"></script>
   
   <style>
     :root {
@@ -93,6 +97,8 @@
     .nav-link:hover { color: var(--text-secondary); background: rgba(255,255,255,0.03); }
     .nav-link.active { color: var(--text); background: rgba(255,255,255,0.06); }
     .header-right { display: flex; align-items: center; gap: 8px; }
+    .chain-select { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 6px 10px; font-size: 0.75rem; }
+    .chain-note { font-size: 0.65rem; color: var(--text-muted); }
     .network-badge { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--long-bg); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 20px; font-size: 0.7rem; font-weight: 600; color: var(--long); }
     .network-dot { width: 6px; height: 6px; background: var(--long); border-radius: 50%; animation: pulse 2s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
@@ -1155,6 +1161,39 @@
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    .wallet-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1200;
+    }
+    .wallet-modal.active { display: flex; }
+    .wallet-modal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      width: 320px;
+      display: grid;
+      gap: 12px;
+    }
+    .wallet-modal-title { font-size: 1rem; font-weight: 600; color: var(--text); }
+    .wallet-modal-btn {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      color: var(--text);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .wallet-modal-btn:hover { border-color: var(--border-hover); }
+    .wallet-modal-close { background: transparent; border: none; color: var(--text-muted); cursor: pointer; text-align: left; }
   </style>
 </head>
 <body>
@@ -1179,11 +1218,29 @@
     <div class="header-right">
       <div class="network-badge">
         <span class="network-dot"></span>
-        Arbitrum
+        <span id="activeChainLabel">Arbitrum</span>
       </div>
+      <select class="chain-select" id="chainSelect">
+        <option value="ethereum">Ethereum</option>
+        <option value="arbitrum" selected>Arbitrum</option>
+        <option value="base">Base</option>
+        <option value="solana">Solana</option>
+        <option value="hyperliquid">Hyperliquid</option>
+      </select>
       <button class="connect-btn" id="connectWallet">Connect Wallet</button>
     </div>
   </header>
+
+  <div class="wallet-modal" id="walletModal">
+    <div class="wallet-modal-card">
+      <div class="wallet-modal-title">Connect Wallet</div>
+      <button class="wallet-modal-btn" id="connectMetaMask">MetaMask</button>
+      <button class="wallet-modal-btn" id="connectWalletConnect">WalletConnect</button>
+      <button class="wallet-modal-btn" id="connectPhantom">Phantom (Solana)</button>
+      <button class="wallet-modal-btn" id="connectSolflare">Solflare (Solana)</button>
+      <button class="wallet-modal-close" id="closeWalletModal">Cancel</button>
+    </div>
+  </div>
 
   <!-- Stats Bar -->
   <div class="stats-bar">
@@ -1215,40 +1272,8 @@
   </div>
 
   <!-- Market Selector -->
-  <div class="market-selector">
-    <div class="market-tab active" data-market="ETH">
-      <div class="market-icon eth">ETH</div>
-      <div class="market-info">
-        <div class="market-name">Ethereum</div>
-        <div class="market-pair">ETH-PERP</div>
-      </div>
-      <div class="market-price">
-        <div class="market-price-value" id="ethPrice">$3,245.67</div>
-        <div class="market-change up" id="ethChange">+2.34%</div>
-      </div>
-    </div>
-    <div class="market-tab" data-market="BTC">
-      <div class="market-icon btc">BTC</div>
-      <div class="market-info">
-        <div class="market-name">Bitcoin</div>
-        <div class="market-pair">BTC-PERP</div>
-      </div>
-      <div class="market-price">
-        <div class="market-price-value" id="btcPrice">$97,234.00</div>
-        <div class="market-change up" id="btcChange">+1.87%</div>
-      </div>
-    </div>
-    <div class="market-tab" data-market="SOL">
-      <div class="market-icon sol">SOL</div>
-      <div class="market-info">
-        <div class="market-name">Solana</div>
-        <div class="market-pair">SOL-PERP</div>
-      </div>
-      <div class="market-price">
-        <div class="market-price-value" id="solPrice">$178.45</div>
-        <div class="market-change up" id="solChange">+3.21%</div>
-      </div>
-    </div>
+  <div class="market-selector" id="marketSelector">
+    <!-- Markets will be dynamically populated from CONFIG -->
   </div>
 
   <!-- Main Trading Layout -->
@@ -1574,6 +1599,7 @@
               <th>Liq. Price</th>
               <th>Unrealized PnL</th>
               <th>Margin</th>
+              <th>TP/SL</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -1999,17 +2025,60 @@
       leverage: 10,
       isWalletConnected: false,
       walletAddress: null,
+      solanaAddress: null,
+      activeChain: 'arbitrum',
       balance: 0,
       positions: [],
-      orders: []
+      orders: [],
+      orderbooks: {},
+      trades: {},
+      perpsWsConnected: false
     };
 
-    // Market Configuration
-    const markets = {
-      ETH: { name: 'Ethereum', symbol: 'ETHUSDT', decimals: 2, icon: 'ETH', gradient: 'linear-gradient(135deg, #627eea, #8c9eff)' },
-      BTC: { name: 'Bitcoin', symbol: 'BTCUSDT', decimals: 2, icon: 'BTC', gradient: 'linear-gradient(135deg, #f7931a, #ffb347)' },
-      SOL: { name: 'Solana', symbol: 'SOLUSDT', decimals: 2, icon: 'SOL', gradient: 'linear-gradient(135deg, #9945ff, #14f195)' }
+    const CONFIG = {
+      walletConnectProjectId: 'YOUR_WALLETCONNECT_PROJECT_ID',
+      apiBase: '/api',
+      perpsApiBase: null,
+      perpsWs: null,
+      useHyperliquid: true  // Enable HyperLiquid by default
     };
+
+    let walletProvider = null;
+    let walletType = null;
+    let ethersProvider = null;
+    let hyperliquidAssets = {};
+
+    // Market Configuration - Top 20 HyperLiquid Markets
+    const markets = {
+      BTC: { name: 'Bitcoin', symbol: 'BTC', decimals: 1, icon: 'BTC', gradient: 'linear-gradient(135deg, #f7931a, #ffb347)' },
+      ETH: { name: 'Ethereum', symbol: 'ETH', decimals: 2, icon: 'ETH', gradient: 'linear-gradient(135deg, #627eea, #8c9eff)' },
+      SOL: { name: 'Solana', symbol: 'SOL', decimals: 3, icon: 'SOL', gradient: 'linear-gradient(135deg, #9945ff, #14f195)' },
+      HYPE: { name: 'Hyperliquid', symbol: 'HYPE', decimals: 4, icon: 'HYPE', gradient: 'linear-gradient(135deg, #00d4ff, #0084ff)' },
+      ARB: { name: 'Arbitrum', symbol: 'ARB', decimals: 4, icon: 'ARB', gradient: 'linear-gradient(135deg, #28a0f0, #2d74da)' },
+      OP: { name: 'Optimism', symbol: 'OP', decimals: 4, icon: 'OP', gradient: 'linear-gradient(135deg, #ff0420, #ff4d5d)' },
+      AVAX: { name: 'Avalanche', symbol: 'AVAX', decimals: 3, icon: 'AVAX', gradient: 'linear-gradient(135deg, #e84142, #ff6b6b)' },
+      MATIC: { name: 'Polygon', symbol: 'MATIC', decimals: 5, icon: 'MATIC', gradient: 'linear-gradient(135deg, #8247e5, #a873ff)' },
+      DOGE: { name: 'Dogecoin', symbol: 'DOGE', decimals: 6, icon: 'DOGE', gradient: 'linear-gradient(135deg, #c2a633, #f4d03f)' },
+      LINK: { name: 'Chainlink', symbol: 'LINK', decimals: 3, icon: 'LINK', gradient: 'linear-gradient(135deg, #2a5ada, #5b89ff)' },
+      UNI: { name: 'Uniswap', symbol: 'UNI', decimals: 4, icon: 'UNI', gradient: 'linear-gradient(135deg, #ff007a, #ff5cae)' },
+      ATOM: { name: 'Cosmos', symbol: 'ATOM', decimals: 3, icon: 'ATOM', gradient: 'linear-gradient(135deg, #2e3148, #5064fb)' },
+      LTC: { name: 'Litecoin', symbol: 'LTC', decimals: 2, icon: 'LTC', gradient: 'linear-gradient(135deg, #345d9d, #5b8fce)' },
+      BCH: { name: 'Bitcoin Cash', symbol: 'BCH', decimals: 2, icon: 'BCH', gradient: 'linear-gradient(135deg, #8dc351, #b1e26d)' },
+      ETC: { name: 'Ethereum Classic', symbol: 'ETC', decimals: 3, icon: 'ETC', gradient: 'linear-gradient(135deg, #328332, #61b361)' },
+      FIL: { name: 'Filecoin', symbol: 'FIL', decimals: 4, icon: 'FIL', gradient: 'linear-gradient(135deg, #0090ff, #40b8ff)' },
+      APT: { name: 'Aptos', symbol: 'APT', decimals: 4, icon: 'APT', gradient: 'linear-gradient(135deg, #00ffb9, #00d9a3)' },
+      STX: { name: 'Stacks', symbol: 'STX', decimals: 4, icon: 'STX', gradient: 'linear-gradient(135deg, #5546ff, #7b6dff)' },
+      INJ: { name: 'Injective', symbol: 'INJ', decimals: 3, icon: 'INJ', gradient: 'linear-gradient(135deg, #00f2fe, #4facfe)' },
+      TIA: { name: 'Celestia', symbol: 'TIA', decimals: 4, icon: 'TIA', gradient: 'linear-gradient(135deg, #7b3fe4, #a855f7)' }
+    };
+
+    const marketSymbolMap = {};
+    const symbolMarketMap = {};
+    Object.keys(markets).forEach(key => {
+      const sym = markets[key].symbol.toLowerCase();
+      marketSymbolMap[key] = sym;
+      symbolMarketMap[sym] = key;
+    });
 
     // Price Data Store
     const priceData = {
@@ -2052,6 +2121,313 @@
 
     function formatTime(date) {
       return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    }
+
+    const toWire = (value) => {
+      const fixed = Number(value).toFixed(8);
+      return fixed.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+    };
+
+    const concatBytes = (arrays) => {
+      const total = arrays.reduce((acc, arr) => acc + arr.length, 0);
+      const out = new Uint8Array(total);
+      let offset = 0;
+      arrays.forEach((arr) => {
+        out.set(arr, offset);
+        offset += arr.length;
+      });
+      return out;
+    };
+
+    const decodeBase64Tx = (value) => {
+      const binary = atob(value);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    };
+
+    async function signAndSendSolanaTx(base64Tx) {
+      if (!walletProvider || !window.solanaWeb3) {
+        throw new Error('Solana wallet not available');
+      }
+      const txBytes = decodeBase64Tx(base64Tx);
+      const transaction = window.solanaWeb3.Transaction.from(txBytes);
+      const result = await walletProvider.signAndSendTransaction(transaction);
+      return result?.signature || result;
+    }
+
+    const u64be = (num) => {
+      const out = new Uint8Array(8);
+      let n = BigInt(num);
+      for (let i = 7; i >= 0; i--) {
+        out[i] = Number(n & 0xffn);
+        n >>= 8n;
+      }
+      return out;
+    };
+
+    const actionHash = (action, vaultAddress, nonce, expiresAfter) => {
+      const packed = msgpack.encode(action);
+      const parts = [packed, u64be(nonce)];
+      if (!vaultAddress) {
+        parts.push(new Uint8Array([0]));
+      } else {
+        const addr = vaultAddress.replace(/^0x/, '');
+        parts.push(new Uint8Array([1]));
+        parts.push(Uint8Array.from(addr.match(/.{1,2}/g).map((b) => parseInt(b, 16))));
+      }
+      if (expiresAfter != null) {
+        parts.push(new Uint8Array([0]));
+        parts.push(u64be(expiresAfter));
+      }
+      const payload = concatBytes(parts);
+      return ethers.keccak256(payload);
+    };
+
+    const buildHyperliquidAction = (order) => {
+      const assetIndex = hyperliquidAssets[order.market];
+      if (assetIndex == null) throw new Error('Unsupported market for Hyperliquid');
+      const tif = order.type === 'limit' ? 'Gtc' : 'Ioc';
+      const slippage = 0.05;
+      const px = order.type === 'limit'
+        ? order.price
+        : order.side === 'long'
+          ? order.price * (1 + slippage)
+          : order.price * (1 - slippage);
+      return {
+        type: 'order',
+        orders: [
+          {
+            a: assetIndex,
+            b: order.side === 'long',
+            p: toWire(px),
+            s: toWire(order.size),
+            r: false,
+            t: { limit: { tif } }
+          }
+        ],
+        grouping: 'na'
+      };
+    };
+
+    const signHyperliquidAction = async (action, nonce) => {
+      const hash = actionHash(action, null, nonce, null);
+      const phantomAgent = { source: 'a', connectionId: hash };
+      const domain = {
+        name: 'Exchange',
+        version: '1',
+        chainId: 1337,
+        verifyingContract: '0x0000000000000000000000000000000000000000'
+      };
+      const types = { Agent: [
+        { name: 'source', type: 'string' },
+        { name: 'connectionId', type: 'bytes32' }
+      ] };
+      const signer = await ethersProvider.getSigner();
+      const signature = await signer.signTypedData(domain, types, phantomAgent);
+      const sig = ethers.Signature.from(signature);
+      return { r: sig.r, s: sig.s, v: sig.v };
+    };
+
+    const loadHyperliquidAssets = async () => {
+      try {
+        const response = await fetch('https://api.hyperliquid.xyz/info', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'metaAndAssetCtxs' })
+        });
+        const data = await response.json();
+        const universe = Array.isArray(data) ? data[0]?.universe || [] : [];
+        hyperliquidAssets = {};
+        universe.forEach((item, idx) => {
+          hyperliquidAssets[item.name] = idx;
+        });
+      } catch (e) {
+        console.error('Hyperliquid asset load failed', e);
+      }
+    };
+
+    function toggleWalletModal(show) {
+      const modal = document.getElementById('walletModal');
+      if (!modal) return;
+      modal.classList.toggle('active', show);
+    }
+
+    const chainConfig = {
+      ethereum: { label: 'Ethereum', chainId: '0x1' },
+      arbitrum: { label: 'Arbitrum', chainId: '0xa4b1' },
+      base: { label: 'Base', chainId: '0x2105' },
+      solana: { label: 'Solana', chainId: null },
+      hyperliquid: { label: 'Hyperliquid', chainId: null }
+    };
+
+    async function setActiveChain(chainKey) {
+      state.activeChain = chainKey;
+      const label = document.getElementById('activeChainLabel');
+      if (label) label.textContent = chainConfig[chainKey]?.label || 'Arbitrum';
+
+      if (['ethereum', 'arbitrum', 'base'].includes(chainKey) && walletProvider?.request) {
+        try {
+          await walletProvider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: chainConfig[chainKey].chainId }]
+          });
+        } catch (e) {
+          console.error('Network switch failed', e);
+        }
+      }
+    }
+
+    async function connectMetaMask() {
+      if (!window.ethereum) {
+        alert('MetaMask not found. Please install MetaMask.');
+        return;
+      }
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      walletProvider = window.ethereum;
+      walletType = 'metamask';
+      ethersProvider = new ethers.BrowserProvider(walletProvider);
+      state.walletAddress = accounts[0];
+      state.isWalletConnected = true;
+      state.balance = 10000;
+      updateWalletUI();
+
+      walletProvider.on?.('accountsChanged', (accs) => {
+        state.walletAddress = accs?.[0] || null;
+        state.isWalletConnected = !!state.walletAddress;
+        updateWalletUI();
+      });
+    }
+
+    async function connectWalletConnect() {
+      if (!window.EthereumProvider) {
+        alert('WalletConnect provider not available.');
+        return;
+      }
+      if (CONFIG.walletConnectProjectId === 'YOUR_WALLETCONNECT_PROJECT_ID') {
+        alert('WalletConnect Project ID missing. Set CONFIG.walletConnectProjectId.');
+        return;
+      }
+      walletProvider = await window.EthereumProvider.init({
+        projectId: CONFIG.walletConnectProjectId,
+        chains: [1],
+        showQrModal: true
+      });
+      await walletProvider.connect();
+      walletType = 'walletconnect';
+      ethersProvider = new ethers.BrowserProvider(walletProvider);
+      const accounts = await ethersProvider.send('eth_accounts', []);
+      state.walletAddress = accounts[0];
+      state.isWalletConnected = true;
+      state.balance = 10000;
+      updateWalletUI();
+
+      walletProvider.on?.('accountsChanged', (accs) => {
+        state.walletAddress = accs?.[0] || null;
+        state.isWalletConnected = !!state.walletAddress;
+        updateWalletUI();
+      });
+    }
+
+    async function connectSolanaWallet(type) {
+      const provider = type === 'phantom' ? window.solana : window.solflare;
+      if (!provider) {
+        alert('Solana wallet not found. Install Phantom or Solflare.');
+        return;
+      }
+      const resp = await provider.connect();
+      state.solanaAddress = resp.publicKey?.toString();
+      state.walletAddress = null;
+      state.isWalletConnected = true;
+      walletProvider = provider;
+      walletType = `solana-${type}`;
+      updateWalletUI();
+    }
+
+    function disconnectWallet() {
+      if (walletProvider?.disconnect) walletProvider.disconnect();
+      state.isWalletConnected = false;
+      state.walletAddress = null;
+      state.solanaAddress = null;
+      state.balance = 0;
+      walletProvider = null;
+      walletType = null;
+      ethersProvider = null;
+      updateWalletUI();
+    }
+
+    function updateWalletUI() {
+      const btn = document.getElementById('connectWallet');
+      if (!btn) return;
+      if (state.isWalletConnected && (state.walletAddress || state.solanaAddress)) {
+        const addr = state.walletAddress || state.solanaAddress;
+        btn.textContent = addr.slice(0, 6) + '...' + addr.slice(-4);
+        btn.classList.add('connected');
+        document.getElementById('availableBalance').textContent = 'Available: $' + state.balance.toLocaleString();
+      } else {
+        btn.textContent = 'Connect Wallet';
+        btn.classList.remove('connected');
+        document.getElementById('availableBalance').textContent = 'Available: $0.00';
+      }
+      updateSubmitButton();
+      if (state.isWalletConnected) {
+        loadUserPositions();
+        loadUserHistory();
+        loadUserOrders();
+      }
+    }
+
+    async function apiRequest(path, options = {}, base = CONFIG.apiBase) {
+      const response = await fetch(`${base}${path}`, {
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'API request failed');
+      }
+      return response.json();
+    }
+
+    async function perpsApiRequest(path, options = {}) {
+      const base = CONFIG.perpsApiBase || CONFIG.apiBase;
+      return apiRequest(path, options, base);
+    }
+
+    async function loadUserPositions() {
+      const address = state.walletAddress || state.solanaAddress;
+      if (!address) return;
+      try {
+        const data = await perpsApiRequest(`/perps/positions?address=${address}`);
+        state.positions = data.positions || [];
+        renderPositions();
+      } catch (e) {
+        console.error('Positions load failed:', e);
+      }
+    }
+
+    async function loadUserHistory() {
+      const address = state.walletAddress || state.solanaAddress;
+      if (!address) return;
+      try {
+        await perpsApiRequest(`/perps/history?address=${address}`);
+      } catch (e) {
+        console.error('History load failed:', e);
+      }
+    }
+
+    async function loadUserOrders() {
+      const address = state.walletAddress || state.solanaAddress;
+      if (!address) return;
+      try {
+        const data = await perpsApiRequest(`/perps/orders?address=${address}`);
+        state.orders = (data.orders || []).filter(o => o.status === 'open');
+        renderOrders();
+      } catch (e) {
+        console.error('Orders load failed:', e);
+      }
     }
 
     // ==========================================
@@ -2229,8 +2605,32 @@
       return { asks: asks.reverse(), bids, spread: asks[asks.length - 1].price - bids[0].price };
     }
 
+    function normalizeOrderbook(raw) {
+      if (!raw) return null;
+      const asks = (raw.asks || [])
+        .map(row => ({ price: Number(row.price), size: Number(row.size) }))
+        .filter(row => row.price && row.size)
+        .sort((a, b) => a.price - b.price)
+        .slice(0, 12);
+      const bids = (raw.bids || [])
+        .map(row => ({ price: Number(row.price), size: Number(row.size) }))
+        .filter(row => row.price && row.size)
+        .sort((a, b) => b.price - a.price)
+        .slice(0, 12);
+
+      let askTotal = 0;
+      let bidTotal = 0;
+      asks.forEach(a => { askTotal += a.size; a.total = askTotal; });
+      bids.forEach(b => { bidTotal += b.size; b.total = bidTotal; });
+
+      return { asks, bids, spread: asks.length && bids.length ? asks[0].price - bids[0].price : 0 };
+    }
+
     function renderOrderBook() {
-      const { asks, bids, spread } = generateOrderBook();
+      const liveBook = state.orderbooks[state.currentMarket];
+      const book = liveBook ? normalizeOrderbook(liveBook) : generateOrderBook();
+      if (!book) return;
+      const { asks, bids, spread } = book;
       const asksContainer = document.getElementById('orderbookAsks');
       const bidsContainer = document.getElementById('orderbookBids');
       const spreadEl = document.getElementById('spreadValue');
@@ -2280,7 +2680,8 @@
     }
 
     function renderRecentTrades() {
-      const trades = generateRecentTrades();
+      const liveTrades = state.trades[state.currentMarket];
+      const trades = liveTrades && liveTrades.length ? liveTrades : generateRecentTrades();
       const container = document.getElementById('tradesList');
       const decimals = markets[state.currentMarket].decimals;
 
@@ -2288,7 +2689,7 @@
         <div class="trade-row ${t.side}">
           <span class="trade-price">${t.price.toFixed(decimals)}</span>
           <span class="trade-size">${t.size.toFixed(4)}</span>
-          <span class="trade-time">${formatTime(t.time)}</span>
+          <span class="trade-time">${formatTime(t.time instanceof Date ? t.time : new Date(t.time))}</span>
         </div>
       `).join('');
     }
@@ -2299,7 +2700,106 @@
 
     let ws = null;
 
-    function connectWebSocket() {
+    function getPerpsWsUrl() {
+      if (CONFIG.perpsWs) return CONFIG.perpsWs;
+      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      return `${protocol}://${window.location.host}/ws/perps`;
+    }
+
+    function subscribePerpsMarket() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      const symbol = marketSymbolMap[state.currentMarket];
+      if (!symbol) return;
+      ws.send(JSON.stringify({ type: 'subscribe', market: symbol }));
+    }
+
+    function connectPerpsWebSocket() {
+      try {
+        ws = new WebSocket(getPerpsWsUrl());
+
+        ws.onopen = () => {
+          state.perpsWsConnected = true;
+          subscribePerpsMarket();
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'snapshot') {
+              Object.entries(msg.data || {}).forEach(([symbol, payload]) => {
+                const market = symbolMarketMap[symbol];
+                if (!market) return;
+                if (payload.ticker) {
+                  priceData[market].price = payload.ticker.price;
+                  priceData[market].change = payload.ticker.change;
+                  priceData[market].high = payload.ticker.high;
+                  priceData[market].low = payload.ticker.low;
+                }
+                if (payload.orderbook) state.orderbooks[market] = payload.orderbook;
+                if (payload.trades) state.trades[market] = payload.trades;
+              });
+              updatePriceDisplays(state.currentMarket);
+              renderOrderBook();
+              renderRecentTrades();
+              return;
+            }
+
+            if (msg.type === 'ticker') {
+              const market = symbolMarketMap[msg.symbol];
+              if (!market || !msg.ticker) return;
+              priceData[market].price = msg.ticker.price;
+              priceData[market].change = msg.ticker.change;
+              priceData[market].high = msg.ticker.high;
+              priceData[market].low = msg.ticker.low;
+              updatePriceDisplays(market);
+            }
+
+            if (msg.type === 'orderbook') {
+              const market = symbolMarketMap[msg.symbol];
+              if (!market || !msg.orderbook) return;
+              state.orderbooks[market] = msg.orderbook;
+              if (market === state.currentMarket) renderOrderBook();
+            }
+
+            if (msg.type === 'trade') {
+              const market = symbolMarketMap[msg.symbol];
+              if (!market || !msg.trade) return;
+              if (!state.trades[market]) state.trades[market] = [];
+              state.trades[market].unshift(msg.trade);
+              state.trades[market] = state.trades[market].slice(0, 40);
+              if (market === state.currentMarket) renderRecentTrades();
+            }
+
+            if (msg.type === 'position' && msg.data) {
+              if (msg.data.type === 'open') {
+                state.positions.unshift(msg.data.position);
+              } else if (msg.data.type === 'close' || msg.data.type === 'liquidation') {
+                state.positions = state.positions.filter(p => p.id !== msg.data.position.id);
+              }
+              renderPositions();
+            }
+          } catch (e) {
+            console.error('Perps WS parse error:', e);
+          }
+        };
+
+        ws.onerror = (err) => {
+          console.error('Perps WS error:', err);
+          state.perpsWsConnected = false;
+          connectBinanceWebSocket();
+        };
+
+        ws.onclose = () => {
+          state.perpsWsConnected = false;
+          setTimeout(connectPerpsWebSocket, 4000);
+        };
+      } catch (e) {
+        console.error('Perps WS connection error:', e);
+        connectBinanceWebSocket();
+      }
+    }
+
+    function connectBinanceWebSocket() {
       try {
         const streams = 'ethusdt@ticker/btcusdt@ticker/solusdt@ticker';
         ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
@@ -2332,6 +2832,10 @@
         console.error('WS connection error:', e);
         setTimeout(connectWebSocket, 5000);
       }
+    }
+
+    function connectWebSocket() {
+      connectPerpsWebSocket();
     }
 
     function updatePriceDisplays(symbol) {
@@ -2488,12 +2992,14 @@
       document.getElementById('orderCount').textContent = String(state.orders.length);
 
       ordersBody.innerHTML = state.orders.map(order => {
+        const marketKey = symbolMarketMap[order.market] || order.market;
+        const orderType = (order.order_type || order.type || '').toUpperCase();
         return `
           <tr data-order-id="${order.id}">
-            <td>${order.market}</td>
-            <td>${order.type.toUpperCase()}</td>
+            <td>${marketKey}</td>
+            <td>${orderType}</td>
             <td class="${order.side === 'long' ? 'position-side long' : 'position-side short'}">${order.side.toUpperCase()}</td>
-            <td>${order.price ? formatPrice(order.price, markets[order.market].decimals) : 'Market'}</td>
+            <td>${order.price ? formatPrice(order.price, markets[marketKey]?.decimals || 2) : 'Market'}</td>
             <td>${order.amount.toFixed(2)} USDC</td>
             <td>${order.status}</td>
             <td>
@@ -2501,6 +3007,48 @@
                 <button class="order-action-btn modify" data-action="modify">Modify</button>
                 <button class="order-action-btn cancel" data-action="cancel">Cancel</button>
               </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderPositions() {
+      const positionsTable = document.getElementById('positionsTable');
+      const positionsBody = document.getElementById('positionsBody');
+      const noPositions = document.getElementById('noPositions');
+
+      if (!positionsTable || !positionsBody || !noPositions) return;
+
+      if (!state.positions.length) {
+        positionsTable.style.display = 'none';
+        noPositions.style.display = 'block';
+        document.getElementById('positionCount').textContent = '0';
+        return;
+      }
+
+      positionsTable.style.display = 'table';
+      noPositions.style.display = 'none';
+      document.getElementById('positionCount').textContent = String(state.positions.length);
+
+      positionsBody.innerHTML = state.positions.map((pos) => {
+        const sideClass = pos.side === 'long' ? 'position-side long' : 'position-side short';
+        const marketKey = symbolMarketMap[pos.market] || pos.market;
+        const decimals = markets[marketKey]?.decimals || 2;
+        return `
+          <tr>
+            <td>${marketKey}</td>
+            <td class="${sideClass}">${pos.side.toUpperCase()}</td>
+            <td>${Number(pos.size).toFixed(4)}</td>
+            <td>${formatPrice(pos.entry_price, decimals)}</td>
+            <td>${formatPrice(pos.mark_price || pos.entry_price, decimals)}</td>
+            <td>${formatPrice(pos.liq_price || 0, decimals)}</td>
+            <td class="${pos.unrealized_pnl >= 0 ? 'green' : 'red'}">${formatPrice(pos.unrealized_pnl || 0)}</td>
+            <td>${formatPrice(pos.margin || 0)}</td>
+            <td>${pos.tp_price ? formatPrice(pos.tp_price, decimals) : '—'} / ${pos.sl_price ? formatPrice(pos.sl_price, decimals) : '—'}</td>
+            <td>
+              <button class="order-action-btn cancel" data-action="close" data-id="${pos.id}">Close</button>
+              <button class="order-action-btn modify" data-action="partial" data-id="${pos.id}">Partial</button>
             </td>
           </tr>
         `;
@@ -2550,6 +3098,45 @@
     // ==========================================
     // FUNDING RATE
     // ==========================================
+    // INITIALIZATION
+    // ==========================================
+
+    function renderMarketTabs() {
+      const marketSelector = document.getElementById('marketSelector');
+      if (!marketSelector) return;
+      
+      marketSelector.innerHTML = Object.keys(markets).map((key, idx) => {
+        const market = markets[key];
+        const sym = market.symbol.toLowerCase();
+        return `
+          <div class="market-tab ${idx === 0 ? 'active' : ''}" data-market="${key}">
+            <div class="market-icon" style="background: ${market.gradient}">${market.icon}</div>
+            <div class="market-info">
+              <div class="market-name">${market.name}</div>
+              <div class="market-pair">${key}-PERP</div>
+            </div>
+            <div class="market-price">
+              <div class="market-price-value" id="${sym}Price">$0.00</div>
+              <div class="market-change" id="${sym}Change">-</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Re-attach market tab click listeners
+      document.querySelectorAll('.market-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+          document.querySelectorAll('.market-tab').forEach(t => t.classList.remove('active'));
+          this.classList.add('active');
+          state.currentMarket = this.dataset.market;
+          updateMarketUI();
+          loadChartData(state.currentMarket, state.currentTimeframe);
+          renderOrderBook();
+          renderRecentTrades();
+          subscribePerpsMarket();
+        });
+      });
+    }
 
     let fundingCountdown = 8 * 60 * 60; // 8 hours in seconds
 
@@ -2637,18 +3224,7 @@
     // ==========================================
 
     function setupEventListeners() {
-      // Market tabs
-      document.querySelectorAll('.market-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-          document.querySelectorAll('.market-tab').forEach(t => t.classList.remove('active'));
-          this.classList.add('active');
-          state.currentMarket = this.dataset.market;
-          updateMarketUI();
-          loadChartData(state.currentMarket, state.currentTimeframe);
-          renderOrderBook();
-          renderRecentTrades();
-        });
-      });
+      // Market tabs are now dynamically rendered and attached in renderMarketTabs()
 
       // Timeframe buttons
       document.querySelectorAll('.tf-btn').forEach(btn => {
@@ -2815,36 +3391,56 @@
       // Connect wallet button
       document.getElementById('connectWallet').addEventListener('click', async function() {
         if (state.isWalletConnected) {
-          // Disconnect
-          state.isWalletConnected = false;
-          state.walletAddress = null;
-          state.balance = 0;
-          this.textContent = 'Connect Wallet';
-          this.classList.remove('connected');
-          updateSubmitButton();
+          disconnectWallet();
         } else {
-          // Connect (simulate)
-          if (typeof window.ethereum !== 'undefined') {
-            try {
-              const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-              state.walletAddress = accounts[0];
-              state.isWalletConnected = true;
-              state.balance = 10000; // Simulated balance
-              this.textContent = state.walletAddress.slice(0, 6) + '...' + state.walletAddress.slice(-4);
-              this.classList.add('connected');
-              document.getElementById('availableBalance').textContent = 'Available: $' + state.balance.toLocaleString();
-              updateSubmitButton();
-            } catch (err) {
-              console.error('Wallet connection failed:', err);
-            }
-          } else {
-            alert('Please install MetaMask or another Web3 wallet');
-          }
+          toggleWalletModal(true);
         }
       });
 
+      document.getElementById('connectMetaMask').addEventListener('click', async () => {
+        toggleWalletModal(false);
+        try {
+          await connectMetaMask();
+        } catch (e) {
+          console.error('MetaMask connect error', e);
+        }
+      });
+
+      document.getElementById('connectWalletConnect').addEventListener('click', async () => {
+        toggleWalletModal(false);
+        try {
+          await connectWalletConnect();
+        } catch (e) {
+          console.error('WalletConnect error', e);
+        }
+      });
+
+      document.getElementById('connectPhantom').addEventListener('click', async () => {
+        toggleWalletModal(false);
+        try {
+          await connectSolanaWallet('phantom');
+        } catch (e) {
+          console.error('Phantom connect error', e);
+        }
+      });
+
+      document.getElementById('connectSolflare').addEventListener('click', async () => {
+        toggleWalletModal(false);
+        try {
+          await connectSolanaWallet('solflare');
+        } catch (e) {
+          console.error('Solflare connect error', e);
+        }
+      });
+
+      document.getElementById('closeWalletModal').addEventListener('click', () => toggleWalletModal(false));
+
+      document.getElementById('chainSelect').addEventListener('change', (e) => {
+        setActiveChain(e.target.value);
+      });
+
       // Submit order
-      document.getElementById('submitOrder').addEventListener('click', function() {
+      document.getElementById('submitOrder').addEventListener('click', async function() {
         if (!state.isWalletConnected) return;
         
         const amount = parseFloat(document.getElementById('amountInput').value);
@@ -2856,25 +3452,105 @@
         const price = priceData[state.currentMarket].price;
         const orderPrice = ['limit', 'stop', 'stop-limit', 'tpsl'].includes(state.currentOrderType)
           ? parseFloat(document.getElementById('limitPriceInput')?.value || price)
-          : null;
+          : price;
 
-        const newOrder = {
-          id: Date.now(),
-          market: state.currentMarket,
-          type: state.currentOrderType,
-          side: state.currentDirection,
-          price: orderPrice,
-          amount: amount,
-          status: state.currentOrderType === 'market' ? 'Filled' : 'Open'
-        };
-
-        if (newOrder.status === 'Open') {
-          state.orders.unshift(newOrder);
-          renderOrders();
+        if (!['market', 'limit'].includes(state.currentOrderType)) {
+          alert('Only market and limit orders are supported right now.');
+          return;
         }
 
-        // Simulate order placement
-        alert(`Order placed!\n${state.currentDirection.toUpperCase()} ${state.currentMarket}\nAmount: $${amount}\nLeverage: ${state.leverage}x`);
+        const isSolana = walletType && walletType.startsWith('solana');
+        const reduceOnly = document.getElementById('reduceOnlyCheckbox')?.classList.contains('checked');
+        const postOnly = document.getElementById('postOnlyCheckbox')?.classList.contains('checked');
+        const tpslEnabled = document.getElementById('tpslCheckbox')?.classList.contains('checked');
+        const tpPrice = tpslEnabled ? parseFloat(document.getElementById('tpInput')?.value || '') : null;
+        const slPrice = tpslEnabled ? parseFloat(document.getElementById('slInput')?.value || '') : null;
+        const plan = computeExecutionPlan(amount * state.leverage, price);
+        const basePayload = {
+          walletAddress: isSolana ? state.solanaAddress : state.walletAddress,
+          market: marketSymbolMap[state.currentMarket] || state.currentMarket,
+          side: state.currentDirection,
+          orderType: state.currentOrderType,
+          price: orderPrice,
+          amount,
+          leverage: state.leverage,
+          executionModel: state.currentExecutionModel,
+          route: plan.route,
+          feeRate: plan.feeRate,
+          reduceOnly,
+          postOnly,
+          tpPrice: Number.isFinite(tpPrice) ? tpPrice : null,
+          slPrice: Number.isFinite(slPrice) ? slPrice : null,
+          chain: isSolana ? 'solana' : state.activeChain,
+          clientSigned: Boolean(isSolana),
+          timestamp: new Date().toISOString()
+        };
+
+        let payload = { ...basePayload };
+        if (!isSolana && CONFIG.useHyperliquid) {
+          if (!hyperliquidAssets[state.currentMarket]) {
+            await loadHyperliquidAssets();
+          }
+          if (!hyperliquidAssets[state.currentMarket]) {
+            alert('Hyperliquid asset mapping unavailable. Please retry.');
+            return;
+          }
+
+          const size = (amount * state.leverage) / price;
+          const hyperliquidAction = buildHyperliquidAction({
+            market: state.currentMarket,
+            side: state.currentDirection,
+            type: state.currentOrderType,
+            price: orderPrice,
+            size
+          });
+          const nonce = Date.now();
+          const signature = await signHyperliquidAction(hyperliquidAction, nonce);
+
+          payload = {
+            ...payload,
+            hyperliquidAction,
+            hyperliquidSignature: signature,
+            hyperliquidNonce: nonce
+          };
+        }
+
+        try {
+          if (isSolana) {
+            const size = (amount * state.leverage) / price;
+            const prep = await perpsApiRequest('/perps/solana/prepare-open', {
+              method: 'POST',
+              body: JSON.stringify({
+                walletAddress: state.solanaAddress,
+                market: marketSymbolMap[state.currentMarket],
+                size,
+                price: orderPrice,
+                margin: amount,
+                leverage: state.leverage,
+                side: state.currentDirection
+              })
+            });
+            if (!prep?.transaction) throw new Error('Solana tx not prepared');
+            await signAndSendSolanaTx(prep.transaction);
+          }
+
+          const result = await perpsApiRequest('/perps/order', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
+
+          if (result.position) {
+            state.positions.unshift(result.position);
+            renderPositions();
+          } else if (result.order) {
+            state.orders.unshift(result.order);
+            renderOrders();
+          }
+
+          alert(`Order submitted!\nStatus: ${result.execution_status || result.execution?.status || 'queued'}`);
+        } catch (err) {
+          alert(`Order failed: ${err.message}`);
+        }
       });
 
       // Mobile trade buttons
@@ -2904,6 +3580,7 @@
 
       updateSubmitButton();
       updateOrderSummary();
+      subscribePerpsMarket();
 
       if (state.chartMode === 'tv') {
         initTradingViewWidget(state.currentMarket, state.currentTimeframe);
@@ -2952,6 +3629,9 @@
       if (tv) tv.style.display = 'block';
       if (lite) lite.style.display = 'none';
       
+      // Render market tabs from config
+      renderMarketTabs();
+      
       // Setup event listeners
       setupEventListeners();
       
@@ -2962,9 +3642,13 @@
       renderOrderBook();
       renderRecentTrades();
       renderOrders();
+      renderPositions();
       updateMarketUI();
       updateOrderSummary();
       updateRiskMetrics();
+
+      loadHyperliquidAssets();
+      setActiveChain(state.activeChain);
 
       // Start intervals
       setInterval(updateFundingCountdown, 1000);
@@ -2973,6 +3657,11 @@
       setInterval(renderOrderBook, 2000);
       setInterval(renderRecentTrades, 3000);
       setInterval(updateRiskMetrics, 3000);
+      setInterval(() => {
+        if (state.isWalletConnected) {
+          loadUserOrders();
+        }
+      }, 8000);
 
       console.log('✅ Nexxore Perps initialized');
     });
@@ -2983,21 +3672,101 @@
       if (!btn) return;
       const row = btn.closest('tr');
       if (!row) return;
-      const id = parseInt(row.dataset.orderId, 10);
+      const orderId = row.dataset.orderId ? parseInt(row.dataset.orderId, 10) : null;
+      const positionId = btn.dataset.id ? parseInt(btn.dataset.id, 10) : null;
 
-      if (btn.dataset.action === 'cancel') {
-        state.orders = state.orders.filter(o => o.id !== id);
-        renderOrders();
+      if (btn.dataset.action === 'cancel' && orderId) {
+        perpsApiRequest('/perps/cancel', {
+          method: 'POST',
+          body: JSON.stringify({ orderId })
+        }).then(() => {
+          state.orders = state.orders.filter(o => o.id !== orderId);
+          renderOrders();
+        }).catch((e) => console.error('Cancel order failed', e));
       }
 
-      if (btn.dataset.action === 'modify') {
-        const order = state.orders.find(o => o.id === id);
+      if (btn.dataset.action === 'modify' && orderId) {
+        const order = state.orders.find(o => o.id === orderId);
         if (!order) return;
         const newPrice = prompt('Update limit price', order.price || '');
         if (newPrice) {
           order.price = parseFloat(newPrice);
           renderOrders();
         }
+      }
+      if (btn.dataset.action === 'close' && positionId) {
+        const position = state.positions.find(p => p.id === positionId);
+        const marketKey = position?.market || state.currentMarket;
+        const closePrice = priceData[marketKey]?.price || 0;
+        const isSolana = walletType && walletType.startsWith('solana');
+        const closeFlow = async () => {
+          if (isSolana) {
+            const prep = await perpsApiRequest('/perps/solana/prepare-close', {
+              method: 'POST',
+              body: JSON.stringify({
+                walletAddress: state.solanaAddress,
+                market: marketSymbolMap[marketKey],
+                price: closePrice
+              })
+            });
+            if (prep?.transaction) {
+              await signAndSendSolanaTx(prep.transaction);
+            }
+          }
+          return perpsApiRequest('/perps/close', {
+            method: 'POST',
+            body: JSON.stringify({ positionId, price: closePrice, walletAddress: state.walletAddress || state.solanaAddress, clientSigned: isSolana })
+          });
+        };
+
+        closeFlow().then((resp) => {
+          if (resp?.position) {
+            state.positions = state.positions.filter(p => p.id !== positionId);
+            renderPositions();
+          }
+        }).catch((e) => console.error('Close position failed', e));
+      }
+
+      if (btn.dataset.action === 'partial' && positionId) {
+        const position = state.positions.find(p => p.id === positionId);
+        if (!position) return;
+        const marketKey = position?.market || state.currentMarket;
+        const closePrice = priceData[marketKey]?.price || 0;
+        const sizeInput = prompt('Partial close size', (Number(position.size) * 0.5).toFixed(4));
+        const size = parseFloat(sizeInput || '0');
+        if (!size || size <= 0) return;
+
+        const isSolana = walletType && walletType.startsWith('solana');
+        const partialFlow = async () => {
+          if (isSolana) {
+            const prep = await perpsApiRequest('/perps/solana/prepare-close', {
+              method: 'POST',
+              body: JSON.stringify({
+                walletAddress: state.solanaAddress,
+                market: marketSymbolMap[marketKey],
+                price: closePrice
+              })
+            });
+            if (prep?.transaction) {
+              await signAndSendSolanaTx(prep.transaction);
+            }
+          }
+          return perpsApiRequest('/perps/close', {
+            method: 'POST',
+            body: JSON.stringify({ positionId, price: closePrice, size, walletAddress: state.walletAddress || state.solanaAddress, clientSigned: isSolana })
+          });
+        };
+
+        partialFlow().then((resp) => {
+          if (resp?.position) {
+            if (resp.position.status !== 'open' || Number(resp.position.size) <= 0) {
+              state.positions = state.positions.filter(p => p.id !== positionId);
+            } else {
+              state.positions = state.positions.map(p => p.id === positionId ? resp.position : p);
+            }
+            renderPositions();
+          }
+        }).catch((e) => console.error('Partial close failed', e));
       }
     });
   </script>

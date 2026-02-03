@@ -508,6 +508,16 @@
   <script src="frontend/js/wallet.js"></script>
   <!-- Vault Integration -->
   <script src="frontend/js/vaultIntegration.js"></script>
+  <script>
+    const chainSelect = document.getElementById('chainSelect');
+    if (chainSelect) {
+      const stored = localStorage.getItem('nexxoreChain');
+      if (stored) chainSelect.value = stored;
+      chainSelect.addEventListener('change', () => {
+        localStorage.setItem('nexxoreChain', chainSelect.value);
+      });
+    }
+  </script>
 <script>
   document.querySelectorAll('a[href$=".html"]').forEach(link => {
     const href = link.getAttribute('href');

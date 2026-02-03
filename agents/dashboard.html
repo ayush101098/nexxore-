@@ -321,6 +321,92 @@
       scroll-behavior: smooth;
     }
 
+    .agent-os {
+      padding: 0 16px 16px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .agent-os-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .metric-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .metric-label {
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .metric-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .table th,
+    .table td {
+      padding: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: left;
+    }
+
+    .table th {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .tag {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      font-size: 0.7rem;
+      color: #00d4ff;
+    }
+
+    .alert {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fecaca;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+
+    .code-block {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.78rem;
+      white-space: pre-wrap;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
     @media (max-width: 1200px) {
       .container {
         grid-template-columns: 1fr;
@@ -330,13 +416,17 @@
       .panel {
         max-height: 45vh;
       }
+
+      .agent-os-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
   <!-- Header -->
   <div class="header">
-    <div class="header-title">🌐 NEXXORE Research Dashboard</div>
+    <div class="header-title">🌐 NEXXORE Agent OS</div>
     <div class="header-nav">
       <a href="/" class="nav-link">← Back Home</a>
       <button class="nav-link" onclick="location.reload()">🔄 Refresh</button>
@@ -383,6 +473,53 @@
       </div>
     </div>
   </div>
+
+  <section class="agent-os">
+    <div class="agent-os-grid">
+      <div class="panel">
+        <div class="panel-title">✅ Performance Agent — Truth Teller</div>
+        <div class="metric-grid" id="perfMetrics"></div>
+        <div style="margin-top: 12px; font-size: 0.85rem; color: rgba(255,255,255,0.6);">Core Metrics</div>
+        <table class="table" id="strategyTable" style="margin-top: 8px;"></table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">📈 Advanced Analytics</div>
+        <div class="metric-grid" id="advancedMetrics"></div>
+        <div style="margin-top: 12px; font-size: 0.85rem; color: rgba(255,255,255,0.6);">Feedback Loop</div>
+        <div class="code-block" id="feedbackBlock"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">🧠 Capital Brain — Portfolio Optimiser</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <span class="tag">Mean–Variance</span>
+          <span class="tag">Volatility Cap</span>
+          <span class="tag">Stablecoin Buffer</span>
+        </div>
+        <div style="margin-top: 12px; font-size: 0.85rem; color: rgba(255,255,255,0.6);">Output Schema</div>
+        <div class="code-block" id="optimizerOutput"></div>
+      </div>
+    </div>
+
+    <div class="agent-os-grid">
+      <div class="panel">
+        <div class="panel-title">📊 Hypothesis Accuracy</div>
+        <table class="table" id="hypothesisTable"></table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">⚠️ Signal Decay & Risk Alerts</div>
+        <div class="alert" id="riskAlert"></div>
+        <div style="margin-top: 12px;" class="code-block" id="signalDecay"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">🧩 Strategy Attribution</div>
+        <table class="table" id="attributionTable"></table>
+      </div>
+    </div>
+  </section>
 
   <script>
     const API_BASE = 'http://localhost:3000';
@@ -436,7 +573,6 @@
           console.error('Analysis error:', err);
           this.renderOpportunities([]);
         }
-      }
       }
 
       async sendMessage() {
@@ -569,9 +705,147 @@
       }
     }
 
+    const formatMetric = (label, value) => `
+      <div class="metric-card">
+        <div class="metric-label">${label}</div>
+        <div class="metric-value">${value}</div>
+      </div>
+    `;
+
+    const renderTable = (el, headers, rows) => {
+      el.innerHTML = `
+        <thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+      `;
+    };
+
+    const mean = (arr) => arr.reduce((a, b) => a + b, 0) / Math.max(1, arr.length);
+    const stdev = (arr) => {
+      const m = mean(arr);
+      return Math.sqrt(mean(arr.map((v) => (v - m) ** 2)));
+    };
+
+    const computeOptimizer = () => {
+      const assets = [
+        { symbol: 'SOL', confidence: 0.8, momentum: 0.9, isStablecoin: false },
+        { symbol: 'ETH', confidence: 0.7, momentum: 0.6, isStablecoin: false },
+        { symbol: 'BTC', confidence: 0.6, momentum: 0.5, isStablecoin: false },
+        { symbol: 'USDC', confidence: 0.2, momentum: 0.1, isStablecoin: true }
+      ];
+      const mu = assets.map((a) => a.confidence * a.momentum);
+      const weights = [0.25, 0.2, 0.15, 0.4];
+      const expectedReturn = mu.reduce((acc, v, i) => acc + v * weights[i], 0);
+      const expectedVol = 0.18;
+      return {
+        timestamp: '2026-01-27',
+        weights: {
+          SOL: 0.25,
+          ETH: 0.2,
+          BTC: 0.15,
+          USDC: 0.4
+        },
+        risk_metrics: {
+          expected_vol: Number(expectedVol.toFixed(2)),
+          expected_return: Number(expectedReturn.toFixed(2))
+        }
+      };
+    };
+
+    const renderAgentOS = () => {
+      const perfMetrics = document.getElementById('perfMetrics');
+      const advancedMetrics = document.getElementById('advancedMetrics');
+      const strategyTable = document.getElementById('strategyTable');
+      const hypothesisTable = document.getElementById('hypothesisTable');
+      const attributionTable = document.getElementById('attributionTable');
+      const feedbackBlock = document.getElementById('feedbackBlock');
+      const optimizerOutput = document.getElementById('optimizerOutput');
+      const riskAlert = document.getElementById('riskAlert');
+      const signalDecay = document.getElementById('signalDecay');
+
+      const strategies = [
+        { name: 'Momentum on SOL', returns: [0.02, -0.01, 0.03, 0.005, 0.01] },
+        { name: 'Mean-rev on memes', returns: [0.005, -0.02, 0.004, -0.01, 0.002] },
+        { name: 'Funding arb on BTC', returns: [0.008, 0.004, 0.006, -0.002, 0.005] }
+      ];
+
+      const benchmark = [0.01, -0.005, 0.012, 0.004, 0.008];
+      const sharpe = (returns) => {
+        const m = mean(returns);
+        const v = stdev(returns);
+        return v > 0 ? m / v : 0;
+      };
+
+      const computed = strategies.map((s) => ({
+        name: s.name,
+        sharpe: sharpe(s.returns),
+        maxDrawdown: Math.min(...s.returns),
+        winRate: s.returns.filter((r) => r > 0).length / s.returns.length,
+        profitFactor: s.returns.filter((r) => r > 0).length / Math.max(1, s.returns.filter((r) => r < 0).length),
+        alpha: mean(s.returns.map((r, i) => r - benchmark[i]))
+      }));
+
+      const avgSharpe = computed.reduce((a, b) => a + b.sharpe, 0) / Math.max(1, computed.length);
+
+      const drawdownPct = Math.abs(Math.min(...computed.map((c) => c.maxDrawdown))) * 100;
+      perfMetrics.innerHTML = [
+        formatMetric('Sharpe (avg)', avgSharpe.toFixed(2)),
+        formatMetric('Max Drawdown', `${drawdownPct.toFixed(1)}%`),
+        formatMetric('Win Rate', `${(mean(computed.map((c) => c.winRate)) * 100).toFixed(1)}%`),
+        formatMetric('Profit Factor', mean(computed.map((c) => c.profitFactor)).toFixed(2))
+      ].join('');
+
+      const returnsAll = strategies.flatMap((s) => s.returns);
+      const volAdj = stdev(returnsAll) > 0 ? mean(returnsAll) / stdev(returnsAll) : 0;
+      advancedMetrics.innerHTML = [
+        formatMetric('Alpha vs BTC', `${(mean(computed.map((c) => c.alpha)) * 100).toFixed(2)}%`),
+        formatMetric('Vol-Adj PnL', volAdj.toFixed(3)),
+        formatMetric('Hypothesis Accuracy', '78.4%'),
+        formatMetric('Signal Decay', '0.62')
+      ].join('');
+
+      renderTable(strategyTable,
+        ['Strategy', 'Sharpe', 'Win Rate', 'Profit Factor'],
+        computed.map((c) => [
+          c.name,
+          c.sharpe.toFixed(2),
+          `${(c.winRate * 100).toFixed(0)}%`,
+          c.profitFactor.toFixed(2)
+        ])
+      );
+
+      renderTable(hypothesisTable,
+        ['Hypothesis', 'Accuracy', 'Score'],
+        [
+          ['SOL Momentum', '84%', '0.812'],
+          ['Memecoin Mean-Rev', '41%', '0.322'],
+          ['BTC Funding Arb', '73%', '0.691']
+        ]
+      );
+
+      renderTable(attributionTable,
+        ['Factor', 'Contribution', 'Notes'],
+        [
+          ['Momentum', '+0.38%', 'Primary driver'],
+          ['Funding', '+0.14%', 'Stable'],
+          ['Mean-Rev', '-0.09%', 'Underperforming']
+        ]
+      );
+
+      feedbackBlock.textContent = JSON.stringify({
+        action: 'Increase confidence threshold for low-Sharpe strategies',
+        capital_shift: 'Allocate less to strategies with Sharpe < 1.0'
+      }, null, 2);
+
+      optimizerOutput.textContent = JSON.stringify(computeOptimizer(), null, 2);
+
+      riskAlert.textContent = 'Alert: Mean-rev on memes Sharpe 0.4 → Reduce allocation';
+      signalDecay.textContent = 'Signal decay analysis: SOL momentum 0.81 | BTC funding arb 0.66 | memecoin mean-rev 0.32';
+    };
+
     // Initialize dashboard
     document.addEventListener('DOMContentLoaded', () => {
       new ResearchDashboard();
+      renderAgentOS();
     });
   </script>
 <script>

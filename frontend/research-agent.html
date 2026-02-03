@@ -1990,6 +1990,16 @@
       loadTrending();
     }, 5 * 60 * 1000); // Every 5 minutes
   </script>
+  <script>
+    const chainSelect = document.getElementById('chainSelect');
+    if (chainSelect) {
+      const stored = localStorage.getItem('nexxoreChain');
+      if (stored) chainSelect.value = stored;
+      chainSelect.addEventListener('change', () => {
+        localStorage.setItem('nexxoreChain', chainSelect.value);
+      });
+    }
+  </script>
 <script>
   document.querySelectorAll('a[href$=".html"]').forEach(link => {
     const href = link.getAttribute('href');

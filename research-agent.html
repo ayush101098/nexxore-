@@ -98,6 +98,14 @@
       gap: 10px;
     }
 
+    .chain-select {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 5px 10px;
+      font-size: 0.7rem;
+    }
+
     .market-badge {
       display: flex;
       align-items: center;
@@ -715,6 +723,13 @@
         <span class="status-dot"></span>
         <span>Live</span>
       </div>
+      <select class="chain-select" id="chainSelect">
+        <option value="ethereum">Ethereum</option>
+        <option value="arbitrum">Arbitrum</option>
+        <option value="base">Base</option>
+        <option value="solana">Solana</option>
+        <option value="hyperliquid">Hyperliquid</option>
+      </select>
       <button class="refresh-btn" onclick="refreshData()">Refresh</button>
     </div>
   </header>
@@ -2218,6 +2233,16 @@
       // Auto-refresh every 60 seconds
       setInterval(refreshData, 60000);
     });
+  </script>
+  <script>
+    const chainSelect = document.getElementById('chainSelect');
+    if (chainSelect) {
+      const stored = localStorage.getItem('nexxoreChain');
+      if (stored) chainSelect.value = stored;
+      chainSelect.addEventListener('change', () => {
+        localStorage.setItem('nexxoreChain', chainSelect.value);
+      });
+    }
   </script>
 <script>
   document.querySelectorAll('a[href$=".html"]').forEach(link => {
