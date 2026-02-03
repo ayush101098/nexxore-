@@ -737,6 +737,7 @@
   <!-- Navigation Tabs -->
   <nav class="nav-tabs">
     <button class="nav-tab active" data-tab="signals">Signals</button>
+    <button class="nav-tab" data-tab="perps">Perps Analysis</button>
     <button class="nav-tab" data-tab="research">Research</button>
     <button class="nav-tab" data-tab="hypotheses">Hypotheses</button>
     <button class="nav-tab" data-tab="airdrops">Airdrops</button>
@@ -843,10 +844,81 @@
       </div>
     </div>
 
-    <!-- Research Tab -->
-    <div id="research" class="tab-content">
-      <div class="panel">
+    <!-- Perps Analysis Tab -->
+    <div id="perps" class="tab-content">
+      <div class="panel" style="margin-bottom: 16px;">
         <div class="panel-header">
+          <div class="panel-title">📊 Market Overview - 20 HyperLiquid Perpetuals</div>
+          <span class="panel-badge" id="perpsTimestamp">--</span>
+        </div>
+        <div class="stats-bar" style="border: none; padding: 12px 0;">
+          <div class="stat-card">
+            <div class="stat-label">Markets</div>
+            <div class="stat-value" id="perpsMarkets">20</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Longs</div>
+            <div class="stat-value" id="perpsLongs" style="color: var(--accent-green);">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Shorts</div>
+            <div class="stat-value" id="perpsShorts" style="color: var(--accent-red);">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Sentiment</div>
+            <div class="stat-value" id="perpsSentiment">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">High Conf</div>
+            <div class="stat-value" id="perpsHighConf" style="color: var(--accent-purple);">--</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🎯 Top Opportunities</div>
+            <span class="panel-badge">High Confidence</span>
+          </div>
+          <div class="scrollable" id="topOpportunities" style="max-height: 400px;"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">⚡ Funding Rate Leaders</div>
+            <span class="panel-badge">Arbitrage</span>
+          </div>
+          <div class="scrollable" id="fundingLeaders" style="max-height: 400px;"></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top: 16px;">
+        <div class="panel-header">
+          <div class="panel-title">📈 All Markets Analysis</div>
+          <span class="panel-badge">Live Data</span>
+        </div>
+        <table class="data-table" id="perpsAnalysisTable">
+          <thead>
+            <tr>
+              <th>Market</th>
+              <th>Price</th>
+              <th>24h %</th>
+              <th>Signal</th>
+              <th>Conf</th>
+              <th>RSI</th>
+              <th>Funding</th>
+              <th>Momentum</th>
+              <th>Regime</th>
+            </tr>
+          </thead>
+          <tbody id="perpsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Research Tab -->
+    <div id="research" class="tab-content">\n      <div class="panel">\n        <div class="panel-header">\n
           <div class="panel-title">🎯 Hot Narratives</div>
           <span class="panel-badge" id="narrativeCount">-- Active</span>
         </div>
@@ -2189,6 +2261,153 @@
 
     // ===== REFRESH ALL DATA =====
     async function refreshData() {
+      console.log('🔄 Refreshing all data...');
+      await Promise.all([
+        fetchNews(),
+        fetchGainersLosers(),
+        fetchWhales(),
+        fetchChains(),
+        loadSmartMoney(),
+        fetchFearGreed(),
+        fetchGas(),
+        fetchPerpsAnalysis()
+      ]);
+      console.log('✅ All data refreshed');
+    }
+
+    // ===== PERPS ANALYSIS =====
+    async function fetchPerpsAnalysis() {
+      try {
+        console.log('📊 Fetching perps analysis...');
+        const res = await fetch('/api/perps-analysis');
+        const data = await res.json();
+        
+        if (!data.success) throw new Error(data.error);
+
+        // Update overview stats
+        document.getElementById('perpsTimestamp').textContent = new Date(data.timestamp).toLocaleTimeString();
+        document.getElementById('perpsLongs').textContent = data.overview.longs;
+        document.getElementById('perpsShorts').textContent = data.overview.shorts;
+        document.getElementById('perpsHighConf').textContent = data.overview.highConfidenceSignals;
+        
+        const sentiment = data.marketSentiment || 'NEUTRAL';
+        const sentimentEl = document.getElementById('perpsSentiment');
+        sentimentEl.textContent = sentiment;
+        sentimentEl.style.color = sentiment === 'BULLISH' ? 'var(--accent-green)' : 
+                                    sentiment === 'BEARISH' ? 'var(--accent-red)' : 
+                                    'var(--text-secondary)';
+
+        // Render top opportunities
+        renderTopOpportunities(data.topOpportunities || []);
+        
+        // Render funding leaders
+        renderFundingLeaders(data.markets || []);
+        
+        // Render full table
+        renderPerpsTable(data.markets || []);
+        
+        console.log('✅ Perps analysis loaded');
+      } catch (err) {
+        console.error('Perps analysis fetch error:', err);
+        document.getElementById('perpsTimestamp').textContent = 'Error loading';
+      }
+    }
+
+    function renderTopOpportunities(opportunities) {
+      const container = document.getElementById('topOpportunities');
+      if (!opportunities || opportunities.length === 0) {
+        container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">No high-confidence signals</div>';
+        return;
+      }
+
+      container.innerHTML = opportunities.map(opp => {
+        const isLong = opp.signal === 'LONG';
+        const color = isLong ? 'var(--accent-green)' : 'var(--accent-red)';
+        const conf = parseFloat(opp.confidence);
+        
+        return `
+          <div class="signal-card" style="margin-bottom: 12px; padding: 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px;">
+            <div class="signal-header">
+              <span class="signal-name" style="font-weight: 600; color: var(--text-primary);">${opp.coin}</span>
+              <span class="signal-score" style="background: ${color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">
+                ${opp.signal}
+              </span>
+            </div>
+            <div class="signal-meta" style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.7rem; color: var(--text-muted);">
+              <span>Confidence: <strong style="color: var(--text-primary);">${opp.confidence}</strong></span>
+              <span>Momentum: <strong style="color: var(--text-primary);">${opp.momentum}</strong></span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderFundingLeaders(markets) {
+      const container = document.getElementById('fundingLeaders');
+      
+      // Sort by absolute funding rate
+      const sorted = markets
+        .filter(m => m.funding && m.funding.current)
+        .map(m => ({
+          ...m,
+          fundingAbs: Math.abs(parseFloat(m.funding.current))
+        }))
+        .sort((a, b) => b.fundingAbs - a.fundingAbs)
+        .slice(0, 10);
+
+      container.innerHTML = sorted.map(market => {
+        const funding = parseFloat(market.funding.current);
+        const isPositive = funding > 0;
+        const color = isPositive ? 'var(--accent-red)' : 'var(--accent-green)';
+        const label = isPositive ? 'Longs Pay' : 'Shorts Pay';
+        
+        return `
+          <div class="signal-card" style="margin-bottom: 8px; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px;">
+            <div class="signal-header">
+              <span class="signal-name" style="font-weight: 600; color: var(--text-primary);">${market.coin}</span>
+              <span class="signal-score" style="background: ${color}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem;">
+                ${market.funding.current}
+              </span>
+            </div>
+            <div class="signal-meta" style="margin-top: 6px; font-size: 0.65rem; color: var(--text-muted);">
+              <span>${label}</span>
+              <span>APR: <strong style="color: var(--text-primary);">${market.funding.annualized}</strong></span>
+              <span style="color: ${color};">${market.funding.signal}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderPerpsTable(markets) {
+      const tbody = document.getElementById('perpsTableBody');
+      
+      tbody.innerHTML = markets.map(market => {
+        const signal = market.signal?.direction || 'NEUTRAL';
+        const signalColor = signal === 'LONG' ? 'var(--accent-green)' : 
+                            signal === 'SHORT' ? 'var(--accent-red)' : 
+                            'var(--text-muted)';
+        const changeNum = parseFloat(market.price?.change24h);
+        const changeColor = changeNum >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+        
+        return `
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td><strong style="color: var(--text-primary);">${market.coin}</strong></td>
+            <td style="font-family: var(--font-mono);">$${market.price?.current}</td>
+            <td style="color: ${changeColor}; font-family: var(--font-mono);">${market.price?.change24h}</td>
+            <td style="color: ${signalColor}; font-weight: 600;">${signal}</td>
+            <td>${market.signal?.confidence}</td>
+            <td>${market.technicals?.rsi || '--'}</td>
+            <td style="font-family: var(--font-mono); font-size: 0.65rem;">${market.funding?.current || '--'}</td>
+            <td>${market.momentum?.score || '--'}</td>
+            <td style="font-size: 0.65rem;">${market.regime?.regime || '--'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ===== ORIGINAL REFRESH =====
+    async function refreshDataOld() {
       const btn = document.querySelector('.refresh-btn');
       btn.textContent = 'Loading...';
       
