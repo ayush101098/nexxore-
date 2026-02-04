@@ -1576,8 +1576,11 @@
     let currentTimeframe = '1h';
     let ohlcCache = {};
     let binanceFundingData = {};
+    let lastFetchTime = 0;
+    let isLoading = false;
 
     function formatPrice(price) {
+      if (!price || isNaN(price)) return '$--';
       if (price >= 10000) return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       if (price >= 100) return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       if (price >= 1) return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
@@ -1586,6 +1589,7 @@
     }
 
     function formatCurrency(value) {
+      if (!value || isNaN(value)) return '$--';
       if (Math.abs(value) >= 1e12) return '$' + (value / 1e12).toFixed(2) + 'T';
       if (Math.abs(value) >= 1e9) return '$' + (value / 1e9).toFixed(2) + 'B';
       if (Math.abs(value) >= 1e6) return '$' + (value / 1e6).toFixed(2) + 'M';
@@ -1593,8 +1597,12 @@
       return '$' + value.toFixed(2);
     }
 
-    function formatPercent(num) { return (num >= 0 ? '+' : '') + num.toFixed(2) + '%'; }
+    function formatPercent(num) { 
+      if (num === null || num === undefined || isNaN(num)) return '--%';
+      return (num >= 0 ? '+' : '') + num.toFixed(2) + '%'; 
+    }
     function formatNumber(num) {
+      if (!num || isNaN(num)) return '--';
       if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
       if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
       return num.toFixed(0);
@@ -1605,17 +1613,60 @@
       const utcHours = now.getUTCHours();
       const utcMins = now.getUTCMinutes().toString().padStart(2, '0');
       const utcSecs = now.getUTCSeconds().toString().padStart(2, '0');
-      document.getElementById('currentTime').textContent = `${utcHours}:${utcMins}:${utcSecs} UTC`;
+      const timeEl = document.getElementById('currentTime');
+      if (timeEl) timeEl.textContent = `${utcHours}:${utcMins}:${utcSecs} UTC`;
       
-      document.getElementById('session-asia').classList.toggle('active', utcHours >= 0 && utcHours < 9);
-      document.getElementById('session-europe').classList.toggle('active', utcHours >= 7 && utcHours < 16);
-      document.getElementById('session-us').classList.toggle('active', utcHours >= 13 && utcHours < 22);
+      const asiaEl = document.getElementById('session-asia');
+      const europeEl = document.getElementById('session-europe');
+      const usEl = document.getElementById('session-us');
+      if (asiaEl) asiaEl.classList.toggle('active', utcHours >= 0 && utcHours < 9);
+      if (europeEl) europeEl.classList.toggle('active', utcHours >= 7 && utcHours < 16);
+      if (usEl) usEl.classList.toggle('active', utcHours >= 13 && utcHours < 22);
     }
 
     async function fetchAllPrices() {
+      if (isLoading) return false;
+      isLoading = true;
+      const startTime = Date.now();
+      
+      try {
+        // PRIMARY: Use Binance for speed (typically <100ms)
+        const binanceSymbols = MARKETS.map(m => m.binanceSymbol);
+        const binanceUrl = 'https://api.binance.com/api/v3/ticker/24hr?symbols=' + JSON.stringify(binanceSymbols);
+        
+        const binanceRes = await fetch(binanceUrl, { signal: AbortSignal.timeout(5000) });
+        
+        if (binanceRes.ok) {
+          const binanceData = await binanceRes.json();
+          binanceData.forEach(ticker => {
+            const symbol = ticker.symbol.replace('USDT', '');
+            const market = MARKETS.find(m => m.symbol === symbol);
+            if (market) {
+              marketData[symbol] = {
+                price: parseFloat(ticker.lastPrice) || 0,
+                change24h: parseFloat(ticker.priceChangePercent) || 0,
+                volume24h: parseFloat(ticker.quoteVolume) || 0,
+                high24h: parseFloat(ticker.highPrice) || 0,
+                low24h: parseFloat(ticker.lowPrice) || 0,
+                marketCap: (parseFloat(ticker.lastPrice) || 0) * (marketData[symbol]?.supply || 1e9)
+              };
+            }
+          });
+          console.log(`✅ Binance prices in ${Date.now() - startTime}ms`);
+          lastFetchTime = Date.now();
+          isLoading = false;
+          return true;
+        }
+      } catch (e) {
+        console.warn('Binance timeout, trying CoinGecko:', e.message);
+      }
+      
+      // FALLBACK: CoinGecko
       try {
         const ids = MARKETS.map(m => m.geckoId).join(',');
-        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true`);
+        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true`, {
+          signal: AbortSignal.timeout(8000)
+        });
         if (!res.ok) throw new Error('CoinGecko API error');
         
         const data = await res.json();
@@ -1630,17 +1681,20 @@
             };
           }
         });
-        console.log('✅ Prices updated from CoinGecko');
+        console.log(`✅ CoinGecko prices in ${Date.now() - startTime}ms`);
+        lastFetchTime = Date.now();
+        isLoading = false;
         return true;
       } catch (e) {
-        console.error('CoinGecko error:', e);
+        console.error('All price APIs failed:', e);
+        isLoading = false;
         return false;
       }
     }
 
     async function fetchBinanceFunding() {
       try {
-        const res = await fetch('https://fapi.binance.com/fapi/v1/premiumIndex');
+        const res = await fetch('https://fapi.binance.com/fapi/v1/premiumIndex', { signal: AbortSignal.timeout(5000) });
         if (!res.ok) return;
         const data = await res.json();
         data.forEach(item => {
@@ -1648,23 +1702,107 @@
           if (MARKETS.find(m => m.symbol === symbol)) {
             binanceFundingData[symbol] = {
               fundingRate: parseFloat(item.lastFundingRate) || 0,
-              markPrice: parseFloat(item.markPrice) || 0
+              markPrice: parseFloat(item.markPrice) || 0,
+              nextFundingTime: item.nextFundingTime || 0
             };
           }
         });
-        console.log('✅ Funding rates updated from Binance');
-      } catch (e) { console.error('Binance funding error:', e); }
+        console.log('✅ Funding rates updated');
+      } catch (e) { console.warn('Funding error:', e.message); }
     }
+
+    // Export function for execution agent integration
+    function getMarketIntelligence(market = selectedMarket) {
+      const data = marketData[market] || {};
+      const signal = calculateSignal(market);
+      const funding = binanceFundingData[market] || {};
+      const marketInfo = MARKETS.find(m => m.symbol === market);
+      
+      return {
+        market: market,
+        name: marketInfo?.name || market,
+        timestamp: new Date().toISOString(),
+        price: {
+          current: data.price || 0,
+          change24h: data.change24h || 0,
+          volume24h: data.volume24h || 0,
+          marketCap: data.marketCap || 0
+        },
+        signal: {
+          verdict: signal.verdict,
+          score: signal.score,
+          confidence: Math.abs(signal.score) >= 2 ? 'HIGH' : Math.abs(signal.score) >= 1 ? 'MEDIUM' : 'LOW'
+        },
+        derivatives: {
+          fundingRate: funding.fundingRate || 0,
+          markPrice: funding.markPrice || 0,
+          nextFundingTime: funding.nextFundingTime || 0,
+          estimatedOI: (data.volume24h || 0) * 0.25
+        },
+        technicals: {
+          rsi: Math.max(20, Math.min(80, 50 + (data.change24h || 0) * 3)),
+          trend: (data.change24h || 0) > 2 ? 'BULLISH' : (data.change24h || 0) < -2 ? 'BEARISH' : 'NEUTRAL',
+          volatility: Math.abs(data.change24h || 0) > 5 ? 'HIGH' : Math.abs(data.change24h || 0) > 2 ? 'MEDIUM' : 'LOW'
+        }
+      };
+    }
+    
+    function getAllMarketIntelligence() {
+      return MARKETS.map(m => getMarketIntelligence(m.symbol));
+    }
+    
+    window.nexxoreAgent = {
+      getMarketIntelligence,
+      getAllMarketIntelligence,
+      getMarketData: () => marketData,
+      getFundingData: () => binanceFundingData,
+      getSelectedMarket: () => selectedMarket,
+      refreshData: async () => {
+        await Promise.allSettled([fetchAllPrices(), fetchBinanceFunding()]);
+        return { success: true, timestamp: new Date().toISOString() };
+      }
+    };
 
     async function fetchOHLC(market, days = 30) {
       const cacheKey = `${market}_${days}`;
-      if (ohlcCache[cacheKey] && Date.now() - ohlcCache[cacheKey].time < 300000) return ohlcCache[cacheKey].data;
+      const cacheEntry = ohlcCache[cacheKey];
+      if (cacheEntry && Date.now() - cacheEntry.time < 600000) return cacheEntry.data;
       
       try {
+        // Try Binance klines first (faster)
+        const binanceSymbol = MARKETS.find(m => m.symbol === market)?.binanceSymbol;
+        if (binanceSymbol) {
+          const interval = days <= 1 ? '1h' : days <= 7 ? '4h' : '1d';
+          const limit = days <= 1 ? 24 : days <= 7 ? 42 : Math.min(days, 100);
+          
+          const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=${limit}`, {
+            signal: AbortSignal.timeout(5000)
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            const ohlc = data.map(c => ({ 
+              time: c[0], 
+              open: parseFloat(c[1]), 
+              high: parseFloat(c[2]), 
+              low: parseFloat(c[3]), 
+              close: parseFloat(c[4]),
+              volume: parseFloat(c[5])
+            }));
+            ohlcCache[cacheKey] = { data: ohlc, time: Date.now() };
+            return ohlc;
+          }
+        }
+        
+        // Fallback to CoinGecko
         const geckoId = MARKETS.find(m => m.symbol === market)?.geckoId;
-        if (!geckoId) return null;
-        const res = await fetch(`https://api.coingecko.com/api/v3/coins/${geckoId}/ohlc?vs_currency=usd&days=${days}`);
-        if (!res.ok) return null;
+        if (!geckoId) return cacheEntry?.data || null;
+        
+        const res = await fetch(`https://api.coingecko.com/api/v3/coins/${geckoId}/ohlc?vs_currency=usd&days=${days}`, {
+          signal: AbortSignal.timeout(8000)
+        });
+        if (!res.ok) return cacheEntry?.data || null;
+        
         const data = await res.json();
         const ohlc = data.map(c => ({ time: c[0], open: c[1], high: c[2], low: c[3], close: c[4] }));
         ohlcCache[cacheKey] = { data: ohlc, time: Date.now() };
@@ -1785,10 +1923,12 @@
     // Populate dropdown with all markets
     function populateMarketDropdown() {
       const dropdown = document.getElementById('marketDropdown');
-      dropdown.innerHTML = MARKETS.map(m => 
-        `<option value="${m.symbol}">${m.icon} ${m.symbol}-PERP (${m.name})</option>`
-      ).join('');
-      dropdown.value = selectedMarket;
+      if (dropdown) {
+        dropdown.innerHTML = MARKETS.map(m => 
+          `<option value="${m.symbol}">${m.icon} ${m.symbol}-PERP (${m.name})</option>`
+        ).join('');
+        dropdown.value = selectedMarket;
+      }
     }
 
     // Update quick stats in selector bar
@@ -1796,15 +1936,19 @@
       const data = marketData[selectedMarket] || {};
       const signal = calculateSignal(selectedMarket);
       
-      document.getElementById('selectedPrice').textContent = formatPrice(data.price || 0);
-      
+      const priceEl = document.getElementById('selectedPrice');
       const changeEl = document.getElementById('selectedChange');
-      changeEl.textContent = formatPercent(data.change24h || 0);
-      changeEl.style.color = (data.change24h || 0) >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
-      
       const signalEl = document.getElementById('selectedSignal');
-      signalEl.textContent = signal.verdict;
-      signalEl.className = 'quick-signal ' + signal.verdict.toLowerCase();
+      
+      if (priceEl) priceEl.textContent = formatPrice(data.price || 0);
+      if (changeEl) {
+        changeEl.textContent = formatPercent(data.change24h || 0);
+        changeEl.style.color = (data.change24h || 0) >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+      }
+      if (signalEl) {
+        signalEl.textContent = signal.verdict;
+        signalEl.className = 'quick-signal ' + signal.verdict.toLowerCase();
+      }
     }
 
     // Update verdict card
@@ -1825,8 +1969,12 @@
       changeEl.className = 'verdict-change ' + ((data.change24h || 0) >= 0 ? 'positive' : 'negative');
       
       const badgeEl = document.getElementById('verdictBadge');
-      badgeEl.textContent = signal.verdict;
-      badgeEl.className = 'verdict-badge ' + signal.verdict.toLowerCase();
+      const summaryEl = document.getElementById('verdictSummary');
+      
+      if (badgeEl) {
+        badgeEl.textContent = signal.verdict;
+        badgeEl.className = 'verdict-badge ' + signal.verdict.toLowerCase();
+      }
       
       const fr = funding ? (funding.fundingRate * 100).toFixed(4) : '0.0000';
       let summary = `<strong>${signal.verdict}</strong> signal on ${market.symbol}-PERP at ${formatPrice(data.price || 0)}.<br><br>`;
@@ -1841,17 +1989,18 @@
         summary += `<strong>📊 Analysis:</strong> Consolidating. 24h: ${formatPercent(data.change24h || 0)}. Funding: ${fr}%.<br><br>`;
         summary += `<strong>🎯 Strategy:</strong> Range trade between S/R. Wait for breakout. Tight stops.`;
       }
-      document.getElementById('verdictSummary').innerHTML = summary;
+      if (summaryEl) summaryEl.innerHTML = summary;
     }
 
-    // Update Technical section
-    async function updateTechnicalSection() {
+    // Update Technical section - sync part only
+    function updateTechnicalMetrics() {
       const data = marketData[selectedMarket] || {};
       const rsi = Math.max(20, Math.min(80, 50 + (data.change24h || 0) * 3 + (Math.random() * 10 - 5)));
       const stochRsi = Math.max(10, Math.min(90, 50 + (data.change24h || 0) * 2.5));
       const adx = Math.abs(data.change24h || 0) > 3 ? 35 + Math.random() * 15 : 15 + Math.random() * 10;
       
-      document.getElementById('technicalMetrics').innerHTML = `
+      const el = document.getElementById('technicalMetrics');
+      if (el) el.innerHTML = `
         <div class="metric-row"><span class="row-label">RSI (14)</span><span class="row-value ${rsi > 65 ? 'positive' : rsi < 35 ? 'negative' : ''}">${rsi.toFixed(1)} - ${rsi > 70 ? 'Overbought' : rsi < 30 ? 'Oversold' : 'Neutral'}</span></div>
         <div class="metric-row"><span class="row-label">MACD Signal</span><span class="row-value ${(data.change24h || 0) > 0 ? 'positive' : 'negative'}">${(data.change24h || 0) > 0 ? 'Bullish Crossover' : 'Bearish Crossover'}</span></div>
         <div class="metric-row"><span class="row-label">EMA 9/21 Cross</span><span class="row-value ${(data.change24h || 0) > 1 ? 'positive' : (data.change24h || 0) < -1 ? 'negative' : ''}">${(data.change24h || 0) > 1 ? '9 above 21' : (data.change24h || 0) < -1 ? '9 below 21' : 'Converging'}</span></div>
@@ -1861,9 +2010,14 @@
         <div class="metric-row"><span class="row-label">ADX Trend</span><span class="row-value">${adx.toFixed(1)} - ${adx > 25 ? 'Strong Trend' : 'Weak/Range'}</span></div>
         <div class="metric-row"><span class="row-label">Volume Profile</span><span class="row-value ${Math.abs(data.change24h || 0) > 2 ? 'positive' : ''}">${Math.abs(data.change24h || 0) > 2 ? 'High Activity' : 'Normal'}</span></div>
       `;
-      
-      await updateSRDisplay();
+    }
+
+    // Legacy async function - kept for compatibility
+    async function updateTechnicalSection() {
+      updateTechnicalMetrics();
       updateOpportunities();
+      // Non-blocking S/R update
+      updateSRDisplay().catch(e => console.warn('S/R update error:', e));
     }
 
     // Update Fundamental section  
@@ -2128,17 +2282,21 @@
     }
 
     async function updateSRDisplay() {
-      document.getElementById('srContainer').innerHTML = '<div class="loading"><div class="loading-spinner"></div>Calculating from historical data...</div>';
+      const srContainer = document.getElementById('srContainer');
+      const srDataSource = document.getElementById('srDataSource');
+      if (!srContainer) return;
+      
+      srContainer.innerHTML = '<div class="loading"><div class="loading-spinner"></div>Calculating from historical data...</div>';
       const levels = await calculateSRLevels(selectedMarket, currentTimeframe);
       const currentPrice = marketData[selectedMarket]?.price || 0;
-      document.getElementById('srDataSource').textContent = levels.source;
+      if (srDataSource) srDataSource.textContent = levels.source;
       
       const formatDistance = (price) => {
         const dist = ((price - currentPrice) / currentPrice) * 100;
         return dist >= 0 ? `+${dist.toFixed(2)}%` : `${dist.toFixed(2)}%`;
       };
       
-      document.getElementById('srContainer').innerHTML = `
+      srContainer.innerHTML = `
         <div class="sr-group">
           <div class="sr-group-title">🔴 Resistance Levels</div>
           ${levels.resistance.length > 0 ? levels.resistance.map(r => `
@@ -2177,7 +2335,8 @@
         opportunities.push({ type: 'Range Short', confidence: 'MEDIUM', direction: 'SHORT', entry: price * 1.02, target: price * 0.98, stop: price * 1.03, rr: '2.0:1' });
       }
       
-      document.getElementById('opportunitiesGrid').innerHTML = opportunities.map(opp => `
+      const oppGrid = document.getElementById('opportunitiesGrid');
+      if (oppGrid) oppGrid.innerHTML = opportunities.map(opp => `
         <div class="opportunity-card">
           <div class="opp-header"><span class="opp-type">${opp.type}</span><span class="opp-confidence ${opp.confidence.toLowerCase()}">${opp.confidence}</span></div>
           <div class="opp-detail"><span class="opp-label">Direction</span><span class="opp-value ${opp.direction.toLowerCase()}">${opp.direction}</span></div>
@@ -2190,12 +2349,13 @@
     }
 
     async function loadNews() {
-      document.getElementById('newsFeed').innerHTML = '<div class="loading"><div class="loading-spinner"></div>Fetching live news...</div>';
+      const newsFeed = document.getElementById('newsFeed');
+      if (newsFeed) newsFeed.innerHTML = '<div class="loading"><div class="loading-spinner"></div>Fetching live news...</div>';
       
       let news = [];
       try {
-        // Fetch from CryptoPanic API (free tier)
-        const res = await fetch('https://cryptopanic.com/api/v1/posts/?auth_token=free&public=true&kind=news&filter=hot');
+        // Fetch from CryptoPanic API (free tier) with timeout
+        const res = await fetch('https://cryptopanic.com/api/v1/posts/?auth_token=free&public=true&kind=news&filter=hot', { signal: AbortSignal.timeout(8000) });
         if (res.ok) {
           const data = await res.json();
           if (data.results) {
@@ -2389,35 +2549,75 @@
     }
 
     async function init() {
-      console.log('🚀 Initializing On-Chain Analyst Agent v3.1...');
+      const startTime = performance.now();
+      console.log('🚀 Initializing On-Chain Analyst Agent v3.2 (optimized)...');
+      
+      // Sync init - fast
       initTabs();
       updateTime();
       setInterval(updateTime, 1000);
-      
-      await Promise.all([fetchAllPrices(), fetchBinanceFunding(), fetchFearGreed(), fetchGlobalData()]);
-      
-      if (marketData['BTC']) {
-        document.getElementById('btcPrice').textContent = formatPrice(marketData['BTC'].price);
-        document.getElementById('btcChange').textContent = formatPercent(marketData['BTC'].change24h);
-        document.getElementById('btcChange').className = 'stat-change ' + (marketData['BTC'].change24h >= 0 ? 'positive' : 'negative');
-      }
-      if (marketData['ETH']) {
-        document.getElementById('ethPrice').textContent = formatPrice(marketData['ETH'].price);
-        document.getElementById('ethChange').textContent = formatPercent(marketData['ETH'].change24h);
-        document.getElementById('ethChange').className = 'stat-change ' + (marketData['ETH'].change24h >= 0 ? 'positive' : 'negative');
-      }
-      
-      // Initialize dropdown and load first market
       populateMarketDropdown();
-      await updateAllSections();
       
+      // Show loading state
+      const loadingIndicator = document.createElement('div');
+      loadingIndicator.id = 'initLoading';
+      loadingIndicator.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.9);padding:30px;border-radius:12px;z-index:9999;color:#fff;text-align:center;';
+      loadingIndicator.innerHTML = '<div class="loading-spinner" style="width:40px;height:40px;margin:0 auto 15px;"></div><div>Loading market data...</div>';
+      document.body.appendChild(loadingIndicator);
+      
+      // Parallel data fetching with allSettled (won't fail if one times out)
+      const fetchStart = performance.now();
+      const results = await Promise.allSettled([
+        fetchAllPrices(),
+        fetchBinanceFunding(),
+        fetchFearGreed(),
+        fetchGlobalData()
+      ]);
+      console.log(`📊 Data fetch completed in ${(performance.now() - fetchStart).toFixed(0)}ms`);
+      
+      // Log any failures
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          console.warn(`Fetch ${i} failed:`, r.reason);
+        }
+      });
+      
+      // Update header stats
+      const btcPriceEl = document.getElementById('btcPrice');
+      const btcChangeEl = document.getElementById('btcChange');
+      const ethPriceEl = document.getElementById('ethPrice');
+      const ethChangeEl = document.getElementById('ethChange');
+      
+      if (marketData['BTC'] && btcPriceEl) {
+        btcPriceEl.textContent = formatPrice(marketData['BTC'].price);
+        if (btcChangeEl) {
+          btcChangeEl.textContent = formatPercent(marketData['BTC'].change24h);
+          btcChangeEl.className = 'stat-change ' + (marketData['BTC'].change24h >= 0 ? 'positive' : 'negative');
+        }
+      }
+      if (marketData['ETH'] && ethPriceEl) {
+        ethPriceEl.textContent = formatPrice(marketData['ETH'].price);
+        if (ethChangeEl) {
+          ethChangeEl.textContent = formatPercent(marketData['ETH'].change24h);
+          ethChangeEl.className = 'stat-change ' + (marketData['ETH'].change24h >= 0 ? 'positive' : 'negative');
+        }
+      }
+      
+      // Remove loading indicator
+      loadingIndicator.remove();
+      
+      // Update UI sections (sync parts first, async parts non-blocking)
+      updateAllSections();
+      
+      // Background refresh every 30 seconds
       setInterval(async () => {
-        await fetchAllPrices();
-        await fetchBinanceFunding();
-        await updateAllSections();
+        const now = Date.now();
+        if (now - lastFetchTime < 25000) return; // Debounce
+        await Promise.allSettled([fetchAllPrices(), fetchBinanceFunding()]);
+        updateAllSections();
       }, 30000);
       
-      console.log('✅ Agent initialized successfully');
+      console.log(`✅ Agent initialized in ${(performance.now() - startTime).toFixed(0)}ms`);
     }
 
     document.addEventListener('DOMContentLoaded', init);
