@@ -93,6 +93,56 @@ app.get('/api/perps/alerts', async (req, res) => {
   }
 });
 
+// Perps Intelligence Analysis Endpoint
+app.get('/api/perps/analysis/:market', async (req, res) => {
+  try {
+    const { market } = req.params;
+    const axios = require('axios');
+    
+    const result = {
+      market,
+      timestamp: new Date().toISOString(),
+      onChainMetrics: {},
+      marketIntelligence: {},
+      protocolMetrics: {},
+      tradingSignal: {},
+      supportResistance: {},
+      opportunities: []
+    };
+
+    // Fetch CoinGecko data
+    try {
+      const coinId = market.toLowerCase() === 'btc' ? 'bitcoin' : 
+                     market.toLowerCase() === 'eth' ? 'ethereum' :
+                     market.toLowerCase() === 'sol' ? 'solana' : null;
+      
+      if (coinId) {
+        const cgResponse = await axios.get(`https://api.coingecko.com/api/v3/coins/${coinId}`, {
+          params: { localization: false, tickers: false, community_data: false, developer_data: false },
+          headers: { 'x-cg-demo-api-key': 'XFt9ZK6NwVSRovOVTtkNmxydSRdqLlIqnQQsjlpArr+dK-uL' },
+          timeout: 3000
+        });
+
+        const data = cgResponse.data;
+        result.onChainMetrics = {
+          marketCap: data.market_data?.market_cap?.usd || 0,
+          volume24h: data.market_data?.total_volume?.usd || 0,
+          priceChange24h: data.market_data?.price_change_percentage_24h || 0,
+          priceChange7d: data.market_data?.price_change_percentage_7d || 0,
+          currentPrice: data.market_data?.current_price?.usd || 0
+        };
+      }
+    } catch (e) {
+      console.error('CoinGecko error:', e.message);
+    }
+
+    // Return what we have
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/perps/order', async (req, res) => {
   try {
     const body = req.body;
