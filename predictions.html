@@ -1618,31 +1618,57 @@
     };
     
     async function fetchPolymarketData() {
+      const allMarkets = [];
+      const seenIds = new Set();
+      
+      // Multiple search queries for diverse markets
+      const queries = ['', 'bitcoin', 'trump', 'election', 'fed', 'ai', 'crypto', 'sports', 'tech', 'economy'];
+      
       try {
-        const response = await fetch(`${API_BASE}/public-search?q=&events_status=active&limit_per_type=50`);
-        const data = await response.json();
+        // Fetch from multiple endpoints in parallel
+        const responses = await Promise.allSettled([
+          fetch(`${API_BASE}/public-search?q=&events_status=active&limit_per_type=100`),
+          fetch(`${API_BASE}/events?active=true&limit=200`),
+          ...queries.slice(1).map(q => fetch(`${API_BASE}/public-search?q=${q}&events_status=active&limit_per_type=50`))
+        ]);
         
-        if (data.events && data.events.length > 0) {
-          return data.events.flatMap(event => {
-            if (!event.markets) return [];
-            return event.markets.map(market => ({
-              id: market.id || market.conditionId,
-              title: market.question || event.title,
-              category: categorizeMarket(event.title || market.question),
-              platform: 'Polymarket',
-              yesOdds: parseFloat(market.outcomePrices?.split(',')[0] || '0.5') * 100,
-              noOdds: (1 - parseFloat(market.outcomePrices?.split(',')[0] || '0.5')) * 100,
-              volume: parseFloat(market.volume || 0),
-              liquidity: parseFloat(market.liquidity || 0),
-              volumeChange: Math.random() * 50 - 10,
-              yesChange: (Math.random() * 10 - 5).toFixed(1),
-              expiry: market.endDate ? new Date(market.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD',
-              slug: event.slug || market.slug
-            }));
-          }).filter(m => m.yesOdds > 1 && m.yesOdds < 99);
+        for (const result of responses) {
+          if (result.status !== 'fulfilled' || !result.value.ok) continue;
+          const data = await result.value.json();
+          
+          const events = data.events || data || [];
+          for (const event of events) {
+            if (!event.markets && !event.outcomePrices) continue;
+            const marketsList = event.markets || [event];
+            
+            for (const market of marketsList) {
+              const id = market.id || market.conditionId || market.slug;
+              if (seenIds.has(id)) continue;
+              seenIds.add(id);
+              
+              const yesPrice = parseFloat(market.outcomePrices?.split(',')[0] || market.yes_price || '0.5');
+              if (yesPrice <= 0.01 || yesPrice >= 0.99) continue;
+              
+              allMarkets.push({
+                id,
+                title: market.question || event.title || market.title,
+                category: categorizeMarket(market.question || event.title || market.title || ''),
+                platform: 'Polymarket',
+                yesOdds: yesPrice * 100,
+                noOdds: (1 - yesPrice) * 100,
+                volume: parseFloat(market.volume || event.volume || 0),
+                liquidity: parseFloat(market.liquidity || 0),
+                volumeChange: Math.random() * 50 - 10,
+                yesChange: (Math.random() * 10 - 5).toFixed(1),
+                expiry: (market.endDate || event.endDate) ? new Date(market.endDate || event.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD',
+                slug: event.slug || market.slug
+              });
+            }
+          }
         }
+        console.log(`Fetched ${allMarkets.length} markets from Polymarket`);
       } catch (err) { console.error('Polymarket API error:', err); }
-      return [];
+      return allMarkets;
     }
     
     function categorizeMarket(title) {
@@ -1657,10 +1683,59 @@
     
     function generateKalshiMarkets() {
       return [
+        // Economy Markets
         { id: 'k1', title: 'Will the Fed cut rates in March 2026?', category: 'economy', platform: 'Kalshi', yesOdds: 68, noOdds: 32, volume: 89200000, volumeChange: 15.2, yesChange: '+5.1', expiry: 'Mar 15, 2026' },
         { id: 'k2', title: 'US GDP growth exceeds 3% in 2026?', category: 'economy', platform: 'Kalshi', yesOdds: 25, noOdds: 75, volume: 42800000, volumeChange: 8.4, yesChange: '+1.8', expiry: 'Jan 31, 2027' },
-        { id: 'k3', title: 'Government shutdown in 2026?', category: 'politics', platform: 'Kalshi', yesOdds: 45, noOdds: 55, volume: 78300000, volumeChange: 22.1, yesChange: '+2.1', expiry: 'Dec 31, 2026' },
-        { id: 'k4', title: 'Bitcoin dominance exceeds 60% Q1 2026?', category: 'crypto', platform: 'Kalshi', yesOdds: 38, noOdds: 62, volume: 52100000, volumeChange: -4.2, yesChange: '-4.2', expiry: 'Mar 31, 2026' }
+        { id: 'k3', title: 'US inflation below 2.5% by Q2 2026?', category: 'economy', platform: 'Kalshi', yesOdds: 42, noOdds: 58, volume: 67500000, volumeChange: 12.3, yesChange: '+3.2', expiry: 'Jun 30, 2026' },
+        { id: 'k4', title: 'S&P 500 above 6000 by June 2026?', category: 'economy', platform: 'Kalshi', yesOdds: 55, noOdds: 45, volume: 124000000, volumeChange: 8.7, yesChange: '+2.4', expiry: 'Jun 30, 2026' },
+        { id: 'k5', title: 'US unemployment rate above 5%?', category: 'economy', platform: 'Kalshi', yesOdds: 22, noOdds: 78, volume: 38900000, volumeChange: -3.1, yesChange: '-1.2', expiry: 'Dec 31, 2026' },
+        { id: 'k6', title: 'US recession declared in 2026?', category: 'economy', platform: 'Kalshi', yesOdds: 18, noOdds: 82, volume: 156000000, volumeChange: -5.4, yesChange: '-2.8', expiry: 'Dec 31, 2026' },
+        { id: 'k7', title: 'Fed Funds Rate below 4% by year end?', category: 'economy', platform: 'Kalshi', yesOdds: 72, noOdds: 28, volume: 98700000, volumeChange: 18.2, yesChange: '+6.3', expiry: 'Dec 31, 2026' },
+        { id: 'k8', title: 'US 10Y Treasury yield above 5%?', category: 'economy', platform: 'Kalshi', yesOdds: 28, noOdds: 72, volume: 45600000, volumeChange: -8.9, yesChange: '-3.4', expiry: 'Dec 31, 2026' },
+        
+        // Politics Markets
+        { id: 'k10', title: 'Government shutdown in 2026?', category: 'politics', platform: 'Kalshi', yesOdds: 45, noOdds: 55, volume: 78300000, volumeChange: 22.1, yesChange: '+2.1', expiry: 'Dec 31, 2026' },
+        { id: 'k11', title: 'New Supreme Court Justice in 2026?', category: 'politics', platform: 'Kalshi', yesOdds: 15, noOdds: 85, volume: 34200000, volumeChange: 2.3, yesChange: '+0.8', expiry: 'Dec 31, 2026' },
+        { id: 'k12', title: 'Major bipartisan bill passed in 2026?', category: 'politics', platform: 'Kalshi', yesOdds: 38, noOdds: 62, volume: 28900000, volumeChange: 5.6, yesChange: '+1.9', expiry: 'Dec 31, 2026' },
+        { id: 'k13', title: 'US implements new tariffs on China?', category: 'politics', platform: 'Kalshi', yesOdds: 62, noOdds: 38, volume: 89400000, volumeChange: 14.7, yesChange: '+4.2', expiry: 'Jun 30, 2026' },
+        { id: 'k14', title: 'TikTok ban enforced in US?', category: 'politics', platform: 'Kalshi', yesOdds: 35, noOdds: 65, volume: 112000000, volumeChange: -12.3, yesChange: '-5.1', expiry: 'Dec 31, 2026' },
+        { id: 'k15', title: 'US-China trade deal announced?', category: 'politics', platform: 'Kalshi', yesOdds: 22, noOdds: 78, volume: 67800000, volumeChange: 8.4, yesChange: '+2.7', expiry: 'Dec 31, 2026' },
+        
+        // Crypto Markets
+        { id: 'k20', title: 'Bitcoin dominance exceeds 60% Q1 2026?', category: 'crypto', platform: 'Kalshi', yesOdds: 38, noOdds: 62, volume: 52100000, volumeChange: -4.2, yesChange: '-4.2', expiry: 'Mar 31, 2026' },
+        { id: 'k21', title: 'Bitcoin above $150,000 by July 2026?', category: 'crypto', platform: 'Kalshi', yesOdds: 42, noOdds: 58, volume: 234000000, volumeChange: 28.4, yesChange: '+8.2', expiry: 'Jul 31, 2026' },
+        { id: 'k22', title: 'Ethereum above $8,000 by June 2026?', category: 'crypto', platform: 'Kalshi', yesOdds: 35, noOdds: 65, volume: 156000000, volumeChange: 15.6, yesChange: '+5.3', expiry: 'Jun 30, 2026' },
+        { id: 'k23', title: 'Solana flips Ethereum in market cap?', category: 'crypto', platform: 'Kalshi', yesOdds: 8, noOdds: 92, volume: 78400000, volumeChange: 45.2, yesChange: '+2.1', expiry: 'Dec 31, 2026' },
+        { id: 'k24', title: 'SEC approves Solana ETF in 2026?', category: 'crypto', platform: 'Kalshi', yesOdds: 48, noOdds: 52, volume: 145000000, volumeChange: 32.1, yesChange: '+12.4', expiry: 'Dec 31, 2026' },
+        { id: 'k25', title: 'Total crypto market cap above $5T?', category: 'crypto', platform: 'Kalshi', yesOdds: 52, noOdds: 48, volume: 189000000, volumeChange: 22.8, yesChange: '+7.6', expiry: 'Dec 31, 2026' },
+        { id: 'k26', title: 'Major crypto exchange hack (>$100M)?', category: 'crypto', platform: 'Kalshi', yesOdds: 28, noOdds: 72, volume: 45600000, volumeChange: -8.4, yesChange: '-2.9', expiry: 'Dec 31, 2026' },
+        { id: 'k27', title: 'XRP wins final SEC appeal?', category: 'crypto', platform: 'Kalshi', yesOdds: 65, noOdds: 35, volume: 98700000, volumeChange: 18.9, yesChange: '+6.8', expiry: 'Jun 30, 2026' },
+        
+        // Tech/AI Markets
+        { id: 'k30', title: 'GPT-5 released by OpenAI in 2026?', category: 'tech', platform: 'Kalshi', yesOdds: 72, noOdds: 28, volume: 167000000, volumeChange: 12.4, yesChange: '+3.8', expiry: 'Dec 31, 2026' },
+        { id: 'k31', title: 'Apple releases AR glasses in 2026?', category: 'tech', platform: 'Kalshi', yesOdds: 45, noOdds: 55, volume: 89300000, volumeChange: 8.7, yesChange: '+2.4', expiry: 'Dec 31, 2026' },
+        { id: 'k32', title: 'Tesla Full Self-Driving approved?', category: 'tech', platform: 'Kalshi', yesOdds: 32, noOdds: 68, volume: 134000000, volumeChange: 15.2, yesChange: '+4.1', expiry: 'Dec 31, 2026' },
+        { id: 'k33', title: 'NVIDIA stock above $200 by June?', category: 'tech', platform: 'Kalshi', yesOdds: 58, noOdds: 42, volume: 178000000, volumeChange: 24.6, yesChange: '+9.2', expiry: 'Jun 30, 2026' },
+        { id: 'k34', title: 'Major tech company layoffs (>10K)?', category: 'tech', platform: 'Kalshi', yesOdds: 55, noOdds: 45, volume: 56700000, volumeChange: 6.8, yesChange: '+1.9', expiry: 'Dec 31, 2026' },
+        { id: 'k35', title: 'Twitter/X reaches 1B daily users?', category: 'tech', platform: 'Kalshi', yesOdds: 18, noOdds: 82, volume: 34500000, volumeChange: -12.3, yesChange: '-4.6', expiry: 'Dec 31, 2026' },
+        { id: 'k36', title: 'Meta releases Llama 4 in 2026?', category: 'tech', platform: 'Kalshi', yesOdds: 68, noOdds: 32, volume: 78900000, volumeChange: 9.4, yesChange: '+2.8', expiry: 'Dec 31, 2026' },
+        { id: 'k37', title: 'Anthropic valued above $50B?', category: 'tech', platform: 'Kalshi', yesOdds: 62, noOdds: 38, volume: 67800000, volumeChange: 28.7, yesChange: '+11.2', expiry: 'Dec 31, 2026' },
+        
+        // Sports Markets
+        { id: 'k40', title: 'Lakers win NBA Championship 2026?', category: 'sports', platform: 'Kalshi', yesOdds: 12, noOdds: 88, volume: 234000000, volumeChange: 34.5, yesChange: '+4.2', expiry: 'Jun 30, 2026' },
+        { id: 'k41', title: 'Chiefs win Super Bowl LX?', category: 'sports', platform: 'Kalshi', yesOdds: 15, noOdds: 85, volume: 456000000, volumeChange: 18.9, yesChange: '+3.1', expiry: 'Feb 8, 2026' },
+        { id: 'k42', title: 'Messi wins Ballon d\'Or 2026?', category: 'sports', platform: 'Kalshi', yesOdds: 8, noOdds: 92, volume: 145000000, volumeChange: -15.2, yesChange: '-2.8', expiry: 'Dec 31, 2026' },
+        { id: 'k43', title: 'USA wins most medals at Olympics?', category: 'sports', platform: 'Kalshi', yesOdds: 42, noOdds: 58, volume: 189000000, volumeChange: 5.6, yesChange: '+1.4', expiry: 'Aug 15, 2026' },
+        { id: 'k44', title: 'Yankees win World Series 2026?', category: 'sports', platform: 'Kalshi', yesOdds: 9, noOdds: 91, volume: 178000000, volumeChange: 12.3, yesChange: '+2.1', expiry: 'Nov 1, 2026' },
+        { id: 'k45', title: 'Ohtani hits 60+ home runs?', category: 'sports', platform: 'Kalshi', yesOdds: 25, noOdds: 75, volume: 98700000, volumeChange: 28.4, yesChange: '+8.6', expiry: 'Oct 1, 2026' },
+        
+        // World Events
+        { id: 'k50', title: 'Major earthquake (7.0+) in California?', category: 'other', platform: 'Kalshi', yesOdds: 22, noOdds: 78, volume: 34500000, volumeChange: 2.1, yesChange: '+0.5', expiry: 'Dec 31, 2026' },
+        { id: 'k51', title: 'Global temperature record broken?', category: 'other', platform: 'Kalshi', yesOdds: 75, noOdds: 25, volume: 56700000, volumeChange: 8.9, yesChange: '+2.3', expiry: 'Dec 31, 2026' },
+        { id: 'k52', title: 'New COVID variant causes lockdowns?', category: 'other', platform: 'Kalshi', yesOdds: 12, noOdds: 88, volume: 89400000, volumeChange: -18.4, yesChange: '-5.2', expiry: 'Dec 31, 2026' },
+        { id: 'k53', title: 'Commercial space tourism reaches 100 people?', category: 'tech', platform: 'Kalshi', yesOdds: 55, noOdds: 45, volume: 45600000, volumeChange: 22.1, yesChange: '+7.8', expiry: 'Dec 31, 2026' },
+        { id: 'k54', title: 'Self-driving taxi service in 10+ US cities?', category: 'tech', platform: 'Kalshi', yesOdds: 48, noOdds: 52, volume: 78900000, volumeChange: 14.5, yesChange: '+4.6', expiry: 'Dec 31, 2026' },
+        { id: 'k55', title: 'Nuclear fusion breakthrough announced?', category: 'tech', platform: 'Kalshi', yesOdds: 28, noOdds: 72, volume: 67800000, volumeChange: 32.1, yesChange: '+9.4', expiry: 'Dec 31, 2026' }
       ];
     }
     
@@ -1686,7 +1761,7 @@
         return;
       }
       
-      list.innerHTML = filtered.slice(0, 20).map(market => {
+      list.innerHTML = filtered.slice(0, 100).map(market => {
         const fairValue = MLModel.calculateFairValue(market);
         const signal = MLModel.generateSignal(market, fairValue);
         const signalClass = signal.verdict.includes('YES') ? 'bullish' : signal.verdict.includes('NO') ? 'bearish' : 'neutral';
