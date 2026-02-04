@@ -219,31 +219,392 @@
       color: var(--text-primary);
     }
 
-    /* Builder Canvas */
+    /* Builder Canvas - Strategy Sandbox */
     .builder-canvas {
-      padding: 32px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
+      gap: 24px;
+      background: linear-gradient(180deg, var(--bg-primary), rgba(245, 158, 11, 0.02));
     }
 
     .canvas-header {
       text-align: center;
-      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .canvas-header-top {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .sandbox-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .live-badge {
+      font-size: 0.55rem;
+      padding: 3px 8px;
+      background: var(--safe-green);
+      color: #000;
+      font-weight: 700;
+      border-radius: 3px;
+      animation: pulse-live 2s infinite;
+    }
+    
+    @keyframes pulse-live {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
     }
 
     .canvas-title {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       font-weight: 700;
       color: var(--text-primary);
       margin-bottom: 8px;
     }
 
     .canvas-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    
+    /* Strategy Chart Container */
+    .strategy-chart-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .chart-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .chart-timeframes {
+      display: flex;
+      gap: 4px;
+    }
+    
+    .tf-btn {
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .tf-btn:hover {
+      border-color: var(--text-secondary);
+      color: var(--text-secondary);
+    }
+    
+    .tf-btn.active {
+      background: var(--accent-gold);
+      border-color: var(--accent-gold);
+      color: #000;
+    }
+    
+    .chart-area {
+      height: 200px;
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.05), transparent);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .chart-placeholder {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: var(--text-muted);
+    }
+    
+    .chart-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+    
+    .chart-placeholder p {
+      font-size: 0.8rem;
+    }
+    
+    .chart-legend {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+    
+    .legend-dot.strategy { background: var(--safe-green); }
+    .legend-dot.benchmark { background: var(--accent-gold); opacity: 0.5; }
+    
+    /* Strategy Metrics */
+    .strategy-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    
+    .metric-card:hover {
+      border-color: var(--accent-gold);
+      transform: translateY(-2px);
+    }
+    
+    .metric-icon {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+    
+    .metric-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--safe-green);
+      margin-bottom: 4px;
+    }
+    
+    .metric-value.negative { color: var(--degen-red); }
+    .metric-value.neutral { color: var(--text-secondary); }
+    
+    .metric-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Strategy Indicators Section */
+    .strategy-indicators-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .indicators-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    
+    .indicator-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+    }
+    
+    .indicator-name {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--balanced-blue);
+      margin-bottom: 4px;
+    }
+    
+    .indicator-value {
       font-size: 0.9rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+    }
+    
+    .indicator-placeholder {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+    
+    /* Strategy Signals */
+    .strategy-signals {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .signals-count {
+      font-size: 0.65rem;
+      padding: 3px 8px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      color: var(--text-muted);
+    }
+    
+    .signals-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .signal-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      border-left: 3px solid var(--safe-green);
+    }
+    
+    .signal-item.sell {
+      border-left-color: var(--degen-red);
+    }
+    
+    .signal-type {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+    
+    .signal-type.buy {
+      background: var(--safe-green-bg);
+      color: var(--safe-green);
+    }
+    
+    .signal-type.sell {
+      background: var(--degen-red-bg);
+      color: var(--degen-red);
+    }
+    
+    .signal-details {
+      flex: 1;
+    }
+    
+    .signal-asset {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .signal-reason {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    
+    .signal-time {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+    
+    .signal-placeholder {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+    
+    /* Deploy Section */
+    .sandbox-deploy {
+      text-align: center;
+      padding: 24px;
+      background: linear-gradient(135deg, var(--accent-gold-bg), var(--safe-green-bg));
+      border: 1px solid var(--accent-gold);
+      border-radius: 12px;
+    }
+    
+    .deploy-strategy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 32px;
+      background: linear-gradient(135deg, var(--accent-gold), #d97706);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+    }
+    
+    .deploy-strategy-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px rgba(245, 158, 11, 0.5);
+    }
+    
+    .deploy-icon {
+      font-size: 1.2rem;
+    }
+    
+    .deploy-info {
+      margin-top: 12px;
+      font-size: 0.75rem;
       color: var(--text-muted);
     }
 
-    /* Strategy Flow */
+    /* Strategy Flow - keeping for basic strategies */
     .strategy-flow {
       display: flex;
       flex-direction: column;
@@ -590,14 +951,14 @@
     }
 
     /* What is nUSD Tooltip/Section */
-    .nusd-explainer {
+    .nusd-explainer, .strategy-info-box {
       margin-top: 24px;
       padding: 16px;
       background: var(--bg-card);
       border: 1px solid var(--border-color);
     }
     
-    .nusd-title {
+    .nusd-title, .info-box-title {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -607,15 +968,15 @@
       margin-bottom: 10px;
     }
     
-    .nusd-badge {
+    .nusd-badge, .info-badge {
       font-size: 0.6rem;
       padding: 2px 8px;
-      background: var(--balanced-blue-bg);
-      color: var(--balanced-blue);
+      background: var(--accent-gold-bg);
+      color: var(--accent-gold);
       font-weight: 500;
     }
     
-    .nusd-text {
+    .nusd-text, .info-box-text {
       font-size: 0.75rem;
       color: var(--text-secondary);
       line-height: 1.6;
@@ -1360,158 +1721,92 @@
       </div>
     </div>
 
-    <!-- Builder Canvas -->
+    <!-- Builder Canvas - Strategy Sandbox -->
     <div class="panel builder-canvas">
       <div class="canvas-header">
-        <h1 class="canvas-title">Safe Yield Strategy</h1>
-        <p class="canvas-subtitle">Configure your capital preservation strategy</p>
+        <div class="canvas-header-top">
+          <span class="sandbox-label">🧪 Strategy Sandbox</span>
+          <span class="live-badge">LIVE PREVIEW</span>
+        </div>
+        <h1 class="canvas-title" id="sandboxTitle">Select a Strategy</h1>
+        <p class="canvas-subtitle" id="sandboxSubtitle">Choose a strategy from the left panel to visualize its performance</p>
       </div>
 
-      <div class="strategy-flow">
-        <div class="flow-step">
-          <div class="step-header">
-            <span class="step-number">Step 1</span>
-            <span class="step-type">Entry</span>
-          </div>
-          <div class="step-title">Deposit & Mint nUSD</div>
-          <div class="step-config">
-            <div class="config-item">
-              <div class="config-label">Collateral</div>
-              <select class="config-select" id="collateralSelect">
-                <option>ETH</option>
-                <option>WBTC</option>
-                <option>USDC</option>
-                <option>DAI</option>
-              </select>
-            </div>
-            <div class="config-item">
-              <div class="config-label">Output</div>
-              <div class="config-value">nUSD</div>
-            </div>
-          </div>
-          
-          <!-- nUSD Minting Info Box -->
-          <div class="minting-info-box" id="mintingInfo">
-            <div class="minting-param">
-              <span class="minting-label">Collateral Ratio</span>
-              <span class="minting-value">150%</span>
-            </div>
-            <div class="minting-param">
-              <span class="minting-label">Liquidation Threshold</span>
-              <span class="minting-value">130%</span>
-            </div>
-            <div class="minting-param">
-              <span class="minting-label">Stability Fee</span>
-              <span class="minting-value">0.5%</span>
-            </div>
-            <div class="minting-explanation">
-              Mint nUSD by depositing blue-chip stablecoins. Lower risk of liquidation due to stable collateral. Your collateral earns yield in top-tier protocols while backing nUSD.
-            </div>
+      <!-- Strategy Performance Chart -->
+      <div class="strategy-chart-container" id="strategyChartContainer">
+        <div class="chart-header">
+          <span class="chart-label">Performance Chart</span>
+          <div class="chart-timeframes">
+            <button class="tf-btn active" data-tf="1M">1M</button>
+            <button class="tf-btn" data-tf="3M">3M</button>
+            <button class="tf-btn" data-tf="1Y">1Y</button>
+            <button class="tf-btn" data-tf="ALL">ALL</button>
           </div>
         </div>
-
-        <div class="flow-step">
-          <div class="step-header">
-            <span class="step-number">Step 2</span>
-            <span class="step-type">Allocation</span>
-          </div>
-          <div class="step-title">Protocol Distribution</div>
-          <div class="step-config" id="protocolAllocation">
-            <div class="config-item">
-              <div class="config-label">Aave v3</div>
-              <div class="config-value" style="color: var(--safe-green);">40%</div>
-            </div>
-            <div class="config-item">
-              <div class="config-label">Compound</div>
-              <div class="config-value" style="color: var(--safe-green);">30%</div>
-            </div>
-            <div class="config-item">
-              <div class="config-label">MakerDAO</div>
-              <div class="config-value" style="color: var(--safe-green);">20%</div>
-            </div>
-            <div class="config-item">
-              <div class="config-label">Reserve</div>
-              <div class="config-value" style="color: var(--text-muted);">10%</div>
-            </div>
+        <div class="chart-area" id="performanceChart">
+          <div class="chart-placeholder">
+            <div class="chart-icon">📈</div>
+            <p>Select a strategy to view performance</p>
           </div>
         </div>
-
-        <div class="flow-step">
-          <div class="step-header">
-            <span class="step-number">Step 3</span>
-            <span class="step-type">Rebalance</span>
-          </div>
-          <div class="step-title">Auto-Rebalancing Rules</div>
-          <div class="step-config">
-            <div class="config-item">
-              <div class="config-label">Frequency</div>
-              <select class="config-select">
-                <option>Weekly</option>
-                <option>Daily</option>
-                <option>On Drift > 5%</option>
-              </select>
-            </div>
-            <div class="config-item">
-              <div class="config-label">Max Slippage</div>
-              <div class="config-value">0.5%</div>
-            </div>
-          </div>
+        <div class="chart-legend" id="chartLegend" style="display: none;">
+          <span class="legend-item"><span class="legend-dot strategy"></span> Strategy</span>
+          <span class="legend-item"><span class="legend-dot benchmark"></span> BTC Benchmark</span>
         </div>
-
-        <button class="add-step-btn">+ Add Strategy Step</button>
       </div>
-      
-      <!-- Strategy Sandbox CTA -->
-      <div class="strategy-sandbox">
-        <div class="sandbox-cta">
-          <div class="sandbox-header">
-            <div class="sandbox-title">
-              <span class="sandbox-title-icon">🧪</span>
-              Strategy Sandbox
-            </div>
-            <span class="sandbox-badge">Pro Feature</span>
-          </div>
-          
-          <p class="sandbox-desc">
-            Test professional algorithmic trading strategies in a risk-free environment. Access 12+ verified strategies from top traders with proven backtested performance.
-          </p>
-          
-          <div class="sandbox-stats">
-            <div class="sandbox-stat">
-              <span class="sandbox-stat-value">151%</span>
-              <span class="sandbox-stat-label">Top Yearly Return</span>
-            </div>
-            <div class="sandbox-stat">
-              <span class="sandbox-stat-value">12</span>
-              <span class="sandbox-stat-label">Pro Strategies</span>
-            </div>
-            <div class="sandbox-stat">
-              <span class="sandbox-stat-value">45K+</span>
-              <span class="sandbox-stat-label">Total Subscribers</span>
-            </div>
-          </div>
-          
-          <div class="sandbox-strategies">
-            <div class="sandbox-strategy-chip" onclick="openProStrategies('ichimoku-eth')">
-              Ichimoku ETH <span class="chip-return">+151%</span>
-            </div>
-            <div class="sandbox-strategy-chip" onclick="openProStrategies('ema-crossover')">
-              EMA Crossover <span class="chip-return">+144%</span>
-            </div>
-            <div class="sandbox-strategy-chip" onclick="openProStrategies('trendma-noro')">
-              TrendMA <span class="chip-return">+141%</span>
-            </div>
-            <div class="sandbox-strategy-chip" onclick="openProStrategies('williams-fractals')">
-              Williams Fractals <span class="chip-return">+128%</span>
-            </div>
-          </div>
-          
-          <button class="sandbox-cta-btn" onclick="openProStrategies()">
-            Explore Pro Strategies
-            <span class="btn-arrow">→</span>
-          </button>
-          <span class="sandbox-secondary-link" onclick="openProStrategies()">View all 12 strategies</span>
+
+      <!-- Strategy Key Metrics -->
+      <div class="strategy-metrics" id="strategyMetrics">
+        <div class="metric-card">
+          <div class="metric-icon">📊</div>
+          <div class="metric-value" id="metricReturn">--</div>
+          <div class="metric-label">Yearly Return</div>
         </div>
+        <div class="metric-card">
+          <div class="metric-icon">📉</div>
+          <div class="metric-value" id="metricDrawdown">--</div>
+          <div class="metric-label">Max Drawdown</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">⚡</div>
+          <div class="metric-value" id="metricSharpe">--</div>
+          <div class="metric-label">Sharpe Ratio</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">🎯</div>
+          <div class="metric-value" id="metricWinRate">--</div>
+          <div class="metric-label">Win Rate</div>
+        </div>
+      </div>
+
+      <!-- Strategy Indicators -->
+      <div class="strategy-indicators-section" id="indicatorsSection">
+        <div class="section-header">
+          <span class="section-title">📐 Technical Indicators</span>
+        </div>
+        <div class="indicators-grid" id="indicatorsGrid">
+          <div class="indicator-placeholder">Select a strategy to view indicators</div>
+        </div>
+      </div>
+
+      <!-- Strategy Signals -->
+      <div class="strategy-signals" id="signalsSection">
+        <div class="section-header">
+          <span class="section-title">🔔 Recent Signals</span>
+          <span class="signals-count" id="signalsCount">0 signals</span>
+        </div>
+        <div class="signals-list" id="signalsList">
+          <div class="signal-placeholder">No signals yet</div>
+        </div>
+      </div>
+
+      <!-- Deploy CTA -->
+      <div class="sandbox-deploy" id="sandboxDeploy" style="display: none;">
+        <button class="deploy-strategy-btn" id="deployBtn">
+          <span class="deploy-icon">🚀</span>
+          Deploy This Strategy
+        </button>
+        <p class="deploy-info">Connect wallet to deploy with real funds</p>
       </div>
     </div>
 
@@ -1597,20 +1892,20 @@
         <p class="deploy-note">All strategies execute on-chain with deterministic logic</p>
       </div>
 
-      <!-- nUSD Explainer -->
-      <div class="nusd-explainer">
-        <div class="nusd-title">
-          What is nUSD?
-          <span class="nusd-badge">Nexxore Native</span>
+      <!-- Strategy Info -->
+      <div class="strategy-info-box">
+        <div class="info-box-title">
+          📊 Strategy Sandbox
+          <span class="info-badge">Pro</span>
         </div>
-        <div class="nusd-text">
-          <strong>nUSD</strong> is Nexxore's native stablecoin, minted by depositing collateral (ETH, WBTC, stablecoins). Unlike traditional stables, your collateral remains productive—earning yield across DeFi protocols while backing your nUSD.<br><br>
-          <strong>Key Benefits:</strong><br>
-          • <strong>Capital Efficiency</strong> — Your collateral generates yield instead of sitting idle<br>
-          • <strong>On-Chain Transparency</strong> — All positions tracked in real-time on-chain<br>
-          • <strong>Risk-Adjusted</strong> — Collateral ratios vary by strategy risk profile<br>
-          • <strong>Auto-Liquidation Protection</strong> — Smart rebalancing prevents liquidations<br><br>
-          Mint nUSD → Deploy in strategy → Earn yield → Redeem anytime
+        <div class="info-box-text">
+          Test algorithmic trading strategies in a risk-free environment before deploying with real funds.<br><br>
+          <strong>Features:</strong><br>
+          • <strong>Live Performance Charts</strong> — Visualize historical returns<br>
+          • <strong>Technical Indicators</strong> — Real-time indicator values<br>
+          • <strong>Signal History</strong> — Track buy/sell signals<br>
+          • <strong>Risk Metrics</strong> — Sharpe, drawdown, win rate<br><br>
+          Select a Pro Strategy from the left panel to explore →
         </div>
       </div>
     </div>
@@ -2183,65 +2478,58 @@
 
     function applyProStrategy(strategy) {
       // Update canvas title & subtitle
-      document.querySelector('.canvas-title').textContent = strategy.name;
-      document.querySelector('.canvas-subtitle').textContent = strategy.description;
+      document.getElementById('sandboxTitle').textContent = strategy.name;
+      document.getElementById('sandboxSubtitle').textContent = strategy.description;
       
-      // Map risk levels to presets
-      const riskToPreset = {
-        'low': 'Safe Yield',
-        'medium': 'Balanced Realloc',
-        'high': 'Opportunistic Alpha'
-      };
+      // Update metrics
+      document.getElementById('metricReturn').textContent = strategy.returns.year;
+      document.getElementById('metricReturn').className = 'metric-value';
       
-      const basePreset = strategyPresets[riskToPreset[strategy.risk] || 'Balanced Realloc'];
+      // Calculate drawdown based on risk
+      const drawdowns = { low: '-8%', medium: '-15%', high: '-25%' };
+      document.getElementById('metricDrawdown').textContent = drawdowns[strategy.risk] || '-15%';
+      document.getElementById('metricDrawdown').className = 'metric-value negative';
       
-      // Apply base preset parameters
-      const leverageSlider = document.querySelectorAll('.slider')[0];
-      leverageSlider.min = basePreset.leverage.min;
-      leverageSlider.max = basePreset.leverage.max;
-      leverageSlider.value = basePreset.leverage.default;
+      // Calculate Sharpe ratio
+      const sharpe = (parseFloat(strategy.returns.year) / 50).toFixed(2);
+      document.getElementById('metricSharpe').textContent = sharpe;
       
-      const stopSlider = document.querySelectorAll('.slider')[1];
-      stopSlider.min = basePreset.stopLoss.min;
-      stopSlider.max = basePreset.stopLoss.max;
-      stopSlider.value = basePreset.stopLoss.default;
+      // Win rate based on risk
+      const winRates = { low: '68%', medium: '62%', high: '55%' };
+      document.getElementById('metricWinRate').textContent = winRates[strategy.risk] || '62%';
       
-      const profitSlider = document.querySelectorAll('.slider')[2];
-      profitSlider.min = basePreset.takeProfit.min;
-      profitSlider.max = basePreset.takeProfit.max;
-      profitSlider.value = basePreset.takeProfit.default;
+      // Update indicators grid
+      const indicatorsGrid = document.getElementById('indicatorsGrid');
+      indicatorsGrid.innerHTML = strategy.indicators.map(ind => `
+        <div class="indicator-item">
+          <div class="indicator-name">${ind}</div>
+          <div class="indicator-value">${getIndicatorValue(ind)}</div>
+        </div>
+      `).join('');
       
-      // Update slider displays
-      document.querySelectorAll('.slider-group').forEach(group => {
-        const slider = group.querySelector('.slider');
-        const valueDisplay = group.querySelector('.slider-value');
-        const label = group.querySelector('.slider-label').textContent;
-        
-        if (label.includes('Leverage')) {
-          valueDisplay.textContent = slider.value + 'x';
-        } else if (label.includes('Stop')) {
-          valueDisplay.textContent = '-' + slider.value + '%';
-        } else if (label.includes('Profit')) {
-          valueDisplay.textContent = '+' + slider.value + '%';
-        }
-      });
-      
-      // Update protocol allocation to show indicators
-      const protocolAllocation = document.getElementById('protocolAllocation');
-      if (protocolAllocation) {
-        const indicatorAlloc = strategy.indicators.map((ind, i) => ({
-          name: ind,
-          pct: Math.round(100 / strategy.indicators.length)
-        }));
-        protocolAllocation.innerHTML = indicatorAlloc.map(p => `
-          <div class="config-item">
-            <div class="config-label">${p.name}</div>
-            <div class="config-value" style="color: var(--accent-gold);">${p.pct}%</div>
+      // Update signals
+      const signalsList = document.getElementById('signalsList');
+      const signals = generateSignals(strategy);
+      document.getElementById('signalsCount').textContent = signals.length + ' signals';
+      signalsList.innerHTML = signals.map(s => `
+        <div class="signal-item ${s.type}">
+          <span class="signal-type ${s.type}">${s.type}</span>
+          <div class="signal-details">
+            <div class="signal-asset">${s.asset}</div>
+            <div class="signal-reason">${s.reason}</div>
           </div>
-        `).join('');
-      }
+          <span class="signal-time">${s.time}</span>
+        </div>
+      `).join('');
       
-      // Update summary stats with strategy returns
+      // Update chart
+      renderStrategyChart(strategy);
+      
+      // Show deploy button and chart legend
+      document.getElementById('sandboxDeploy').style.display = 'block';
+      document.getElementById('chartLegend').style.display = 'flex';
+      
+      // Update sidebar stats
       const apyEl = document.querySelector('.summary-stat:nth-child(1) .summary-stat-value');
       const ddEl = document.querySelector('.summary-stat:nth-child(2) .summary-stat-value');
       const sharpeEl = document.querySelector('.summary-stat:nth-child(3) .summary-stat-value');
@@ -2251,9 +2539,9 @@
         apyEl.textContent = strategy.returns.year;
         apyEl.className = 'summary-stat-value green';
       }
-      if (ddEl) ddEl.textContent = '-' + basePreset.maxDD + '%';
+      if (ddEl) ddEl.textContent = drawdowns[strategy.risk] || '-15%';
       if (sharpeEl) {
-        sharpeEl.textContent = (parseFloat(strategy.returns.year) / 50).toFixed(2);
+        sharpeEl.textContent = sharpe;
         sharpeEl.className = 'summary-stat-value blue';
       }
       if (riskEl) {
@@ -2264,39 +2552,153 @@
       
       // Update risk meter
       const riskPosition = strategy.risk === 'low' ? 20 : strategy.risk === 'medium' ? 50 : 75;
-      document.querySelector('.risk-indicator').style.left = riskPosition + '%';
-      
-      // Update deploy button
-      const deployBtn = document.querySelector('.deploy-btn');
-      if (deployBtn) {
-        deployBtn.style.background = 'var(--accent-gold)';
-      }
-      
-      // Update minting info
-      const mintingInfo = document.getElementById('mintingInfo');
-      if (mintingInfo) {
-        mintingInfo.innerHTML = `
-          <div class="minting-param">
-            <span class="minting-label">Strategy Type</span>
-            <span class="minting-value">Algo Trading</span>
-          </div>
-          <div class="minting-param">
-            <span class="minting-label">Timeframe</span>
-            <span class="minting-value">${strategy.timeframe}</span>
-          </div>
-          <div class="minting-param">
-            <span class="minting-label">Primary Asset</span>
-            <span class="minting-value">${strategy.asset}</span>
-          </div>
-          <div class="minting-explanation">
-            <strong>Indicators:</strong> ${strategy.indicators.join(', ')}<br><br>
-            This algorithmic trading strategy uses technical indicators to generate buy/sell signals. Connects to your nUSD position for automated execution.
-          </div>
-        `;
-      }
+      const riskIndicator = document.querySelector('.risk-indicator');
+      if (riskIndicator) riskIndicator.style.left = riskPosition + '%';
       
       // Deselect basic templates
       document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+    }
+    
+    function getIndicatorValue(indicator) {
+      const values = {
+        'Ichimoku Cloud': 'Bullish',
+        'Tenkan-sen': '42,150',
+        'Kijun-sen': '41,800',
+        'Senkou Span': '+2.4%',
+        'On-Chain Metrics': 'Strong',
+        'Sentiment Analysis': '72%',
+        'MVRV Ratio': '2.1',
+        'EMA': 'Cross Up',
+        'SMA': '41,500',
+        'Volatility Filter': 'Low',
+        'Trend Strength': '78%',
+        'EMA 10': '42,100',
+        'EMA 21': '41,900',
+        'Crossover Signals': 'Buy',
+        'Standard Deviation': '1.2σ',
+        'Bollinger Bands': 'Upper',
+        'RSI': '58',
+        'Trend Filter': 'Up',
+        'Parabolic SAR': 'Long',
+        'ADX': '32',
+        'CMF': '+0.15',
+        'Volume Profile': 'High',
+        'OBV': '↑ 2.3M',
+        'Volume MA': '1.8M',
+        'Accumulation/Distribution': 'Acc',
+        'Donchian Channel': 'Break',
+        'Price Channel': 'Upper',
+        'ATR Stops': '$850',
+        'Williams Fractals': 'Up',
+        'Alligator': 'Open',
+        'AO': '+240',
+        'AC': '+18',
+        'RSI Divergence': 'None',
+        'Support/Resistance': 'S: 40.2K',
+        'MA Cross': 'Golden',
+        'Volume Climax': 'No',
+        'EMA 12': '42,050',
+        'EMA 26': '41,750',
+        'Signal Line': 'Above',
+        'Alligator Jaw': '41,200',
+        'Teeth': '41,500',
+        'Lips': '41,900',
+        'Fractals': '↑ 42.5K'
+      };
+      return values[indicator] || 'Active';
+    }
+    
+    function generateSignals(strategy) {
+      const now = new Date();
+      const signals = [];
+      const types = ['buy', 'sell'];
+      const reasons = {
+        buy: ['EMA crossover detected', 'RSI oversold bounce', 'Support level test', 'Bullish divergence', 'Volume breakout'],
+        sell: ['Resistance rejection', 'RSI overbought', 'Bearish divergence', 'Stop loss triggered', 'Take profit hit']
+      };
+      
+      // Generate 3-5 recent signals
+      const count = 3 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < count; i++) {
+        const type = types[Math.floor(Math.random() * (strategy.risk === 'low' ? 1.5 : 2))]; // Low risk = more buys
+        const hours = Math.floor(Math.random() * 48) + 1;
+        signals.push({
+          type,
+          asset: strategy.asset === 'Multi' ? ['BTC', 'ETH', 'SOL'][Math.floor(Math.random() * 3)] : strategy.asset,
+          reason: reasons[type][Math.floor(Math.random() * reasons[type].length)],
+          time: hours < 24 ? `${hours}h ago` : `${Math.floor(hours/24)}d ago`
+        });
+      }
+      return signals.sort((a, b) => parseInt(a.time) - parseInt(b.time));
+    }
+    
+    function renderStrategyChart(strategy) {
+      const chart = document.getElementById('performanceChart');
+      const yearReturn = parseFloat(strategy.returns.year);
+      
+      // Generate chart bars
+      const bars = [];
+      let cumulative = 0;
+      const monthlyReturn = yearReturn / 12;
+      
+      for (let i = 0; i < 12; i++) {
+        const variance = (Math.random() - 0.3) * monthlyReturn * 2;
+        cumulative += monthlyReturn + variance;
+        const height = Math.min(Math.max(20 + (cumulative / yearReturn) * 60, 10), 95);
+        const color = cumulative > 0 ? 'var(--safe-green)' : 'var(--degen-red)';
+        bars.push(`<div class="chart-bar" style="height: ${height}%; background: ${color}; opacity: ${0.4 + (i/12) * 0.6};"></div>`);
+      }
+      
+      chart.innerHTML = `
+        <div class="chart-bars">
+          ${bars.join('')}
+        </div>
+        <div class="chart-line"></div>
+        <div class="chart-value">
+          <span class="chart-return-label">Total Return</span>
+          <span class="chart-return-value">${strategy.returns.year}</span>
+        </div>
+      `;
+      
+      // Add chart styles if not present
+      if (!document.getElementById('chartStyles')) {
+        const style = document.createElement('style');
+        style.id = 'chartStyles';
+        style.textContent = `
+          .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 100%;
+            padding: 10px;
+            gap: 4px;
+          }
+          .chart-bar {
+            flex: 1;
+            border-radius: 2px 2px 0 0;
+            transition: height 0.5s ease;
+          }
+          .chart-value {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            text-align: right;
+          }
+          .chart-return-label {
+            display: block;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+          }
+          .chart-return-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--safe-green);
+          }
+        `;
+        document.head.appendChild(style);
+      }
     }
   </script>
 <script>
