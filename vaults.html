@@ -382,6 +382,22 @@
     <button id="connectWalletBtn" class="connect-btn">Connect Wallet</button>
   </header>
 
+  <!-- Coming Soon Modal -->
+  <div class="coming-soon-modal" id="comingSoonModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:10000; align-items:center; justify-content:center;">
+    <div style="background:linear-gradient(135deg, #131318, #1a1a22); border:1px solid rgba(168,85,247,0.3); border-radius:16px; padding:40px; max-width:420px; text-align:center; animation:modalPop 0.3s ease;">
+      <div style="font-size:48px; margin-bottom:16px;">🚀</div>
+      <h2 style="font-size:1.5rem; color:#fff; margin-bottom:12px;">We'll Be Live Shortly!</h2>
+      <p style="color:rgba(255,255,255,0.6); margin-bottom:24px; line-height:1.6;">Vaults are launching soon. Join our waitlist to get early access and exclusive perks.</p>
+      <a href="/#waitlist" style="display:inline-block; background:linear-gradient(135deg, #a855f7, #22c55e); color:#fff; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:600; margin-bottom:12px; transition:transform 0.2s;">Join Waitlist →</a>
+      <button id="closeComingSoon" style="display:block; width:100%; margin-top:12px; background:transparent; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.6); padding:12px; border-radius:8px; cursor:pointer; font-size:0.9rem;">Maybe Later</button>
+    </div>
+  </div>
+  <style>
+    @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    #comingSoonModal a:hover { transform: scale(1.02); }
+    #closeComingSoon:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  </style>
+
   <!-- Main Content -->
   <main class="main">
     <div class="container">
@@ -509,6 +525,19 @@
   <!-- Vault Integration -->
   <script src="frontend/js/vaultIntegration.js"></script>
   <script>
+    // Connect wallet - DISABLED (Coming Soon)
+    document.getElementById('connectWalletBtn').addEventListener('click', () => {
+      document.getElementById('comingSoonModal').style.display = 'flex';
+    });
+    document.getElementById('closeComingSoon').addEventListener('click', () => {
+      document.getElementById('comingSoonModal').style.display = 'none';
+    });
+    document.getElementById('comingSoonModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('comingSoonModal')) {
+        document.getElementById('comingSoonModal').style.display = 'none';
+      }
+    });
+
     const chainSelect = document.getElementById('chainSelect');
     if (chainSelect) {
       const stored = localStorage.getItem('nexxoreChain');
