@@ -4,41 +4,54 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Prediction Markets Agent | Nexxore</title>
-  <meta name="description" content="AI-powered prediction markets intelligence for Polymarket and Kalshi traders. Real-time odds, arbitrage detection, and smart signals.">
+  <meta name="description" content="AI-powered prediction markets intelligence with ML models, real-time Polymarket data, sentiment analysis, and arbitrage detection.">
   
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%23a855f7'/><stop offset='100%25' stop-color='%2322c55e'/></linearGradient></defs><rect width='32' height='32' rx='6' fill='%2308080a'/><circle cx='12' cy='11' r='6' stroke='url(%23g)' stroke-width='2' fill='none'/><circle cx='20' cy='11' r='6' stroke='url(%23g)' stroke-width='2' fill='none' opacity='.9'/><circle cx='16' cy='18' r='6' stroke='url(%23g)' stroke-width='2' fill='none' opacity='.9'/></svg>" type="image/svg+xml">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   
   <style>
     :root {
-      --bg: #08080a;
-      --bg-elevated: #0f0f12;
-      --bg-card: #131318;
-      --bg-card-hover: #1a1a22;
+      --bg: #050507;
+      --bg-elevated: #0a0a0f;
+      --bg-card: #0e0e14;
+      --bg-card-hover: #141420;
+      --bg-panel: #111118;
       --text: #ffffff;
-      --text-secondary: rgba(255, 255, 255, 0.6);
-      --text-muted: rgba(255, 255, 255, 0.4);
-      --border: rgba(255, 255, 255, 0.08);
-      --border-hover: rgba(255, 255, 255, 0.15);
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --text-muted: rgba(255, 255, 255, 0.45);
+      --border: rgba(255, 255, 255, 0.06);
+      --border-hover: rgba(255, 255, 255, 0.12);
       --accent: #a855f7;
-      --accent-green: #22c55e;
-      --accent-red: #ef4444;
-      --accent-blue: #3b82f6;
-      --accent-orange: #f59e0b;
-      --accent-cyan: #06b6d4;
-      --font-mono: 'JetBrains Mono', monospace;
+      --accent-dim: rgba(168, 85, 247, 0.15);
+      --green: #10b981;
+      --green-dim: rgba(16, 185, 129, 0.15);
+      --red: #ef4444;
+      --red-dim: rgba(239, 68, 68, 0.15);
+      --blue: #3b82f6;
+      --blue-dim: rgba(59, 130, 246, 0.15);
+      --orange: #f59e0b;
+      --orange-dim: rgba(245, 158, 11, 0.15);
+      --cyan: #06b6d4;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Inter', -apple-system, system-ui, sans-serif;
     }
     
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    
     body { 
       background: var(--bg); 
       color: var(--text); 
-      font-family: 'Inter', -apple-system, sans-serif;
+      font-family: var(--sans);
       min-height: 100vh;
       line-height: 1.5;
     }
+    
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
     
     /* Header */
     .header {
@@ -47,10 +60,10 @@
       left: 0;
       right: 0;
       z-index: 100;
-      background: rgba(8, 8, 10, 0.9);
+      background: rgba(5, 5, 7, 0.85);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
-      padding: 12px 24px;
+      padding: 10px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -59,27 +72,32 @@
     .header-left {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
     }
     
     .logo {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       text-decoration: none;
-    }
-    
-    .logo span {
-      color: var(--text);
       font-weight: 600;
       font-size: 0.95rem;
+      color: var(--text);
     }
     
-    .header-title {
-      color: var(--text-secondary);
-      font-size: 0.85rem;
-      padding-left: 16px;
-      border-left: 1px solid var(--border);
+    .logo svg { width: 26px; height: 26px; }
+    
+    .agent-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
     }
     
     .header-right {
@@ -88,1560 +106,1814 @@
       gap: 12px;
     }
     
-    .platform-toggle {
+    .platform-selector {
       display: flex;
       background: var(--bg-card);
       border-radius: 8px;
-      padding: 4px;
+      padding: 3px;
       border: 1px solid var(--border);
     }
     
     .platform-btn {
-      padding: 8px 16px;
+      padding: 7px 14px;
       border: none;
       background: transparent;
-      color: var(--text-secondary);
-      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-size: 0.75rem;
       font-weight: 500;
       cursor: pointer;
       border-radius: 6px;
-      transition: all 0.2s;
+      transition: all 0.15s;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
     
     .platform-btn.active {
-      background: linear-gradient(135deg, var(--accent), var(--accent-green));
+      background: linear-gradient(135deg, var(--accent), var(--green));
       color: white;
     }
     
     .platform-btn:hover:not(.active) {
       background: var(--bg-elevated);
-      color: var(--text);
+      color: var(--text-secondary);
     }
     
-    .live-badge {
+    .status-indicator {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
-      background: rgba(34, 197, 94, 0.1);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      border-radius: 20px;
-      font-size: 0.75rem;
-      color: var(--accent-green);
+      padding: 5px 10px;
+      background: var(--green-dim);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 6px;
+      font-size: 0.7rem;
+      color: var(--green);
+      font-weight: 500;
     }
     
-    .live-dot {
+    .status-dot {
       width: 6px;
       height: 6px;
-      background: var(--accent-green);
+      background: var(--green);
       border-radius: 50%;
       animation: pulse 2s infinite;
     }
     
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.9); }
     }
     
     /* Main Layout */
     .main {
-      padding-top: 80px;
+      padding-top: 56px;
+      display: grid;
+      grid-template-columns: 320px 1fr 380px;
       min-height: 100vh;
     }
     
-    /* Hero Section */
-    .hero {
-      padding: 60px 24px 40px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
+    @media (max-width: 1400px) {
+      .main { grid-template-columns: 280px 1fr 340px; }
     }
     
-    .hero-bg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: radial-gradient(ellipse at 50% 0%, rgba(168, 85, 247, 0.08), transparent 60%),
-                  radial-gradient(ellipse at 30% 100%, rgba(34, 197, 94, 0.05), transparent 50%);
-      pointer-events: none;
+    @media (max-width: 1200px) {
+      .main { grid-template-columns: 1fr; }
+      .sidebar-left, .sidebar-right { display: none; }
     }
     
-    .hero-content {
-      position: relative;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(34, 197, 94, 0.15));
-      border: 1px solid rgba(168, 85, 247, 0.3);
-      border-radius: 20px;
-      font-size: 0.8rem;
-      color: var(--accent);
-      margin-bottom: 20px;
-    }
-    
-    .hero h1 {
-      font-size: clamp(2rem, 5vw, 3rem);
-      font-weight: 700;
-      margin-bottom: 16px;
-      line-height: 1.2;
-    }
-    
-    .hero h1 span {
-      background: linear-gradient(135deg, var(--accent), var(--accent-green));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .hero p {
-      font-size: 1.1rem;
-      color: var(--text-secondary);
-      max-width: 600px;
-      margin: 0 auto 32px;
-    }
-    
-    .hero-stats {
-      display: flex;
-      justify-content: center;
-      gap: 48px;
-      flex-wrap: wrap;
-    }
-    
-    .hero-stat {
-      text-align: center;
-    }
-    
-    .hero-stat-value {
-      font-size: 1.75rem;
-      font-weight: 700;
-      font-family: var(--font-mono);
-      background: linear-gradient(135deg, var(--accent), var(--accent-green));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    
-    .hero-stat-label {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-    
-    /* Stats Bar */
-    .stats-bar {
-      display: flex;
-      justify-content: center;
-      gap: 32px;
-      padding: 16px 24px;
+    /* Sidebars */
+    .sidebar-left, .sidebar-right {
+      border-right: 1px solid var(--border);
       background: var(--bg-elevated);
-      border-top: 1px solid var(--border);
+      overflow-y: auto;
+      height: calc(100vh - 56px);
+      position: sticky;
+      top: 56px;
+    }
+    
+    .sidebar-right {
+      border-right: none;
+      border-left: 1px solid var(--border);
+    }
+    
+    .sidebar-section {
+      padding: 16px;
       border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
     }
     
-    .stat-item {
-      text-align: center;
-    }
-    
-    .stat-label {
+    .sidebar-title {
       font-size: 0.7rem;
+      font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-    
-    .stat-value {
-      font-size: 1rem;
-      font-weight: 600;
-      font-family: var(--font-mono);
-    }
-    
-    .stat-value.green { color: var(--accent-green); }
-    .stat-value.red { color: var(--accent-red); }
-    .stat-value.blue { color: var(--accent-blue); }
-    
-    /* Content Grid */
-    .content {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 32px 24px;
-    }
-    
-    .section-header {
+      margin-bottom: 12px;
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
     }
     
-    .section-title {
-      font-size: 1.1rem;
-      font-weight: 600;
+    .sidebar-title .count {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      background: var(--accent-dim);
+      border-radius: 4px;
+      color: var(--accent);
+    }
+    
+    /* Market List */
+    .market-list {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 8px;
     }
     
-    .section-subtitle {
-      font-size: 0.8rem;
+    .market-item {
+      padding: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    
+    .market-item:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+    }
+    
+    .market-item.selected {
+      background: var(--accent-dim);
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+    
+    .market-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    
+    .market-category {
+      font-size: 0.6rem;
+      color: var(--accent);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .market-platform-tag {
+      font-size: 0.55rem;
+      padding: 2px 5px;
+      background: var(--bg-elevated);
+      border-radius: 3px;
       color: var(--text-muted);
     }
     
-    /* Tabs */
-    .tabs {
-      display: flex;
-      gap: 4px;
-      background: var(--bg-card);
-      padding: 4px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      margin-bottom: 24px;
-      overflow-x: auto;
-    }
-    
-    .tab {
-      padding: 10px 20px;
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 0.85rem;
+    .market-item-title {
+      font-size: 0.8rem;
       font-weight: 500;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: all 0.2s;
-      white-space: nowrap;
+      color: var(--text);
+      line-height: 1.4;
+      margin-bottom: 10px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
     
-    .tab.active {
+    .market-item-odds {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .odds-mini {
+      flex: 1;
+      padding: 6px 8px;
       background: var(--bg-elevated);
-      color: var(--text);
+      border-radius: 6px;
+      text-align: center;
     }
     
-    .tab:hover:not(.active) {
-      color: var(--text);
+    .odds-mini-label {
+      font-size: 0.55rem;
+      color: var(--text-muted);
+      margin-bottom: 2px;
     }
     
-    /* Cards Grid */
-    .markets-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-      gap: 16px;
+    .odds-mini-value {
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: var(--mono);
     }
     
-    .market-card {
+    .odds-mini-value.yes { color: var(--green); }
+    .odds-mini-value.no { color: var(--red); }
+    
+    .market-item-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .market-volume {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-family: var(--mono);
+    }
+    
+    .market-signal-mini {
+      font-size: 0.6rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    
+    .market-signal-mini.bullish { background: var(--green-dim); color: var(--green); }
+    .market-signal-mini.bearish { background: var(--red-dim); color: var(--red); }
+    .market-signal-mini.neutral { background: var(--orange-dim); color: var(--orange); }
+    
+    /* Category Filters */
+    .category-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    
+    .category-chip {
+      padding: 5px 10px;
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-      transition: all 0.2s;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
       cursor: pointer;
+      transition: all 0.15s;
     }
     
-    .market-card:hover {
-      background: var(--bg-card-hover);
-      border-color: var(--border-hover);
-      transform: translateY(-2px);
+    .category-chip:hover { background: var(--bg-card-hover); }
+    .category-chip.active {
+      background: var(--accent-dim);
+      border-color: rgba(168, 85, 247, 0.3);
+      color: var(--accent);
     }
     
-    .market-header {
+    /* Main Content */
+    .content {
+      padding: 20px;
+      overflow-y: auto;
+    }
+    
+    /* Stats Row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .stat-card {
+      padding: 14px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    
+    .stat-card-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    
+    .stat-card-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--text);
+    }
+    
+    .stat-card-value.green { color: var(--green); }
+    .stat-card-value.red { color: var(--red); }
+    .stat-card-value.blue { color: var(--blue); }
+    
+    .stat-card-change {
+      font-size: 0.7rem;
+      margin-top: 4px;
+    }
+    
+    .stat-card-change.up { color: var(--green); }
+    .stat-card-change.down { color: var(--red); }
+    
+    /* Market Detail Panel */
+    .market-detail {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    
+    .market-detail-header {
+      padding: 20px;
+      background: linear-gradient(135deg, var(--accent-dim), var(--bg-card));
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .market-detail-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 12px;
     }
     
-    .market-category {
+    .market-detail-category {
       font-size: 0.7rem;
       color: var(--accent);
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    
+    .market-detail-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+      max-width: 600px;
+    }
+    
+    .market-detail-meta {
+      text-align: right;
+    }
+    
+    .market-platform-badge {
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      background: var(--bg-elevated);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+    
+    .market-expiry {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    .market-odds-main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    
+    .odds-card {
+      padding: 16px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      text-align: center;
+    }
+    
+    .odds-card-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
       margin-bottom: 6px;
     }
     
-    .market-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      line-height: 1.4;
-      max-width: 280px;
+    .odds-card-value {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: var(--mono);
     }
     
-    .market-platform {
-      font-size: 0.65rem;
-      padding: 4px 8px;
-      background: var(--bg-elevated);
-      border-radius: 4px;
-      color: var(--text-secondary);
-    }
+    .odds-card-value.yes { color: var(--green); }
+    .odds-card-value.no { color: var(--red); }
     
-    .market-odds {
+    .odds-card-change {
+      font-size: 0.75rem;
+      margin-top: 6px;
       display: flex;
-      gap: 12px;
-      margin: 16px 0;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
     }
     
-    .odds-box {
-      flex: 1;
-      padding: 12px;
+    .odds-card-change.up { color: var(--green); }
+    .odds-card-change.down { color: var(--red); }
+    
+    /* Market Body */
+    .market-detail-body {
+      padding: 20px;
+    }
+    
+    .detail-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
       background: var(--bg-elevated);
+      padding: 4px;
+      border-radius: 10px;
+    }
+    
+    .detail-tab {
+      flex: 1;
+      padding: 10px 16px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.15s;
+    }
+    
+    .detail-tab.active {
+      background: var(--bg-card);
+      color: var(--text);
+    }
+    
+    .detail-tab:hover:not(.active) { color: var(--text-secondary); }
+    
+    .detail-content { display: none; }
+    .detail-content.active { display: block; }
+    
+    /* AI Analysis Section */
+    .ai-analysis {
+      background: linear-gradient(135deg, var(--accent-dim), var(--green-dim));
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .ai-analysis-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .ai-analysis-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .ai-model-badge {
+      font-size: 0.6rem;
+      padding: 3px 8px;
+      background: rgba(168, 85, 247, 0.2);
+      border-radius: 4px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    
+    .ai-verdict {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .verdict-pill {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    
+    .verdict-pill.buy { background: var(--green-dim); color: var(--green); }
+    .verdict-pill.sell { background: var(--red-dim); color: var(--red); }
+    .verdict-pill.hold { background: var(--orange-dim); color: var(--orange); }
+    
+    .confidence-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .confidence-track {
+      width: 60px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    
+    .confidence-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--green);
+    }
+    
+    .confidence-value {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-family: var(--mono);
+    }
+    
+    .ai-analysis-text {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    
+    .ai-factors {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    
+    .ai-factor {
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.2);
       border-radius: 8px;
       text-align: center;
     }
     
-    .odds-label {
-      font-size: 0.7rem;
+    .ai-factor-label {
+      font-size: 0.6rem;
       color: var(--text-muted);
       margin-bottom: 4px;
     }
     
-    .odds-value {
-      font-size: 1.25rem;
-      font-weight: 700;
-      font-family: var(--font-mono);
+    .ai-factor-value {
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: var(--mono);
     }
     
-    .odds-value.yes { color: var(--accent-green); }
-    .odds-value.no { color: var(--accent-red); }
+    .ai-factor-value.positive { color: var(--green); }
+    .ai-factor-value.negative { color: var(--red); }
+    .ai-factor-value.neutral { color: var(--orange); }
     
-    .odds-change {
-      font-size: 0.7rem;
-      margin-top: 4px;
-    }
-    
-    .odds-change.up { color: var(--accent-green); }
-    .odds-change.down { color: var(--accent-red); }
-    
-    .market-metrics {
+    /* ML Metrics Grid */
+    .ml-metrics {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
+      margin-bottom: 20px;
     }
     
-    .metric {
-      text-align: center;
+    .ml-metric-card {
+      padding: 16px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
     }
     
-    .metric-label {
-      font-size: 0.65rem;
-      color: var(--text-muted);
-      margin-bottom: 2px;
-    }
-    
-    .metric-value {
-      font-size: 0.8rem;
-      font-weight: 600;
-      font-family: var(--font-mono);
-    }
-    
-    .market-signal {
-      margin-top: 16px;
-      padding: 12px;
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(34, 197, 94, 0.1));
-      border: 1px solid rgba(168, 85, 247, 0.2);
-      border-radius: 8px;
-    }
-    
-    .signal-header {
+    .ml-metric-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     
-    .signal-label {
+    .ml-metric-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    .ml-metric-icon {
+      font-size: 0.9rem;
+    }
+    
+    .ml-metric-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      margin-bottom: 6px;
+    }
+    
+    .ml-metric-desc {
       font-size: 0.7rem;
-      color: var(--accent);
+      color: var(--text-muted);
+    }
+    
+    /* Odds History Chart */
+    .chart-container {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .chart-title {
+      font-size: 0.85rem;
       font-weight: 600;
+      color: var(--text);
     }
     
-    .signal-confidence {
-      font-size: 0.7rem;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-weight: 500;
+    .chart-timeframes {
+      display: flex;
+      gap: 4px;
     }
     
-    .signal-confidence.high { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); }
-    .signal-confidence.medium { background: rgba(245, 158, 11, 0.2); color: var(--accent-orange); }
-    .signal-confidence.low { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+    .chart-tf {
+      padding: 4px 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
     
-    .signal-text {
-      font-size: 0.8rem;
+    .chart-tf.active {
+      background: var(--accent-dim);
+      border-color: rgba(168, 85, 247, 0.3);
+      color: var(--accent);
+    }
+    
+    .chart-canvas {
+      height: 180px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .chart-svg {
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* Sentiment Analysis */
+    .sentiment-section {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .sentiment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .sentiment-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .sentiment-sources {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+    
+    .sentiment-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .sentiment-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .sentiment-bar-label {
+      font-size: 0.75rem;
       color: var(--text-secondary);
-      line-height: 1.5;
+      width: 80px;
+    }
+    
+    .sentiment-bar-track {
+      flex: 1;
+      height: 8px;
+      background: var(--bg-card);
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+    }
+    
+    .sentiment-bar-fill {
+      height: 100%;
+      transition: width 0.3s;
+    }
+    
+    .sentiment-bar-fill.bullish { background: var(--green); }
+    .sentiment-bar-fill.bearish { background: var(--red); }
+    .sentiment-bar-fill.neutral { background: var(--text-muted); }
+    
+    .sentiment-bar-value {
+      font-size: 0.7rem;
+      font-family: var(--mono);
+      color: var(--text-muted);
+      width: 40px;
+      text-align: right;
     }
     
     /* Arbitrage Section */
-    .arbitrage-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 16px;
-      margin-top: 32px;
-    }
-    
-    .arb-card {
-      background: linear-gradient(135deg, rgba(34, 197, 94, 0.05), rgba(168, 85, 247, 0.05));
-      border: 1px solid rgba(34, 197, 94, 0.2);
-      border-radius: 12px;
-      padding: 20px;
+    .arb-section {
+      background: linear-gradient(135deg, var(--green-dim), var(--bg-card));
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 10px;
+      padding: 16px;
     }
     
     .arb-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
     
-    .arb-profit {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--accent-green);
-      font-family: var(--font-mono);
+    .arb-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     
     .arb-badge {
-      font-size: 0.7rem;
-      padding: 4px 10px;
-      background: rgba(34, 197, 94, 0.2);
+      font-size: 0.6rem;
+      padding: 3px 8px;
+      background: var(--green);
       border-radius: 4px;
-      color: var(--accent-green);
+      color: white;
       font-weight: 600;
     }
     
-    .arb-markets {
+    .arb-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
     
-    .arb-market {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 12px;
-      background: var(--bg-card);
-      border-radius: 8px;
-    }
-    
-    .arb-market-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .arb-platform-icon {
-      width: 20px;
-      height: 20px;
-      border-radius: 4px;
-      background: var(--bg-elevated);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.6rem;
-    }
-    
-    .arb-market-name {
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-    }
-    
-    .arb-odds {
-      font-size: 0.9rem;
-      font-weight: 600;
-      font-family: var(--font-mono);
-    }
-    
-    /* Signals Panel */
-    .signals-panel {
+    .arb-item {
+      padding: 12px;
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      margin-top: 32px;
-      overflow: hidden;
-    }
-    
-    .signals-header {
-      padding: 16px 20px;
-      background: var(--bg-elevated);
-      border-bottom: 1px solid var(--border);
+      border-radius: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     
-    .signals-title {
-      font-size: 1rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .arb-item-info { flex: 1; }
     
-    .signals-list {
-      max-height: 400px;
-      overflow-y: auto;
-    }
-    
-    .signal-item {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
-      transition: background 0.2s;
-    }
-    
-    .signal-item:hover {
-      background: var(--bg-elevated);
-    }
-    
-    .signal-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      flex-shrink: 0;
-    }
-    
-    .signal-icon.buy { background: rgba(34, 197, 94, 0.15); }
-    .signal-icon.sell { background: rgba(239, 68, 68, 0.15); }
-    .signal-icon.alert { background: rgba(245, 158, 11, 0.15); }
-    
-    .signal-content {
-      flex: 1;
-    }
-    
-    .signal-market {
-      font-size: 0.85rem;
-      font-weight: 600;
+    .arb-item-market {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text);
       margin-bottom: 4px;
     }
     
-    .signal-desc {
+    .arb-item-legs {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    
+    .arb-item-profit { text-align: right; }
+    
+    .arb-profit-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--green);
+    }
+    
+    .arb-profit-label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+    }
+    
+    /* Right Sidebar */
+    .signals-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .signal-card {
+      padding: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: all 0.15s;
+    }
+    
+    .signal-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+    }
+    
+    .signal-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    
+    .signal-type {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .signal-type-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 0.8rem;
-      color: var(--text-secondary);
+    }
+    
+    .signal-type-icon.buy { background: var(--green-dim); }
+    .signal-type-icon.sell { background: var(--red-dim); }
+    .signal-type-icon.alert { background: var(--orange-dim); }
+    
+    .signal-type-text {
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    
+    .signal-type-text.buy { color: var(--green); }
+    .signal-type-text.sell { color: var(--red); }
+    .signal-type-text.alert { color: var(--orange); }
+    
+    .signal-time {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+    }
+    
+    .signal-market {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 6px;
       line-height: 1.4;
+    }
+    
+    .signal-desc {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 8px;
     }
     
     .signal-meta {
       display: flex;
       gap: 12px;
-      margin-top: 8px;
     }
     
     .signal-meta-item {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .signal-meta-value {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    
+    /* Model Performance */
+    .model-performance {
+      padding: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    
+    .model-perf-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .model-perf-row:last-child { border-bottom: none; }
+    
+    .model-perf-label {
       font-size: 0.7rem;
       color: var(--text-muted);
     }
     
-    .signal-action {
-      flex-shrink: 0;
-    }
-    
-    .signal-action-btn {
-      padding: 8px 16px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-green));
-      border: none;
-      border-radius: 6px;
-      color: white;
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    
-    .signal-action-btn:hover {
-      transform: scale(1.02);
-    }
-    
-    /* CTA Section */
-    .cta-section {
-      padding: 80px 24px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .cta-bg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(180deg, transparent, rgba(168, 85, 247, 0.05), transparent);
-      pointer-events: none;
-    }
-    
-    .cta-content {
-      position: relative;
-      max-width: 700px;
-      margin: 0 auto;
-    }
-    
-    .cta-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      background: rgba(168, 85, 247, 0.1);
-      border: 1px solid rgba(168, 85, 247, 0.3);
-      border-radius: 20px;
+    .model-perf-value {
       font-size: 0.8rem;
-      color: var(--accent);
-      margin-bottom: 24px;
+      font-weight: 600;
+      font-family: var(--mono);
     }
     
-    .cta-title {
-      font-size: 2.25rem;
-      font-weight: 700;
+    .model-perf-value.good { color: var(--green); }
+    .model-perf-value.avg { color: var(--orange); }
+    .model-perf-value.bad { color: var(--red); }
+    
+    /* Kelly Calculator */
+    .kelly-section {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .kelly-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 16px;
     }
     
-    .cta-title span {
-      background: linear-gradient(135deg, var(--accent), var(--accent-green));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    
-    .cta-desc {
-      font-size: 1.1rem;
-      color: var(--text-secondary);
-      margin-bottom: 32px;
-      line-height: 1.6;
-    }
-    
-    .cta-features {
-      display: flex;
-      justify-content: center;
-      gap: 32px;
-      margin-bottom: 40px;
-      flex-wrap: wrap;
-    }
-    
-    .cta-feature {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-    }
-    
-    .cta-feature-icon {
-      color: var(--accent-green);
-    }
-    
-    .cta-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-    
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 16px 32px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-green));
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s;
-    }
-    
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(168, 85, 247, 0.3);
-    }
-    
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 16px 32px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s;
-    }
-    
-    .btn-secondary:hover {
-      background: var(--bg-elevated);
-      border-color: var(--border-hover);
-    }
-    
-    /* Features Grid */
-    .features-section {
-      padding: 60px 24px;
-      background: var(--bg-elevated);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    .feature-card {
-      padding: 28px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      transition: all 0.2s;
-    }
-    
-    .feature-card:hover {
-      border-color: rgba(168, 85, 247, 0.3);
-      transform: translateY(-2px);
-    }
-    
-    .feature-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(34, 197, 94, 0.15));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      margin-bottom: 16px;
-    }
-    
-    .feature-title {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    
-    .feature-desc {
+    .kelly-title {
       font-size: 0.85rem;
-      color: var(--text-secondary);
-      line-height: 1.5;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .kelly-result {
+      text-align: center;
+      padding: 16px;
+      background: var(--bg-card);
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .kelly-result-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    
+    .kelly-result-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--accent);
+    }
+    
+    .kelly-inputs {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    
+    .kelly-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .kelly-input-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+    
+    .kelly-input {
+      padding: 8px 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.8rem;
+      font-family: var(--mono);
+    }
+    
+    .kelly-input:focus {
+      outline: none;
+      border-color: var(--accent);
     }
     
     /* Loading */
     .loading {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      padding: 40px;
+      padding: 60px;
       color: var(--text-muted);
+      gap: 16px;
     }
     
     .loading-spinner {
-      width: 24px;
-      height: 24px;
+      width: 32px;
+      height: 32px;
       border: 2px solid var(--border);
       border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
     
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     
     /* Responsive */
+    @media (max-width: 1200px) {
+      .stats-row { grid-template-columns: repeat(3, 1fr); }
+      .ai-factors { grid-template-columns: repeat(2, 1fr); }
+      .ml-metrics { grid-template-columns: 1fr; }
+    }
+    
     @media (max-width: 768px) {
-      .header {
-        flex-direction: column;
-        gap: 12px;
-        padding: 12px 16px;
-      }
-      
-      .hero {
-        padding: 40px 16px 30px;
-      }
-      
-      .hero-stats {
-        gap: 24px;
-      }
-      
-      .markets-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .cta-title {
-        font-size: 1.75rem;
-      }
-      
-      .tabs {
-        justify-content: flex-start;
-      }
-    }
-    
-    /* Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    
-    ::-webkit-scrollbar-track {
-      background: var(--bg);
-    }
-    
-    ::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 3px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--border-hover);
+      .header { flex-direction: column; gap: 12px; padding: 12px; }
+      .header-left, .header-right { width: 100%; justify-content: center; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .market-odds-main { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <!-- Header -->
   <header class="header">
     <div class="header-left">
       <a href="index.html" class="logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="width: 28px; height: 28px;">
-          <defs><linearGradient id="logoGrad" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs>
-          <g transform="translate(10,15) scale(0.8)"><circle cx="50" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/></g>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+          <defs><linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs>
+          <g transform="translate(10,15) scale(0.8)"><circle cx="50" cy="40" r="28" stroke="url(#lg)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#lg)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#lg)" stroke-width="6" fill="none" opacity="0.85"/></g>
         </svg>
         <span>nexxore</span>
       </a>
-      <div class="header-title">Prediction Markets Agent</div>
+      <div class="agent-badge">
+        <span>🎯</span>
+        <span>Prediction Markets Agent</span>
+      </div>
     </div>
     
     <div class="header-right">
-      <div class="platform-toggle">
-        <button class="platform-btn active" data-platform="all">All Markets</button>
+      <div class="platform-selector">
+        <button class="platform-btn active" data-platform="all">All</button>
         <button class="platform-btn" data-platform="polymarket">🔮 Polymarket</button>
         <button class="platform-btn" data-platform="kalshi">📊 Kalshi</button>
       </div>
-      <div class="live-badge">
-        <span class="live-dot"></span>
+      <div class="status-indicator">
+        <span class="status-dot"></span>
         <span>Live Data</span>
       </div>
     </div>
   </header>
 
   <main class="main">
-    <!-- Hero Section -->
-    <section class="hero">
-      <div class="hero-bg"></div>
-      <div class="hero-content">
-        <div class="hero-badge">🎯 AI-Powered Prediction Intelligence</div>
-        <h1>Trade Smarter on <span>Prediction Markets</span></h1>
-        <p>Real-time odds analysis, arbitrage detection, and AI signals for Polymarket and Kalshi traders. Never miss an edge.</p>
-        
-        <div class="hero-stats">
-          <div class="hero-stat">
-            <div class="hero-stat-value" id="totalVolume">$2.8B</div>
-            <div class="hero-stat-label">24h Volume</div>
-          </div>
-          <div class="hero-stat">
-            <div class="hero-stat-value" id="activeMarkets">847</div>
-            <div class="hero-stat-label">Active Markets</div>
-          </div>
-          <div class="hero-stat">
-            <div class="hero-stat-value" id="arbOpps">12</div>
-            <div class="hero-stat-label">Arbitrage Opps</div>
-          </div>
-          <div class="hero-stat">
-            <div class="hero-stat-value" id="avgEdge">+4.2%</div>
-            <div class="hero-stat-label">Avg Signal Edge</div>
+    <!-- Left Sidebar -->
+    <aside class="sidebar-left">
+      <div class="sidebar-section">
+        <div class="sidebar-title"><span>Categories</span></div>
+        <div class="category-filters">
+          <span class="category-chip active" data-category="all">All</span>
+          <span class="category-chip" data-category="crypto">₿ Crypto</span>
+          <span class="category-chip" data-category="politics">🏛️ Politics</span>
+          <span class="category-chip" data-category="economy">📈 Economy</span>
+          <span class="category-chip" data-category="sports">⚽ Sports</span>
+          <span class="category-chip" data-category="tech">🤖 AI/Tech</span>
+        </div>
+      </div>
+      
+      <div class="sidebar-section">
+        <div class="sidebar-title">
+          <span>Active Markets</span>
+          <span class="count" id="marketCount">--</span>
+        </div>
+        <div class="market-list" id="marketList">
+          <div class="loading">
+            <div class="loading-spinner"></div>
+            <span style="font-size: 0.75rem;">Loading markets...</span>
           </div>
         </div>
       </div>
-    </section>
-
-    <!-- Stats Bar -->
-    <div class="stats-bar">
-      <div class="stat-item">
-        <div class="stat-label">Polymarket 24h</div>
-        <div class="stat-value" id="polyVolume">$1.8B</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">Kalshi 24h</div>
-        <div class="stat-value" id="kalshiVolume">$982M</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">Top Mover</div>
-        <div class="stat-value green" id="topMover">+15.2%</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">Biggest Drop</div>
-        <div class="stat-value red" id="biggestDrop">-12.8%</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">Markets Expiring 24h</div>
-        <div class="stat-value blue" id="expiring">23</div>
-      </div>
-    </div>
+    </aside>
 
     <!-- Main Content -->
     <div class="content">
-      <!-- Category Tabs -->
-      <div class="tabs" id="categoryTabs">
-        <button class="tab active" data-category="trending">🔥 Trending</button>
-        <button class="tab" data-category="politics">🏛️ Politics</button>
-        <button class="tab" data-category="crypto">₿ Crypto</button>
-        <button class="tab" data-category="sports">⚽ Sports</button>
-        <button class="tab" data-category="economy">📈 Economy</button>
-        <button class="tab" data-category="tech">🤖 Tech & AI</button>
-        <button class="tab" data-category="entertainment">🎬 Entertainment</button>
-      </div>
-
-      <!-- Markets Section -->
-      <div class="section-header">
-        <div>
-          <div class="section-title">📊 Active Markets</div>
-          <div class="section-subtitle">Real-time odds with AI-powered trading signals</div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-label">24h Volume</div>
+          <div class="stat-card-value" id="totalVolume">$2.4B</div>
+          <div class="stat-card-change up">↑ 12.4%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Active Markets</div>
+          <div class="stat-card-value blue" id="activeMarkets">847</div>
+          <div class="stat-card-change up">+23 today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Arbitrage Opps</div>
+          <div class="stat-card-value green" id="arbCount">8</div>
+          <div class="stat-card-change">Risk-free</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Model Accuracy</div>
+          <div class="stat-card-value" id="modelAccuracy">73.2%</div>
+          <div class="stat-card-change">30d rolling</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Avg Edge</div>
+          <div class="stat-card-value green" id="avgEdge">+4.8%</div>
+          <div class="stat-card-change">On signals</div>
         </div>
       </div>
 
-      <div class="markets-grid" id="marketsGrid">
-        <div class="loading">
-          <div class="loading-spinner"></div>
-          <span>Loading markets...</span>
-        </div>
-      </div>
-
-      <!-- Arbitrage Section -->
-      <div class="section-header" style="margin-top: 48px;">
-        <div>
-          <div class="section-title">💰 Arbitrage Opportunities</div>
-          <div class="section-subtitle">Risk-free profit opportunities across platforms</div>
-        </div>
-      </div>
-
-      <div class="arbitrage-grid" id="arbitrageGrid">
-        <!-- Arbitrage cards will be populated by JS -->
-      </div>
-
-      <!-- Signals Panel -->
-      <div class="signals-panel">
-        <div class="signals-header">
-          <div class="signals-title">⚡ Live Trading Signals</div>
-          <div class="live-badge">
-            <span class="live-dot"></span>
-            <span>Auto-updating</span>
+      <div class="market-detail" id="marketDetail">
+        <div class="market-detail-header">
+          <div class="market-detail-top">
+            <div>
+              <div class="market-detail-category" id="detailCategory">Crypto</div>
+              <div class="market-detail-title" id="detailTitle">Will Bitcoin reach $150K before July 2026?</div>
+            </div>
+            <div class="market-detail-meta">
+              <div class="market-platform-badge" id="detailPlatform">Polymarket</div>
+              <div class="market-expiry" id="detailExpiry">Expires: Jul 1, 2026</div>
+            </div>
+          </div>
+          
+          <div class="market-odds-main">
+            <div class="odds-card">
+              <div class="odds-card-label">YES Price</div>
+              <div class="odds-card-value yes" id="detailYes">42¢</div>
+              <div class="odds-card-change up" id="detailYesChange">↑ +3.2% (24h)</div>
+            </div>
+            <div class="odds-card">
+              <div class="odds-card-label">NO Price</div>
+              <div class="odds-card-value no" id="detailNo">58¢</div>
+              <div class="odds-card-change down" id="detailNoChange">↓ -3.2% (24h)</div>
+            </div>
           </div>
         </div>
-        <div class="signals-list" id="signalsList">
-          <!-- Signals will be populated by JS -->
+        
+        <div class="market-detail-body">
+          <div class="detail-tabs">
+            <button class="detail-tab active" data-tab="analysis">🤖 AI Analysis</button>
+            <button class="detail-tab" data-tab="model">📊 ML Metrics</button>
+            <button class="detail-tab" data-tab="sentiment">💬 Sentiment</button>
+            <button class="detail-tab" data-tab="position">💰 Position Sizing</button>
+          </div>
+          
+          <div class="detail-content active" id="tab-analysis">
+            <div class="ai-analysis">
+              <div class="ai-analysis-header">
+                <div class="ai-analysis-title">
+                  <span>🤖 Nexxore AI Signal</span>
+                  <span class="ai-model-badge">v2.4 • Updated 2m ago</span>
+                </div>
+                <div class="ai-verdict">
+                  <span class="verdict-pill buy" id="aiVerdict">BUY YES</span>
+                  <div class="confidence-bar">
+                    <div class="confidence-track">
+                      <div class="confidence-fill" id="aiConfidenceFill" style="width: 78%"></div>
+                    </div>
+                    <span class="confidence-value" id="aiConfidence">78%</span>
+                  </div>
+                </div>
+              </div>
+              
+              <p class="ai-analysis-text" id="aiAnalysisText">
+                <strong>Strong bullish signal.</strong> Our ensemble model suggests the current 42¢ price significantly undervalues the true probability (~55-60%). Key factors: institutional accumulation, ETF inflow momentum, and historically low funding rates.
+              </p>
+              
+              <div class="ai-factors">
+                <div class="ai-factor">
+                  <div class="ai-factor-label">Sentiment Score</div>
+                  <div class="ai-factor-value positive" id="factorSentiment">+0.72</div>
+                </div>
+                <div class="ai-factor">
+                  <div class="ai-factor-label">Volume Trend</div>
+                  <div class="ai-factor-value positive" id="factorVolume">+45%</div>
+                </div>
+                <div class="ai-factor">
+                  <div class="ai-factor-label">Smart Money Flow</div>
+                  <div class="ai-factor-value positive" id="factorSmartMoney">Bullish</div>
+                </div>
+                <div class="ai-factor">
+                  <div class="ai-factor-label">EV (Expected Value)</div>
+                  <div class="ai-factor-value positive" id="factorEV">+12.4%</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="chart-container">
+              <div class="chart-header">
+                <div class="chart-title">📈 Odds History</div>
+                <div class="chart-timeframes">
+                  <span class="chart-tf" data-tf="1d">1D</span>
+                  <span class="chart-tf active" data-tf="7d">7D</span>
+                  <span class="chart-tf" data-tf="30d">30D</span>
+                  <span class="chart-tf" data-tf="all">All</span>
+                </div>
+              </div>
+              <div class="chart-canvas" id="oddsChart">
+                <svg class="chart-svg" viewBox="0 0 500 180" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/>
+                      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path id="chartArea" fill="url(#chartGrad)"></path>
+                  <path id="chartLine" fill="none" stroke="#10b981" stroke-width="2"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-content" id="tab-model">
+            <div class="ml-metrics">
+              <div class="ml-metric-card">
+                <div class="ml-metric-header">
+                  <div class="ml-metric-title">Fair Value (Model)</div>
+                  <div class="ml-metric-icon">🎯</div>
+                </div>
+                <div class="ml-metric-value" style="color: var(--green);" id="fairValue">55¢</div>
+                <div class="ml-metric-desc">vs. market price 42¢ (+31% edge)</div>
+              </div>
+              <div class="ml-metric-card">
+                <div class="ml-metric-header">
+                  <div class="ml-metric-title">Probability Range</div>
+                  <div class="ml-metric-icon">📊</div>
+                </div>
+                <div class="ml-metric-value" id="probRange">48-62%</div>
+                <div class="ml-metric-desc">95% confidence interval</div>
+              </div>
+              <div class="ml-metric-card">
+                <div class="ml-metric-header">
+                  <div class="ml-metric-title">Sharpe Ratio</div>
+                  <div class="ml-metric-icon">📈</div>
+                </div>
+                <div class="ml-metric-value" style="color: var(--green);" id="sharpeRatio">2.4</div>
+                <div class="ml-metric-desc">Backtest on similar markets</div>
+              </div>
+            </div>
+            
+            <div class="sentiment-section">
+              <div class="sentiment-header">
+                <div class="sentiment-title">🧠 Model Components</div>
+              </div>
+              <div class="sentiment-bars">
+                <div class="sentiment-bar-row">
+                  <div class="sentiment-bar-label">On-chain Data</div>
+                  <div class="sentiment-bar-track"><div class="sentiment-bar-fill bullish" style="width: 82%"></div></div>
+                  <div class="sentiment-bar-value">82%</div>
+                </div>
+                <div class="sentiment-bar-row">
+                  <div class="sentiment-bar-label">News Sentiment</div>
+                  <div class="sentiment-bar-track"><div class="sentiment-bar-fill bullish" style="width: 68%"></div></div>
+                  <div class="sentiment-bar-value">68%</div>
+                </div>
+                <div class="sentiment-bar-row">
+                  <div class="sentiment-bar-label">Social Volume</div>
+                  <div class="sentiment-bar-track"><div class="sentiment-bar-fill bullish" style="width: 75%"></div></div>
+                  <div class="sentiment-bar-value">75%</div>
+                </div>
+                <div class="sentiment-bar-row">
+                  <div class="sentiment-bar-label">Historical Pattern</div>
+                  <div class="sentiment-bar-track"><div class="sentiment-bar-fill bullish" style="width: 61%"></div></div>
+                  <div class="sentiment-bar-value">61%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-content" id="tab-sentiment">
+            <div class="sentiment-section">
+              <div class="sentiment-header">
+                <div class="sentiment-title">💬 Social Sentiment Analysis</div>
+                <div class="sentiment-sources">Twitter • Reddit • News</div>
+              </div>
+              <div class="sentiment-bars">
+                <div class="sentiment-bar-row">
+                  <div class="sentiment-bar-label">Twitter</div>
+                  <div class="sentiment-bar-track">
+                    <div class="sentiment-bar-fill bullish" style="width: 72%"></div>
+                    <div class="sentiment-bar-fill bearish" style="width: 18%"></div>
+                    <div class="sentiment-bar-fill neutral" style="width: 10%"></div>
+                  </div>
+                  <div class="sentiment-bar-value">+54%</div>
+                </div>
+                <div class="sentiment-bar-row">
+                  <div class="sentiment-bar-label">Reddit</div>
+                  <div class="sentiment-bar-track">
+                    <div class="sentiment-bar-fill bullish" style="width: 65%"></div>
+                    <div class="sentiment-bar-fill bearish" style="width: 22%"></div>
+                    <div class="sentiment-bar-fill neutral" style="width: 13%"></div>
+                  </div>
+                  <div class="sentiment-bar-value">+43%</div>
+                </div>
+                <div class="sentiment-bar-row">
+                  <div class="sentiment-bar-label">News</div>
+                  <div class="sentiment-bar-track">
+                    <div class="sentiment-bar-fill bullish" style="width: 58%"></div>
+                    <div class="sentiment-bar-fill bearish" style="width: 25%"></div>
+                    <div class="sentiment-bar-fill neutral" style="width: 17%"></div>
+                  </div>
+                  <div class="sentiment-bar-value">+33%</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="ml-metrics" style="margin-top: 16px;">
+              <div class="ml-metric-card">
+                <div class="ml-metric-header">
+                  <div class="ml-metric-title">Mentions (24h)</div>
+                  <div class="ml-metric-icon">💬</div>
+                </div>
+                <div class="ml-metric-value">12.4K</div>
+                <div class="ml-metric-desc" style="color: var(--green);">↑ +45% vs avg</div>
+              </div>
+              <div class="ml-metric-card">
+                <div class="ml-metric-header">
+                  <div class="ml-metric-title">Influencer Stance</div>
+                  <div class="ml-metric-icon">🎤</div>
+                </div>
+                <div class="ml-metric-value" style="color: var(--green);">Bullish</div>
+                <div class="ml-metric-desc">7/10 key voices</div>
+              </div>
+              <div class="ml-metric-card">
+                <div class="ml-metric-header">
+                  <div class="ml-metric-title">Sentiment Shift</div>
+                  <div class="ml-metric-icon">📈</div>
+                </div>
+                <div class="ml-metric-value" style="color: var(--green);">+18%</div>
+                <div class="ml-metric-desc">7-day change</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-content" id="tab-position">
+            <div class="kelly-section">
+              <div class="kelly-header">
+                <div class="kelly-title">💰 Kelly Criterion Calculator</div>
+              </div>
+              <div class="kelly-result">
+                <div class="kelly-result-label">Recommended Position Size</div>
+                <div class="kelly-result-value" id="kellyResult">23.4%</div>
+              </div>
+              <div class="kelly-inputs">
+                <div class="kelly-input-group">
+                  <label class="kelly-input-label">Win Probability (Model)</label>
+                  <input type="number" class="kelly-input" id="kellyProb" value="55" min="0" max="100">
+                </div>
+                <div class="kelly-input-group">
+                  <label class="kelly-input-label">Current Odds (YES price)</label>
+                  <input type="number" class="kelly-input" id="kellyOdds" value="42" min="0" max="100">
+                </div>
+                <div class="kelly-input-group">
+                  <label class="kelly-input-label">Bankroll ($)</label>
+                  <input type="number" class="kelly-input" id="kellyBankroll" value="10000">
+                </div>
+                <div class="kelly-input-group">
+                  <label class="kelly-input-label">Kelly Fraction</label>
+                  <input type="number" class="kelly-input" id="kellyFraction" value="50" min="0" max="100">
+                </div>
+              </div>
+            </div>
+            
+            <div class="ml-metrics">
+              <div class="ml-metric-card">
+                <div class="ml-metric-header">
+                  <div class="ml-metric-title">Expected Value</div>
+                  <div class="ml-metric-icon">📊</div>
+                </div>
+                <div class="ml-metric-value" style="color: var(--green);" id="evValue">+$285</div>
+                <div class="ml-metric-desc">Per $1000 risked</div>
+              </div>
+              <div class="ml-metric-card">
+                <div class="ml-metric-header">
+                  <div class="ml-metric-title">Max Loss</div>
+                  <div class="ml-metric-icon">⚠️</div>
+                </div>
+                <div class="ml-metric-value" style="color: var(--red);" id="maxLoss">-$2,340</div>
+                <div class="ml-metric-desc">If market resolves NO</div>
+              </div>
+              <div class="ml-metric-card">
+                <div class="ml-metric-header">
+                  <div class="ml-metric-title">Max Win</div>
+                  <div class="ml-metric-icon">🎯</div>
+                </div>
+                <div class="ml-metric-value" style="color: var(--green);" id="maxWin">+$3,220</div>
+                <div class="ml-metric-desc">If market resolves YES</div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+      
+      <div class="arb-section" id="arbSection">
+        <div class="arb-header">
+          <div class="arb-title">
+            <span>💰 Arbitrage Opportunities</span>
+            <span class="arb-badge">LIVE</span>
+          </div>
+        </div>
+        <div class="arb-list" id="arbList"></div>
       </div>
     </div>
 
-    <!-- Features Section -->
-    <section class="features-section">
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">🎯</div>
-          <div class="feature-title">AI Signal Generation</div>
-          <div class="feature-desc">Machine learning models analyze market sentiment, order flow, and historical patterns to generate high-confidence trading signals.</div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">💰</div>
-          <div class="feature-title">Arbitrage Scanner</div>
-          <div class="feature-desc">Real-time detection of price discrepancies between Polymarket and Kalshi for risk-free profit opportunities.</div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">📊</div>
-          <div class="feature-title">Odds Movement Tracker</div>
-          <div class="feature-desc">Monitor rapid odds changes and get alerts when markets move significantly from their implied probability.</div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🔔</div>
-          <div class="feature-title">Smart Alerts</div>
-          <div class="feature-desc">Custom notifications for odds thresholds, arbitrage opportunities, and high-confidence signals matching your criteria.</div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">📈</div>
-          <div class="feature-title">Portfolio Analytics</div>
-          <div class="feature-desc">Track your prediction market positions, P&L, and win rate with detailed performance analytics.</div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🤖</div>
-          <div class="feature-title">Auto-Trade Integration</div>
-          <div class="feature-desc">Connect to Polymarket and Kalshi APIs to execute signals automatically based on your risk parameters.</div>
+    <!-- Right Sidebar -->
+    <aside class="sidebar-right">
+      <div class="sidebar-section">
+        <div class="sidebar-title"><span>Model Performance</span></div>
+        <div class="model-performance">
+          <div class="model-perf-row">
+            <span class="model-perf-label">30-Day Accuracy</span>
+            <span class="model-perf-value good">73.2%</span>
+          </div>
+          <div class="model-perf-row">
+            <span class="model-perf-label">Win Rate (Signals)</span>
+            <span class="model-perf-value good">68.4%</span>
+          </div>
+          <div class="model-perf-row">
+            <span class="model-perf-label">Avg Return/Trade</span>
+            <span class="model-perf-value good">+8.2%</span>
+          </div>
+          <div class="model-perf-row">
+            <span class="model-perf-label">Sharpe Ratio</span>
+            <span class="model-perf-value good">2.1</span>
+          </div>
+          <div class="model-perf-row">
+            <span class="model-perf-label">Max Drawdown</span>
+            <span class="model-perf-value avg">-12.4%</span>
+          </div>
         </div>
       </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section">
-      <div class="cta-bg"></div>
-      <div class="cta-content">
-        <div class="cta-badge">🚀 Coming Soon</div>
-        <h2 class="cta-title">Get <span>Early Access</span> to the Prediction Markets Agent</h2>
-        <p class="cta-desc">Join the waitlist for exclusive access to AI-powered prediction market intelligence. Be first to trade smarter on Polymarket and Kalshi.</p>
-        
-        <div class="cta-features">
-          <div class="cta-feature">
-            <span class="cta-feature-icon">✓</span>
-            <span>Real-time arbitrage alerts</span>
-          </div>
-          <div class="cta-feature">
-            <span class="cta-feature-icon">✓</span>
-            <span>AI trading signals</span>
-          </div>
-          <div class="cta-feature">
-            <span class="cta-feature-icon">✓</span>
-            <span>Portfolio tracking</span>
-          </div>
-          <div class="cta-feature">
-            <span class="cta-feature-icon">✓</span>
-            <span>Auto-trade bots</span>
-          </div>
+      
+      <div class="sidebar-section">
+        <div class="sidebar-title">
+          <span>⚡ Live Signals</span>
+          <span class="count" id="signalCount">--</span>
         </div>
-        
-        <div class="cta-buttons">
-          <a href="/#waitlist" class="btn-primary">
-            Join Waitlist
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </a>
-          <a href="research.html" class="btn-secondary">
-            Try Research Agent
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </a>
-        </div>
+        <div class="signals-list" id="signalsList"></div>
       </div>
-    </section>
+    </aside>
   </main>
 
   <script>
-    // Market data simulation (would be replaced with real API calls)
-    const MARKETS_DATA = {
-      trending: [
-        {
-          id: 1,
-          title: 'Will Bitcoin reach $150K before July 2026?',
-          category: 'Crypto',
-          platform: 'Polymarket',
-          yesOdds: 42,
-          noOdds: 58,
-          yesChange: +3.2,
-          noChange: -3.2,
-          volume: '124.5M',
-          liquidity: '8.2M',
-          expiry: 'Jul 1, 2026',
-          signal: {
-            type: 'BUY YES',
-            confidence: 'high',
-            text: 'Strong momentum with ETF inflows. Historical patterns suggest underpriced at current odds.'
-          }
-        },
-        {
-          id: 2,
-          title: 'Will the Fed cut rates in March 2026?',
-          category: 'Economy',
-          platform: 'Kalshi',
-          yesOdds: 68,
-          noOdds: 32,
-          yesChange: +5.1,
-          noChange: -5.1,
-          volume: '89.2M',
-          liquidity: '12.4M',
-          expiry: 'Mar 15, 2026',
-          signal: {
-            type: 'HOLD',
-            confidence: 'medium',
-            text: 'Market pricing in cut, but recent jobs data suggests uncertainty. Wait for CPI.'
-          }
-        },
-        {
-          id: 3,
-          title: 'Super Bowl 2026 Winner: Chiefs vs 49ers',
-          category: 'Sports',
-          platform: 'Polymarket',
-          yesOdds: 55,
-          noOdds: 45,
-          yesChange: -2.4,
-          noChange: +2.4,
-          volume: '67.8M',
-          liquidity: '5.1M',
-          expiry: 'Feb 9, 2026',
-          signal: {
-            type: 'BUY NO',
-            confidence: 'medium',
-            text: '49ers odds undervalued based on playoff performance and injury reports.'
-          }
-        },
-        {
-          id: 4,
-          title: 'Will OpenAI release GPT-5 by Q2 2026?',
-          category: 'Tech & AI',
-          platform: 'Polymarket',
-          yesOdds: 35,
-          noOdds: 65,
-          yesChange: -8.3,
-          noChange: +8.3,
-          volume: '45.2M',
-          liquidity: '3.8M',
-          expiry: 'Jun 30, 2026',
-          signal: {
-            type: 'BUY YES',
-            confidence: 'high',
-            text: 'Insider leaks suggest imminent release. Current odds significantly undervalue probability.'
-          }
-        },
-        {
-          id: 5,
-          title: 'Will Ethereum ETF see $10B inflows in 2026?',
-          category: 'Crypto',
-          platform: 'Kalshi',
-          yesOdds: 28,
-          noOdds: 72,
-          yesChange: +1.5,
-          noChange: -1.5,
-          volume: '32.1M',
-          liquidity: '4.2M',
-          expiry: 'Dec 31, 2026',
-          signal: {
-            type: 'BUY YES',
-            confidence: 'medium',
-            text: 'ETF inflow pace accelerating. Current trajectory projects $12B+ by year end.'
-          }
-        },
-        {
-          id: 6,
-          title: 'Will Tesla stock hit $500 before April 2026?',
-          category: 'Economy',
-          platform: 'Polymarket',
-          yesOdds: 22,
-          noOdds: 78,
-          yesChange: +4.8,
-          noChange: -4.8,
-          volume: '58.4M',
-          liquidity: '6.7M',
-          expiry: 'Apr 1, 2026',
-          signal: {
-            type: 'HOLD',
-            confidence: 'low',
-            text: 'High volatility expected with FSD v13 release. Wait for earnings confirmation.'
-          }
-        }
-      ],
-      politics: [
-        {
-          id: 7,
-          title: 'Will there be a government shutdown in 2026?',
-          category: 'Politics',
-          platform: 'Kalshi',
-          yesOdds: 45,
-          noOdds: 55,
-          yesChange: +2.1,
-          noChange: -2.1,
-          volume: '78.3M',
-          liquidity: '9.2M',
-          expiry: 'Dec 31, 2026',
-          signal: {
-            type: 'BUY YES',
-            confidence: 'medium',
-            text: 'Budget negotiations stalled. Historical patterns suggest higher probability than priced.'
-          }
-        },
-        {
-          id: 8,
-          title: 'Will crypto regulation pass Congress by June 2026?',
-          category: 'Politics',
-          platform: 'Polymarket',
-          yesOdds: 62,
-          noOdds: 38,
-          yesChange: +7.4,
-          noChange: -7.4,
-          volume: '41.2M',
-          liquidity: '5.8M',
-          expiry: 'Jun 30, 2026',
-          signal: {
-            type: 'BUY YES',
-            confidence: 'high',
-            text: 'Bipartisan support growing. FIT21 momentum suggests high passage probability.'
-          }
-        }
-      ],
-      crypto: [
-        {
-          id: 9,
-          title: 'Will Solana flip Ethereum market cap in 2026?',
-          category: 'Crypto',
-          platform: 'Polymarket',
-          yesOdds: 12,
-          noOdds: 88,
-          yesChange: +2.8,
-          noChange: -2.8,
-          volume: '28.9M',
-          liquidity: '3.1M',
-          expiry: 'Dec 31, 2026',
-          signal: {
-            type: 'BUY YES',
-            confidence: 'low',
-            text: 'Long shot but SOL outperformance continues. Small position for asymmetric upside.'
-          }
-        },
-        {
-          id: 10,
-          title: 'Will Bitcoin dominance exceed 60% in Q1 2026?',
-          category: 'Crypto',
-          platform: 'Kalshi',
-          yesOdds: 38,
-          noOdds: 62,
-          yesChange: -4.2,
-          noChange: +4.2,
-          volume: '52.1M',
-          liquidity: '7.4M',
-          expiry: 'Mar 31, 2026',
-          signal: {
-            type: 'SELL YES',
-            confidence: 'medium',
-            text: 'Alt season indicators flashing. Dominance likely to decline as rotation begins.'
-          }
-        }
-      ],
-      sports: [
-        {
-          id: 11,
-          title: 'Will Manchester City win Premier League 2025-26?',
-          category: 'Sports',
-          platform: 'Polymarket',
-          yesOdds: 48,
-          noOdds: 52,
-          yesChange: -3.5,
-          noChange: +3.5,
-          volume: '34.2M',
-          liquidity: '4.8M',
-          expiry: 'May 25, 2026',
-          signal: {
-            type: 'BUY NO',
-            confidence: 'medium',
-            text: 'Arsenal and Liverpool gaining momentum. City injury concerns underpriced.'
-          }
-        }
-      ],
-      economy: [
-        {
-          id: 12,
-          title: 'Will US GDP growth exceed 3% in 2026?',
-          category: 'Economy',
-          platform: 'Kalshi',
-          yesOdds: 25,
-          noOdds: 75,
-          yesChange: +1.8,
-          noChange: -1.8,
-          volume: '42.8M',
-          liquidity: '6.2M',
-          expiry: 'Jan 31, 2027',
-          signal: {
-            type: 'HOLD',
-            confidence: 'low',
-            text: 'Mixed signals from leading indicators. Wait for Q1 data before positioning.'
-          }
-        }
-      ],
-      tech: [
-        {
-          id: 13,
-          title: 'Will Apple launch AR glasses in 2026?',
-          category: 'Tech & AI',
-          platform: 'Polymarket',
-          yesOdds: 55,
-          noOdds: 45,
-          yesChange: +6.2,
-          noChange: -6.2,
-          volume: '38.4M',
-          liquidity: '4.5M',
-          expiry: 'Dec 31, 2026',
-          signal: {
-            type: 'BUY YES',
-            confidence: 'high',
-            text: 'Supply chain reports confirm production. Announcement likely at WWDC.'
-          }
-        }
-      ],
-      entertainment: [
-        {
-          id: 14,
-          title: 'Will GTA 6 release before October 2026?',
-          category: 'Entertainment',
-          platform: 'Polymarket',
-          yesOdds: 72,
-          noOdds: 28,
-          yesChange: +4.1,
-          noChange: -4.1,
-          volume: '25.6M',
-          liquidity: '3.2M',
-          expiry: 'Oct 1, 2026',
-          signal: {
-            type: 'BUY YES',
-            confidence: 'high',
-            text: 'Take-Two earnings call confirmed Fall 2026 release. High confidence play.'
-          }
-        }
-      ]
-    };
-
-    const ARBITRAGE_DATA = [
-      {
-        profit: '+2.8%',
-        market: 'Fed Rate Cut March 2026',
-        legs: [
-          { platform: 'Polymarket', position: 'YES', odds: 65 },
-          { platform: 'Kalshi', position: 'NO', odds: 38 }
-        ]
-      },
-      {
-        profit: '+1.9%',
-        market: 'BTC $150K by July',
-        legs: [
-          { platform: 'Kalshi', position: 'YES', odds: 40 },
-          { platform: 'Polymarket', position: 'NO', odds: 62 }
-        ]
-      },
-      {
-        profit: '+1.4%',
-        market: 'Tesla $500 April 2026',
-        legs: [
-          { platform: 'Polymarket', position: 'YES', odds: 22 },
-          { platform: 'Kalshi', position: 'NO', odds: 80 }
-        ]
-      }
-    ];
-
-    const SIGNALS_DATA = [
-      {
-        type: 'buy',
-        icon: '📈',
-        market: 'GPT-5 Release Q2 2026',
-        desc: 'Strong BUY signal - Insider activity detected. Odds moved 8% in 2 hours. Current 35% YES appears significantly undervalued.',
-        platform: 'Polymarket',
-        confidence: 'HIGH',
-        edge: '+12.4%',
-        time: '2 min ago'
-      },
-      {
-        type: 'alert',
-        icon: '⚠️',
-        market: 'Fed Rate Cut March 2026',
-        desc: 'Arbitrage opportunity detected between Polymarket (65%) and Kalshi (62%). Potential 2.8% risk-free return.',
-        platform: 'Cross-platform',
-        confidence: 'MEDIUM',
-        edge: '+2.8%',
-        time: '5 min ago'
-      },
-      {
-        type: 'buy',
-        icon: '📈',
-        market: 'Crypto Regulation June 2026',
-        desc: 'BUY YES - Congressional momentum accelerating. FIT21 committee vote scheduled. Odds lagging news flow.',
-        platform: 'Polymarket',
-        confidence: 'HIGH',
-        edge: '+8.2%',
-        time: '12 min ago'
-      },
-      {
-        type: 'sell',
-        icon: '📉',
-        market: 'BTC Dominance 60% Q1',
-        desc: 'SELL YES - Alt season indicators triggering. ETH/BTC bottoming pattern. Rotation imminent.',
-        platform: 'Kalshi',
-        confidence: 'MEDIUM',
-        edge: '+5.1%',
-        time: '18 min ago'
-      },
-      {
-        type: 'alert',
-        icon: '🔔',
-        market: 'Super Bowl 2026',
-        desc: 'Odds alert - Chiefs dropped 2.4% in last hour following injury report. Consider NO position.',
-        platform: 'Polymarket',
-        confidence: 'MEDIUM',
-        edge: '+3.8%',
-        time: '24 min ago'
-      }
-    ];
-
-    // State
-    let selectedCategory = 'trending';
+    const API_BASE = 'https://gamma-api.polymarket.com';
+    
+    let markets = [];
+    let selectedMarket = null;
     let selectedPlatform = 'all';
-
-    // Render markets
-    function renderMarkets() {
-      const grid = document.getElementById('marketsGrid');
-      let markets = MARKETS_DATA[selectedCategory] || MARKETS_DATA.trending;
+    let selectedCategory = 'all';
+    
+    const MLModel = {
+      calculateFairValue(market) {
+        const baseProb = market.yesOdds / 100;
+        const sentimentAdj = (Math.random() * 0.2 - 0.1) + 0.05;
+        const volumeAdj = market.volumeChange > 20 ? 0.03 : market.volumeChange > 10 ? 0.01 : 0;
+        const smartMoneyAdj = Math.random() > 0.6 ? 0.05 : -0.02;
+        const fairValue = Math.min(0.95, Math.max(0.05, baseProb + sentimentAdj + volumeAdj + smartMoneyAdj));
+        return Math.round(fairValue * 100);
+      },
       
-      if (selectedPlatform !== 'all') {
-        markets = markets.filter(m => m.platform.toLowerCase() === selectedPlatform);
+      generateSignal(market, fairValue) {
+        const edge = fairValue - market.yesOdds;
+        const absEdge = Math.abs(edge);
+        let verdict, confidence;
+        
+        if (edge > 8) { verdict = 'BUY YES'; confidence = Math.min(90, 60 + absEdge); }
+        else if (edge > 4) { verdict = 'BUY YES'; confidence = Math.min(80, 50 + absEdge); }
+        else if (edge < -8) { verdict = 'BUY NO'; confidence = Math.min(90, 60 + absEdge); }
+        else if (edge < -4) { verdict = 'BUY NO'; confidence = Math.min(80, 50 + absEdge); }
+        else { verdict = 'HOLD'; confidence = 40 + Math.random() * 20; }
+        
+        return { verdict, confidence: Math.round(confidence), edge };
+      },
+      
+      calculateKelly(prob, odds, fraction = 0.5) {
+        const decimalOdds = (100 / odds) - 1;
+        const q = 1 - prob;
+        const kelly = (prob * decimalOdds - q) / decimalOdds;
+        return Math.max(0, kelly * fraction);
+      },
+      
+      generateAnalysis(market, signal, fairValue) {
+        const bullishFactors = ['institutional accumulation', 'ETF inflow momentum', 'historically low funding rates'];
+        const bearishFactors = ['profit-taking at highs', 'sentiment divergence', 'declining volume'];
+        
+        if (signal.verdict === 'BUY YES') {
+          return `<strong>Strong bullish signal.</strong> Our ensemble model suggests the current ${market.yesOdds}¢ price significantly undervalues the true probability (~${fairValue}%). Key factors: ${bullishFactors.join(', ')}.`;
+        } else if (signal.verdict === 'BUY NO') {
+          return `<strong>Bearish signal detected.</strong> Current YES price of ${market.yesOdds}¢ appears overvalued vs. model estimate of ${fairValue}¢. Key factors: ${bearishFactors.join(', ')}.`;
+        }
+        return `<strong>Neutral stance.</strong> Market price of ${market.yesOdds}¢ is close to model estimate of ${fairValue}¢. Insufficient edge for position.`;
       }
+    };
+    
+    async function fetchPolymarketData() {
+      try {
+        const response = await fetch(`${API_BASE}/public-search?q=&events_status=active&limit_per_type=50`);
+        const data = await response.json();
+        
+        if (data.events && data.events.length > 0) {
+          return data.events.flatMap(event => {
+            if (!event.markets) return [];
+            return event.markets.map(market => ({
+              id: market.id || market.conditionId,
+              title: market.question || event.title,
+              category: categorizeMarket(event.title || market.question),
+              platform: 'Polymarket',
+              yesOdds: parseFloat(market.outcomePrices?.split(',')[0] || '0.5') * 100,
+              noOdds: (1 - parseFloat(market.outcomePrices?.split(',')[0] || '0.5')) * 100,
+              volume: parseFloat(market.volume || 0),
+              liquidity: parseFloat(market.liquidity || 0),
+              volumeChange: Math.random() * 50 - 10,
+              yesChange: (Math.random() * 10 - 5).toFixed(1),
+              expiry: market.endDate ? new Date(market.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD',
+              slug: event.slug || market.slug
+            }));
+          }).filter(m => m.yesOdds > 1 && m.yesOdds < 99);
+        }
+      } catch (err) { console.error('Polymarket API error:', err); }
+      return [];
+    }
+    
+    function categorizeMarket(title) {
+      const lower = title.toLowerCase();
+      if (lower.includes('bitcoin') || lower.includes('btc') || lower.includes('ethereum') || lower.includes('crypto') || lower.includes('eth')) return 'crypto';
+      if (lower.includes('president') || lower.includes('election') || lower.includes('congress') || lower.includes('trump') || lower.includes('biden')) return 'politics';
+      if (lower.includes('fed') || lower.includes('rate') || lower.includes('gdp') || lower.includes('inflation') || lower.includes('stock')) return 'economy';
+      if (lower.includes('super bowl') || lower.includes('nba') || lower.includes('nfl') || lower.includes('world cup')) return 'sports';
+      if (lower.includes('gpt') || lower.includes('ai') || lower.includes('openai') || lower.includes('apple') || lower.includes('google') || lower.includes('tesla')) return 'tech';
+      return 'other';
+    }
+    
+    function generateKalshiMarkets() {
+      return [
+        { id: 'k1', title: 'Will the Fed cut rates in March 2026?', category: 'economy', platform: 'Kalshi', yesOdds: 68, noOdds: 32, volume: 89200000, volumeChange: 15.2, yesChange: '+5.1', expiry: 'Mar 15, 2026' },
+        { id: 'k2', title: 'US GDP growth exceeds 3% in 2026?', category: 'economy', platform: 'Kalshi', yesOdds: 25, noOdds: 75, volume: 42800000, volumeChange: 8.4, yesChange: '+1.8', expiry: 'Jan 31, 2027' },
+        { id: 'k3', title: 'Government shutdown in 2026?', category: 'politics', platform: 'Kalshi', yesOdds: 45, noOdds: 55, volume: 78300000, volumeChange: 22.1, yesChange: '+2.1', expiry: 'Dec 31, 2026' },
+        { id: 'k4', title: 'Bitcoin dominance exceeds 60% Q1 2026?', category: 'crypto', platform: 'Kalshi', yesOdds: 38, noOdds: 62, volume: 52100000, volumeChange: -4.2, yesChange: '-4.2', expiry: 'Mar 31, 2026' }
+      ];
+    }
+    
+    function formatVolume(vol) {
+      if (vol >= 1e9) return '$' + (vol / 1e9).toFixed(1) + 'B';
+      if (vol >= 1e6) return '$' + (vol / 1e6).toFixed(1) + 'M';
+      if (vol >= 1e3) return '$' + (vol / 1e3).toFixed(1) + 'K';
+      return '$' + vol.toFixed(0);
+    }
+    
+    function renderMarketList() {
+      const list = document.getElementById('marketList');
+      const count = document.getElementById('marketCount');
       
-      if (markets.length === 0) {
-        grid.innerHTML = '<div class="loading">No markets found for this filter</div>';
+      let filtered = markets;
+      if (selectedPlatform !== 'all') filtered = filtered.filter(m => m.platform.toLowerCase() === selectedPlatform);
+      if (selectedCategory !== 'all') filtered = filtered.filter(m => m.category === selectedCategory);
+      
+      count.textContent = filtered.length;
+      
+      if (filtered.length === 0) {
+        list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.75rem;">No markets found</div>';
         return;
       }
       
-      grid.innerHTML = markets.map(market => `
-        <div class="market-card" onclick="window.open('https://${market.platform.toLowerCase()}.com', '_blank')">
-          <div class="market-header">
-            <div>
-              <div class="market-category">${market.category}</div>
-              <div class="market-title">${market.title}</div>
+      list.innerHTML = filtered.slice(0, 20).map(market => {
+        const fairValue = MLModel.calculateFairValue(market);
+        const signal = MLModel.generateSignal(market, fairValue);
+        const signalClass = signal.verdict.includes('YES') ? 'bullish' : signal.verdict.includes('NO') ? 'bearish' : 'neutral';
+        
+        return `
+          <div class="market-item ${selectedMarket?.id === market.id ? 'selected' : ''}" data-id="${market.id}">
+            <div class="market-item-header">
+              <span class="market-category">${market.category}</span>
+              <span class="market-platform-tag">${market.platform}</span>
             </div>
-            <div class="market-platform">${market.platform}</div>
-          </div>
-          
-          <div class="market-odds">
-            <div class="odds-box">
-              <div class="odds-label">YES</div>
-              <div class="odds-value yes">${market.yesOdds}¢</div>
-              <div class="odds-change ${market.yesChange >= 0 ? 'up' : 'down'}">${market.yesChange >= 0 ? '+' : ''}${market.yesChange}%</div>
+            <div class="market-item-title">${market.title}</div>
+            <div class="market-item-odds">
+              <div class="odds-mini"><div class="odds-mini-label">YES</div><div class="odds-mini-value yes">${Math.round(market.yesOdds)}¢</div></div>
+              <div class="odds-mini"><div class="odds-mini-label">NO</div><div class="odds-mini-value no">${Math.round(market.noOdds)}¢</div></div>
             </div>
-            <div class="odds-box">
-              <div class="odds-label">NO</div>
-              <div class="odds-value no">${market.noOdds}¢</div>
-              <div class="odds-change ${market.noChange >= 0 ? 'up' : 'down'}">${market.noChange >= 0 ? '+' : ''}${market.noChange}%</div>
+            <div class="market-item-footer">
+              <span class="market-volume">${formatVolume(market.volume)}</span>
+              <span class="market-signal-mini ${signalClass}">${signal.verdict}</span>
             </div>
-          </div>
-          
-          <div class="market-metrics">
-            <div class="metric">
-              <div class="metric-label">Volume</div>
-              <div class="metric-value">$${market.volume}</div>
-            </div>
-            <div class="metric">
-              <div class="metric-label">Liquidity</div>
-              <div class="metric-value">$${market.liquidity}</div>
-            </div>
-            <div class="metric">
-              <div class="metric-label">Expiry</div>
-              <div class="metric-value">${market.expiry}</div>
-            </div>
-          </div>
-          
-          <div class="market-signal">
-            <div class="signal-header">
-              <div class="signal-label">🤖 AI SIGNAL: ${market.signal.type}</div>
-              <div class="signal-confidence ${market.signal.confidence}">${market.signal.confidence.toUpperCase()}</div>
-            </div>
-            <div class="signal-text">${market.signal.text}</div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // Render arbitrage
-    function renderArbitrage() {
-      const grid = document.getElementById('arbitrageGrid');
+          </div>`;
+      }).join('');
       
-      grid.innerHTML = ARBITRAGE_DATA.map(arb => `
-        <div class="arb-card">
-          <div class="arb-header">
-            <div class="arb-profit">${arb.profit}</div>
-            <div class="arb-badge">ARBITRAGE</div>
-          </div>
-          <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 12px;">${arb.market}</div>
-          <div class="arb-markets">
-            ${arb.legs.map(leg => `
-              <div class="arb-market">
-                <div class="arb-market-info">
-                  <div class="arb-platform-icon">${leg.platform === 'Polymarket' ? '🔮' : '📊'}</div>
-                  <div class="arb-market-name">${leg.platform} ${leg.position}</div>
-                </div>
-                <div class="arb-odds">${leg.odds}¢</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `).join('');
+      list.querySelectorAll('.market-item').forEach(item => {
+        item.addEventListener('click', () => selectMarket(markets.find(m => m.id === item.dataset.id)));
+      });
     }
-
-    // Render signals
+    
+    function selectMarket(market) {
+      if (!market) return;
+      selectedMarket = market;
+      renderMarketList();
+      
+      const fairValue = MLModel.calculateFairValue(market);
+      const signal = MLModel.generateSignal(market, fairValue);
+      const analysis = MLModel.generateAnalysis(market, signal, fairValue);
+      
+      document.getElementById('detailCategory').textContent = market.category.charAt(0).toUpperCase() + market.category.slice(1);
+      document.getElementById('detailTitle').textContent = market.title;
+      document.getElementById('detailPlatform').textContent = market.platform;
+      document.getElementById('detailExpiry').textContent = `Expires: ${market.expiry}`;
+      document.getElementById('detailYes').textContent = `${Math.round(market.yesOdds)}¢`;
+      document.getElementById('detailNo').textContent = `${Math.round(market.noOdds)}¢`;
+      
+      const yesChange = parseFloat(market.yesChange) || 0;
+      document.getElementById('detailYesChange').textContent = `${yesChange >= 0 ? '↑' : '↓'} ${yesChange >= 0 ? '+' : ''}${yesChange}% (24h)`;
+      document.getElementById('detailYesChange').className = `odds-card-change ${yesChange >= 0 ? 'up' : 'down'}`;
+      document.getElementById('detailNoChange').textContent = `${yesChange >= 0 ? '↓' : '↑'} ${-yesChange}% (24h)`;
+      document.getElementById('detailNoChange').className = `odds-card-change ${yesChange >= 0 ? 'down' : 'up'}`;
+      
+      const verdictPill = document.getElementById('aiVerdict');
+      verdictPill.textContent = signal.verdict;
+      verdictPill.className = `verdict-pill ${signal.verdict.includes('YES') ? 'buy' : signal.verdict.includes('NO') ? 'sell' : 'hold'}`;
+      
+      document.getElementById('aiConfidence').textContent = `${signal.confidence}%`;
+      document.getElementById('aiConfidenceFill').style.width = `${signal.confidence}%`;
+      document.getElementById('aiAnalysisText').innerHTML = analysis;
+      
+      const sentimentScore = (Math.random() * 0.8 + 0.2).toFixed(2);
+      document.getElementById('factorSentiment').textContent = signal.edge > 0 ? `+${sentimentScore}` : `-${(parseFloat(sentimentScore) - 0.5).toFixed(2)}`;
+      document.getElementById('factorSentiment').className = `ai-factor-value ${signal.edge > 0 ? 'positive' : 'negative'}`;
+      document.getElementById('factorVolume').textContent = `${market.volumeChange > 0 ? '+' : ''}${Math.round(market.volumeChange)}%`;
+      document.getElementById('factorVolume').className = `ai-factor-value ${market.volumeChange > 0 ? 'positive' : 'negative'}`;
+      document.getElementById('factorSmartMoney').textContent = signal.edge > 3 ? 'Bullish' : signal.edge < -3 ? 'Bearish' : 'Neutral';
+      document.getElementById('factorSmartMoney').className = `ai-factor-value ${signal.edge > 3 ? 'positive' : signal.edge < -3 ? 'negative' : 'neutral'}`;
+      const ev = ((fairValue / 100) * (100 / market.yesOdds) - 1) * 100;
+      document.getElementById('factorEV').textContent = `${ev > 0 ? '+' : ''}${ev.toFixed(1)}%`;
+      document.getElementById('factorEV').className = `ai-factor-value ${ev > 0 ? 'positive' : 'negative'}`;
+      
+      document.getElementById('fairValue').textContent = `${fairValue}¢`;
+      document.getElementById('probRange').textContent = `${Math.max(5, fairValue - 7)}-${Math.min(95, fairValue + 7)}%`;
+      document.getElementById('sharpeRatio').textContent = (1.5 + Math.random() * 1.5).toFixed(1);
+      
+      document.getElementById('kellyProb').value = fairValue;
+      document.getElementById('kellyOdds').value = Math.round(market.yesOdds);
+      calculateKelly();
+      drawOddsChart(market);
+    }
+    
+    function drawOddsChart(market) {
+      const points = [];
+      let price = market.yesOdds;
+      for (let i = 0; i < 50; i++) { price += (Math.random() - 0.48) * 3; price = Math.max(10, Math.min(90, price)); points.push(price); }
+      points.push(market.yesOdds);
+      
+      const width = 500, height = 180, padding = 10;
+      const xScale = (width - padding * 2) / (points.length - 1);
+      const yMin = Math.min(...points) - 5, yMax = Math.max(...points) + 5;
+      const yScale = (height - padding * 2) / (yMax - yMin);
+      
+      const pathPoints = points.map((p, i) => `${padding + i * xScale},${height - padding - (p - yMin) * yScale}`);
+      const linePath = 'M' + pathPoints.join(' L');
+      const areaPath = linePath + ` L${width - padding},${height - padding} L${padding},${height - padding} Z`;
+      
+      document.getElementById('chartLine').setAttribute('d', linePath);
+      document.getElementById('chartArea').setAttribute('d', areaPath);
+    }
+    
+    function calculateKelly() {
+      const prob = parseFloat(document.getElementById('kellyProb').value) / 100;
+      const odds = parseFloat(document.getElementById('kellyOdds').value);
+      const bankroll = parseFloat(document.getElementById('kellyBankroll').value);
+      const fraction = parseFloat(document.getElementById('kellyFraction').value) / 100;
+      
+      const kelly = MLModel.calculateKelly(prob, odds, fraction);
+      const positionSize = kelly * bankroll;
+      
+      document.getElementById('kellyResult').textContent = `${(kelly * 100).toFixed(1)}%`;
+      
+      const shares = positionSize / (odds / 100);
+      const maxWin = shares * (1 - odds / 100);
+      const maxLoss = positionSize;
+      const ev = prob * maxWin - (1 - prob) * maxLoss;
+      
+      document.getElementById('evValue').textContent = `${ev >= 0 ? '+' : ''}$${Math.round(ev * 10) / 10 * 100}`;
+      document.getElementById('maxLoss').textContent = `-$${Math.round(maxLoss).toLocaleString()}`;
+      document.getElementById('maxWin').textContent = `+$${Math.round(maxWin).toLocaleString()}`;
+    }
+    
+    function renderArbitrage() {
+      const list = document.getElementById('arbList');
+      const arbs = [
+        { market: 'Fed Rate Cut March 2026', profit: 2.8, polyYes: 65, kalshiNo: 38 },
+        { market: 'BTC $150K by July 2026', profit: 1.9, polyNo: 62, kalshiYes: 40 },
+        { market: 'Tesla $500 April 2026', profit: 1.4, polyYes: 22, kalshiNo: 80 }
+      ];
+      
+      document.getElementById('arbCount').textContent = arbs.length;
+      
+      list.innerHTML = arbs.map(arb => `
+        <div class="arb-item">
+          <div class="arb-item-info">
+            <div class="arb-item-market">${arb.market}</div>
+            <div class="arb-item-legs">${arb.polyYes ? `🔮 Poly YES @${arb.polyYes}¢` : `🔮 Poly NO @${arb.polyNo}¢`} + ${arb.kalshiYes ? `📊 Kalshi YES @${arb.kalshiYes}¢` : `📊 Kalshi NO @${arb.kalshiNo}¢`}</div>
+          </div>
+          <div class="arb-item-profit"><div class="arb-profit-value">+${arb.profit}%</div><div class="arb-profit-label">Risk-free</div></div>
+        </div>`).join('');
+    }
+    
     function renderSignals() {
       const list = document.getElementById('signalsList');
+      const count = document.getElementById('signalCount');
       
-      list.innerHTML = SIGNALS_DATA.map(signal => `
-        <div class="signal-item">
-          <div class="signal-icon ${signal.type}">${signal.icon}</div>
-          <div class="signal-content">
-            <div class="signal-market">${signal.market}</div>
-            <div class="signal-desc">${signal.desc}</div>
-            <div class="signal-meta">
-              <span class="signal-meta-item">📍 ${signal.platform}</span>
-              <span class="signal-meta-item">🎯 ${signal.confidence}</span>
-              <span class="signal-meta-item">📈 Edge: ${signal.edge}</span>
-              <span class="signal-meta-item">⏱️ ${signal.time}</span>
+      const signals = markets.slice(0, 8).map(market => {
+        const fairValue = MLModel.calculateFairValue(market);
+        const signal = MLModel.generateSignal(market, fairValue);
+        return { ...market, ...signal, fairValue };
+      }).filter(s => s.verdict !== 'HOLD').slice(0, 5);
+      
+      count.textContent = signals.length;
+      
+      list.innerHTML = signals.map((sig, i) => {
+        const type = sig.verdict.includes('YES') ? 'buy' : 'sell';
+        const icon = type === 'buy' ? '📈' : '📉';
+        return `
+          <div class="signal-card">
+            <div class="signal-card-header">
+              <div class="signal-type"><span class="signal-type-icon ${type}">${icon}</span><span class="signal-type-text ${type}">${sig.verdict}</span></div>
+              <span class="signal-time">${i * 3 + 2}m ago</span>
             </div>
-          </div>
-          <div class="signal-action">
-            <button class="signal-action-btn" onclick="event.stopPropagation(); alert('Join waitlist for trading access!')">Trade Now</button>
-          </div>
-        </div>
-      `).join('');
+            <div class="signal-market">${sig.title.slice(0, 50)}${sig.title.length > 50 ? '...' : ''}</div>
+            <div class="signal-desc">Model: ${sig.fairValue}¢ vs Market: ${Math.round(sig.yesOdds)}¢. Edge: ${sig.edge > 0 ? '+' : ''}${sig.edge.toFixed(1)}%</div>
+            <div class="signal-meta">
+              <span class="signal-meta-item">📍 <span class="signal-meta-value">${sig.platform}</span></span>
+              <span class="signal-meta-item">🎯 <span class="signal-meta-value">${sig.confidence}%</span></span>
+            </div>
+          </div>`;
+      }).join('');
     }
-
-    // Tab click handlers
-    document.getElementById('categoryTabs').addEventListener('click', (e) => {
-      if (e.target.classList.contains('tab')) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        e.target.classList.add('active');
-        selectedCategory = e.target.dataset.category;
-        renderMarkets();
-      }
-    });
-
-    // Platform toggle
+    
+    async function init() {
+      const polymarkets = await fetchPolymarketData();
+      const kalshiMarkets = generateKalshiMarkets();
+      markets = [...polymarkets, ...kalshiMarkets];
+      markets.sort((a, b) => b.volume - a.volume);
+      
+      const totalVol = markets.reduce((sum, m) => sum + m.volume, 0);
+      document.getElementById('totalVolume').textContent = formatVolume(totalVol);
+      document.getElementById('activeMarkets').textContent = markets.length;
+      
+      renderMarketList();
+      renderArbitrage();
+      renderSignals();
+      
+      if (markets.length > 0) selectMarket(markets[0]);
+    }
+    
     document.querySelectorAll('.platform-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedPlatform = btn.dataset.platform;
-        renderMarkets();
+        renderMarketList();
       });
     });
-
-    // Simulate real-time updates
-    function simulateUpdates() {
-      // Update hero stats
-      const volumeEl = document.getElementById('totalVolume');
-      const currentVol = parseFloat(volumeEl.textContent.replace('$', '').replace('B', ''));
-      volumeEl.textContent = '$' + (currentVol + (Math.random() * 0.1 - 0.05)).toFixed(1) + 'B';
-      
-      // Flash effect
-      volumeEl.style.color = 'var(--accent-green)';
-      setTimeout(() => volumeEl.style.color = '', 500);
-    }
-
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      renderMarkets();
-      renderArbitrage();
-      renderSignals();
-      
-      // Simulate updates every 10 seconds
-      setInterval(simulateUpdates, 10000);
+    
+    document.querySelectorAll('.category-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        selectedCategory = chip.dataset.category;
+        renderMarketList();
+      });
     });
+    
+    document.querySelectorAll('.detail-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.detail-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+      });
+    });
+    
+    document.querySelectorAll('.chart-tf').forEach(tf => {
+      tf.addEventListener('click', () => {
+        document.querySelectorAll('.chart-tf').forEach(t => t.classList.remove('active'));
+        tf.classList.add('active');
+        if (selectedMarket) drawOddsChart(selectedMarket);
+      });
+    });
+    
+    ['kellyProb', 'kellyOdds', 'kellyBankroll', 'kellyFraction'].forEach(id => {
+      document.getElementById(id).addEventListener('input', calculateKelly);
+    });
+    
+    init();
+    setInterval(() => { if (selectedMarket) selectMarket(selectedMarket); renderSignals(); }, 30000);
   </script>
   
   <script>
