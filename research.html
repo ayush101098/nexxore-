@@ -1155,6 +1155,35 @@
   </header>
 
   <main class="container">
+    <!-- Value Proposition Banner -->
+    <div style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(79, 70, 229, 0.1)); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 16px; padding: 24px 32px; margin-bottom: 32px;">
+      <h1 style="font-size: 1.8rem; font-weight: 700; color: var(--text-primary); margin: 0 0 12px 0; display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 2rem;">🔬</span>
+        On-Chain Analyst - Your Trading Intelligence Hub
+      </h1>
+      <p style="font-size: 1rem; color: var(--text-secondary); margin: 0 0 16px 0; line-height: 1.6;">
+        Get institutional-grade insights combining <strong>on-chain data, market sentiment, protocol metrics, and AI-powered trading signals</strong> for all major perpetuals markets.
+      </p>
+      <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.2rem;">📊</span>
+          <span style="color: var(--text-secondary); font-size: 0.9rem;">Real-time Market Data</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.2rem;">🎯</span>
+          <span style="color: var(--text-secondary); font-size: 0.9rem;">AI Trading Signals</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.2rem;">📍</span>
+          <span style="color: var(--text-secondary); font-size: 0.9rem;">Support/Resistance Levels</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.2rem;">💰</span>
+          <span style="color: var(--text-secondary); font-size: 0.9rem;">Trade Opportunities</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Stats Bar -->
     <div class="stats-bar">
       <div class="stat-card">
@@ -2148,10 +2177,14 @@
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
       console.log('🚀 Loading On-Chain Analyst...');
-      loadAllData();
       
-      // Initialize Perps Analysis
+      // Initialize Perps Analysis immediately (non-blocking)
       initPerpsAnalysis();
+      
+      // Load other data in background
+      setTimeout(() => {
+        loadAllData();
+      }, 100);
       
       // Refresh every 2 minutes
       setInterval(loadAllData, 120000);
@@ -2177,28 +2210,27 @@
     // Fetch real data from API
     async function fetchPerpsIntelligence(market, timeframe) {
       try {
-        // Try local test server first, then fall back to production
-        const endpoints = [
-          `http://localhost:3020/api/perps-intelligence?market=${market}&timeframe=${timeframe}`,
-          `/api/perps-intelligence?market=${market}&timeframe=${timeframe}`
-        ];
+        // Try production API with short timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
         
-        for (const endpoint of endpoints) {
-          try {
-            const response = await fetch(endpoint);
-            if (response.ok) {
-              const data = await response.json();
-              console.log('✅ Fetched data from:', endpoint);
-              return data;
-            }
-          } catch (e) {
-            console.log('Failed to fetch from:', endpoint);
-          }
+        const response = await fetch(`/api/perps-intelligence?market=${market}&timeframe=${timeframe}`, {
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ Fetched live data for', market);
+          return data;
         }
         
         return null;
       } catch (error) {
-        console.error('Failed to fetch perps intelligence:', error);
+        if (error.name === 'AbortError') {
+          console.log('⚡ API timeout for', market);
+        }
         return null;
       }
     }
@@ -2326,14 +2358,29 @@
       console.log(`📊 Updating perps analysis for ${market}`);
       perpsState.currentMarket = market;
 
-      // Fetch real data from API
-      const intelligence = await fetchPerpsIntelligence(market, perpsState.currentTimeframe);
-      
-      if (intelligence && intelligence.success) {
-        // Use real data from API
-        updateWithRealData(market, intelligence);
-      } else {
-        // Fallback to mock data
+      // Show loading state immediately
+      document.getElementById('perpsUpdateTime').textContent = 'Updating...';
+
+      // Fetch real data from API with timeout
+      try {
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 5000)
+        );
+        
+        const intelligence = await Promise.race([
+          fetchPerpsIntelligence(market, perpsState.currentTimeframe),
+          timeoutPromise
+        ]);
+        
+        if (intelligence && intelligence.success) {
+          // Use real data from API
+          updateWithRealData(market, intelligence);
+        } else {
+          // Fallback to mock data
+          updateWithMockData(market);
+        }
+      } catch (error) {
+        console.log('⚡ API timeout, using instant mock data');
         updateWithMockData(market);
       }
     }
@@ -2693,23 +2740,19 @@
         });
       });
 
-      // Initial load
-      updatePerpsAnalysis('BTC');
+      // Initial load with instant mock data
+      console.log('🚀 Initializing Perps Analysis...');
+      updateWithMockData('BTC');
       
-      // Show API status
-      setTimeout(async () => {
-        const testData = await fetchPerpsIntelligence('BTC', '1d');
-        if (testData) {
-          console.log('✅ API Integration Status:', testData.dataSources);
-        } else {
-          console.log('⚠️ Using fallback mock data');
-        }
-      }, 1000);
+      // Try to fetch real data in background
+      setTimeout(() => {
+        updatePerpsAnalysis('BTC');
+      }, 500);
       
-      // Auto-refresh every 30 seconds
+      // Auto-refresh every 60 seconds (reduced from 30)
       setInterval(() => {
         updatePerpsAnalysis(perpsState.currentMarket);
-      }, 30000);
+      }, 60000);
     }
 
     // ===== INSIGHTS ENGINE =====
