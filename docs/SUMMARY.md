@@ -9,14 +9,16 @@
 
 ## Products
 
-* [Perpetual Vaults](products/perps-vaults.md)
+* [Perpetuals Trading](products/perps-vaults.md)
+* [Yield Vaults](products/vaults.md)
 * [Strategy Sandbox](products/strategy-sandbox.md)
 * [Delta Neutral Builder](products/delta-neutral.md)
 
 ## Nexxore Agents
 
 * [Agent Overview](agents/overview.md)
-* [Research Agent](agents/research-agent.md)
+* [On-Chain Analyst](agents/research-agent.md)
+* [Prediction Markets Agent](agents/prediction-markets.md)
 * [Alpha Agent](agents/alpha-agent.md)
 * [Web3 Intelligence](agents/web3-intelligence.md)
 

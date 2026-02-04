@@ -23,7 +23,8 @@ Nexxore operates a coordinated swarm of specialized agents, each with distinct r
 
 | Agent | Role | Primary Function |
 |-------|------|------------------|
-| **Research Agent** | The Analyst | Market intelligence, news synthesis, trend detection |
+| **On-Chain Analyst** | The Analyst | Market intelligence, technicals, fundamentals for 20 perp markets |
+| **Prediction Markets Agent** | The Oracle | AI signals for Polymarket & Kalshi, arbitrage detection |
 | **Alpha Agent** | The Strategist | Trading signal generation, entry/exit recommendations |
 | **Web3 Intelligence Agent** | The Auditor | Contract analysis, security scoring, rug pull detection |
 | **Execution Agent** | The Trader | Order routing, slippage minimization, venue selection |
@@ -87,20 +88,37 @@ Agents don't operate in isolation—they coordinate through a shared messaging l
 
 ## Available Agents
 
-### Research Agent
+### On-Chain Analyst (Research Agent)
 
-Market intelligence and analysis system.
+Comprehensive market intelligence for perpetual trading.
 
 **Provides:**
-- Live crypto news aggregation
-- Top gainers and losers tracking
-- Whale movement alerts
-- Smart money wallet monitoring
-- Fear & Greed index
-- DeFi TVL analytics
-- Airdrop opportunity tracking
+- Real-time price tracking for 20 markets (BTC, ETH, SOL, etc.)
+- Technical analysis: RSI, MACD, EMA crossovers, Bollinger Bands
+- Fundamental analysis: TVL, dev activity, tokenomics
+- Derivatives data: funding rates, open interest, liquidations
+- Support/resistance level calculation from OHLC data
+- Trading signals: BULLISH/BEARISH/NEUTRAL with confidence
+- API integration for execution agents (`window.nexxoreAgent`)
 
 [Learn more →](./research-agent.md)
+
+---
+
+### Prediction Markets Agent
+
+AI-powered intelligence for prediction market traders.
+
+**Provides:**
+- Real-time odds analysis for Polymarket & Kalshi
+- Cross-platform arbitrage detection
+- AI trading signals with confidence scoring
+- Market categorization: Politics, Crypto, Sports, Economy, Tech
+- Odds movement tracking and alerts
+- Portfolio analytics and performance tracking
+- Auto-trade integration (coming soon)
+
+[Learn more →](./prediction-markets.md)
 
 ---
 
@@ -160,7 +178,8 @@ Agents are continuously monitored for performance:
 
 ## Next Steps
 
-- [Research Agent →](./research-agent.md)
+- [On-Chain Analyst →](./research-agent.md)
+- [Prediction Markets Agent →](./prediction-markets.md)
 - [Alpha Agent →](./alpha-agent.md)
 - [Web3 Intelligence →](./web3-intelligence.md)
 - [Risk Framework →](../framework/risk-framework.md)

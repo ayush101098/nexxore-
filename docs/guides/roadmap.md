@@ -24,7 +24,7 @@ Core infrastructure and initial product launch.
 | Web3 frontend dApp | ✓ Complete |
 | ETH Delta-Neutral Vault | ✓ Complete |
 | BTC Delta-Neutral Vault | ✓ Complete |
-| Research Agent deployment | ✓ Complete |
+| On-Chain Analyst Agent | ✓ Complete |
 | Alpha Agent (signal generation) | ✓ Complete |
 | GMX v2 integration | ✓ Complete |
 | Arbitrum mainnet deployment | ✓ Complete |
@@ -33,9 +33,9 @@ Core infrastructure and initial product launch.
 
 ## Phase 2: Intelligence
 
-**Status:** In Progress (65%)
+**Status:** In Progress (80%)
 
-Advanced AI capabilities and cross-protocol optimization.
+Advanced AI capabilities, new agents, and cross-protocol optimization.
 
 | Milestone | Status |
 |-----------|--------|
@@ -44,29 +44,39 @@ Advanced AI capabilities and cross-protocol optimization.
 | Multi-asset portfolio tracking | ✓ Complete |
 | Real-time PnL calculation | ✓ Complete |
 | CVaR-based risk limits | ✓ Complete |
+| **Perpetuals Trading (50x leverage)** | ✓ Complete |
+| **On-Chain Analyst v3.2 (optimized)** | ✓ Complete |
+| **Prediction Markets Agent** | ✓ Complete |
+| Polymarket & Kalshi integration | ✓ Complete |
+| Cross-platform arbitrage scanner | ✓ Complete |
+| AI signal generation for predictions | ✓ Complete |
 | Cross-vault correlation analysis | ◐ In Progress |
 | Advanced risk modeling | ◐ In Progress |
 | Public API for agent signals | ◐ In Progress |
 | Dynamic position sizing | ◐ In Progress |
 | Developer SDK | ○ Planned |
 | ML-based risk predictions | ○ Planned |
-| Webhook integrations | ○ Planned |
+| Auto-trade integration | ○ Planned |
 
 ### Current Focus
 
-1. **Cross-Vault Optimization** — Correlate positions across vaults to reduce overall portfolio risk
-2. **Public Signal API** — Allow external systems to consume Alpha Agent signals via REST API
-3. **Advanced Risk Modeling** — Implement ML-based volatility forecasting for better CVaR estimation
+1. **Prediction Markets Expansion** — Add more platforms (PredictIt, Metaculus, Manifold)
+2. **Auto-Trade Bots** — Automated execution for high-confidence signals
+3. **Cross-Vault Optimization** — Correlate positions across vaults to reduce overall portfolio risk
+4. **Public Signal API** — Allow external systems to consume agent signals via REST API
 
 ### Timeline
 
 | Feature | Target |
 |---------|--------|
 | Web3 Intelligence | Q1 2025 ✓ |
-| Cross-vault optimization | Q2 2025 |
-| Public API v1 | Q2 2025 |
-| ML Risk Models | Q3 2025 |
-| Developer SDK | Q3 2025 |
+| Perpetuals Trading | Q4 2025 ✓ |
+| Prediction Markets Agent | Q1 2026 ✓ |
+| Cross-vault optimization | Q2 2026 |
+| Public API v1 | Q2 2026 |
+| Auto-trade bots | Q3 2026 |
+| ML Risk Models | Q3 2026 |
+| Developer SDK | Q4 2026 |
 
 ---
 

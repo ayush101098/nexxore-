@@ -16,8 +16,10 @@ Our mission extends beyond creating a protocol—it's about fostering a system t
 
 | Feature | Description |
 |---------|-------------|
+| **Perpetuals Trading** | Trade 20+ assets with up to 50x leverage, zero gas fees, and real-time intelligence |
 | **Delta-Neutral Vaults** | Market-neutral strategies that capture funding rates while hedging directional risk |
-| **AI Agent Swarm** | Autonomous agents for research, signal generation, execution, and risk management |
+| **AI Agent Swarm** | Autonomous agents for research, predictions, signal generation, and execution |
+| **Prediction Markets Agent** | AI-powered intelligence for Polymarket and Kalshi traders |
 | **nUSD Stablecoin** | Overcollateralized synthetic dollar backed by productive, hedged positions |
 | **ERC-4626 Vaults** | Standardized tokenized vaults for seamless DeFi composability |
 
@@ -31,13 +33,15 @@ Our mission extends beyond creating a protocol—it's about fostering a system t
 - [nUSD Stablecoin](./nusd.md) — The productive stable unit
 
 ### Products
-- [Perpetual Vaults](./products/perps-vaults.md) — Yield-generating vault strategies
+- [Perpetuals Trading](./products/perps-vaults.md) — Trade with up to 50x leverage
+- [Yield Vaults](./products/vaults.md) — Automated yield strategies
 - [Strategy Sandbox](./products/strategy-sandbox.md) — Build custom strategies
 - [Delta Neutral Builder](./products/delta-neutral.md) — Create market-neutral positions
 
 ### Nexxore Agents
 - [Agent Overview](./agents/overview.md) — The autonomous agent swarm
-- [Research Agent](./agents/research-agent.md) — Market intelligence and analysis
+- [On-Chain Analyst](./agents/research-agent.md) — Market intelligence and analysis
+- [Prediction Markets Agent](./agents/prediction-markets.md) — Polymarket & Kalshi signals
 - [Alpha Agent](./agents/alpha-agent.md) — Trading signal generation
 - [Web3 Intelligence](./agents/web3-intelligence.md) — Security scanning and auditing
 

@@ -1,167 +1,221 @@
-# Research Agent
+# On-Chain Analyst Agent
 
-Read how the Research Agent works: real-time market intelligence, news aggregation, whale tracking, and actionable insights for informed decision-making.
+The On-Chain Analyst is Nexxore's data intelligence layer for perpetual trading. It provides comprehensive market analysis across 20 assets, combining technical indicators, fundamental metrics, derivatives data, and AI-powered trading signals.
 
 ---
 
 ## Overview
 
-The Research Agent is your 24/7 market intelligence system. It aggregates data from dozens of sources, synthesizes information using AI, and presents actionable insights—all in real-time.
+The On-Chain Analyst Agent is a real-time market intelligence system optimized for speed and accuracy. It serves as the data backbone for:
+
+- **Traders** — Get instant analysis on any perp market
+- **Execution Agents** — Consume signals programmatically via API
+- **Risk Management** — Monitor market conditions 24/7
 
 ---
 
-## Features
+## Supported Markets
 
-### Live Crypto News
+The agent tracks 20 perpetual markets:
 
-Real-time news aggregation from major crypto outlets:
-
-| Source | Coverage |
-|--------|----------|
-| CoinDesk | Breaking news, analysis |
-| The Block | Institutional coverage |
-| Decrypt | Project updates |
-| CryptoCompare | Market news feed |
-
-Each article is categorized, timestamped, and ranked by relevance.
-
----
-
-### Top Gainers (24h)
-
-Live tracking of the biggest winners in the market:
-
-| Data Point | Description |
-|------------|-------------|
-| Symbol | Token ticker |
-| Price | Current market price |
-| 24h Change | Percentage gain |
-| Volume | Trading volume |
-| Market Cap | Total market capitalization |
-
-Data sourced from CoinGecko, updated every 60 seconds.
-
----
-
-### Top Losers (24h)
-
-Track the biggest decliners to:
-
-- Identify panic selling opportunities
-- Spot potential reversal candidates
-- Monitor portfolio risk exposure
-
-Same data granularity as gainers, inverse selection criteria.
-
----
-
-### Whale Movements
-
-Large transaction monitoring across major wallets:
-
-| Movement Type | Interpretation |
-|---------------|----------------|
-| Exchange Deposit | Potential selling pressure |
-| Exchange Withdrawal | Accumulation signal |
-| Wallet-to-Wallet | OTC deal or repositioning |
-| Stablecoin Mint | Fresh capital entering market |
-
-**Example Alert:**
-
-> **15,000 ETH ($49.5M)** — Binance → Unknown Wallet  
-> Withdrawal | 12 minutes ago  
-> *Interpretation: Large withdrawal suggests accumulation, not selling.*
-
----
-
-### Smart Money Wallets
-
-Track known institutional and whale wallets:
-
-| Entity | Type |
-|--------|------|
-| Jump Trading | Market maker |
-| Paradigm | VC fund |
-| a16z | VC fund |
-| Galaxy Digital | Trading firm |
-| Wintermute | Market maker |
-| Cumberland | OTC desk |
-
-**Monitoring includes:**
-- Holdings changes
-- Recent transaction activity
-- Entry/exit patterns
-- New position detection
-
----
-
-### Chain Activity
-
-Cross-chain TVL and activity metrics:
-
-| Chain | Data Available |
-|-------|----------------|
-| Ethereum | TVL, gas, activity |
-| Arbitrum | TVL, transactions |
-| BSC | TVL, volume |
-| Solana | TVL, TPS |
-| Optimism | TVL, growth |
-
-Data sourced from DefiLlama, updated in real-time.
-
----
-
-### Fear & Greed Index
-
-Market sentiment indicator on a 0-100 scale:
-
-| Range | Sentiment | Historical Signal |
-|-------|-----------|-------------------|
-| 0-24 | Extreme Fear | Often precedes rallies |
-| 25-44 | Fear | Accumulation zone |
-| 45-55 | Neutral | No clear signal |
-| 56-74 | Greed | Caution warranted |
-| 75-100 | Extreme Greed | Often precedes corrections |
-
----
-
-### Gas Prices
-
-Ethereum gas tracking for optimal transaction timing:
-
-| Speed | Gas (Gwei) | Wait Time |
-|-------|------------|-----------|
-| Slow | ~15 | 5-10 min |
-| Standard | ~25 | 1-3 min |
-| Fast | ~40 | < 1 min |
-
-Includes historical trends and recommendations for timing large transactions.
-
----
-
-### Airdrop Opportunities
-
-Track potential and confirmed airdrops:
-
-| Field | Description |
-|-------|-------------|
-| Protocol | Project name |
-| Status | Confirmed, Speculated, or Claimable |
-| Est. Value | Projected airdrop value |
-| Requirements | Actions needed to qualify |
-| Deadline | Claim or qualification deadline |
+| Tier | Assets |
+|------|--------|
+| **Major** | BTC, ETH, SOL |
+| **Large Cap** | BNB, XRP, DOGE, ADA, AVAX, LINK, DOT |
+| **Mid Cap** | MATIC, UNI, ATOM, LTC, NEAR, APT |
+| **Emerging** | OP, ARB, INJ, SUI |
 
 ---
 
 ## Data Sources
 
-| Category | Sources |
-|----------|---------|
-| Price Data | Binance, CoinGecko, CoinMarketCap |
-| News | CryptoCompare, RSS feeds, Twitter |
-| On-Chain | Etherscan, Arbiscan, DefiLlama |
-| Whale Data | Whale Alert, Arkham, Nansen |
-| Sentiment | Alternative.me, LunarCrush |
+### Primary: Binance API (~100ms latency)
+
+| Endpoint | Data |
+|----------|------|
+| `/ticker/24hr` | Price, volume, 24h change |
+| `/fapi/v1/premiumIndex` | Funding rates |
+| `/klines` | OHLC candlestick data |
+
+### Secondary: CoinGecko (fallback)
+
+| Endpoint | Data |
+|----------|------|
+| `/coins/markets` | Market cap, volume, supply |
+| `/coins/{id}/market_chart` | Historical prices |
+
+### Additional Sources
+
+| Source | Data Type |
+|--------|-----------|
+| Alternative.me | Fear & Greed Index |
+| CoinGecko Global | Total market cap, BTC dominance |
+| Binance Futures | Open interest, funding rates |
+
+---
+
+## Analysis Modules
+
+### 📊 Technical Analysis
+
+Real-time indicators calculated from OHLC data:
+
+| Indicator | Calculation | Signal |
+|-----------|-------------|--------|
+| **RSI (14)** | Relative Strength Index | Overbought (>70) / Oversold (<30) |
+| **MACD** | Moving Average Convergence/Divergence | Bullish/Bearish crossover |
+| **EMA 9/21** | Exponential Moving Average cross | Short-term trend |
+| **EMA 50/200** | Golden Cross / Death Cross | Long-term trend |
+| **Bollinger Bands** | Standard deviation bands | Volatility + position |
+| **Stochastic RSI** | RSI of RSI | Momentum extremes |
+| **ADX** | Average Directional Index | Trend strength |
+
+### 📈 Support & Resistance
+
+Automated S/R level calculation from historical OHLC:
+
+```
+Resistance Levels:
+├── R3: $108,450 (+4.2%) — Strong
+├── R2: $105,200 (+1.1%) — Medium
+└── R1: $104,800 (+0.7%) — Weak
+
+Current Price: $104,100
+
+Support Levels:
+├── S1: $103,200 (-0.9%) — Weak
+├── S2: $101,500 (-2.5%) — Medium
+└── S3: $98,800 (-5.1%) — Strong
+```
+
+### 📋 Fundamental Analysis
+
+Project-level metrics for informed decisions:
+
+| Metric | Description |
+|--------|-------------|
+| **Market Cap** | Total value of circulating supply |
+| **Volume/MCap** | Liquidity ratio |
+| **TVL** | Total value locked in protocols |
+| **Dev Activity** | GitHub commits, releases |
+| **Consensus** | Network mechanism (PoW, PoS, etc.) |
+| **Launch Year** | Time in market |
+
+### 📉 Derivatives Data
+
+Perpetual-specific intelligence:
+
+| Metric | Significance |
+|--------|--------------|
+| **Funding Rate** | Positive = longs pay shorts |
+| **Open Interest** | Total outstanding contracts |
+| **Long/Short Ratio** | Market positioning |
+| **Liquidation Levels** | Price points with clustered liquidations |
+
+---
+
+## Trading Signals
+
+The agent generates verdicts for each market:
+
+### Signal Types
+
+| Signal | Meaning | Typical Action |
+|--------|---------|----------------|
+| **BULLISH** | Positive momentum, favorable conditions | Long entries on pullbacks |
+| **BEARISH** | Negative pressure, unfavorable setup | Shorts at resistance |
+| **NEUTRAL** | Consolidating, no clear direction | Range trade or wait |
+
+### Signal Generation Logic
+
+```javascript
+function calculateSignal(market) {
+  const data = marketData[market];
+  const funding = fundingData[market];
+  
+  let score = 0;
+  
+  // Price momentum
+  if (data.change24h > 3) score += 2;
+  else if (data.change24h > 0) score += 1;
+  else if (data.change24h < -3) score -= 2;
+  else if (data.change24h < 0) score -= 1;
+  
+  // Funding rate (negative = bullish)
+  if (funding.rate < -0.0001) score += 1;
+  else if (funding.rate > 0.0005) score -= 1;
+  
+  // Volume trend
+  if (data.volume24h > averageVolume * 1.5) score += 1;
+  
+  // Return verdict
+  if (score >= 2) return 'BULLISH';
+  if (score <= -2) return 'BEARISH';
+  return 'NEUTRAL';
+}
+```
+
+### Signal Output
+
+```json
+{
+  "market": "BTC-PERP",
+  "verdict": "BULLISH",
+  "confidence": 0.72,
+  "analysis": "Positive momentum with 24h gain of +2.4%. Funding rate negative at -0.0012% indicating shorts overleveraged. Volume 35% above average.",
+  "strategy": "Long entries on pullbacks to $103K support. Stops below $101.5K. Scale in gradually."
+}
+```
+
+---
+
+## Execution Agent API
+
+The On-Chain Analyst exposes a JavaScript API for programmatic access:
+
+```javascript
+// Access the agent from browser console or other agents
+const agent = window.nexxoreAgent;
+
+// Get analysis for single market
+const btcIntel = agent.getMarketIntelligence('BTC');
+console.log(btcIntel);
+// {
+//   price: 104100,
+//   change24h: 2.4,
+//   volume: 28500000000,
+//   funding: -0.0012,
+//   signal: 'BULLISH',
+//   confidence: 0.72,
+//   support: [103200, 101500, 98800],
+//   resistance: [104800, 105200, 108450]
+// }
+
+// Get all 20 markets
+const allMarkets = agent.getAllMarketIntelligence();
+
+// Raw data access
+const prices = agent.getMarketData();
+const funding = agent.getFundingData();
+
+// Force refresh
+await agent.refreshData();
+```
+
+---
+
+## Performance Optimizations
+
+Version 3.2 includes significant performance improvements:
+
+| Optimization | Before | After |
+|--------------|--------|-------|
+| **Primary API** | CoinGecko (~2s) | Binance (~100ms) |
+| **Initial Load** | 3-5 seconds | 500-800ms |
+| **Market Switch** | 1-2 seconds | <200ms |
+| **S/R Calculation** | Blocking | Non-blocking async |
+| **OHLC Cache** | None | 10 minute TTL |
+| **Error Handling** | Crash on timeout | Graceful fallback |
 
 ---
 
@@ -169,37 +223,51 @@ Track potential and confirmed airdrops:
 
 | Data Type | Frequency |
 |-----------|-----------|
-| Prices | Real-time (~1s) |
-| News | Every 5 minutes |
-| Whale Alerts | Real-time |
-| TVL Data | Every 15 minutes |
+| Prices | Real-time WebSocket |
+| Funding Rates | Every 30 seconds |
+| S/R Levels | On market change |
 | Fear & Greed | Daily |
+| Global Stats | Every 5 minutes |
 
 ---
 
 ## Use Cases
 
-| Use Case | How Research Agent Helps |
-|----------|--------------------------|
-| Market Timing | Fear & Greed + Whale movements |
-| Asset Selection | Top gainers + Smart money tracking |
-| Risk Assessment | News sentiment + Chain activity |
-| Opportunity Detection | Airdrops + New listings |
+### For Traders
+
+1. **Market Selection** — Find assets with strongest signals
+2. **Entry Timing** — Use S/R levels for optimal entries
+3. **Risk Assessment** — Check funding rates and OI
+4. **News Context** — Understand what's driving moves
+
+### For Execution Agents
+
+1. **Signal Consumption** — Use `getMarketIntelligence()` API
+2. **Data Pipeline** — Feed into ML models
+3. **Automated Trading** — Trigger orders on BULLISH signals
+
+### For Risk Management
+
+1. **Portfolio Monitoring** — Track all positions
+2. **Correlation Analysis** — Detect correlated moves
+3. **Stress Alerts** — Fear & Greed extremes
 
 ---
 
-## Integration with Other Agents
+## Integration
 
-| Agent | Integration |
-|-------|-------------|
-| Alpha Agent | Research insights inform signal generation |
-| Web3 Intelligence | News triggers deeper contract analysis |
-| Risk Agent | Market stress indicators adjust risk limits |
+| System | Integration Method |
+|--------|-------------------|
+| Execution Agent | JavaScript API (`window.nexxoreAgent`) |
+| External Systems | REST API (coming soon) |
+| Alerts | Webhook notifications |
+| Analytics | Data export |
 
 ---
 
 ## Next Steps
 
+- [Prediction Markets Agent →](./prediction-markets.md)
 - [Alpha Agent →](./alpha-agent.md)
 - [Web3 Intelligence →](./web3-intelligence.md)
 - [Agent Overview →](./overview.md)
