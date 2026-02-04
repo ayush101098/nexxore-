@@ -2174,6 +2174,30 @@
       };
     });
 
+    // Market-specific statistics
+    const marketStats = {
+      'BTC': { openInterest: 892.5e6, volume24h: 2.8e9, tvl: 156.3e6, fundingRate: 0.0082, maxLeverage: 50 },
+      'ETH': { openInterest: 524.3e6, volume24h: 1.6e9, tvl: 98.7e6, fundingRate: 0.0074, maxLeverage: 50 },
+      'SOL': { openInterest: 187.4e6, volume24h: 456.2e6, tvl: 42.5e6, fundingRate: 0.0091, maxLeverage: 50 },
+      'HYPE': { openInterest: 45.2e6, volume24h: 89.3e6, tvl: 18.9e6, fundingRate: 0.0125, maxLeverage: 25 },
+      'ARB': { openInterest: 92.1e6, volume24h: 234.5e6, tvl: 31.2e6, fundingRate: 0.0068, maxLeverage: 50 },
+      'OP': { openInterest: 78.3e6, volume24h: 198.7e6, tvl: 28.4e6, fundingRate: 0.0072, maxLeverage: 50 },
+      'AVAX': { openInterest: 112.5e6, volume24h: 287.4e6, tvl: 35.8e6, fundingRate: 0.0079, maxLeverage: 50 },
+      'MATIC': { openInterest: 156.8e6, volume24h: 312.9e6, tvl: 45.6e6, fundingRate: 0.0065, maxLeverage: 50 },
+      'DOGE': { openInterest: 234.6e6, volume24h: 498.2e6, tvl: 67.3e6, fundingRate: 0.0088, maxLeverage: 50 },
+      'LINK': { openInterest: 89.4e6, volume24h: 223.1e6, tvl: 29.7e6, fundingRate: 0.0076, maxLeverage: 50 },
+      'UNI': { openInterest: 67.2e6, volume24h: 167.8e6, tvl: 24.5e6, fundingRate: 0.0071, maxLeverage: 50 },
+      'ATOM': { openInterest: 54.3e6, volume24h: 134.6e6, tvl: 21.8e6, fundingRate: 0.0083, maxLeverage: 50 },
+      'LTC': { openInterest: 98.7e6, volume24h: 245.3e6, tvl: 33.4e6, fundingRate: 0.0069, maxLeverage: 50 },
+      'BCH': { openInterest: 76.5e6, volume24h: 189.2e6, tvl: 27.9e6, fundingRate: 0.0073, maxLeverage: 50 },
+      'ETC': { openInterest: 43.2e6, volume24h: 98.7e6, tvl: 16.3e6, fundingRate: 0.0081, maxLeverage: 40 },
+      'FIL': { openInterest: 38.9e6, volume24h: 87.4e6, tvl: 14.7e6, fundingRate: 0.0078, maxLeverage: 40 },
+      'APT': { openInterest: 52.1e6, volume24h: 123.5e6, tvl: 19.8e6, fundingRate: 0.0092, maxLeverage: 40 },
+      'STX': { openInterest: 29.4e6, volume24h: 67.8e6, tvl: 11.2e6, fundingRate: 0.0087, maxLeverage: 30 },
+      'INJ': { openInterest: 61.8e6, volume24h: 145.3e6, tvl: 23.6e6, fundingRate: 0.0095, maxLeverage: 40 },
+      'TIA': { openInterest: 34.6e6, volume24h: 78.9e6, tvl: 13.4e6, fundingRate: 0.0089, maxLeverage: 30 }
+    };
+
     // Chart Variables
     let chart = null;
     let candleSeries = null;
@@ -3829,7 +3853,9 @@
     function updateMarketUI() {
       const market = markets[state.currentMarket];
       const data = priceData[state.currentMarket];
+      const stats = marketStats[state.currentMarket];
       
+      // Update chart header
       document.getElementById('chartIcon').textContent = market.icon;
       document.getElementById('chartIcon').style.background = market.gradient;
       document.getElementById('chartName').textContent = market.name;
@@ -3838,6 +3864,50 @@
       const badge = document.getElementById('priceBadge');
       badge.textContent = (data.change >= 0 ? '+' : '') + data.change.toFixed(2) + '%';
       badge.className = 'price-badge ' + (data.change >= 0 ? 'up' : 'down');
+
+      // Update market statistics
+      if (stats) {
+        document.getElementById('statOI').textContent = '$' + formatNumber(stats.openInterest);
+        document.getElementById('statVolume').textContent = '$' + formatNumber(stats.volume24h);
+        document.getElementById('statTVL').textContent = '$' + formatNumber(stats.tvl);
+        document.getElementById('statFunding').textContent = (stats.fundingRate * 100).toFixed(4) + '%';
+        document.getElementById('statIndex').textContent = formatPrice(data.price * 0.9999, market.decimals);
+        
+        // Update stats in other sections
+        const statIndexPrice = document.getElementById('statIndexPrice');
+        if (statIndexPrice) statIndexPrice.textContent = formatPrice(data.price * 0.9999, market.decimals);
+        
+        const stat24hVolume = document.getElementById('stat24hVolume');
+        if (stat24hVolume) stat24hVolume.textContent = '$' + formatNumber(stats.volume24h);
+        
+        const statOIMarket = document.getElementById('statOIMarket');
+        if (statOIMarket) statOIMarket.textContent = '$' + formatNumber(stats.openInterest);
+        
+        const statMarkPrice = document.getElementById('statMarkPrice');
+        if (statMarkPrice) statMarkPrice.textContent = formatPrice(data.price * 1.0001, market.decimals);
+        
+        // Update funding rate section
+        const currentFundingRate = document.getElementById('currentFundingRate');
+        if (currentFundingRate) {
+          const fundingPct = (stats.fundingRate * 100).toFixed(4);
+          currentFundingRate.textContent = (stats.fundingRate >= 0 ? '+' : '') + fundingPct + '%';
+          currentFundingRate.className = 'funding-rate-value ' + (stats.fundingRate >= 0 ? 'positive' : 'negative');
+          
+          // Update annualized rate (8-hour rate * 3 * 365)
+          const annualized = stats.fundingRate * 3 * 365 * 100;
+          const annualizedEl = currentFundingRate.nextElementSibling;
+          if (annualizedEl) annualizedEl.textContent = 'Annualized: ' + (annualized >= 0 ? '+' : '') + annualized.toFixed(2) + '%';
+        }
+        
+        const fundingPerpPrice = document.getElementById('fundingPerpPrice');
+        if (fundingPerpPrice) fundingPerpPrice.textContent = formatPrice(data.price * 1.0001, market.decimals);
+        
+        const fundingIndexPrice = document.getElementById('fundingIndexPrice');
+        if (fundingIndexPrice) fundingIndexPrice.textContent = formatPrice(data.price * 0.9999, market.decimals);
+        
+        const fundingPremium = document.getElementById('fundingPremium');
+        if (fundingPremium) fundingPremium.textContent = '+0.021%';
+      }
 
       updateSubmitButton();
       updateOrderSummary();
