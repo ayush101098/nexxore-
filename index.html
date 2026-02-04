@@ -612,7 +612,7 @@
       <p class="section-desc">Be the first to access new features and earn priority rewards.</p>
       
       <form class="waitlist-form" id="waitlistForm">
-        <input type="email" placeholder="Enter your email" required>
+        <input type="email" id="email" placeholder="Enter your email" required>
         <button type="submit">Join</button>
       </form>
       <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 14px;">We respect your privacy.</p>
@@ -691,6 +691,79 @@
     const cleanPath = window.location.pathname.replace(/\.html$/, '');
     window.history.replaceState({}, '', cleanPath + window.location.search + window.location.hash);
   }
+</script>
+<script>
+  // Waitlist Form Handling
+  (function() {
+    const form = document.getElementById('waitlistForm');
+    if (!form) return;
+    
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const emailInput = document.getElementById('email');
+      const email = emailInput.value.trim();
+      const submitBtn = form.querySelector('button[type="submit"]');
+      
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showWaitlistNotification('Please enter a valid email address', 'error');
+        return;
+      }
+      
+      // Show loading state
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Joining...';
+      submitBtn.disabled = true;
+      
+      // Google Apps Script endpoint
+      const WAITLIST_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzfgnxfO9tUHiE5w642YB5V7B7uA82m58DYF6dF_vRbQ2n2mdkqmzUmnPwwJxhAYdSq/exec';
+      
+      try {
+        await fetch(WAITLIST_ENDPOINT, {
+          method: 'POST',
+          body: JSON.stringify({ email }),
+          mode: 'no-cors'
+        });
+        
+        form.reset();
+        showWaitlistNotification('Successfully joined the waitlist! We\'ll be in touch soon.', 'success');
+      } catch (err) {
+        console.error('Waitlist submission error:', err);
+        showWaitlistNotification('Submission failed. Please try again.', 'error');
+      } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
+    });
+    
+    function showWaitlistNotification(message, type) {
+      const existing = document.querySelector('.waitlist-notification');
+      if (existing) existing.remove();
+      
+      const notification = document.createElement('div');
+      notification.className = 'waitlist-notification ' + type;
+      notification.innerHTML = message;
+      notification.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        padding: 16px 24px;
+        background: ${type === 'success' ? 'rgba(34, 197, 94, 0.95)' : 'rgba(239, 68, 68, 0.95)'};
+        color: white;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      `;
+      
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 5000);
+    }
+  })();
 </script>
 </body>
 </html>
