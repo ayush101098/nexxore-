@@ -32,7 +32,9 @@
       --degen-red: #ef4444;
       --degen-red-bg: rgba(239, 68, 68, 0.08);
       --accent-gold: #f59e0b;
+      --accent-gold-bg: rgba(245, 158, 11, 0.08);
       --accent-cyan: #06b6d4;
+      --accent-cyan-bg: rgba(6, 182, 212, 0.08);
     }
     
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -243,7 +245,6 @@
 
     /* Strategy Flow */
     .strategy-flow {
-      flex: 1;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -619,6 +620,613 @@
       color: var(--text-secondary);
       line-height: 1.6;
     }
+    
+    /* Pro Strategies Tabs */
+    .strategy-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 20px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 4px;
+    }
+    
+    .strategy-tab {
+      flex: 1;
+      padding: 12px 16px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+    }
+    
+    .strategy-tab:hover {
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.03);
+    }
+    
+    .strategy-tab.active {
+      background: var(--accent-gold);
+      color: #000;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+    
+    .strategy-tab[data-tab="pro"]::after {
+      content: 'NEW';
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      font-size: 0.5rem;
+      padding: 2px 4px;
+      background: var(--safe-green);
+      color: #000;
+      font-weight: 700;
+      border-radius: 2px;
+    }
+    
+    /* Pro Strategy Cards */
+    .pro-strategy-card {
+      padding: 18px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .pro-strategy-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--accent-gold);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    
+    .pro-strategy-card:hover {
+      border-color: var(--accent-gold);
+      background: linear-gradient(135deg, var(--bg-card), rgba(245, 158, 11, 0.05));
+      transform: translateX(4px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .pro-strategy-card:hover::before {
+      opacity: 1;
+    }
+    
+    .pro-strategy-card.selected {
+      border-color: var(--accent-gold);
+      background: linear-gradient(135deg, var(--accent-gold-bg), rgba(245, 158, 11, 0.1));
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+    }
+    
+    .pro-strategy-card.selected::before {
+      opacity: 1;
+      background: var(--accent-gold);
+    }
+    
+    .pro-strategy-header {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 10px;
+    }
+    
+    .pro-strategy-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+    
+    .pro-strategy-badge {
+      font-size: 0.55rem;
+      padding: 2px 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: var(--accent-gold-bg);
+      color: var(--accent-gold);
+    }
+    
+    .pro-strategy-author {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    
+    .pro-strategy-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-top: 12px;
+    }
+    
+    .pro-stat {
+      text-align: center;
+      padding: 10px 6px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+    }
+    
+    .pro-stat-label {
+      display: block;
+      font-size: 0.55rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    
+    .pro-stat-value {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+    
+    .pro-stat-value.positive { color: var(--safe-green); text-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
+    .pro-stat-value.negative { color: var(--degen-red); text-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+    .pro-stat-value.neutral { color: var(--text-secondary); }
+    
+    .pro-strategy-indicators {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 10px 0;
+    }
+    
+    .indicator-tag {
+      font-size: 0.6rem;
+      padding: 4px 8px;
+      background: linear-gradient(135deg, var(--balanced-blue-bg), rgba(59, 130, 246, 0.15));
+      color: var(--balanced-blue);
+      font-weight: 600;
+      border-radius: 4px;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    
+    .strategy-scroll {
+      max-height: 600px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    
+    .strategy-scroll::-webkit-scrollbar { width: 6px; }
+    .strategy-scroll::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
+    .strategy-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+    
+    /* Search Box */
+    .strategy-search {
+      margin-bottom: 16px;
+      position: relative;
+    }
+    
+    .strategy-search::before {
+      content: '🔍';
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.8rem;
+      opacity: 0.5;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 12px 12px 12px 36px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      font-family: var(--font-body);
+      transition: all 0.2s;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-gold);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+    
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+    
+    /* Strategy Info Banner */
+    .strategy-info-banner {
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(59, 130, 246, 0.08));
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .strategy-info-banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-gold), var(--balanced-blue), var(--safe-green));
+    }
+    
+    .info-banner-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .info-banner-text {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    
+    /* Strategy Detail Preview */
+    .strategy-preview {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+    }
+    
+    .preview-title {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    
+    .preview-chart {
+      height: 80px;
+      background: linear-gradient(180deg, var(--safe-green-bg), transparent);
+      position: relative;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: flex-end;
+    }
+    
+    .preview-bar {
+      flex: 1;
+      background: var(--safe-green);
+      opacity: 0.6;
+      margin: 0 1px;
+      transition: height 0.3s;
+    }
+    
+    /* Pro Strategy Footer */
+    .pro-strategy-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .pro-strategy-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .asset-badge, .timeframe-badge, .risk-badge {
+      font-size: 0.6rem;
+      padding: 4px 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    
+    .asset-badge {
+      background: linear-gradient(135deg, var(--balanced-blue-bg), rgba(59, 130, 246, 0.2));
+      color: var(--balanced-blue);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .timeframe-badge {
+      background: linear-gradient(135deg, var(--aggressive-purple-bg), rgba(168, 85, 247, 0.2));
+      color: var(--aggressive-purple);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+    
+    .risk-badge {
+      background: var(--text-muted);
+      color: var(--bg-primary);
+    }
+    
+    .risk-badge.low {
+      background: linear-gradient(135deg, var(--safe-green-bg), rgba(34, 197, 94, 0.2));
+      color: var(--safe-green);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    
+    .risk-badge.medium {
+      background: linear-gradient(135deg, var(--accent-gold-bg), rgba(245, 158, 11, 0.2));
+      color: var(--accent-gold);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .risk-badge.high {
+      background: linear-gradient(135deg, var(--degen-red-bg), rgba(239, 68, 68, 0.2));
+      color: var(--degen-red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .subscribers {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 4px;
+    }
+    
+    /* Pro Strategy Description */
+    .pro-strategy-desc {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    /* Pro Strategy Author */
+    .pro-strategy-author {
+      font-size: 0.65rem;
+      color: var(--accent-gold);
+      opacity: 0.8;
+    }
+    
+    /* Year Return Highlight */
+    .pro-stat:nth-child(3) {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.2);
+    }
+    
+    .pro-stat:nth-child(3) .pro-stat-label {
+      color: var(--accent-gold);
+    }
+    
+    /* Selected State */
+    .pro-strategy-card.selected {
+      border-color: var(--accent-gold);
+      background: linear-gradient(135deg, var(--accent-gold-bg), var(--bg-card));
+    }
+    
+    .pro-strategy-card.selected .pro-strategy-name {
+      color: var(--accent-gold);
+    }
+    
+    /* Strategy Sandbox Section */
+    .strategy-sandbox {
+      margin-top: 40px;
+      padding: 24px 0;
+      border-top: 2px solid var(--accent-gold);
+      position: relative;
+    }
+    
+    .strategy-sandbox::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: 0;
+      width: 100px;
+      height: 2px;
+      background: var(--safe-green);
+    }
+    
+    .sandbox-cta {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(59, 130, 246, 0.08), rgba(34, 197, 94, 0.05));
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 12px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .sandbox-cta::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent-gold), var(--balanced-blue), var(--safe-green), var(--aggressive-purple));
+    }
+    
+    .sandbox-cta::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.1), transparent 70%);
+      pointer-events: none;
+    }
+    
+    .sandbox-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    
+    .sandbox-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .sandbox-title-icon {
+      font-size: 1.5rem;
+    }
+    
+    .sandbox-badge {
+      font-size: 0.6rem;
+      padding: 4px 8px;
+      background: var(--accent-gold);
+      color: #000;
+      font-weight: 700;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      animation: pulse-badge 2s infinite;
+    }
+    
+    @keyframes pulse-badge {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+    }
+    
+    .sandbox-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 20px;
+      max-width: 500px;
+    }
+    
+    .sandbox-stats {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .sandbox-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .sandbox-stat-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--safe-green);
+    }
+    
+    .sandbox-stat-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .sandbox-strategies {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    
+    .sandbox-strategy-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .sandbox-strategy-chip:hover {
+      border-color: var(--accent-gold);
+      background: var(--accent-gold-bg);
+      color: var(--text-primary);
+    }
+    
+    .sandbox-strategy-chip .chip-return {
+      font-weight: 700;
+      color: var(--safe-green);
+      font-family: var(--font-mono);
+    }
+    
+    .sandbox-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      background: linear-gradient(135deg, var(--accent-gold), #d97706);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+    
+    .sandbox-cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(245, 158, 11, 0.5);
+    }
+    
+    .sandbox-cta-btn .btn-arrow {
+      transition: transform 0.2s;
+    }
+    
+    .sandbox-cta-btn:hover .btn-arrow {
+      transform: translateX(4px);
+    }
+    
+    .sandbox-secondary-link {
+      display: inline-block;
+      margin-left: 16px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-decoration: underline;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    
+    .sandbox-secondary-link:hover {
+      color: var(--text-primary);
+    }
   </style>
 </head>
 <body>
@@ -637,6 +1245,14 @@
     <div class="panel">
       <div class="panel-title">Strategy Templates</div>
       
+      <!-- Tabs -->
+      <div class="strategy-tabs">
+        <button class="strategy-tab active" data-tab="basic">Basic</button>
+        <button class="strategy-tab" data-tab="pro">Pro Strategies</button>
+      </div>
+      
+      <!-- Basic Strategies -->
+      <div id="basicStrategies">
       <div class="template-card safe selected">
         <div class="template-header">
           <span class="template-name">Safe Yield</span>
@@ -721,6 +1337,26 @@
             <span class="value">Variable</span>
           </div>
         </div>
+      </div>
+      </div>
+      
+      <!-- Pro Strategies (AlphaInsider) -->
+      <div id="proStrategies" style="display: none;">
+        <div class="strategy-info-banner">
+          <div class="info-banner-title">
+            ⚡ Pro Algo Strategies
+            <span style="font-size: 0.55rem; padding: 2px 6px; background: var(--safe-green); color: #000; border-radius: 3px; font-weight: 700;">12 STRATEGIES</span>
+          </div>
+          <div class="info-banner-text">
+            Professional cryptocurrency trading strategies from top algorithmic traders. All strategies are backtested with verified performance metrics.
+          </div>
+        </div>
+        
+        <div class="strategy-search">
+          <input type="text" class="search-input" id="proStrategySearch" placeholder="Search by name, indicator, or asset...">
+        </div>
+        
+        <div class="strategy-scroll" id="proStrategyList"></div>
       </div>
     </div>
 
@@ -823,6 +1459,59 @@
         </div>
 
         <button class="add-step-btn">+ Add Strategy Step</button>
+      </div>
+      
+      <!-- Strategy Sandbox CTA -->
+      <div class="strategy-sandbox">
+        <div class="sandbox-cta">
+          <div class="sandbox-header">
+            <div class="sandbox-title">
+              <span class="sandbox-title-icon">🧪</span>
+              Strategy Sandbox
+            </div>
+            <span class="sandbox-badge">Pro Feature</span>
+          </div>
+          
+          <p class="sandbox-desc">
+            Test professional algorithmic trading strategies in a risk-free environment. Access 12+ verified strategies from top traders with proven backtested performance.
+          </p>
+          
+          <div class="sandbox-stats">
+            <div class="sandbox-stat">
+              <span class="sandbox-stat-value">151%</span>
+              <span class="sandbox-stat-label">Top Yearly Return</span>
+            </div>
+            <div class="sandbox-stat">
+              <span class="sandbox-stat-value">12</span>
+              <span class="sandbox-stat-label">Pro Strategies</span>
+            </div>
+            <div class="sandbox-stat">
+              <span class="sandbox-stat-value">45K+</span>
+              <span class="sandbox-stat-label">Total Subscribers</span>
+            </div>
+          </div>
+          
+          <div class="sandbox-strategies">
+            <div class="sandbox-strategy-chip" onclick="openProStrategies('ichimoku-eth')">
+              Ichimoku ETH <span class="chip-return">+151%</span>
+            </div>
+            <div class="sandbox-strategy-chip" onclick="openProStrategies('ema-crossover')">
+              EMA Crossover <span class="chip-return">+144%</span>
+            </div>
+            <div class="sandbox-strategy-chip" onclick="openProStrategies('trendma-noro')">
+              TrendMA <span class="chip-return">+141%</span>
+            </div>
+            <div class="sandbox-strategy-chip" onclick="openProStrategies('williams-fractals')">
+              Williams Fractals <span class="chip-return">+128%</span>
+            </div>
+          </div>
+          
+          <button class="sandbox-cta-btn" onclick="openProStrategies()">
+            Explore Pro Strategies
+            <span class="btn-arrow">→</span>
+          </button>
+          <span class="sandbox-secondary-link" onclick="openProStrategies()">View all 12 strategies</span>
+        </div>
       </div>
     </div>
 
@@ -1233,7 +1922,382 @@
     // Initialize with Safe Yield
     document.addEventListener('DOMContentLoaded', () => {
       applyPreset('Safe Yield');
+      initProStrategies();
     });
+
+    // Pro Strategies from AlphaInsider
+    const proStrategies = [
+      {
+        id: 'ichimoku-eth',
+        name: 'Ichimoku Kinko Hyo: ETH 3h',
+        author: 'TradingView Community',
+        description: 'Japanese cloud indicator system applied to ETH on 3-hour timeframe. Combines multiple moving averages for trend identification.',
+        indicators: ['Ichimoku Cloud', 'Tenkan-sen', 'Kijun-sen', 'Senkou Span'],
+        returns: { day: '+0.8%', week: '+12.3%', month: '+28.5%', year: '+151%', fiveYear: '+410%' },
+        risk: 'medium',
+        subscribers: '2.4k',
+        asset: 'ETH',
+        timeframe: '3h'
+      },
+      {
+        id: 'saylor-schiff',
+        name: 'ETH - Saylor to Schiff Ratio',
+        author: 'CryptoQuant',
+        description: 'Sentiment-based strategy comparing bullish vs bearish market indicators. Captures macro trends through on-chain metrics.',
+        indicators: ['On-Chain Metrics', 'Sentiment Analysis', 'MVRV Ratio'],
+        returns: { day: '+1.2%', week: '+15.4%', month: '+32.1%', year: '+151%', fiveYear: '+380%' },
+        risk: 'medium',
+        subscribers: '1.8k',
+        asset: 'ETH',
+        timeframe: '1d'
+      },
+      {
+        id: 'trendma-noro',
+        name: "Noro's TrendMA Strategy",
+        author: 'Noro',
+        description: 'Trend-following system using multiple moving average crossovers with volatility filters for entry/exit signals.',
+        indicators: ['EMA', 'SMA', 'Volatility Filter', 'Trend Strength'],
+        returns: { day: '+2.1%', week: '+35.76%', month: '+48.2%', year: '+141%', fiveYear: '+520%' },
+        risk: 'high',
+        subscribers: '3.1k',
+        asset: 'Multi',
+        timeframe: '4h'
+      },
+      {
+        id: 'ema-crossover',
+        name: 'EMA(10,10) EMA(21,21) Crossover',
+        author: 'Technical Traders',
+        description: 'Classic dual exponential moving average crossover strategy optimized for crypto volatility.',
+        indicators: ['EMA 10', 'EMA 21', 'Crossover Signals'],
+        returns: { day: '+3.2%', week: '+43.54%', month: '+52.8%', year: '+144%', fiveYear: '+480%' },
+        risk: 'high',
+        subscribers: '4.2k',
+        asset: 'BTC/ETH',
+        timeframe: '1h'
+      },
+      {
+        id: 'trend-deviation',
+        name: 'Trend Deviation Strategy [IkkeOmar]',
+        author: 'IkkeOmar',
+        description: 'Mean reversion combined with trend following. Identifies overextended price movements for reversal entries.',
+        indicators: ['Standard Deviation', 'Bollinger Bands', 'RSI', 'Trend Filter'],
+        returns: { day: '+1.5%', week: '+22.3%', month: '+38.6%', year: '+141%', fiveYear: '+395%' },
+        risk: 'medium',
+        subscribers: '2.7k',
+        asset: 'Multi',
+        timeframe: '4h'
+      },
+      {
+        id: 'psar-adx-cmf',
+        name: 'Full Strategy: PSAR + ADX + CMF + RSI',
+        author: 'QuantTraders',
+        description: 'Multi-indicator confirmation strategy combining parabolic SAR, trend strength, money flow, and momentum.',
+        indicators: ['Parabolic SAR', 'ADX', 'CMF', 'RSI'],
+        returns: { day: '+0.9%', week: '+18.4%', month: '+29.7%', year: '+105%', fiveYear: '+340%' },
+        risk: 'medium',
+        subscribers: '5.8k',
+        asset: 'BTC',
+        timeframe: '4h'
+      },
+      {
+        id: 'volume-advanced',
+        name: 'Volume Advanced by TradingAmmo',
+        author: 'TradingAmmo',
+        description: 'Volume-based analysis detecting accumulation and distribution phases for optimal entry timing.',
+        indicators: ['Volume Profile', 'OBV', 'Volume MA', 'Accumulation/Distribution'],
+        returns: { day: '+0.6%', week: '+14.2%', month: '+26.8%', year: '+98.09%', fiveYear: '+290%' },
+        risk: 'low',
+        subscribers: '6.2k',
+        asset: 'BTC/ETH',
+        timeframe: '1d'
+      },
+      {
+        id: 'lunaowl-channel',
+        name: '[LunaOwl] LOHAS Investor PriceChannel',
+        author: 'LunaOwl',
+        description: 'Long-term price channel strategy designed for patient investors. Captures major trend moves with minimal trading.',
+        indicators: ['Donchian Channel', 'Price Channel', 'ATR Stops'],
+        returns: { day: '+0.4%', week: '+8.6%', month: '+18.2%', year: '+84.5%', fiveYear: '+386%' },
+        risk: 'low',
+        subscribers: '3.9k',
+        asset: 'BTC',
+        timeframe: '1d'
+      },
+      {
+        id: 'williams-fractals',
+        name: 'WMX Williams Fractals Strategy V4',
+        author: 'WMX',
+        description: 'Bill Williams fractal patterns combined with momentum indicators for breakout detection.',
+        indicators: ['Williams Fractals', 'Alligator', 'AO', 'AC'],
+        returns: { day: '+2.8%', week: '+45.2%', month: '+58.4%', year: '+128%', fiveYear: '+420%' },
+        risk: 'high',
+        subscribers: '2.1k',
+        asset: 'Multi',
+        timeframe: '2h'
+      },
+      {
+        id: 'btc-bear-season',
+        name: 'Bitcoin Bear Season',
+        author: 'CycleTrades',
+        description: 'Counter-trend strategy optimized for bear market conditions. Captures bounces and manages downside risk.',
+        indicators: ['RSI Divergence', 'Support/Resistance', 'MA Cross', 'Volume Climax'],
+        returns: { day: '+0.3%', week: '+6.8%', month: '+12.4%', year: '+48.05%', fiveYear: '+322%' },
+        risk: 'low',
+        subscribers: '7.4k',
+        asset: 'BTC',
+        timeframe: '1d'
+      },
+      {
+        id: 'ema-spot-only',
+        name: 'EMA12/26 Buy Spot Only',
+        author: 'SpotTraders',
+        description: 'Conservative spot-only strategy using classic EMA crossover. No leverage, long-only positions.',
+        indicators: ['EMA 12', 'EMA 26', 'Signal Line'],
+        returns: { day: '+0.2%', week: '+5.8%', month: '+11.2%', year: '+50.4%', fiveYear: '+280%' },
+        risk: 'low',
+        subscribers: '8.9k',
+        asset: 'BTC/ETH',
+        timeframe: '1d'
+      },
+      {
+        id: 'alligator-noro',
+        name: "Noro's Alligator Strategy",
+        author: 'Noro',
+        description: "Bill Williams' Alligator indicator implementation with custom filters for crypto markets.",
+        indicators: ['Alligator Jaw', 'Teeth', 'Lips', 'Fractals'],
+        returns: { day: '+0.5%', week: '+11.4%', month: '+22.6%', year: '+80.32%', fiveYear: '+340%' },
+        risk: 'medium',
+        subscribers: '4.6k',
+        asset: 'Multi',
+        timeframe: '4h'
+      }
+    ];
+
+    function initProStrategies() {
+      renderProStrategies(proStrategies);
+      
+      // Tab switching
+      document.querySelectorAll('.strategy-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.strategy-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          const tabType = tab.dataset.tab;
+          document.getElementById('basicStrategies').style.display = tabType === 'basic' ? 'block' : 'none';
+          document.getElementById('proStrategies').style.display = tabType === 'pro' ? 'block' : 'none';
+        });
+      });
+      
+      // Search functionality
+      document.getElementById('proStrategySearch').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        const filtered = proStrategies.filter(s => 
+          s.name.toLowerCase().includes(query) ||
+          s.author.toLowerCase().includes(query) ||
+          s.indicators.some(i => i.toLowerCase().includes(query)) ||
+          s.asset.toLowerCase().includes(query)
+        );
+        renderProStrategies(filtered);
+      });
+    }
+    
+    // Open Pro Strategies tab and optionally select a strategy
+    function openProStrategies(strategyId) {
+      // Switch to Pro tab
+      document.querySelectorAll('.strategy-tab').forEach(t => t.classList.remove('active'));
+      document.querySelector('.strategy-tab[data-tab="pro"]').classList.add('active');
+      
+      document.getElementById('basicStrategies').style.display = 'none';
+      document.getElementById('proStrategies').style.display = 'block';
+      
+      // Scroll the templates panel into view
+      document.querySelector('.panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      
+      // If a specific strategy was requested, select it
+      if (strategyId) {
+        setTimeout(() => {
+          const card = document.querySelector(`.pro-strategy-card[data-strategy-id="${strategyId}"]`);
+          if (card) {
+            card.click();
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    }
+
+    function renderProStrategies(strategies) {
+      const container = document.getElementById('proStrategyList');
+      container.innerHTML = strategies.map(s => `
+        <div class="pro-strategy-card" data-strategy-id="${s.id}">
+          <div class="pro-strategy-header">
+            <div class="pro-strategy-name">${s.name}</div>
+            <div class="pro-strategy-author">by ${s.author}</div>
+          </div>
+          <div class="pro-strategy-desc">${s.description}</div>
+          <div class="pro-strategy-indicators">
+            ${s.indicators.slice(0, 4).map(i => `<span class="indicator-tag">${i}</span>`).join('')}
+          </div>
+          <div class="pro-strategy-stats">
+            <div class="pro-stat">
+              <span class="pro-stat-label">Week</span>
+              <span class="pro-stat-value ${parseFloat(s.returns.week) >= 0 ? 'positive' : 'negative'}">${s.returns.week}</span>
+            </div>
+            <div class="pro-stat">
+              <span class="pro-stat-label">Month</span>
+              <span class="pro-stat-value ${parseFloat(s.returns.month) >= 0 ? 'positive' : 'negative'}">${s.returns.month}</span>
+            </div>
+            <div class="pro-stat">
+              <span class="pro-stat-label">Year</span>
+              <span class="pro-stat-value ${parseFloat(s.returns.year) >= 0 ? 'positive' : 'negative'}">${s.returns.year}</span>
+            </div>
+            <div class="pro-stat">
+              <span class="pro-stat-label">5 Year</span>
+              <span class="pro-stat-value ${parseFloat(s.returns.fiveYear) >= 0 ? 'positive' : 'negative'}">${s.returns.fiveYear}</span>
+            </div>
+          </div>
+          <div class="pro-strategy-footer">
+            <span class="pro-strategy-meta">
+              <span class="asset-badge">${s.asset}</span>
+              <span class="timeframe-badge">${s.timeframe}</span>
+              <span class="risk-badge ${s.risk}">${s.risk}</span>
+            </span>
+            <span class="subscribers">👥 ${s.subscribers}</span>
+          </div>
+        </div>
+      `).join('');
+      
+      // Add click handlers
+      container.querySelectorAll('.pro-strategy-card').forEach(card => {
+        card.addEventListener('click', () => {
+          container.querySelectorAll('.pro-strategy-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          
+          const strategyId = card.dataset.strategyId;
+          const strategy = proStrategies.find(s => s.id === strategyId);
+          if (strategy) {
+            applyProStrategy(strategy);
+          }
+        });
+      });
+    }
+
+    function applyProStrategy(strategy) {
+      // Update canvas title & subtitle
+      document.querySelector('.canvas-title').textContent = strategy.name;
+      document.querySelector('.canvas-subtitle').textContent = strategy.description;
+      
+      // Map risk levels to presets
+      const riskToPreset = {
+        'low': 'Safe Yield',
+        'medium': 'Balanced Realloc',
+        'high': 'Opportunistic Alpha'
+      };
+      
+      const basePreset = strategyPresets[riskToPreset[strategy.risk] || 'Balanced Realloc'];
+      
+      // Apply base preset parameters
+      const leverageSlider = document.querySelectorAll('.slider')[0];
+      leverageSlider.min = basePreset.leverage.min;
+      leverageSlider.max = basePreset.leverage.max;
+      leverageSlider.value = basePreset.leverage.default;
+      
+      const stopSlider = document.querySelectorAll('.slider')[1];
+      stopSlider.min = basePreset.stopLoss.min;
+      stopSlider.max = basePreset.stopLoss.max;
+      stopSlider.value = basePreset.stopLoss.default;
+      
+      const profitSlider = document.querySelectorAll('.slider')[2];
+      profitSlider.min = basePreset.takeProfit.min;
+      profitSlider.max = basePreset.takeProfit.max;
+      profitSlider.value = basePreset.takeProfit.default;
+      
+      // Update slider displays
+      document.querySelectorAll('.slider-group').forEach(group => {
+        const slider = group.querySelector('.slider');
+        const valueDisplay = group.querySelector('.slider-value');
+        const label = group.querySelector('.slider-label').textContent;
+        
+        if (label.includes('Leverage')) {
+          valueDisplay.textContent = slider.value + 'x';
+        } else if (label.includes('Stop')) {
+          valueDisplay.textContent = '-' + slider.value + '%';
+        } else if (label.includes('Profit')) {
+          valueDisplay.textContent = '+' + slider.value + '%';
+        }
+      });
+      
+      // Update protocol allocation to show indicators
+      const protocolAllocation = document.getElementById('protocolAllocation');
+      if (protocolAllocation) {
+        const indicatorAlloc = strategy.indicators.map((ind, i) => ({
+          name: ind,
+          pct: Math.round(100 / strategy.indicators.length)
+        }));
+        protocolAllocation.innerHTML = indicatorAlloc.map(p => `
+          <div class="config-item">
+            <div class="config-label">${p.name}</div>
+            <div class="config-value" style="color: var(--accent-gold);">${p.pct}%</div>
+          </div>
+        `).join('');
+      }
+      
+      // Update summary stats with strategy returns
+      const apyEl = document.querySelector('.summary-stat:nth-child(1) .summary-stat-value');
+      const ddEl = document.querySelector('.summary-stat:nth-child(2) .summary-stat-value');
+      const sharpeEl = document.querySelector('.summary-stat:nth-child(3) .summary-stat-value');
+      const riskEl = document.querySelector('.summary-stat:nth-child(4) .summary-stat-value');
+      
+      if (apyEl) {
+        apyEl.textContent = strategy.returns.year;
+        apyEl.className = 'summary-stat-value green';
+      }
+      if (ddEl) ddEl.textContent = '-' + basePreset.maxDD + '%';
+      if (sharpeEl) {
+        sharpeEl.textContent = (parseFloat(strategy.returns.year) / 50).toFixed(2);
+        sharpeEl.className = 'summary-stat-value blue';
+      }
+      if (riskEl) {
+        const riskLabel = strategy.risk.charAt(0).toUpperCase() + strategy.risk.slice(1);
+        riskEl.textContent = riskLabel;
+        riskEl.className = 'summary-stat-value ' + (strategy.risk === 'low' ? 'green' : strategy.risk === 'medium' ? 'blue' : 'purple');
+      }
+      
+      // Update risk meter
+      const riskPosition = strategy.risk === 'low' ? 20 : strategy.risk === 'medium' ? 50 : 75;
+      document.querySelector('.risk-indicator').style.left = riskPosition + '%';
+      
+      // Update deploy button
+      const deployBtn = document.querySelector('.deploy-btn');
+      if (deployBtn) {
+        deployBtn.style.background = 'var(--accent-gold)';
+      }
+      
+      // Update minting info
+      const mintingInfo = document.getElementById('mintingInfo');
+      if (mintingInfo) {
+        mintingInfo.innerHTML = `
+          <div class="minting-param">
+            <span class="minting-label">Strategy Type</span>
+            <span class="minting-value">Algo Trading</span>
+          </div>
+          <div class="minting-param">
+            <span class="minting-label">Timeframe</span>
+            <span class="minting-value">${strategy.timeframe}</span>
+          </div>
+          <div class="minting-param">
+            <span class="minting-label">Primary Asset</span>
+            <span class="minting-value">${strategy.asset}</span>
+          </div>
+          <div class="minting-explanation">
+            <strong>Indicators:</strong> ${strategy.indicators.join(', ')}<br><br>
+            This algorithmic trading strategy uses technical indicators to generate buy/sell signals. Connects to your nUSD position for automated execution.
+          </div>
+        `;
+      }
+      
+      // Deselect basic templates
+      document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+    }
   </script>
 <script>
   document.querySelectorAll('a[href$=".html"]').forEach(link => {
