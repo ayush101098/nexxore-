@@ -1,25 +1,47 @@
-const { Pool } = require('pg');
+const Database = require('better-sqlite3');
+const path = require('path');
 const config = require('./config');
 
-let pool = null;
+let db = null;
 
-const getPool = () => {
-  if (!pool) {
-    if (!config.databaseUrl) {
-      throw new Error('DATABASE_URL is not configured');
-    }
-    pool = new Pool({ connectionString: config.databaseUrl });
+const getDB = () => {
+  if (!db) {
+    const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'data', 'perps.db');
+    db = new Database(dbPath);
+    db.pragma('foreign_keys = ON');
+    db.pragma('journal_mode = WAL');
   }
-  return pool;
+  return db;
 };
 
-const query = async (text, params) => {
-  const client = await getPool().connect();
+// PostgreSQL-compatible query wrapper for SQLite
+const query = async (text, params = []) => {
+  const database = getDB();
+  
+  // Convert PostgreSQL $1, $2 placeholders to ? for SQLite
+  let sqliteQuery = text;
+  if (params && params.length > 0) {
+    params.forEach((_, index) => {
+      sqliteQuery = sqliteQuery.replace(`$${index + 1}`, '?');
+    });
+  }
+  
   try {
-    return await client.query(text, params);
-  } finally {
-    client.release();
+    // Detect query type
+    const queryType = text.trim().toLowerCase().split(' ')[0];
+    const stmt = database.prepare(sqliteQuery);
+    
+    if (queryType === 'select' || queryType === 'with') {
+      const rows = stmt.all(...params);
+      return { rows, rowCount: rows.length };
+    } else {
+      const info = stmt.run(...params);
+      return { rows: [], rowCount: info.changes };
+    }
+  } catch (error) {
+    console.error('Database query error:', error);
+    throw error;
   }
 };
 
-module.exports = { getPool, query };
+module.exports = { getDB, query };

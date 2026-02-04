@@ -1,5 +1,6 @@
 const EventEmitter = require('events');
 const WebSocket = require('ws');
+const axios = require('axios');
 const config = require('./config');
 
 class MarketData extends EventEmitter {
@@ -16,15 +17,17 @@ class MarketData extends EventEmitter {
 
   async loadHyperliquidAssets() {
     try {
-      const response = await fetch(`${config.hyperliquidApi}/info`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'meta' })
+      const response = await axios.post(`${config.hyperliquidApi}/info`, {
+        type: 'meta'
+      }, {
+        headers: { 'Content-Type': 'application/json' }
       });
-      const data = await response.json();
-      data.universe.forEach((item, idx) => {
-        this.assetIndices[item.name] = idx;
-      });
+      const data = response.data;
+      if (data && data.universe) {
+        data.universe.forEach((item, idx) => {
+          this.assetIndices[item.name] = idx;
+        });
+      }
     } catch (e) {
       console.error('Failed to load HyperLiquid assets', e);
     }
@@ -63,33 +66,58 @@ class MarketData extends EventEmitter {
     this.ws.on('message', (raw) => {
       try {
         const msg = JSON.parse(raw.toString());
+        
+        // Handle orderbook updates
         if (msg.channel === 'l2Book' && msg.data) {
           const coin = msg.data.coin;
-          const bids = (msg.data.levels[0] || []).map(([price, size]) => ({ 
-            price: parseFloat(price), 
-            size: parseFloat(size) 
-          }));
-          const asks = (msg.data.levels[1] || []).map(([price, size]) => ({ 
-            price: parseFloat(price), 
-            size: parseFloat(size) 
-          }));
+          const levels = msg.data.levels;
+          
+          // Safely parse bids and asks
+          let bids = [];
+          let asks = [];
+          
+          try {
+            if (levels && Array.isArray(levels[0])) {
+              bids = levels[0].map(level => {
+                if (Array.isArray(level) && level.length >= 2) {
+                  return { price: parseFloat(level[0]), size: parseFloat(level[1]) };
+                }
+                return null;
+              }).filter(Boolean);
+            }
+            
+            if (levels && Array.isArray(levels[1])) {
+              asks = levels[1].map(level => {
+                if (Array.isArray(level) && level.length >= 2) {
+                  return { price: parseFloat(level[0]), size: parseFloat(level[1]) };
+                }
+                return null;
+              }).filter(Boolean);
+            }
+          } catch (levelError) {
+            console.warn('Error parsing orderbook levels:', levelError.message);
+          }
+          
           this.books[coin.toLowerCase()] = { bids, asks, lastUpdate: Date.now() };
           this.emit('orderbook', { symbol: coin.toLowerCase(), orderbook: this.books[coin.toLowerCase()] });
         }
 
-        if (msg.channel === 'trades' && msg.data) {
+        // Handle trade updates
+        if (msg.channel === 'trades' && msg.data && Array.isArray(msg.data)) {
           msg.data.forEach(t => {
-            const coin = t.coin;
-            const trade = {
-              price: parseFloat(t.px),
-              size: parseFloat(t.sz),
-              side: t.side,
-              time: t.time
-            };
-            if (!this.trades[coin.toLowerCase()]) this.trades[coin.toLowerCase()] = [];
-            this.trades[coin.toLowerCase()].unshift(trade);
-            this.trades[coin.toLowerCase()] = this.trades[coin.toLowerCase()].slice(0, 80);
-            this.emit('trade', { symbol: coin.toLowerCase(), trade });
+            if (t && t.coin) {
+              const coin = t.coin;
+              const trade = {
+                price: parseFloat(t.px || 0),
+                size: parseFloat(t.sz || 0),
+                side: t.side,
+                time: t.time
+              };
+              if (!this.trades[coin.toLowerCase()]) this.trades[coin.toLowerCase()] = [];
+              this.trades[coin.toLowerCase()].unshift(trade);
+              this.trades[coin.toLowerCase()] = this.trades[coin.toLowerCase()].slice(0, 80);
+              this.emit('trade', { symbol: coin.toLowerCase(), trade });
+            }
           });
         }
       } catch (err) {
@@ -111,12 +139,12 @@ class MarketData extends EventEmitter {
 
   async fetchHyperliquidTickers() {
     try {
-      const response = await fetch(`${config.hyperliquidApi}/info`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'allMids' })
+      const response = await axios.post(`${config.hyperliquidApi}/info`, {
+        type: 'allMids'
+      }, {
+        headers: { 'Content-Type': 'application/json' }
       });
-      const data = await response.json();
+      const data = response.data;
       Object.entries(data).forEach(([symbol, price]) => {
         if (config.symbols.includes(symbol)) {
           const prevPrice = this.tickers[symbol.toLowerCase()]?.price || price;

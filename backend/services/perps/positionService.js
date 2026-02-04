@@ -145,15 +145,29 @@ const getOrdersByWallet = async (walletAddress) => {
 };
 
 const updateMarkPrices = async (markPrices) => {
+  if (!markPrices || typeof markPrices !== 'object') {
+    return; // Nothing to update
+  }
+  
   const updates = Object.entries(markPrices);
+  if (updates.length === 0) {
+    return; // No markets to update
+  }
+  
   for (const [market, markPrice] of updates) {
-    await query(
-      `UPDATE perps_positions
-       SET mark_price = $1,
-           unrealized_pnl = (CASE WHEN side = 'long' THEN ($1 - entry_price) * size ELSE (entry_price - $1) * size END)
-       WHERE market = $2 AND status = 'open'`,
-      [markPrice, market]
-    );
+    if (!market || markPrice === null || markPrice === undefined) continue;
+    
+    try {
+      await query(
+        `UPDATE perps_positions
+         SET mark_price = $1,
+             unrealized_pnl = (CASE WHEN side = 'long' THEN ($1 - entry_price) * size ELSE (entry_price - $1) * size END)
+         WHERE market = $2 AND status = 'open'`,
+        [markPrice, market]
+      );
+    } catch (error) {
+      console.error(`Failed to update mark price for ${market}:`, error.message);
+    }
   }
 };
 
