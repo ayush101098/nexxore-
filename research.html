@@ -24,8 +24,8 @@
       --font-heading: 'Space Grotesk', sans-serif;
       --font-body: 'Inter', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
-      --bg-primary: #0a0a0f;
-      --bg-secondary: #0d0d14;
+      --bg-primary: #000000;
+      --bg-secondary: #0a0a0a;
       --bg-card: rgba(255, 255, 255, 0.02);
       --bg-card-hover: rgba(255, 255, 255, 0.04);
       --accent-cyan: #a855f7;
@@ -37,7 +37,7 @@
       --text-primary: #F8FAFC;
       --text-secondary: #94a3b8;
       --text-muted: #64748b;
-      --border-color: rgba(255, 255, 255, 0.06);
+      --border-color: rgba(255, 255, 255, 0.08);
       --glow-purple: 0 0 30px rgba(168, 85, 247, 0.15);
       --glow-green: 0 0 20px rgba(34, 197, 94, 0.2);
       --glow-red: 0 0 20px rgba(239, 68, 68, 0.2);
@@ -47,10 +47,7 @@
     
     body {
       font-family: var(--font-body);
-      background: var(--bg-primary);
-      background-image: 
-        radial-gradient(ellipse at top, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at bottom right, rgba(34, 197, 94, 0.05) 0%, transparent 40%);
+      background: #000000;
       color: var(--text-secondary);
       min-height: 100vh;
     }
@@ -68,7 +65,7 @@
       align-items: center;
       padding: 16px 32px;
       border-bottom: 1px solid var(--border-color);
-      background: rgba(10, 10, 15, 0.8);
+      background: rgba(0, 0, 0, 0.95);
       backdrop-filter: blur(20px);
       position: sticky;
       top: 0;
@@ -143,8 +140,8 @@
 
     /* Hero Banner */
     .hero-banner {
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(79, 70, 229, 0.08), rgba(34, 197, 94, 0.06));
-      border: 1px solid rgba(168, 85, 247, 0.25);
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(79, 70, 229, 0.05), rgba(0, 0, 0, 0.9));
+      border: 1px solid rgba(168, 85, 247, 0.2);
       border-radius: 24px;
       padding: 40px 48px;
       margin-bottom: 20px;
@@ -1222,7 +1219,7 @@
             </div>
           </div>
           <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
-            Calculated using <strong>Pivot Points</strong> and <strong>Fibonacci retracements</strong> based on market volatility and price structure.
+            Calculated from <strong>real OHLC historical data</strong> using <strong>Pivot Points</strong>, <strong>Fibonacci retracements</strong>, and <strong>price cluster analysis</strong>. All values shown with full precision.
           </p>
           <div class="sr-levels-container" id="srLevelsContainer">
             <div class="loading">Calculating key levels...</div>
@@ -1432,12 +1429,164 @@
       };
     }
 
-    // Calculate S/R levels using pivot points
-    function calculateSRLevels(market, timeframe) {
+    // Calculate S/R levels using real OHLC data from history
+    async function fetchOHLCData(market, days = 30) {
+      try {
+        const geckoId = coinGeckoIds[market];
+        if (!geckoId) return null;
+        
+        const res = await fetch(`https://api.coingecko.com/api/v3/coins/${geckoId}/ohlc?vs_currency=usd&days=${days}`);
+        if (!res.ok) return null;
+        
+        const data = await res.json();
+        // Data format: [timestamp, open, high, low, close]
+        return data.map(candle => ({
+          timestamp: candle[0],
+          open: candle[1],
+          high: candle[2],
+          low: candle[3],
+          close: candle[4]
+        }));
+      } catch (e) {
+        console.error(`OHLC fetch error for ${market}:`, e);
+        return null;
+      }
+    }
+
+    // Cache for OHLC data
+    const ohlcCache = {};
+
+    // Calculate precise S/R levels using pivot points + Fibonacci from real data
+    async function calculateSRLevelsFromHistory(market, timeframe) {
+      const config = marketConfig[market];
+      const currentPrice = config.price;
+      
+      // Determine days based on timeframe
+      const tfDays = { '1h': 1, '4h': 7, '1d': 30, '1w': 90 };
+      const days = tfDays[timeframe] || 30;
+      
+      // Check cache first
+      const cacheKey = `${market}_${days}`;
+      let ohlcData = ohlcCache[cacheKey];
+      
+      if (!ohlcData || Date.now() - ohlcData.fetchTime > 300000) { // 5 min cache
+        const freshData = await fetchOHLCData(market, days);
+        if (freshData && freshData.length > 0) {
+          ohlcCache[cacheKey] = { data: freshData, fetchTime: Date.now() };
+          ohlcData = ohlcCache[cacheKey];
+        }
+      }
+      
+      if (ohlcData && ohlcData.data.length > 0) {
+        const candles = ohlcData.data;
+        
+        // Get recent high/low for pivot calculation
+        const recentCandles = candles.slice(-Math.min(candles.length, timeframe === '1h' ? 4 : timeframe === '4h' ? 6 : timeframe === '1d' ? 7 : 14));
+        
+        const periodHigh = Math.max(...recentCandles.map(c => c.high));
+        const periodLow = Math.min(...recentCandles.map(c => c.low));
+        const periodClose = recentCandles[recentCandles.length - 1].close;
+        
+        // Classic Pivot Point calculation
+        const pivot = (periodHigh + periodLow + periodClose) / 3;
+        const range = periodHigh - periodLow;
+        
+        // Pivot-based levels (precise)
+        const r1 = (2 * pivot) - periodLow;
+        const r2 = pivot + range;
+        const r3 = periodHigh + 2 * (pivot - periodLow);
+        
+        const s1 = (2 * pivot) - periodHigh;
+        const s2 = pivot - range;
+        const s3 = periodLow - 2 * (periodHigh - pivot);
+        
+        // Fibonacci levels from high/low
+        const fib236 = periodHigh - (range * 0.236);
+        const fib382 = periodHigh - (range * 0.382);
+        const fib500 = periodHigh - (range * 0.5);
+        const fib618 = periodHigh - (range * 0.618);
+        const fib786 = periodHigh - (range * 0.786);
+        
+        // Find strongest historical levels (price clusters)
+        const allPrices = candles.flatMap(c => [c.high, c.low, c.open, c.close]);
+        const priceHistogram = {};
+        const bucketSize = range * 0.01; // 1% buckets
+        
+        allPrices.forEach(price => {
+          const bucket = Math.round(price / bucketSize) * bucketSize;
+          priceHistogram[bucket] = (priceHistogram[bucket] || 0) + 1;
+        });
+        
+        // Get top price clusters
+        const clusters = Object.entries(priceHistogram)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10)
+          .map(([price]) => parseFloat(price));
+        
+        // Combine pivot, fibonacci, and cluster levels
+        const resistanceLevels = [];
+        const supportLevels = [];
+        
+        // Add pivot levels
+        if (r1 > currentPrice) resistanceLevels.push({ price: r1, strength: 'Pivot R1', type: 'Pivot' });
+        if (r2 > currentPrice) resistanceLevels.push({ price: r2, strength: 'Pivot R2', type: 'Pivot' });
+        if (r3 > currentPrice) resistanceLevels.push({ price: r3, strength: 'Pivot R3', type: 'Pivot' });
+        
+        if (s1 < currentPrice) supportLevels.push({ price: s1, strength: 'Pivot S1', type: 'Pivot' });
+        if (s2 < currentPrice) supportLevels.push({ price: s2, strength: 'Pivot S2', type: 'Pivot' });
+        if (s3 < currentPrice) supportLevels.push({ price: s3, strength: 'Pivot S3', type: 'Pivot' });
+        
+        // Add Fibonacci levels
+        [fib236, fib382, fib500, fib618, fib786].forEach((fib, i) => {
+          const fibName = ['23.6%', '38.2%', '50%', '61.8%', '78.6%'][i];
+          if (fib > currentPrice * 1.002) {
+            resistanceLevels.push({ price: fib, strength: `Fib ${fibName}`, type: 'Fibonacci' });
+          } else if (fib < currentPrice * 0.998) {
+            supportLevels.push({ price: fib, strength: `Fib ${fibName}`, type: 'Fibonacci' });
+          }
+        });
+        
+        // Add historical cluster levels
+        clusters.forEach(clusterPrice => {
+          const hits = priceHistogram[clusterPrice];
+          const strengthLabel = hits > 8 ? 'Strong Zone' : hits > 5 ? 'Medium Zone' : 'Weak Zone';
+          if (clusterPrice > currentPrice * 1.005) {
+            resistanceLevels.push({ price: clusterPrice, strength: strengthLabel, type: 'Historical' });
+          } else if (clusterPrice < currentPrice * 0.995) {
+            supportLevels.push({ price: clusterPrice, strength: strengthLabel, type: 'Historical' });
+          }
+        });
+        
+        // Sort and deduplicate (keep unique levels within 0.5% of each other)
+        const deduplicateLevels = (levels) => {
+          const sorted = levels.sort((a, b) => Math.abs(b.price - currentPrice) - Math.abs(a.price - currentPrice));
+          const result = [];
+          sorted.forEach(level => {
+            const tooClose = result.some(r => Math.abs(r.price - level.price) / level.price < 0.005);
+            if (!tooClose) result.push(level);
+          });
+          return result.slice(0, 5);
+        };
+        
+        return {
+          resistance: deduplicateLevels(resistanceLevels).sort((a, b) => a.price - b.price),
+          support: deduplicateLevels(supportLevels).sort((a, b) => b.price - a.price),
+          pivot: pivot,
+          periodHigh: periodHigh,
+          periodLow: periodLow,
+          dataSource: 'CoinGecko OHLC'
+        };
+      }
+      
+      // Fallback to calculated levels if API fails
+      return calculateSRLevelsFallback(market, timeframe);
+    }
+
+    // Fallback S/R calculation
+    function calculateSRLevelsFallback(market, timeframe) {
       const config = marketConfig[market];
       const basePrice = config.price;
       
-      // Adjust volatility based on timeframe
       const tfMultiplier = { '1h': 0.5, '4h': 1, '1d': 1.5, '1w': 2.5 };
       const vol = config.volatility * (tfMultiplier[timeframe] || 1);
       
@@ -1445,7 +1594,6 @@
       const low = basePrice * (1 - vol);
       const pivot = (high + low + basePrice) / 3;
       
-      // Pivot-based levels
       const r1 = (2 * pivot) - low;
       const r2 = pivot + (high - low);
       const r3 = high + 2 * (pivot - low);
@@ -1456,16 +1604,29 @@
 
       return {
         resistance: [
-          { price: r1, strength: 'Weak', type: 'R1' },
-          { price: r2, strength: 'Medium', type: 'R2' },
-          { price: r3, strength: 'Strong', type: 'R3' }
+          { price: r1, strength: 'Pivot R1', type: 'Calculated' },
+          { price: r2, strength: 'Pivot R2', type: 'Calculated' },
+          { price: r3, strength: 'Pivot R3', type: 'Calculated' }
         ].sort((a, b) => a.price - b.price),
         support: [
-          { price: s1, strength: 'Weak', type: 'S1' },
-          { price: s2, strength: 'Medium', type: 'S2' },
-          { price: s3, strength: 'Strong', type: 'S3' }
-        ].sort((a, b) => b.price - a.price)
+          { price: s1, strength: 'Pivot S1', type: 'Calculated' },
+          { price: s2, strength: 'Pivot S2', type: 'Calculated' },
+          { price: s3, strength: 'Pivot S3', type: 'Calculated' }
+        ].sort((a, b) => b.price - a.price),
+        pivot: pivot,
+        dataSource: 'Calculated'
       };
+    }
+
+    // Format price with full precision based on price magnitude
+    function formatPricePrecise(price) {
+      if (price >= 10000) return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (price >= 1000) return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (price >= 100) return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+      if (price >= 10) return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+      if (price >= 1) return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+      if (price >= 0.01) return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 6, maximumFractionDigits: 6 });
+      return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 8, maximumFractionDigits: 8 });
     }
 
     // Generate trading opportunities
@@ -1678,7 +1839,7 @@
     }
 
     // Update analysis display
-    function updateAnalysis(market) {
+    async function updateAnalysis(market) {
       console.log(`📊 Analyzing ${market}...`);
       currentMarket = market;
       const config = marketConfig[market];
@@ -1779,8 +1940,8 @@
         </div>
       `;
 
-      // Update S/R levels
-      updateSRLevels(market, currentTimeframe);
+      // Update S/R levels (async)
+      await updateSRLevels(market, currentTimeframe);
 
       // Update opportunities
       updateOpportunities(market);
@@ -1788,41 +1949,83 @@
       document.getElementById('perpsUpdateTime').textContent = 'Updated: ' + new Date().toLocaleTimeString();
     }
 
-    function updateSRLevels(market, timeframe) {
-      const levels = calculateSRLevels(market, timeframe);
-      const decimals = marketConfig[market].price < 1 ? 4 : marketConfig[market].price < 100 ? 2 : 0;
+    async function updateSRLevels(market, timeframe) {
+      // Show loading state
+      document.getElementById('srLevelsContainer').innerHTML = '<div class="loading"><div class="loading-spinner"></div>Fetching historical data & calculating levels...</div>';
+      
+      const levels = await calculateSRLevelsFromHistory(market, timeframe);
+      const currentPrice = marketConfig[market].price;
+      
+      // Calculate distance from current price for each level
+      const formatDistance = (price) => {
+        const dist = ((price - currentPrice) / currentPrice) * 100;
+        return dist >= 0 ? `+${dist.toFixed(2)}%` : `${dist.toFixed(2)}%`;
+      };
       
       document.getElementById('srLevelsContainer').innerHTML = `
         <div class="sr-level-group">
           <div class="sr-group-title">
             <span>🔴</span>
             Resistance Levels (${timeframe.toUpperCase()})
+            <span style="font-size: 0.7rem; color: var(--text-muted); margin-left: auto;">${levels.dataSource}</span>
           </div>
-          ${levels.resistance.map(r => `
+          ${levels.resistance.length > 0 ? levels.resistance.map(r => `
             <div class="sr-level resistance">
-              <span class="sr-price">${formatCurrency(r.price, decimals)} <small style="opacity: 0.6">${r.type}</small></span>
-              <span class="sr-strength">${r.strength}</span>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <span class="sr-price">${formatPricePrecise(r.price)}</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">${formatDistance(r.price)} from current</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                <span class="sr-strength">${r.strength}</span>
+                <span style="font-size: 0.65rem; color: var(--text-muted);">${r.type}</span>
+              </div>
             </div>
-          `).join('')}
+          `).join('') : '<div style="padding: 12px; color: var(--text-muted); font-size: 0.85rem;">No resistance levels found above current price</div>'}
         </div>
         <div class="sr-level-group">
           <div class="sr-group-title">
             <span>🟢</span>
             Support Levels (${timeframe.toUpperCase()})
+            <span style="font-size: 0.7rem; color: var(--text-muted); margin-left: auto;">Pivot + Fibonacci + Historical</span>
           </div>
-          ${levels.support.map(s => `
+          ${levels.support.length > 0 ? levels.support.map(s => `
             <div class="sr-level support">
-              <span class="sr-price">${formatCurrency(s.price, decimals)} <small style="opacity: 0.6">${s.type}</small></span>
-              <span class="sr-strength">${s.strength}</span>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <span class="sr-price">${formatPricePrecise(s.price)}</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted);">${formatDistance(s.price)} from current</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                <span class="sr-strength">${s.strength}</span>
+                <span style="font-size: 0.65rem; color: var(--text-muted);">${s.type}</span>
+              </div>
             </div>
-          `).join('')}
+          `).join('') : '<div style="padding: 12px; color: var(--text-muted); font-size: 0.85rem;">No support levels found below current price</div>'}
         </div>
+        ${levels.pivot ? `
+        <div style="grid-column: 1 / -1; padding: 12px 16px; background: rgba(168, 85, 247, 0.1); border-radius: 10px; border: 1px solid rgba(168, 85, 247, 0.2); margin-top: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Pivot Point</span>
+              <span style="font-family: var(--font-mono); font-weight: 600; color: var(--accent-purple); margin-left: 8px;">${formatPricePrecise(levels.pivot)}</span>
+            </div>
+            ${levels.periodHigh ? `
+            <div>
+              <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Period High</span>
+              <span style="font-family: var(--font-mono); font-weight: 600; color: var(--accent-green); margin-left: 8px;">${formatPricePrecise(levels.periodHigh)}</span>
+            </div>
+            <div>
+              <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Period Low</span>
+              <span style="font-family: var(--font-mono); font-weight: 600; color: var(--accent-red); margin-left: 8px;">${formatPricePrecise(levels.periodLow)}</span>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+        ` : ''}
       `;
     }
 
     function updateOpportunities(market) {
       const opportunities = generateTradingOpportunities(market);
-      const decimals = marketConfig[market].price < 1 ? 4 : marketConfig[market].price < 100 ? 2 : 0;
       
       document.getElementById('opportunitiesGrid').innerHTML = opportunities.map(opp => `
         <div class="opportunity-card">
@@ -1837,15 +2040,15 @@
             </div>
             <div class="opp-detail-row">
               <span class="opp-label">Entry</span>
-              <span class="opp-value">${formatCurrency(opp.entry, decimals)}</span>
+              <span class="opp-value">${formatPricePrecise(opp.entry)}</span>
             </div>
             <div class="opp-detail-row">
               <span class="opp-label">Target</span>
-              <span class="opp-value">${formatCurrency(opp.target, decimals)}</span>
+              <span class="opp-value">${formatPricePrecise(opp.target)}</span>
             </div>
             <div class="opp-detail-row">
               <span class="opp-label">Stop Loss</span>
-              <span class="opp-value">${formatCurrency(opp.stop, decimals)}</span>
+              <span class="opp-value">${formatPricePrecise(opp.stop)}</span>
             </div>
             <div class="opp-detail-row">
               <span class="opp-label">Risk/Reward</span>
@@ -1867,11 +2070,11 @@
 
       // Timeframe tabs
       document.querySelectorAll('.tf-tab').forEach(tab => {
-        tab.addEventListener('click', (e) => {
+        tab.addEventListener('click', async (e) => {
           document.querySelectorAll('.tf-tab').forEach(t => t.classList.remove('active'));
           e.target.classList.add('active');
           currentTimeframe = e.target.dataset.tf;
-          updateSRLevels(currentMarket, currentTimeframe);
+          await updateSRLevels(currentMarket, currentTimeframe);
         });
       });
 
