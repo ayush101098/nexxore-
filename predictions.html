@@ -2906,6 +2906,240 @@
     .feature-tab-panel .performance-section {
       margin-bottom: 0;
     }
+
+    /* Premium Access Gate */
+    .access-gate-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(5, 5, 7, 0.95);
+      backdrop-filter: blur(20px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+
+    .access-gate-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .access-gate-modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 520px;
+      width: 90%;
+      text-align: center;
+      animation: modalSlideIn 0.4s ease;
+    }
+
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .access-gate-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+
+    .access-gate-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .access-gate-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .access-features-list {
+      text-align: left;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: var(--bg-panel);
+      border-radius: 10px;
+    }
+
+    .access-feature {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .access-feature:last-child {
+      border-bottom: none;
+    }
+
+    .access-feature-icon {
+      font-size: 1rem;
+    }
+
+    .access-price {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .access-price-amount {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--green);
+    }
+
+    .access-price-period {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .access-deposit-btn {
+      width: 100%;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 12px;
+    }
+
+    .access-deposit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(168, 85, 247, 0.3);
+    }
+
+    .access-verify-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .access-verify-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .access-verify-input-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .access-verify-input {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.85rem;
+      font-family: var(--mono);
+    }
+
+    .access-verify-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .access-verify-btn {
+      padding: 12px 20px;
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .access-verify-btn:hover {
+      background: var(--accent-dim);
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+
+    .access-verify-btn.verifying {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .access-status {
+      margin-top: 12px;
+      font-size: 0.8rem;
+      padding: 10px;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .access-status.show {
+      display: block;
+    }
+
+    .access-status.success {
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .access-status.error {
+      background: var(--red-dim);
+      color: var(--red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .access-status.pending {
+      background: var(--orange-dim);
+      color: var(--orange);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .access-scanner-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 16px;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .access-scanner-link:hover {
+      color: var(--accent);
+    }
+
+    /* Locked Feature Blur */
+    .feature-locked {
+      filter: blur(4px);
+      pointer-events: none;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
@@ -2947,6 +3181,69 @@
       </div>
     </div>
   </header>
+
+  <!-- Premium Access Gate -->
+  <div class="access-gate-overlay" id="accessGateOverlay">
+    <div class="access-gate-modal">
+      <div class="access-gate-icon">🔐</div>
+      <h2 class="access-gate-title">Unlock Premium Trading Tools</h2>
+      <p class="access-gate-subtitle">
+        Get access to institutional-grade prediction market intelligence with AI consensus, arbitrage scanner, and real-time edge detection.
+      </p>
+      
+      <div class="access-features-list">
+        <div class="access-feature">
+          <span class="access-feature-icon">🤖</span>
+          <span>6-Model AI Consensus (GPT-4o, Claude, Gemini, Perplexity, Mistral, DeepSeek)</span>
+        </div>
+        <div class="access-feature">
+          <span class="access-feature-icon">💰</span>
+          <span>Cross-Platform Arbitrage Scanner (Polymarket vs Kalshi)</span>
+        </div>
+        <div class="access-feature">
+          <span class="access-feature-icon">📊</span>
+          <span>Fair Value Edge Calculator with Mispricing Detection</span>
+        </div>
+        <div class="access-feature">
+          <span class="access-feature-icon">📋</span>
+          <span>Copy Trading - Follow Top Traders Automatically</span>
+        </div>
+        <div class="access-feature">
+          <span class="access-feature-icon">📰</span>
+          <span>Real-Time Market News with Impact Ratings</span>
+        </div>
+        <div class="access-feature">
+          <span class="access-feature-icon">⚡</span>
+          <span>Hotkey Trading Terminal + Whale Alerts</span>
+        </div>
+      </div>
+
+      <div class="access-price">
+        <span class="access-price-amount">0.01 ETH</span>
+        <span class="access-price-period">/ lifetime access</span>
+      </div>
+
+      <a href="https://basescan.org/address/0x742d35Cc6634C0532925a3b844Bc9e7595f5bB23" target="_blank" id="depositLink">
+        <button class="access-deposit-btn" id="depositBtn">
+          💳 Deposit to Unlock Access
+        </button>
+      </a>
+
+      <div class="access-verify-section">
+        <div class="access-verify-label">Already paid? Verify your wallet</div>
+        <div class="access-verify-input-group">
+          <input type="text" class="access-verify-input" id="verifyWalletInput" placeholder="0x... or ENS name">
+          <button class="access-verify-btn" id="verifyAccessBtn">Verify</button>
+        </div>
+        <div class="access-status" id="accessStatus"></div>
+      </div>
+
+      <a href="https://basescan.org/address/0x742d35Cc6634C0532925a3b844Bc9e7595f5bB23#tokentxns" target="_blank" class="access-scanner-link">
+        <span>🔍</span>
+        <span>View deposit scanner on BaseScan</span>
+      </a>
+    </div>
+  </div>
 
   <main class="main">
     <!-- Left Sidebar -->
@@ -5967,6 +6264,176 @@
       renderSignals();
       renderTrendingMarkets();
     }, 30000);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  PREMIUM ACCESS GATE - Deposit Verification System
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    const DEPOSIT_ADDRESS = '0x742d35Cc6634C0532925a3b844Bc9e7595f5bB23';
+    const MINIMUM_DEPOSIT = 0.01; // ETH
+    const ACCESS_KEY = 'nexxore_predictions_access';
+    const BASESCAN_API = 'https://api.basescan.org/api';
+    
+    // Check if user already has access
+    function checkStoredAccess() {
+      const stored = localStorage.getItem(ACCESS_KEY);
+      if (stored) {
+        try {
+          const data = JSON.parse(stored);
+          // Verify expiry (or lifetime access)
+          if (data.verified && data.wallet) {
+            unlockPremiumAccess();
+            return true;
+          }
+        } catch (e) {
+          localStorage.removeItem(ACCESS_KEY);
+        }
+      }
+      return false;
+    }
+    
+    // Verify deposit on-chain
+    async function verifyDeposit(walletAddress) {
+      const statusEl = document.getElementById('accessStatus');
+      const verifyBtn = document.getElementById('verifyAccessBtn');
+      
+      if (!walletAddress) {
+        showAccessStatus('Please enter your wallet address', 'error');
+        return;
+      }
+      
+      // Clean address
+      walletAddress = walletAddress.trim().toLowerCase();
+      
+      // Basic validation
+      if (!walletAddress.startsWith('0x') || walletAddress.length !== 42) {
+        // Check if it might be an ENS name
+        if (walletAddress.includes('.eth')) {
+          showAccessStatus('ENS resolution coming soon. Please use your 0x address.', 'pending');
+          return;
+        }
+        showAccessStatus('Invalid wallet address format', 'error');
+        return;
+      }
+      
+      verifyBtn.classList.add('verifying');
+      verifyBtn.textContent = 'Verifying...';
+      showAccessStatus('Scanning blockchain for your deposit...', 'pending');
+      
+      try {
+        // Query BaseScan API for transactions to deposit address
+        const response = await fetch(
+          `${BASESCAN_API}?module=account&action=txlist&address=${DEPOSIT_ADDRESS}&startblock=0&endblock=99999999&sort=desc`
+        );
+        const data = await response.json();
+        
+        if (data.status === '1' && data.result) {
+          // Find transactions from this wallet
+          const deposits = data.result.filter(tx => 
+            tx.from.toLowerCase() === walletAddress &&
+            tx.to.toLowerCase() === DEPOSIT_ADDRESS.toLowerCase() &&
+            tx.isError === '0'
+          );
+          
+          // Calculate total deposited
+          let totalDeposited = 0;
+          deposits.forEach(tx => {
+            totalDeposited += parseFloat(tx.value) / 1e18; // Convert from Wei
+          });
+          
+          if (totalDeposited >= MINIMUM_DEPOSIT) {
+            // Access granted!
+            const accessData = {
+              verified: true,
+              wallet: walletAddress,
+              amount: totalDeposited,
+              timestamp: Date.now(),
+              txCount: deposits.length
+            };
+            localStorage.setItem(ACCESS_KEY, JSON.stringify(accessData));
+            
+            showAccessStatus(
+              `✅ Verified! ${totalDeposited.toFixed(4)} ETH deposited. Unlocking access...`,
+              'success'
+            );
+            
+            setTimeout(() => {
+              unlockPremiumAccess();
+            }, 1500);
+          } else if (totalDeposited > 0) {
+            showAccessStatus(
+              `Found ${totalDeposited.toFixed(4)} ETH. Minimum required: ${MINIMUM_DEPOSIT} ETH`,
+              'error'
+            );
+          } else {
+            showAccessStatus(
+              'No deposits found from this wallet. Please make a deposit first.',
+              'error'
+            );
+          }
+        } else {
+          // Fallback: If API fails, check localStorage for demo/testing
+          showAccessStatus(
+            'Unable to verify on-chain. Please try again or contact support.',
+            'error'
+          );
+        }
+      } catch (error) {
+        console.error('Verification error:', error);
+        showAccessStatus(
+          'Network error during verification. Please try again.',
+          'error'
+        );
+      }
+      
+      verifyBtn.classList.remove('verifying');
+      verifyBtn.textContent = 'Verify';
+    }
+    
+    function showAccessStatus(message, type) {
+      const statusEl = document.getElementById('accessStatus');
+      statusEl.textContent = message;
+      statusEl.className = `access-status show ${type}`;
+    }
+    
+    function unlockPremiumAccess() {
+      const overlay = document.getElementById('accessGateOverlay');
+      if (overlay) {
+        overlay.classList.add('hidden');
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 300);
+      }
+      
+      // Remove any locked class from features
+      document.querySelectorAll('.feature-locked').forEach(el => {
+        el.classList.remove('feature-locked');
+      });
+      
+      console.log('🔓 Premium access unlocked!');
+    }
+    
+    // Event listeners for access gate
+    const verifyAccessBtn = document.getElementById('verifyAccessBtn');
+    const verifyWalletInput = document.getElementById('verifyWalletInput');
+    
+    if (verifyAccessBtn) {
+      verifyAccessBtn.addEventListener('click', () => {
+        const wallet = verifyWalletInput.value;
+        verifyDeposit(wallet);
+      });
+    }
+    
+    if (verifyWalletInput) {
+      verifyWalletInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          verifyDeposit(e.target.value);
+        }
+      });
+    }
+    
+    // Check stored access on page load
+    checkStoredAccess();
   </script>
   
   <script>
