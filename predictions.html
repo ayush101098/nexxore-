@@ -2841,6 +2841,71 @@
     
     .perf-bar.positive { background: var(--green); }
     .perf-bar.negative { background: var(--red); }
+
+    /* Feature Tabs Navigation */
+    .feature-tabs-nav {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+      background: var(--bg-elevated);
+      padding: 4px;
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+
+    .feature-tab-btn {
+      padding: 10px 16px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .feature-tab-btn:hover:not(.active) {
+      background: var(--bg-card);
+      color: var(--text-secondary);
+    }
+
+    .feature-tab-btn.active {
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      color: white;
+    }
+
+    .feature-tab-btn .tab-icon {
+      font-size: 0.9rem;
+    }
+
+    .feature-tab-panel {
+      display: none;
+    }
+
+    .feature-tab-panel.active {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Remove margin from sections when in tab */
+    .feature-tab-panel .ai-consensus-section,
+    .feature-tab-panel .arbitrage-section,
+    .feature-tab-panel .edge-section,
+    .feature-tab-panel .news-section,
+    .feature-tab-panel .copy-trade-section,
+    .feature-tab-panel .performance-section {
+      margin-bottom: 0;
+    }
   </style>
 </head>
 <body>
@@ -3416,15 +3481,39 @@
         </p>
       </div>
       
-      <!-- v4.0: AI Consensus Panel - Multi-Model Predictions -->
-      <div class="ai-consensus-section" id="aiConsensusSection">
-        <div class="ai-consensus-header">
-          <div class="ai-consensus-title">
-            <span>🤖 AI Consensus</span>
-            <span class="ai-badge">MULTI-MODEL</span>
-          </div>
+      <!-- v4.0 Feature Tabs -->
+      <div class="feature-tabs-container">
+        <div class="feature-tabs-nav">
+          <button class="feature-tab-btn active" data-feature-tab="ai-consensus">
+            <span class="tab-icon">🤖</span> AI Consensus
+          </button>
+          <button class="feature-tab-btn" data-feature-tab="arbitrage">
+            <span class="tab-icon">💰</span> Arbitrage
+          </button>
+          <button class="feature-tab-btn" data-feature-tab="edge">
+            <span class="tab-icon">📊</span> Edge Calculator
+          </button>
+          <button class="feature-tab-btn" data-feature-tab="news">
+            <span class="tab-icon">📰</span> News Feed
+          </button>
+          <button class="feature-tab-btn" data-feature-tab="copy-trading">
+            <span class="tab-icon">📋</span> Copy Trading
+          </button>
+          <button class="feature-tab-btn" data-feature-tab="performance">
+            <span class="tab-icon">📈</span> Performance
+          </button>
         </div>
-        <div class="ai-models-grid" id="aiModelsGrid">
+
+        <!-- AI Consensus Tab -->
+        <div class="feature-tab-panel active" id="feature-ai-consensus">
+          <div class="ai-consensus-section" id="aiConsensusSection">
+            <div class="ai-consensus-header">
+              <div class="ai-consensus-title">
+                <span>🤖 AI Consensus</span>
+                <span class="ai-badge">MULTI-MODEL</span>
+              </div>
+            </div>
+            <div class="ai-models-grid" id="aiModelsGrid">
           <div class="ai-model-card">
             <div class="ai-model-name">GPT-4o</div>
             <div class="ai-model-prediction yes" id="gpt4Prediction">YES 72%</div>
@@ -3456,14 +3545,16 @@
             <div class="ai-model-confidence">Conf: 76%</div>
           </div>
         </div>
-        <div class="ai-consensus-result">
-          <div class="consensus-label">Ensemble Consensus (6 models)</div>
-          <div class="consensus-value bullish" id="consensusValue">YES 66% ±4%</div>
+            <div class="ai-consensus-result">
+              <div class="consensus-label">Ensemble Consensus (6 models)</div>
+              <div class="consensus-value bullish" id="consensusValue">YES 66% ±4%</div>
+            </div>
+          </div>
         </div>
-      </div>
-      
-      <!-- v4.0: Arbitrage Scanner -->
-      <div class="arbitrage-section" id="arbitrageSection">
+
+        <!-- Arbitrage Tab -->
+        <div class="feature-tab-panel" id="feature-arbitrage">
+          <div class="arbitrage-section" id="arbitrageSection">
         <div class="arbitrage-header">
           <div class="arbitrage-title">
             <span>💰 Arbitrage Scanner</span>
@@ -3506,10 +3597,12 @@
             </div>
           </div>
         </div>
-      </div>
-      
-      <!-- v4.0: Edge Calculator -->
-      <div class="edge-section" id="edgeSection">
+          </div>
+        </div>
+
+        <!-- Edge Calculator Tab -->
+        <div class="feature-tab-panel" id="feature-edge">
+          <div class="edge-section" id="edgeSection">
         <div class="edge-header">
           <div class="edge-title">
             <span>📊 Edge Calculator</span>
@@ -3535,13 +3628,15 @@
             <div class="edge-stat-value positive" id="edgePercent">+16.7%</div>
           </div>
         </div>
-        <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 12px; text-align: center;">
-          Edge = (Fair Value - Market Price) / Market Price
-        </p>
-      </div>
-      
-      <!-- v4.0: News Feed -->
-      <div class="news-section" id="newsSection">
+            <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 12px; text-align: center;">
+              Edge = (Fair Value - Market Price) / Market Price
+            </p>
+          </div>
+        </div>
+
+        <!-- News Feed Tab -->
+        <div class="feature-tab-panel" id="feature-news">
+          <div class="news-section" id="newsSection">
         <div class="news-header">
           <div class="news-title">
             <span>📰 Market News</span>
@@ -3586,7 +3681,113 @@
             </div>
           </div>
         </div>
-      </div>
+          </div>
+        </div>
+
+        <!-- Copy Trading Tab -->
+        <div class="feature-tab-panel" id="feature-copy-trading">
+          <div class="copy-trade-section" id="copyTradeSectionMain">
+            <div class="copy-trade-header">
+              <div class="copy-trade-title">
+                <span>📋 Copy Trading</span>
+                <span class="copy-badge">AUTO</span>
+              </div>
+            </div>
+            <div class="copy-trader-card" id="copyTraderCardMain">
+              <div class="copy-trader-info">
+                <div class="copy-trader-name">🏆 gabagool22</div>
+                <div class="copy-trader-stats">
+                  <span class="copy-trader-stat positive">📈 +$892K</span>
+                  <span class="copy-trader-stat">🎯 78% Win Rate</span>
+                </div>
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                <strong style="color: var(--text-secondary);">Last Trade:</strong> BUY YES on "BTC $100K by June 2026" @ 67¢ (2h ago)
+              </div>
+              <button class="copy-trade-btn" id="copyTradeBtnMain">
+                ⚡ Copy Next Trade
+              </button>
+            </div>
+            <div style="margin-top: 16px;">
+              <div class="sidebar-title"><span>📈 Top Traders to Copy</span></div>
+              <div class="top-traders-list" style="max-height: none;">
+                <div class="top-trader-item" data-address="0x8dxd" style="cursor: pointer;">
+                  <div class="top-trader-rank gold">1</div>
+                  <div class="top-trader-info">
+                    <div class="top-trader-address">gabagool22</div>
+                    <div class="top-trader-stats"><span>Win: 78%</span><span>Trades: 1.2K</span></div>
+                  </div>
+                  <div class="top-trader-pnl">+$892K</div>
+                </div>
+                <div class="top-trader-item" data-address="Anjun" style="cursor: pointer;">
+                  <div class="top-trader-rank silver">2</div>
+                  <div class="top-trader-info">
+                    <div class="top-trader-address">Anjun</div>
+                    <div class="top-trader-stats"><span>Win: 74%</span><span>Trades: 892</span></div>
+                  </div>
+                  <div class="top-trader-pnl">+$547K</div>
+                </div>
+                <div class="top-trader-item" data-address="Domer" style="cursor: pointer;">
+                  <div class="top-trader-rank bronze">3</div>
+                  <div class="top-trader-info">
+                    <div class="top-trader-address">Domer</div>
+                    <div class="top-trader-stats"><span>Win: 71%</span><span>Trades: 1.5K</span></div>
+                  </div>
+                  <div class="top-trader-pnl">+$423K</div>
+                </div>
+              </div>
+            </div>
+            <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 12px; text-align: center;">
+              Automatically mirror trades from top traders in real-time. Click a trader to select.
+            </p>
+          </div>
+        </div>
+
+        <!-- Performance Tracker Tab -->
+        <div class="feature-tab-panel" id="feature-performance">
+          <div class="performance-section" id="performanceSectionMain">
+            <div class="performance-header">
+              <div class="performance-title">
+                <span>📊 Your Performance</span>
+              </div>
+            </div>
+            <div class="performance-stats" id="performanceStatsMain" style="grid-template-columns: repeat(4, 1fr);">
+              <div class="perf-stat">
+                <div class="perf-stat-label">Total P&L</div>
+                <div class="perf-stat-value positive" id="perfPnlMain">+$2,847</div>
+              </div>
+              <div class="perf-stat">
+                <div class="perf-stat-label">Win Rate</div>
+                <div class="perf-stat-value" id="perfWinRateMain">68%</div>
+              </div>
+              <div class="perf-stat">
+                <div class="perf-stat-label">Open Positions</div>
+                <div class="perf-stat-value" id="perfOpenPosMain">7</div>
+              </div>
+              <div class="perf-stat">
+                <div class="perf-stat-label">Best Trade</div>
+                <div class="perf-stat-value positive" id="perfBestTradeMain">+$842</div>
+              </div>
+            </div>
+            <div class="perf-chart" id="perfChartMain" style="height: 120px;">
+              <div class="perf-bar positive" style="height: 40%;"></div>
+              <div class="perf-bar positive" style="height: 60%;"></div>
+              <div class="perf-bar negative" style="height: 30%;"></div>
+              <div class="perf-bar positive" style="height: 80%;"></div>
+              <div class="perf-bar positive" style="height: 55%;"></div>
+              <div class="perf-bar negative" style="height: 25%;"></div>
+              <div class="perf-bar positive" style="height: 70%;"></div>
+              <div class="perf-bar positive" style="height: 90%;"></div>
+              <div class="perf-bar positive" style="height: 65%;"></div>
+              <div class="perf-bar negative" style="height: 35%;"></div>
+            </div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); text-align: center; margin-top: 12px;">
+              Last 10 trades • Connect wallet to sync your positions
+            </div>
+          </div>
+        </div>
+
+      </div> <!-- Close feature-tabs-container -->
     </div>
 
     <!-- Right Sidebar -->
@@ -3758,80 +3959,6 @@
               <div class="alert-title">Strong BUY signal: Trump 2028</div>
               <div class="alert-time">5 min ago</div>
             </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- v4.0: Copy Trading -->
-      <div class="sidebar-section">
-        <div class="copy-trade-section">
-          <div class="copy-trade-header">
-            <div class="copy-trade-title">
-              <span>📋 Copy Trading</span>
-              <span class="copy-badge">AUTO</span>
-            </div>
-          </div>
-          <div class="copy-trader-card" id="copyTraderCard">
-            <div class="copy-trader-info">
-              <div class="copy-trader-name">🏆 gabagool22</div>
-              <div class="copy-trader-stats">
-                <span class="copy-trader-stat positive">📈 +892K</span>
-                <span class="copy-trader-stat">🎯 78%</span>
-              </div>
-            </div>
-            <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 10px;">
-              Last trade: BUY YES on "BTC $100K" @ 67¢ (2h ago)
-            </div>
-            <button class="copy-trade-btn" id="copyTradeBtn">
-              ⚡ Copy Next Trade
-            </button>
-          </div>
-          <p style="font-size: 0.6rem; color: var(--text-muted); margin-top: 8px;">
-            Automatically mirror trades from top traders in real-time.
-          </p>
-        </div>
-      </div>
-      
-      <!-- v4.0: Performance Tracker -->
-      <div class="sidebar-section">
-        <div class="performance-section">
-          <div class="performance-header">
-            <div class="performance-title">
-              <span>📊 Your Performance</span>
-            </div>
-          </div>
-          <div class="performance-stats" id="performanceStats">
-            <div class="perf-stat">
-              <div class="perf-stat-label">Total P&L</div>
-              <div class="perf-stat-value positive" id="perfPnl">+$2,847</div>
-            </div>
-            <div class="perf-stat">
-              <div class="perf-stat-label">Win Rate</div>
-              <div class="perf-stat-value" id="perfWinRate">68%</div>
-            </div>
-            <div class="perf-stat">
-              <div class="perf-stat-label">Open Positions</div>
-              <div class="perf-stat-value" id="perfOpenPos">7</div>
-            </div>
-            <div class="perf-stat">
-              <div class="perf-stat-label">Best Trade</div>
-              <div class="perf-stat-value positive" id="perfBestTrade">+$842</div>
-            </div>
-          </div>
-          <div class="perf-chart" id="perfChart">
-            <div class="perf-bar positive" style="height: 40%;"></div>
-            <div class="perf-bar positive" style="height: 60%;"></div>
-            <div class="perf-bar negative" style="height: 30%;"></div>
-            <div class="perf-bar positive" style="height: 80%;"></div>
-            <div class="perf-bar positive" style="height: 55%;"></div>
-            <div class="perf-bar negative" style="height: 25%;"></div>
-            <div class="perf-bar positive" style="height: 70%;"></div>
-            <div class="perf-bar positive" style="height: 90%;"></div>
-            <div class="perf-bar positive" style="height: 65%;"></div>
-            <div class="perf-bar negative" style="height: 35%;"></div>
-          </div>
-          <div style="font-size: 0.6rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
-            Last 10 trades • Connect wallet to sync
           </div>
         </div>
       </div>
@@ -5717,7 +5844,7 @@
       });
     });
     
-    // Tab switching
+    // Tab switching (Market Detail Tabs)
     document.querySelectorAll('.detail-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
@@ -5726,6 +5853,35 @@
         document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
       });
     });
+    
+    // v4.0 Feature Tabs Navigation
+    document.querySelectorAll('.feature-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Update active button
+        document.querySelectorAll('.feature-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Update active panel
+        document.querySelectorAll('.feature-tab-panel').forEach(p => p.classList.remove('active'));
+        const targetPanel = document.getElementById(`feature-${btn.dataset.featureTab}`);
+        if (targetPanel) targetPanel.classList.add('active');
+      });
+    });
+    
+    // Copy Trading buttons (both main and sidebar versions)
+    const copyTradeBtnMain = document.getElementById('copyTradeBtnMain');
+    if (copyTradeBtnMain) {
+      copyTradeBtnMain.addEventListener('click', () => {
+        const traderName = 'gabagool22';
+        enableCopyTrading(traderName);
+        copyTradeBtnMain.innerHTML = copyTradeBtnMain.innerHTML.includes('Copying') 
+          ? '⚡ Copy Next Trade' 
+          : '✓ Copying gabagool22...';
+        copyTradeBtnMain.style.background = copyTradeBtnMain.innerHTML.includes('Copying') 
+          ? 'var(--green)' 
+          : 'var(--orange)';
+      });
+    }
     
     // Chart timeframe switching
     document.querySelectorAll('.chart-tf').forEach(tf => {
