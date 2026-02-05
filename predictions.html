@@ -4118,6 +4118,7 @@
     
     function renderSmartMoneyTracker() {
       const list = document.getElementById('whaleTradeList');
+      if (!list || markets.length === 0) return;
       
       // Generate simulated whale trades based on market activity
       const whaleTradesSimulated = markets.slice(0, 20).map(m => {
@@ -4138,7 +4139,7 @@
           <div class="whale-trade-info">
             <div class="whale-trade-market">${trade.market}</div>
             <div class="whale-trade-meta">
-              <span>${trade.side.toUpperCase()} ${trade.side === 'buy' ? 'YES' : 'NO'} @${trade.price}¢</span>
+              <span>${trade.side.toUpperCase()} ${trade.side === 'buy' ? 'YES' : 'NO'} @${Math.round(trade.price)}¢</span>
               <span>${trade.trader}</span>
             </div>
           </div>
@@ -4155,6 +4156,8 @@
     // ═══════════════════════════════════════════════════════════════════════
     
     function updateMarketPhase(market) {
+      if (!market) return;
+      
       // Parse expiry and calculate phase
       const expiry = market.expiry ? new Date(market.expiry) : new Date(Date.now() + 86400000);
       const now = new Date();
@@ -4188,28 +4191,39 @@
       const timeStr = hours > 24 ? `${Math.floor(hours/24)}d ${hours%24}h` : 
                       hours > 0 ? `${hours}h ${mins}m` : `${mins}m ${secs}s`;
       
-      // Update UI
+      // Update UI - with null checks
       const phaseBadge = document.getElementById('phaseBadge');
-      phaseBadge.className = `phase-badge ${phase}`;
-      phaseBadge.textContent = `${phase.toUpperCase()} PHASE`;
+      if (phaseBadge) {
+        phaseBadge.className = `phase-badge ${phase}`;
+        phaseBadge.textContent = `${phase.toUpperCase()} PHASE`;
+      }
       
-      document.getElementById('phaseTimeRemaining').textContent = timeStr;
+      const phaseTimeEl = document.getElementById('phaseTimeRemaining');
+      if (phaseTimeEl) phaseTimeEl.textContent = timeStr;
       
       const progressFill = document.getElementById('phaseProgressFill');
-      progressFill.className = `phase-progress-fill ${phase}`;
-      progressFill.style.width = `${progress}%`;
+      if (progressFill) {
+        progressFill.className = `phase-progress-fill ${phase}`;
+        progressFill.style.width = `${progress}%`;
+      }
       
       const efficiencyEl = document.getElementById('priceEfficiency');
-      efficiencyEl.textContent = `${efficiency}%`;
-      efficiencyEl.className = `efficiency-value ${efficiency > 75 ? 'good' : efficiency > 50 ? 'medium' : 'poor'}`;
+      if (efficiencyEl) {
+        efficiencyEl.textContent = `${efficiency}%`;
+        efficiencyEl.className = `efficiency-value ${efficiency > 75 ? 'good' : efficiency > 50 ? 'medium' : 'poor'}`;
+      }
       
       const holdRateEl = document.getElementById('favoriteHoldRate');
-      holdRateEl.textContent = `${holdRate}%`;
-      holdRateEl.className = `efficiency-value ${holdRate > 80 ? 'good' : holdRate > 65 ? 'medium' : 'poor'}`;
+      if (holdRateEl) {
+        holdRateEl.textContent = `${holdRate}%`;
+        holdRateEl.className = `efficiency-value ${holdRate > 80 ? 'good' : holdRate > 65 ? 'medium' : 'poor'}`;
+      }
       
       const qualityEl = document.getElementById('entryQuality');
-      qualityEl.textContent = quality;
-      qualityEl.className = `efficiency-value ${quality === 'HIGH' ? 'good' : quality === 'MEDIUM' ? 'medium' : 'poor'}`;
+      if (qualityEl) {
+        qualityEl.textContent = quality;
+        qualityEl.className = `efficiency-value ${quality === 'HIGH' ? 'good' : quality === 'MEDIUM' ? 'medium' : 'poor'}`;
+      }
     }
     
     // ═══════════════════════════════════════════════════════════════════════
@@ -4218,23 +4232,37 @@
     
     function renderLateEntrySignals() {
       const list = document.getElementById('closingSoonList');
+      if (!list || markets.length === 0) return;
       
-      // Find markets closing soon (simulate with random times for demo)
+      // Find markets closing soon - use real expiry data when available
+      const now = Date.now();
       const closingSoon = markets.slice(0, 30)
-        .map(m => ({
-          ...m,
-          minutesToClose: Math.round(Math.random() * 30) + 1,
-          favorite: m.yesOdds > 50 ? 'YES' : 'NO',
-          favoriteOdds: Math.max(m.yesOdds, m.noOdds)
-        }))
-        .filter(m => m.minutesToClose <= 15)
+        .map(m => {
+          // Use real expiry if available, otherwise simulate
+          let minutesToClose;
+          if (m.expiry) {
+            const expiry = new Date(m.expiry).getTime();
+            minutesToClose = Math.max(0, Math.round((expiry - now) / 60000));
+          } else {
+            minutesToClose = Math.round(Math.random() * 30) + 1;
+          }
+          return {
+            ...m,
+            minutesToClose,
+            favorite: m.yesOdds > 50 ? 'YES' : 'NO',
+            favoriteOdds: Math.round(Math.max(m.yesOdds, m.noOdds))
+          };
+        })
+        .filter(m => m.minutesToClose > 0 && m.minutesToClose <= 15)
         .sort((a, b) => a.minutesToClose - b.minutesToClose)
         .slice(0, 5);
       
       if (closingSoon.length === 0) {
         list.innerHTML = `
           <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.75rem;">
-            No markets closing in the next 15 minutes.
+            <div style="margin-bottom: 8px;">⏰</div>
+            No markets closing in the next 15 minutes.<br>
+            <span style="font-size: 0.65rem;">Check back soon for late-entry opportunities.</span>
           </div>`;
         return;
       }
@@ -4301,6 +4329,7 @@
     function renderCrossExchangePanel(market) {
       const section = document.getElementById('crossExchangeSection');
       const grid = document.getElementById('correlationGrid');
+      if (!section || !grid || !market) return;
       
       // Only show for crypto markets
       if (market.category !== 'crypto') {
@@ -4390,26 +4419,41 @@
     async function analyzeWallet(address) {
       const analysisDiv = document.getElementById('walletAnalysis');
       const placeholderDiv = document.getElementById('walletPlaceholder');
+      if (!analysisDiv || !placeholderDiv) return;
+      
+      // Validate address
+      if (!address || address.length < 3) {
+        placeholderDiv.innerHTML = `
+          <div style="text-align: center; padding: 20px; color: var(--red); font-size: 0.75rem;">
+            Please enter a valid wallet address or username.
+          </div>
+        `;
+        return;
+      }
       
       // Show loading
+      placeholderDiv.style.display = 'block';
+      analysisDiv.style.display = 'none';
       placeholderDiv.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 10px;">
           <div class="loading-spinner"></div>
-          <span style="font-size: 0.75rem; color: var(--text-muted);">Analyzing wallet...</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Analyzing ${address}...</span>
         </div>
       `;
       
       // Simulate wallet analysis (in production, this would call Polymarket APIs)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1200));
       
-      // Generate simulated wallet data
+      // Generate simulated wallet data based on address
+      const seed = address.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+      const pnlMultiplier = (seed % 100) / 100;
       const walletData = {
-        pnl: Math.round((Math.random() * 300 - 50) * 1000),
-        winRate: Math.round(50 + Math.random() * 30),
-        trades: Math.round(100 + Math.random() * 2000),
-        avgSize: Math.round(500 + Math.random() * 5000),
-        positions: markets.slice(0, 5).map(m => ({
-          market: m.title.slice(0, 30) + '...',
+        pnl: Math.round((pnlMultiplier * 500 - 100) * 1000),
+        winRate: Math.round(50 + (seed % 35)),
+        trades: Math.round(100 + (seed % 2500)),
+        avgSize: Math.round(500 + (seed % 8000)),
+        positions: markets.slice(0, Math.min(5, markets.length)).map(m => ({
+          market: m.title.slice(0, 28) + (m.title.length > 28 ? '...' : ''),
           side: Math.random() > 0.5 ? 'long' : 'short',
           size: Math.round(500 + Math.random() * 10000),
           pnl: Math.round((Math.random() * 100 - 30) * 10)
@@ -4420,22 +4464,33 @@
       placeholderDiv.style.display = 'none';
       analysisDiv.style.display = 'block';
       
-      document.getElementById('walletPnl').textContent = `${walletData.pnl >= 0 ? '+' : ''}$${(walletData.pnl / 1000).toFixed(0)}K`;
-      document.getElementById('walletPnl').className = `wallet-stat-value ${walletData.pnl >= 0 ? 'positive' : 'negative'}`;
-      document.getElementById('walletWinRate').textContent = `${walletData.winRate}%`;
-      document.getElementById('walletTrades').textContent = walletData.trades.toLocaleString();
-      document.getElementById('walletAvgSize').textContent = `$${(walletData.avgSize / 1000).toFixed(1)}K`;
+      const pnlEl = document.getElementById('walletPnl');
+      if (pnlEl) {
+        pnlEl.textContent = `${walletData.pnl >= 0 ? '+' : ''}$${Math.abs(walletData.pnl / 1000).toFixed(0)}K`;
+        pnlEl.className = `wallet-stat-value ${walletData.pnl >= 0 ? 'positive' : 'negative'}`;
+      }
+      
+      const winRateEl = document.getElementById('walletWinRate');
+      if (winRateEl) winRateEl.textContent = `${walletData.winRate}%`;
+      
+      const tradesEl = document.getElementById('walletTrades');
+      if (tradesEl) tradesEl.textContent = walletData.trades.toLocaleString();
+      
+      const avgSizeEl = document.getElementById('walletAvgSize');
+      if (avgSizeEl) avgSizeEl.textContent = `$${(walletData.avgSize / 1000).toFixed(1)}K`;
       
       const positionsList = document.getElementById('walletPositionsList');
-      positionsList.innerHTML = walletData.positions.map(p => `
-        <div class="wallet-position-item ${p.side}">
-          <div class="wallet-position-market">${p.market}</div>
-          <div class="wallet-position-details">
-            <span class="wallet-position-size">$${(p.size / 1000).toFixed(1)}K</span>
-            <span class="wallet-position-pnl ${p.pnl >= 0 ? 'positive' : 'negative'}">${p.pnl >= 0 ? '+' : ''}${p.pnl}%</span>
+      if (positionsList) {
+        positionsList.innerHTML = walletData.positions.map(p => `
+          <div class="wallet-position-item ${p.side}">
+            <div class="wallet-position-market">${p.market}</div>
+            <div class="wallet-position-details">
+              <span class="wallet-position-size">$${(p.size / 1000).toFixed(1)}K</span>
+              <span class="wallet-position-pnl ${p.pnl >= 0 ? 'positive' : 'negative'}">${p.pnl >= 0 ? '+' : ''}${p.pnl}%</span>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `).join('');
+      }
     }
     
     // ═══════════════════════════════════════════════════════════════════════
@@ -4447,7 +4502,9 @@
     function toggleTradingTerminal() {
       terminalOpen = !terminalOpen;
       const terminal = document.getElementById('tradingTerminal');
-      terminal.classList.toggle('active', terminalOpen);
+      if (terminal) {
+        terminal.classList.toggle('active', terminalOpen);
+      }
       
       if (terminalOpen && selectedMarket) {
         updateTerminalMarket(selectedMarket);
@@ -4455,9 +4512,15 @@
     }
     
     function updateTerminalMarket(market) {
-      document.getElementById('terminalMarketName').textContent = market.title.slice(0, 50) + (market.title.length > 50 ? '...' : '');
-      document.getElementById('terminalYes').textContent = `${Math.round(market.yesOdds)}¢`;
-      document.getElementById('terminalNo').textContent = `${Math.round(market.noOdds)}¢`;
+      if (!market) return;
+      
+      const nameEl = document.getElementById('terminalMarketName');
+      const yesEl = document.getElementById('terminalYes');
+      const noEl = document.getElementById('terminalNo');
+      
+      if (nameEl) nameEl.textContent = market.title.slice(0, 50) + (market.title.length > 50 ? '...' : '');
+      if (yesEl) yesEl.textContent = `${Math.round(market.yesOdds)}¢`;
+      if (noEl) noEl.textContent = `${Math.round(market.noOdds)}¢`;
     }
     
     function executeTrade(side) {
@@ -4466,11 +4529,12 @@
         return;
       }
       
-      const size = document.getElementById('terminalSize').value;
+      const sizeEl = document.getElementById('terminalSize');
+      const size = sizeEl ? sizeEl.value : 100;
       const price = side === 'yes' ? selectedMarket.yesOdds : selectedMarket.noOdds;
       
       // Simulate trade execution
-      console.log(`🚀 Executing trade: BUY ${side.toUpperCase()} @ ${price}¢ for $${size}`);
+      console.log(`🚀 Executing trade: BUY ${side.toUpperCase()} @ ${Math.round(price)}¢ for $${size}`);
       
       // Add alert
       const alertsList = document.getElementById('alertsList');
@@ -4636,36 +4700,61 @@
     
     // Kelly calculator inputs
     ['kellyProb', 'kellyOdds', 'kellyBankroll', 'kellyFraction'].forEach(id => {
-      document.getElementById(id).addEventListener('input', calculateKelly);
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', calculateKelly);
     });
     
     // v3.0 FEATURES - Wallet Analyzer
-    document.getElementById('walletSearchBtn').addEventListener('click', () => {
-      const address = document.getElementById('walletAddressInput').value.trim();
-      if (address) analyzeWallet(address);
-    });
+    const walletSearchBtn = document.getElementById('walletSearchBtn');
+    const walletSearchInput = document.getElementById('walletSearchInput');
     
-    document.getElementById('walletAddressInput').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        const address = e.target.value.trim();
+    if (walletSearchBtn && walletSearchInput) {
+      walletSearchBtn.addEventListener('click', () => {
+        const address = walletSearchInput.value.trim();
         if (address) analyzeWallet(address);
-      }
-    });
+      });
+      
+      walletSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          const address = e.target.value.trim();
+          if (address) analyzeWallet(address);
+        }
+      });
+    }
     
     // v3.0 FEATURES - Hotkey Toggle Button
-    document.getElementById('hotkeyToggle').addEventListener('click', toggleTradingTerminal);
+    const hotkeyToggle = document.getElementById('hotkeyToggle');
+    if (hotkeyToggle) hotkeyToggle.addEventListener('click', toggleTradingTerminal);
     
     // v3.0 FEATURES - Trading Terminal Buttons
-    document.getElementById('terminalBuyYes').addEventListener('click', () => executeTrade('yes'));
-    document.getElementById('terminalBuyNo').addEventListener('click', () => executeTrade('no'));
-    document.getElementById('terminalClose').addEventListener('click', toggleTradingTerminal);
+    const terminalBuyYes = document.getElementById('terminalBuyYes');
+    const terminalBuyNo = document.getElementById('terminalBuyNo');
+    const terminalClose = document.getElementById('terminalClose');
+    
+    if (terminalBuyYes) terminalBuyYes.addEventListener('click', () => executeTrade('yes'));
+    if (terminalBuyNo) terminalBuyNo.addEventListener('click', () => executeTrade('no'));
+    if (terminalClose) terminalClose.addEventListener('click', toggleTradingTerminal);
     
     // v3.0 FEATURES - Top Trader Click (simulate copy trading)
-    document.querySelectorAll('.trader-item').forEach(item => {
+    document.querySelectorAll('.top-trader-item').forEach(item => {
+      item.style.cursor = 'pointer';
       item.addEventListener('click', () => {
-        const address = item.querySelector('.trader-address').textContent;
-        document.getElementById('walletAddressInput').value = address;
-        analyzeWallet(address);
+        const addressEl = item.querySelector('.top-trader-address');
+        if (addressEl && walletSearchInput) {
+          const address = addressEl.textContent;
+          walletSearchInput.value = address;
+          analyzeWallet(address);
+        }
+      });
+    });
+    
+    // v3.0 FEATURES - Trading Terminal Size Presets
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const terminalSize = document.getElementById('terminalSize');
+        if (terminalSize) terminalSize.value = btn.dataset.size;
       });
     });
     
