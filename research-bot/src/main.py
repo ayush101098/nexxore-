@@ -85,7 +85,7 @@ class ResearchBot:
         # Create database pool
         self.db_pool = await asyncpg.create_pool(
             host=os.getenv('DB_HOST', 'localhost'),
-            port=int(os.getenv('DB_PORT', '5432')),
+            port=int(os.getenv('DB_PORT', 5432)),
             user=os.getenv('DB_USER', 'research_bot'),
             password=db_password,
             database=os.getenv('DB_NAME', 'research_bot'),

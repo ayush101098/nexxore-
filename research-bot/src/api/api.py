@@ -132,7 +132,7 @@ async def lifespan(app: FastAPI):
     try:
         state.db_pool = await asyncpg.create_pool(
             host=os.getenv('DB_HOST', 'localhost'),
-            port=int(os.getenv('DB_PORT', '5432')),
+            port=int(os.getenv('DB_PORT', 5432)),
             user=os.getenv('DB_USER', 'research_bot'),
             password=db_password,
             database=os.getenv('DB_NAME', 'research_bot'),
@@ -226,7 +226,10 @@ async def log_requests(request: Request, call_next):
         raise
 
 # CORS middleware - configure allowed origins via environment variable
-allowed_origins = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:8000').split(',')
+allowed_origins = [
+    origin.strip() 
+    for origin in os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:8000').split(',')
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,

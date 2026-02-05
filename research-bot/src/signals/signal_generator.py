@@ -4,6 +4,7 @@ Signal Generator - Generates trade setups from ML predictions and features
 
 import asyncio
 import logging
+import os
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
@@ -88,7 +89,6 @@ class SignalGenerator:
         self.config = config or {}
         
         # Configurable thresholds via environment or config
-        import os
         self.MIN_CONFIDENCE = float(os.getenv('MIN_CONFIDENCE', 
             self.config.get('min_confidence', '0.55')))
         self.MIN_RR_RATIO = float(os.getenv('MIN_RR_RATIO', 
