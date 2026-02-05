@@ -6282,6 +6282,11 @@
     const ACCESS_KEY = 'nexxore_predictions_access';
     const BASESCAN_API = 'https://api.basescan.org/api';
     
+    // Whitelisted wallets with automatic access
+    const WHITELISTED_WALLETS = [
+      '0x905acd442c7b3ef9bfeb0a3189f3686c1cd0c697', // Treasury/Admin wallet
+    ];
+    
     // Check if user already has access
     function checkStoredAccess() {
       const stored = localStorage.getItem(ACCESS_KEY);
@@ -6321,6 +6326,21 @@
           return;
         }
         showAccessStatus('Invalid wallet address format', 'error');
+        return;
+      }
+      
+      // Check if wallet is whitelisted (instant access)
+      if (WHITELISTED_WALLETS.includes(walletAddress)) {
+        const accessData = {
+          verified: true,
+          wallet: walletAddress,
+          amount: 'whitelisted',
+          timestamp: Date.now(),
+          type: 'whitelist'
+        };
+        localStorage.setItem(ACCESS_KEY, JSON.stringify(accessData));
+        showAccessStatus('✅ Whitelisted wallet detected! Unlocking access...', 'success');
+        setTimeout(() => unlockPremiumAccess(), 1000);
         return;
       }
       
