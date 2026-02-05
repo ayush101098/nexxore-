@@ -6463,52 +6463,14 @@
       });
     }
     
-    // Auto-detect connected wallet and check whitelist on page load
-    async function autoDetectWallet() {
-      // First check stored access
-      if (checkStoredAccess()) return;
-      
-      // Try to detect connected wallet
-      if (typeof window.ethereum !== 'undefined') {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          if (accounts && accounts.length > 0) {
-            const connectedWallet = accounts[0].toLowerCase();
-            console.log('Detected wallet:', connectedWallet);
-            
-            // Check if connected wallet is whitelisted
-            if (WHITELISTED_WALLETS.includes(connectedWallet)) {
-              const accessData = {
-                verified: true,
-                wallet: connectedWallet,
-                amount: 'whitelisted',
-                timestamp: Date.now(),
-                type: 'whitelist-auto'
-              };
-              localStorage.setItem(ACCESS_KEY, JSON.stringify(accessData));
-              console.log('✅ Whitelisted wallet auto-detected!');
-              unlockPremiumAccess();
-              return;
-            }
-            
-            // Pre-fill the input with connected wallet
-            if (verifyWalletInput) {
-              verifyWalletInput.value = accounts[0];
-            }
-          }
-        } catch (err) {
-          console.log('Wallet detection failed:', err);
-        }
-      }
-    }
-    
-    // Connect Wallet button handler
+    // Connect Wallet button handler - requires user permission
     const connectWalletBtn = document.getElementById('connectWalletBtn');
     if (connectWalletBtn) {
       connectWalletBtn.addEventListener('click', async () => {
         if (typeof window.ethereum !== 'undefined') {
           try {
             connectWalletBtn.textContent = 'Connecting...';
+            // This prompts the user for permission
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             if (accounts && accounts.length > 0) {
               const wallet = accounts[0];
@@ -6530,8 +6492,8 @@
       });
     }
     
-    // Run auto-detection
-    autoDetectWallet();
+    // Only check stored access on page load (no auto-detection)
+    checkStoredAccess();
   </script>
   
   <script>
