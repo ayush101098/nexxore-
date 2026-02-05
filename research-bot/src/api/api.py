@@ -613,8 +613,13 @@ async def websocket_setups(websocket: WebSocket):
 
 # ============== Utility Functions ==============
 
-async def broadcast_setup_update(setup: Dict):
-    """Broadcast new setup to all WebSocket clients"""
+async def broadcast_setup_update(setup: Dict[str, Any]) -> None:
+    """
+    Broadcast new setup to all WebSocket clients
+    
+    Args:
+        setup: Trade setup data to broadcast
+    """
     async with state.ws_lock:
         connections = state.ws_connections.copy()
     
