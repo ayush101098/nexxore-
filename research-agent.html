@@ -1215,6 +1215,39 @@
 
   <!-- Main Content -->
   <main class="main-content">
+    <!-- Selected Asset Header -->
+    <div class="selected-asset-header" id="selectedAssetHeader" style="display: none; margin-bottom: 16px; padding: 16px 20px; background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(34, 197, 94, 0.1)); border: 1px solid var(--border); border-radius: 12px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div style="font-size: 2.5rem;" id="selectedAssetIcon">₿</div>
+          <div>
+            <div style="font-size: 1.4rem; font-weight: 700; color: var(--text);" id="selectedAssetName">Bitcoin</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);" id="selectedAssetSymbol">BTC/USDT</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 24px;">
+          <div style="text-align: right;">
+            <div style="font-size: 1.8rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text);" id="selectedAssetPrice">$--</div>
+            <div style="font-size: 0.9rem; font-family: 'JetBrains Mono', monospace;" id="selectedAssetChange">--</div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+            <div style="text-align: center; padding: 8px 12px; background: var(--bg-card); border-radius: 8px;">
+              <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">24h High</div>
+              <div style="font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; color: var(--accent-green);" id="selectedAssetHigh">$--</div>
+            </div>
+            <div style="text-align: center; padding: 8px 12px; background: var(--bg-card); border-radius: 8px;">
+              <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">24h Low</div>
+              <div style="font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; color: var(--accent-red);" id="selectedAssetLow">$--</div>
+            </div>
+            <div style="text-align: center; padding: 8px 12px; background: var(--bg-card); border-radius: 8px;">
+              <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Volume</div>
+              <div style="font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; color: var(--text);" id="selectedAssetVolume">$--</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Stats Bar - Live Data -->
     <div class="stats-bar">
       <div class="stat-card">
@@ -1246,6 +1279,17 @@
 
     <!-- ===== ALPHA SCORE TAB - Synthesized Intelligence ===== -->
     <div id="alpha" class="tab-content active">
+      <!-- Asset Context Badge -->
+      <div id="alphaAssetContext" style="display: none; margin-bottom: 16px; padding: 12px 16px; background: linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(34, 197, 94, 0.05)); border: 1px solid var(--border); border-radius: 8px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 1.5rem;" id="alphaAssetIcon">₿</span>
+          <div style="flex: 1;">
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text);" id="alphaAssetLabel">Bitcoin Analysis</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted);">All metrics below are specific to this asset</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Master Alpha Score Card -->
       <div class="alpha-master-card">
         <div class="alpha-score-ring" id="alphaScoreRing">
@@ -1518,137 +1562,14 @@
 
     <!-- ===== RESEARCH TAB ===== -->
     <div id="research" class="tab-content">
-      <!-- Support/Resistance Levels -->
+      <!-- Support/Resistance Levels - Dynamic based on selected asset -->
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title">📊 Key Support & Resistance Levels</div>
-          <span class="panel-badge">Technical Analysis</span>
+          <span class="panel-badge" id="srAssetBadge">All Assets</span>
         </div>
         <div class="sr-levels-container" id="srLevelsContainer">
-          <div class="sr-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; padding: 16px;">
-            <!-- BTC Levels -->
-            <div class="sr-card" style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 16px;">
-              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                <span style="font-size: 1.5rem;">₿</span>
-                <div>
-                  <div style="font-weight: 600; font-size: 1rem;">Bitcoin (BTC)</div>
-                  <div style="font-size: 0.75rem; color: var(--text-muted);" id="btcCurrentSR">Loading...</div>
-                </div>
-              </div>
-              <div class="levels-list" style="display: flex; flex-direction: column; gap: 6px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(239, 68, 68, 0.1); border-radius: 6px;">
-                  <span style="color: #ef4444; font-size: 0.75rem;">R3</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="btcR3">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(239, 68, 68, 0.08); border-radius: 6px;">
-                  <span style="color: #ef4444; font-size: 0.75rem;">R2</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="btcR2">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(239, 68, 68, 0.05); border-radius: 6px;">
-                  <span style="color: #ef4444; font-size: 0.75rem;">R1</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="btcR1">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(168, 85, 247, 0.15); border-radius: 6px; border: 1px solid rgba(168, 85, 247, 0.3);">
-                  <span style="color: #a855f7; font-size: 0.75rem; font-weight: 600;">PIVOT</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 600;" id="btcPivot">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(34, 197, 94, 0.05); border-radius: 6px;">
-                  <span style="color: #22c55e; font-size: 0.75rem;">S1</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="btcS1">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(34, 197, 94, 0.08); border-radius: 6px;">
-                  <span style="color: #22c55e; font-size: 0.75rem;">S2</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="btcS2">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(34, 197, 94, 0.1); border-radius: 6px;">
-                  <span style="color: #22c55e; font-size: 0.75rem;">S3</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="btcS3">$--</span>
-                </div>
-              </div>
-            </div>
-            
-            <!-- ETH Levels -->
-            <div class="sr-card" style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 16px;">
-              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                <span style="font-size: 1.5rem;">⟠</span>
-                <div>
-                  <div style="font-weight: 600; font-size: 1rem;">Ethereum (ETH)</div>
-                  <div style="font-size: 0.75rem; color: var(--text-muted);" id="ethCurrentSR">Loading...</div>
-                </div>
-              </div>
-              <div class="levels-list" style="display: flex; flex-direction: column; gap: 6px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(239, 68, 68, 0.1); border-radius: 6px;">
-                  <span style="color: #ef4444; font-size: 0.75rem;">R3</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="ethR3">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(239, 68, 68, 0.08); border-radius: 6px;">
-                  <span style="color: #ef4444; font-size: 0.75rem;">R2</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="ethR2">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(239, 68, 68, 0.05); border-radius: 6px;">
-                  <span style="color: #ef4444; font-size: 0.75rem;">R1</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="ethR1">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(168, 85, 247, 0.15); border-radius: 6px; border: 1px solid rgba(168, 85, 247, 0.3);">
-                  <span style="color: #a855f7; font-size: 0.75rem; font-weight: 600;">PIVOT</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 600;" id="ethPivot">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(34, 197, 94, 0.05); border-radius: 6px;">
-                  <span style="color: #22c55e; font-size: 0.75rem;">S1</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="ethS1">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(34, 197, 94, 0.08); border-radius: 6px;">
-                  <span style="color: #22c55e; font-size: 0.75rem;">S2</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="ethS2">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(34, 197, 94, 0.1); border-radius: 6px;">
-                  <span style="color: #22c55e; font-size: 0.75rem;">S3</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="ethS3">$--</span>
-                </div>
-              </div>
-            </div>
-            
-            <!-- SOL Levels -->
-            <div class="sr-card" style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 16px;">
-              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                <span style="font-size: 1.5rem;">◎</span>
-                <div>
-                  <div style="font-weight: 600; font-size: 1rem;">Solana (SOL)</div>
-                  <div style="font-size: 0.75rem; color: var(--text-muted);" id="solCurrentSR">Loading...</div>
-                </div>
-              </div>
-              <div class="levels-list" style="display: flex; flex-direction: column; gap: 6px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(239, 68, 68, 0.1); border-radius: 6px;">
-                  <span style="color: #ef4444; font-size: 0.75rem;">R3</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="solR3">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(239, 68, 68, 0.08); border-radius: 6px;">
-                  <span style="color: #ef4444; font-size: 0.75rem;">R2</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="solR2">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(239, 68, 68, 0.05); border-radius: 6px;">
-                  <span style="color: #ef4444; font-size: 0.75rem;">R1</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="solR1">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(168, 85, 247, 0.15); border-radius: 6px; border: 1px solid rgba(168, 85, 247, 0.3);">
-                  <span style="color: #a855f7; font-size: 0.75rem; font-weight: 600;">PIVOT</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 600;" id="solPivot">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(34, 197, 94, 0.05); border-radius: 6px;">
-                  <span style="color: #22c55e; font-size: 0.75rem;">S1</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="solS1">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(34, 197, 94, 0.08); border-radius: 6px;">
-                  <span style="color: #22c55e; font-size: 0.75rem;">S2</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="solS2">$--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(34, 197, 94, 0.1); border-radius: 6px;">
-                  <span style="color: #22c55e; font-size: 0.75rem;">S3</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;" id="solS3">$--</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div style="padding: 20px; text-align: center; color: var(--text-muted);">Loading S/R levels...</div>
         </div>
       </div>
 
@@ -1657,7 +1578,7 @@
         <div class="panel">
           <div class="panel-header">
             <div class="panel-title">📰 Protocol News & Updates</div>
-            <span class="panel-badge">Live Feed</span>
+            <span class="panel-badge" id="newsAssetBadge">Live Feed</span>
           </div>
           <div class="scrollable" id="protocolNewsContainer" style="max-height: 450px;">
             <div style="padding: 20px; text-align: center; color: var(--text-muted);">Loading protocol news...</div>
@@ -2860,29 +2781,40 @@
 
     // ===== SUPPORT/RESISTANCE LEVELS =====
     async function calculateSupportResistance() {
+      const selectedAsset = document.getElementById('assetSelect')?.value || 'all';
+      const container = document.getElementById('srLevelsContainer');
+      const badge = document.getElementById('srAssetBadge');
+      
       try {
-        console.log('📊 Calculating S/R levels...');
+        console.log('📊 Calculating S/R levels for:', selectedAsset);
         
-        // Fetch OHLC data from Binance
-        const assets = [
-          { symbol: 'BTCUSDT', prefix: 'btc' },
-          { symbol: 'ETHUSDT', prefix: 'eth' },
-          { symbol: 'SOLUSDT', prefix: 'sol' }
-        ];
-
-        for (const asset of assets) {
+        // Determine which assets to show
+        const assetsToShow = selectedAsset === 'all' 
+          ? ['btc', 'eth', 'sol']
+          : [selectedAsset];
+        
+        // Update badge
+        if (badge) {
+          badge.textContent = selectedAsset === 'all' ? 'All Assets' : RESEARCH_ASSETS[selectedAsset]?.name || selectedAsset.toUpperCase();
+        }
+        
+        const srData = [];
+        
+        for (const assetKey of assetsToShow) {
+          const config = RESEARCH_ASSETS[assetKey];
+          if (!config) continue;
+          
           try {
-            const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${asset.symbol}&interval=1d&limit=2`);
+            const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${config.symbol}&interval=1d&limit=2`);
             const klines = await res.json();
             
             if (klines && klines.length >= 2) {
-              const prev = klines[0]; // Previous day
+              const prev = klines[0];
               const high = parseFloat(prev[2]);
               const low = parseFloat(prev[3]);
               const close = parseFloat(prev[4]);
-              const current = parseFloat(klines[1][4]); // Current price
+              const current = parseFloat(klines[1][4]);
               
-              // Classic Pivot Point calculations
               const pivot = (high + low + close) / 3;
               const r1 = (2 * pivot) - low;
               const r2 = pivot + (high - low);
@@ -2891,23 +2823,107 @@
               const s2 = pivot - (high - low);
               const s3 = low - 2 * (high - pivot);
               
-              // Update DOM
-              document.getElementById(`${asset.prefix}CurrentSR`).textContent = `$${current.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-              document.getElementById(`${asset.prefix}Pivot`).textContent = `$${pivot.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-              document.getElementById(`${asset.prefix}R1`).textContent = `$${r1.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-              document.getElementById(`${asset.prefix}R2`).textContent = `$${r2.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-              document.getElementById(`${asset.prefix}R3`).textContent = `$${r3.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-              document.getElementById(`${asset.prefix}S1`).textContent = `$${s1.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-              document.getElementById(`${asset.prefix}S2`).textContent = `$${s2.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-              document.getElementById(`${asset.prefix}S3`).textContent = `$${s3.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+              // Calculate price position relative to levels
+              let position = 'neutral';
+              if (current > r1) position = 'above-r1';
+              if (current > r2) position = 'above-r2';
+              if (current < s1) position = 'below-s1';
+              if (current < s2) position = 'below-s2';
+              
+              srData.push({
+                key: assetKey,
+                name: config.name,
+                icon: config.icon,
+                current, pivot, r1, r2, r3, s1, s2, s3, position
+              });
             }
           } catch (e) {
-            console.error(`Error fetching ${asset.symbol}:`, e);
+            console.error(`Error fetching ${config.symbol}:`, e);
           }
         }
+        
+        // Render S/R cards
+        renderSupportResistanceCards(srData, selectedAsset !== 'all');
+        
       } catch (err) {
         console.error('Error calculating S/R:', err);
+        container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">Unable to load S/R levels</div>';
       }
+    }
+    
+    function renderSupportResistanceCards(srData, isSingleAsset) {
+      const container = document.getElementById('srLevelsContainer');
+      
+      if (srData.length === 0) {
+        container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">No S/R data available</div>';
+        return;
+      }
+      
+      const formatSRPrice = (price) => {
+        if (price >= 1000) return '$' + price.toLocaleString(undefined, {maximumFractionDigits: 0});
+        if (price >= 1) return '$' + price.toLocaleString(undefined, {maximumFractionDigits: 2});
+        return '$' + price.toLocaleString(undefined, {maximumFractionDigits: 4});
+      };
+      
+      const cardWidth = isSingleAsset ? 'max-width: 450px; margin: 0 auto;' : '';
+      
+      container.innerHTML = `
+        <div class="sr-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; padding: 16px; ${cardWidth}">
+          ${srData.map(data => `
+            <div class="sr-card" style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 16px; ${isSingleAsset ? 'border-color: var(--accent);' : ''}">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.8rem;">${data.icon}</span>
+                  <div>
+                    <div style="font-weight: 600; font-size: 1.1rem;">${data.name}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Pivot Point Analysis</div>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 1.2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;">${formatSRPrice(data.current)}</div>
+                  <div style="font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; ${data.position.includes('above') ? 'background: rgba(34, 197, 94, 0.15); color: #22c55e;' : data.position.includes('below') ? 'background: rgba(239, 68, 68, 0.15); color: #ef4444;' : 'background: rgba(168, 85, 247, 0.15); color: #a855f7;'}">
+                    ${data.position === 'above-r2' ? '🔥 Above R2' : data.position === 'above-r1' ? '↑ Above R1' : data.position === 'below-s2' ? '⚠️ Below S2' : data.position === 'below-s1' ? '↓ Below S1' : '⚖️ At Pivot Zone'}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="levels-list" style="display: flex; flex-direction: column; gap: 4px;">
+                ${[
+                  { label: 'R3', value: data.r3, color: '#ef4444', bg: '0.12' },
+                  { label: 'R2', value: data.r2, color: '#ef4444', bg: '0.08' },
+                  { label: 'R1', value: data.r1, color: '#ef4444', bg: '0.05' },
+                  { label: 'PIVOT', value: data.pivot, color: '#a855f7', bg: '0.15', bold: true },
+                  { label: 'S1', value: data.s1, color: '#22c55e', bg: '0.05' },
+                  { label: 'S2', value: data.s2, color: '#22c55e', bg: '0.08' },
+                  { label: 'S3', value: data.s3, color: '#22c55e', bg: '0.12' }
+                ].map(level => {
+                  const isNear = Math.abs(data.current - level.value) / data.current < 0.02;
+                  return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(${level.label.includes('R') ? '239, 68, 68' : level.label === 'PIVOT' ? '168, 85, 247' : '34, 197, 94'}, ${level.bg}); border-radius: 6px; ${isNear ? 'border: 1px solid ' + level.color + '; box-shadow: 0 0 8px ' + level.color + '40;' : ''} ${level.bold ? 'border: 1px solid rgba(168, 85, 247, 0.3);' : ''}">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: ${level.color}; font-size: 0.75rem; font-weight: ${level.bold ? '600' : '500'}; min-width: 40px;">${level.label}</span>
+                        ${isNear ? '<span style="font-size: 0.6rem; padding: 1px 4px; background: ' + level.color + '30; color: ' + level.color + '; border-radius: 3px;">NEAR</span>' : ''}
+                      </div>
+                      <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: ${level.bold ? '600' : '500'};">${formatSRPrice(level.value)}</span>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+              
+              ${isSingleAsset ? `
+                <div style="margin-top: 16px; padding: 12px; background: var(--bg-card); border-radius: 8px;">
+                  <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">Trading Guidance</div>
+                  <div style="font-size: 0.8rem; color: var(--text);">
+                    ${data.current > data.r1 ? '📈 <strong>Bullish:</strong> Price above R1. Consider taking profits or trailing stops.' :
+                      data.current < data.s1 ? '📉 <strong>Bearish:</strong> Price below S1. Watch for bounce at S2/S3.' :
+                      '⚖️ <strong>Neutral:</strong> Price near pivot. Wait for breakout direction.'}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+      `;
     }
 
     // ===== PROTOCOL NEWS =====
@@ -3092,6 +3108,9 @@
       // First fetch prices (needed by other functions)
       await fetchPrices();
       
+      // Update selected asset header if an asset is selected
+      updateSelectedAssetHeader();
+      
       // Then fetch everything else in parallel
       await Promise.all([
         fetchNews(),
@@ -3113,7 +3132,7 @@
       // Calculate Alpha Score after all data is loaded
       await calculateAlphaScore();
       
-      console.log('✅ All data refreshed');;
+      console.log('✅ All data refreshed');
     }
 
     // ===== PERPS ANALYSIS =====
@@ -3441,34 +3460,50 @@
     }
 
     function updateAlphaScoreUI() {
+      const asset = document.getElementById('assetSelect')?.value || 'all';
       const score = alphaData.totalScore;
       const scoreEl = document.getElementById('alphaScoreValue');
       const labelEl = document.getElementById('alphaScoreLabel');
       const ringEl = document.getElementById('alphaScoreRing');
       const verdictEl = document.getElementById('alphaVerdict');
       
+      // Update asset context badge
+      const contextEl = document.getElementById('alphaAssetContext');
+      const contextIconEl = document.getElementById('alphaAssetIcon');
+      const contextLabelEl = document.getElementById('alphaAssetLabel');
+      
+      if (asset === 'all') {
+        if (contextEl) contextEl.style.display = 'none';
+      } else {
+        const config = RESEARCH_ASSETS[asset];
+        if (contextEl) contextEl.style.display = 'block';
+        if (contextIconEl) contextIconEl.textContent = config?.icon || '💰';
+        if (contextLabelEl) contextLabelEl.textContent = `${config?.name || asset.toUpperCase()} Analysis`;
+      }
+      
       if (scoreEl) scoreEl.textContent = score;
       
       // Determine verdict and colors
+      const assetName = asset === 'all' ? 'Market' : (RESEARCH_ASSETS[asset]?.name || asset.toUpperCase());
       let verdict, label, color;
       if (score >= 80) {
-        verdict = 'Strong conviction LONG setup detected. Multiple indicators align bullishly.';
+        verdict = `Strong conviction LONG setup for ${assetName}. Multiple indicators align bullishly.`;
         label = 'STRONG LONG';
         color = 'var(--accent-green)';
       } else if (score >= 60) {
-        verdict = 'Cautiously bullish. Favorable conditions but monitor for confirmation.';
+        verdict = `${assetName} showing cautiously bullish signals. Favorable conditions but monitor for confirmation.`;
         label = 'CAUTIOUS LONG';
         color = '#22c55e';
       } else if (score >= 40) {
-        verdict = 'Mixed signals. Market is choppy - consider reduced size or sidelines.';
+        verdict = `Mixed signals for ${assetName}. Market is choppy - consider reduced size or sidelines.`;
         label = 'NEUTRAL';
         color = 'var(--accent-gold)';
       } else if (score >= 20) {
-        verdict = 'Bearish lean. Consider defensive positioning or short exposure.';
+        verdict = `${assetName} showing bearish lean. Consider defensive positioning or short exposure.`;
         label = 'CAUTIOUS SHORT';
         color = '#f59e0b';
       } else {
-        verdict = 'Strong conviction SHORT. Multiple bearish indicators converging.';
+        verdict = `Strong conviction SHORT for ${assetName}. Multiple bearish indicators converging.`;
         label = 'STRONG SHORT';
         color = 'var(--accent-red)';
       }
@@ -4129,16 +4164,12 @@
         assetSelect.addEventListener('change', async () => {
           selectedAsset = assetSelect.value;
           console.log('🔄 Asset changed to:', selectedAsset);
-          // Refresh asset-dependent data
-          await Promise.all([
-            fetchNews(),
-            fetchGainers(),
-            fetchLosers(),
-            fetchWhaleMovements(),
-            fetchSmartMoney()
-          ]);
-          // Recalculate alpha score for new asset
-          await calculateAlphaScore();
+          
+          // Update selected asset header
+          updateSelectedAssetHeader();
+          
+          // Refresh all asset-dependent data
+          await refreshAssetData();
         });
       }
       
@@ -4146,18 +4177,113 @@
         timeframeSelect.addEventListener('change', async () => {
           selectedTimeframe = timeframeSelect.value;
           console.log('🔄 Timeframe changed to:', selectedTimeframe);
+          
+          // Refresh prices with new timeframe
+          await fetchPrices();
+          
+          // Update selected asset header
+          updateSelectedAssetHeader();
+          
           // Refresh timeframe-dependent data
-          await Promise.all([
-            fetchGainers(),
-            fetchLosers(),
-            fetchWhaleMovements(),
-            fetchSmartMoney()
-          ]);
-          // Recalculate alpha score for new timeframe
-          await calculateAlphaScore();
+          await refreshAssetData();
         });
       }
     });
+    
+    // Update selected asset header display
+    function updateSelectedAssetHeader() {
+      const asset = document.getElementById('assetSelect')?.value || 'all';
+      const header = document.getElementById('selectedAssetHeader');
+      
+      if (asset === 'all') {
+        header.style.display = 'none';
+        return;
+      }
+      
+      header.style.display = 'block';
+      const assetConfig = RESEARCH_ASSETS[asset];
+      const data = priceData[asset] || {};
+      
+      document.getElementById('selectedAssetIcon').textContent = assetConfig?.icon || '💰';
+      document.getElementById('selectedAssetName').textContent = assetConfig?.name || asset.toUpperCase();
+      document.getElementById('selectedAssetSymbol').textContent = `${asset.toUpperCase()}/USDT`;
+      document.getElementById('selectedAssetPrice').textContent = formatPrice(data.price);
+      
+      const changeEl = document.getElementById('selectedAssetChange');
+      changeEl.textContent = formatPercent(data.change24h);
+      changeEl.style.color = (data.change24h || 0) >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+      
+      document.getElementById('selectedAssetHigh').textContent = formatPrice(data.high24h);
+      document.getElementById('selectedAssetLow').textContent = formatPrice(data.low24h);
+      document.getElementById('selectedAssetVolume').textContent = formatTVL(data.volume24h);
+    }
+    
+    // Refresh all asset-dependent data
+    async function refreshAssetData() {
+      const asset = document.getElementById('assetSelect')?.value || 'all';
+      console.log('🔄 Refreshing data for asset:', asset);
+      
+      // Calculate Alpha Score (updates all alpha-related displays)
+      await calculateAlphaScore();
+      
+      // Update Support/Resistance for selected asset
+      await calculateSupportResistance();
+      
+      // Refresh asset-specific news
+      await fetchAssetNews(asset);
+      
+      console.log('✅ Asset data refreshed for:', asset);
+    }
+    
+    // Fetch asset-specific news
+    async function fetchAssetNews(asset) {
+      try {
+        const container = document.getElementById('protocolNewsContainer');
+        if (!container) return;
+        
+        const assetConfig = RESEARCH_ASSETS[asset];
+        const searchTerm = asset === 'all' ? 'cryptocurrency' : (assetConfig?.name || asset);
+        
+        const res = await fetch(`https://min-api.cryptocompare.com/data/v2/news/?lang=EN&categories=Technology,Blockchain,Trading&sortOrder=latest`);
+        const data = await res.json();
+        
+        if (data.Data && data.Data.length > 0) {
+          // Filter news for specific asset if not "all"
+          let news = data.Data;
+          if (asset !== 'all' && assetConfig) {
+            news = data.Data.filter(item => 
+              item.title.toLowerCase().includes(assetConfig.name.toLowerCase()) ||
+              item.title.toLowerCase().includes(asset.toLowerCase()) ||
+              item.body?.toLowerCase().includes(assetConfig.name.toLowerCase())
+            );
+            // If no specific news found, show general news
+            if (news.length < 3) {
+              news = data.Data.slice(0, 12);
+            }
+          }
+          
+          news = news.slice(0, 12);
+          
+          container.innerHTML = news.map(item => `
+            <a href="${item.url}" target="_blank" class="news-item" style="display: block; padding: 12px; border-bottom: 1px solid var(--border); text-decoration: none; transition: background 0.2s;">
+              <div style="display: flex; gap: 12px; align-items: flex-start;">
+                <img src="${item.imageurl}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; flex-shrink: 0;" onerror="this.style.display='none'">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 0.85rem; font-weight: 500; color: var(--text); margin-bottom: 4px; line-height: 1.3;">${item.title}</div>
+                  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span style="font-size: 0.7rem; color: var(--accent);">${item.source_info?.name || item.source}</span>
+                    <span style="font-size: 0.65rem; color: var(--text-muted);">${timeAgo(item.published_on)}</span>
+                    ${item.categories ? `<span style="font-size: 0.6rem; padding: 2px 6px; background: rgba(168, 85, 247, 0.1); color: #a855f7; border-radius: 4px;">${item.categories.split('|')[0]}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+            </a>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Error fetching asset news:', err);
+      }
+    }
   </script>
   <script>
     const chainSelect = document.getElementById('chainSelect');
