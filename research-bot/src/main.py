@@ -62,15 +62,15 @@ class ResearchBot:
         self._running = False
         self._symbols: List[str] = []
         
-        # Collection intervals (in seconds)
+        # Collection intervals (in seconds) - configurable via environment
         self.intervals = {
-            'market_data': 60,      # 1 minute
-            'derivatives': 300,     # 5 minutes
-            'onchain': 3600,        # 1 hour
-            'social': 1800,         # 30 minutes
-            'news': 900,            # 15 minutes
-            'features': 300,        # 5 minutes
-            'signals': 300,         # 5 minutes
+            'market_data': int(os.getenv('INTERVAL_MARKET_DATA', '60')),
+            'derivatives': int(os.getenv('INTERVAL_DERIVATIVES', '300')),
+            'onchain': int(os.getenv('INTERVAL_ONCHAIN', '3600')),
+            'social': int(os.getenv('INTERVAL_SOCIAL', '1800')),
+            'news': int(os.getenv('INTERVAL_NEWS', '900')),
+            'features': int(os.getenv('INTERVAL_FEATURES', '300')),
+            'signals': int(os.getenv('INTERVAL_SIGNALS', '300')),
         }
     
     async def initialize(self):

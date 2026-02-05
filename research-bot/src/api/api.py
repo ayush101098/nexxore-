@@ -5,11 +5,12 @@ Research Bot API - FastAPI server for trade setups and ML predictions
 import asyncio
 import logging
 import os
+import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -187,6 +188,42 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+# Request logging middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log all HTTP requests and responses"""
+    start_time = time.time()
+    
+    # Log request
+    logger.info(
+        f"Request: {request.method} {request.url.path} "
+        f"from {request.client.host if request.client else 'unknown'}"
+    )
+    
+    # Process request
+    try:
+        response = await call_next(request)
+        duration_ms = (time.time() - start_time) * 1000
+        
+        # Log response
+        logger.info(
+            f"Response: {request.method} {request.url.path} "
+            f"status={response.status_code} duration={duration_ms:.2f}ms"
+        )
+        
+        # Add custom headers
+        response.headers["X-Process-Time"] = f"{duration_ms:.2f}ms"
+        return response
+        
+    except Exception as e:
+        duration_ms = (time.time() - start_time) * 1000
+        logger.error(
+            f"Error: {request.method} {request.url.path} "
+            f"error={str(e)} duration={duration_ms:.2f}ms",
+            exc_info=True
+        )
+        raise
 
 # CORS middleware - configure allowed origins via environment variable
 allowed_origins = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:8000').split(',')
