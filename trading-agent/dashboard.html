@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexxore Trading Agent Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-card: #21262d;
+      --border: #30363d;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --accent-green: #3fb950;
+      --accent-red: #f85149;
+      --accent-blue: #58a6ff;
+      --accent-yellow: #d29922;
+      --accent-purple: #a371f7;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .dashboard {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo h1 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .logo span {
+      font-size: 12px;
+      padding: 4px 8px;
+      background: var(--accent-blue);
+      border-radius: 4px;
+      color: #000;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--bg-card);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .stat-card h3 {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 600;
+    }
+
+    .stat-value.positive { color: var(--accent-green); }
+    .stat-value.negative { color: var(--accent-red); }
+
+    .stat-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-header h2 {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    td {
+      font-size: 13px;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-long {
+      background: rgba(63, 185, 80, 0.2);
+      color: var(--accent-green);
+    }
+
+    .badge-short {
+      background: rgba(248, 81, 73, 0.2);
+      color: var(--accent-red);
+    }
+
+    .pnl-positive { color: var(--accent-green); }
+    .pnl-negative { color: var(--accent-red); }
+
+    .signals-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .signal-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+    }
+
+    .signal-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .signal-asset {
+      font-weight: 600;
+    }
+
+    .signal-score {
+      font-size: 12px;
+      padding: 4px 8px;
+      background: var(--accent-blue);
+      border-radius: 4px;
+    }
+
+    .performance-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .perf-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .perf-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .perf-bar {
+      height: 8px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .perf-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    .perf-fill.green { background: var(--accent-green); }
+    .perf-fill.blue { background: var(--accent-blue); }
+    .perf-fill.yellow { background: var(--accent-yellow); }
+
+    .activity-log {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .activity-time {
+      color: var(--text-secondary);
+      font-size: 11px;
+      min-width: 60px;
+    }
+
+    .no-data {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 40px;
+    }
+
+    @media (max-width: 1200px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <header>
+      <div class="logo">
+        <h1>Nexxore Trading Agent</h1>
+        <span id="mode">PAPER</span>
+      </div>
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        <span>Running</span>
+      </div>
+    </header>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Portfolio Value</h3>
+        <div class="stat-value" id="portfolio-value">$10,000.00</div>
+        <div class="stat-sub">Available: <span id="available">$10,000.00</span></div>
+      </div>
+      <div class="stat-card">
+        <h3>Total P&L</h3>
+        <div class="stat-value positive" id="total-pnl">$0.00</div>
+        <div class="stat-sub">Today: <span id="today-pnl">$0.00</span></div>
+      </div>
+      <div class="stat-card">
+        <h3>Win Rate</h3>
+        <div class="stat-value" id="win-rate">0%</div>
+        <div class="stat-sub"><span id="trades-count">0</span> total trades</div>
+      </div>
+      <div class="stat-card">
+        <h3>Open Positions</h3>
+        <div class="stat-value" id="open-positions">0</div>
+        <div class="stat-sub">Max: <span id="max-positions">5</span></div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <div class="card">
+        <div class="card-header">
+          <h2>📊 Open Positions</h2>
+          <span id="last-update">Last updated: --</span>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th>Direction</th>
+                <th>Size</th>
+                <th>Entry</th>
+                <th>Current</th>
+                <th>P&L</th>
+                <th>Confluence</th>
+              </tr>
+            </thead>
+            <tbody id="positions-table">
+              <tr>
+                <td colspan="7" class="no-data">No open positions</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>🎯 Recent Signals</h2>
+        </div>
+        <div class="card-body">
+          <div class="signals-list" id="signals-list">
+            <div class="no-data">No signals yet</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px;" class="main-grid">
+      <div class="card">
+        <div class="card-header">
+          <h2>📈 Trade History</h2>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Asset</th>
+                <th>Direction</th>
+                <th>Entry</th>
+                <th>Exit</th>
+                <th>P&L</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody id="trades-table">
+              <tr>
+                <td colspan="7" class="no-data">No trade history</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>⚡ Performance Metrics</h2>
+        </div>
+        <div class="card-body">
+          <div class="performance-bars">
+            <div class="perf-item">
+              <div class="perf-label">
+                <span>Win Rate</span>
+                <span id="perf-winrate">0%</span>
+              </div>
+              <div class="perf-bar">
+                <div class="perf-fill green" id="perf-winrate-bar" style="width: 0%"></div>
+              </div>
+            </div>
+            <div class="perf-item">
+              <div class="perf-label">
+                <span>Profit Factor</span>
+                <span id="perf-pf">0.00</span>
+              </div>
+              <div class="perf-bar">
+                <div class="perf-fill blue" id="perf-pf-bar" style="width: 0%"></div>
+              </div>
+            </div>
+            <div class="perf-item">
+              <div class="perf-label">
+                <span>Max Drawdown</span>
+                <span id="perf-dd">0%</span>
+              </div>
+              <div class="perf-bar">
+                <div class="perf-fill yellow" id="perf-dd-bar" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="color: var(--text-secondary); font-size: 12px;">Avg Win</span>
+              <span id="avg-win" class="pnl-positive">$0.00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="color: var(--text-secondary); font-size: 12px;">Avg Loss</span>
+              <span id="avg-loss" class="pnl-negative">$0.00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="color: var(--text-secondary); font-size: 12px;">Best Trade</span>
+              <span id="best-trade" class="pnl-positive">$0.00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-secondary); font-size: 12px;">Worst Trade</span>
+              <span id="worst-trade" class="pnl-negative">$0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 24px;">
+      <div class="card-header">
+        <h2>📝 Activity Log</h2>
+      </div>
+      <div class="card-body">
+        <div class="activity-log" id="activity-log">
+          <div class="no-data">No activity yet</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:3001/api';
+
+    async function fetchData(endpoint) {
+      try {
+        const res = await fetch(`${API_BASE}${endpoint}`);
+        const data = await res.json();
+        return data.success ? data.data : null;
+      } catch (error) {
+        console.error(`Error fetching ${endpoint}:`, error);
+        return null;
+      }
+    }
+
+    async function updateDashboard() {
+      // Update portfolio
+      const portfolio = await fetchData('/portfolio');
+      if (portfolio) {
+        document.getElementById('portfolio-value').textContent = `$${portfolio.total_capital?.toFixed(2) || '10,000.00'}`;
+        document.getElementById('available').textContent = `$${portfolio.available_capital?.toFixed(2) || '10,000.00'}`;
+        document.getElementById('open-positions').textContent = portfolio.openPositions || 0;
+        
+        const pnl = portfolio.realized_pnl || 0;
+        const pnlEl = document.getElementById('total-pnl');
+        pnlEl.textContent = `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`;
+        pnlEl.className = `stat-value ${pnl >= 0 ? 'positive' : 'negative'}`;
+      }
+
+      // Update positions table
+      const positions = await fetchData('/positions');
+      const posTable = document.getElementById('positions-table');
+      if (positions && positions.length > 0) {
+        posTable.innerHTML = positions.map(p => `
+          <tr>
+            <td><strong>${p.asset}</strong></td>
+            <td><span class="badge badge-${p.direction.toLowerCase()}">${p.direction}</span></td>
+            <td>${p.position_size}</td>
+            <td>$${p.entry_price?.toFixed(2)}</td>
+            <td>$${p.current_price?.toFixed(2) || '--'}</td>
+            <td class="${p.unrealized_pnl_percent >= 0 ? 'pnl-positive' : 'pnl-negative'}">
+              ${p.unrealized_pnl_percent >= 0 ? '+' : ''}${p.unrealized_pnl_percent?.toFixed(2) || '0.00'}%
+            </td>
+            <td>${p.confluence_score || '--'}</td>
+          </tr>
+        `).join('');
+      } else {
+        posTable.innerHTML = '<tr><td colspan="7" class="no-data">No open positions</td></tr>';
+      }
+
+      // Update signals
+      const signals = await fetchData('/signals?limit=5');
+      const signalsList = document.getElementById('signals-list');
+      if (signals && signals.length > 0) {
+        signalsList.innerHTML = signals.map(s => `
+          <div class="signal-item">
+            <div class="signal-info">
+              <span class="badge badge-${s.direction.toLowerCase()}">${s.direction}</span>
+              <span class="signal-asset">${s.asset}</span>
+            </div>
+            <span class="signal-score">${s.confluence_score}</span>
+          </div>
+        `).join('');
+      }
+
+      // Update trades
+      const trades = await fetchData('/trades?limit=10');
+      const tradesTable = document.getElementById('trades-table');
+      if (trades && trades.length > 0) {
+        tradesTable.innerHTML = trades.map(t => `
+          <tr>
+            <td>${new Date(t.closed_at).toLocaleDateString()}</td>
+            <td><strong>${t.asset}</strong></td>
+            <td><span class="badge badge-${t.direction.toLowerCase()}">${t.direction}</span></td>
+            <td>$${t.entry_price?.toFixed(2)}</td>
+            <td>$${t.exit_price?.toFixed(2)}</td>
+            <td class="${t.pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">
+              ${t.pnl >= 0 ? '+' : ''}$${t.pnl?.toFixed(2)}
+            </td>
+            <td>${t.exit_reason || '--'}</td>
+          </tr>
+        `).join('');
+      }
+
+      // Update performance
+      const perf = await fetchData('/performance');
+      if (perf) {
+        document.getElementById('win-rate').textContent = `${perf.winRate}%`;
+        document.getElementById('trades-count').textContent = perf.totalTrades;
+        document.getElementById('perf-winrate').textContent = `${perf.winRate}%`;
+        document.getElementById('perf-winrate-bar').style.width = `${perf.winRate}%`;
+        document.getElementById('perf-pf').textContent = perf.profitFactor;
+        document.getElementById('perf-pf-bar').style.width = `${Math.min(parseFloat(perf.profitFactor) * 20, 100)}%`;
+        document.getElementById('avg-win').textContent = `+$${perf.avgWin}`;
+        document.getElementById('avg-loss').textContent = `-$${perf.avgLoss}`;
+        document.getElementById('best-trade').textContent = `+$${perf.largestWin}`;
+        document.getElementById('worst-trade').textContent = `$${perf.largestLoss}`;
+      }
+
+      // Update events
+      const events = await fetchData('/events?limit=20');
+      const activityLog = document.getElementById('activity-log');
+      if (events && events.length > 0) {
+        activityLog.innerHTML = events.map(e => `
+          <div class="activity-item">
+            <span class="activity-time">${new Date(e.created_at).toLocaleTimeString()}</span>
+            <span>${e.event_type}: ${JSON.parse(e.data)?.asset || ''} ${JSON.parse(e.data)?.direction || ''}</span>
+          </div>
+        `).join('');
+      }
+
+      document.getElementById('last-update').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+    }
+
+    // Initial load
+    updateDashboard();
+
+    // Refresh every 30 seconds
+    setInterval(updateDashboard, 30000);
+  </script>
+</body>
+</html>

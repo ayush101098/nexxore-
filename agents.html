@@ -23,25 +23,32 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Unified Design System -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  
   <style>
     :root {
-      --bg: #08080a;
-      --bg-elevated: #0f0f12;
-      --bg-card: #131318;
-      --text: #ffffff;
-      --text-secondary: rgba(255, 255, 255, 0.6);
-      --text-muted: rgba(255, 255, 255, 0.4);
-      --border: rgba(255, 255, 255, 0.08);
-      --accent: #a855f7;
-      --accent-secondary: #22c55e;
-      --research: #3b82f6;
-      --portfolio: #f59e0b;
-      --execution: #22c55e;
-      --performance: #ef4444;
+      /* Map legacy tokens to unified system */
+      --bg: var(--bg-base);
+      --bg-elevated: var(--bg-elevated);
+      --bg-card: var(--bg-card);
+      --text: var(--text-primary);
+      --border: var(--border-subtle);
+      --accent: var(--accent-primary);
+      --accent-secondary: var(--accent-secondary);
+      /* Agent-specific colors - mapped to semantic */
+      --research: var(--semantic-info);
+      --portfolio: var(--semantic-warning);
+      --execution: var(--semantic-success);
+      --performance: var(--semantic-error);
     }
     
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    body { background: var(--bg-base); color: var(--text-primary); font-family: var(--font-family-sans); }
     
     /* Navbar */
     .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(8, 8, 10, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 14px 0; }

@@ -1,96 +1,372 @@
 /**
- * Nexxore CSS Variables
- * Core design tokens for the Nexxore platform
- * Monochrome Professional Theme - Black & White Only
+ * Nexxore Design System — Unified Tokens
+ * Single source of truth for all visual properties
+ * Version 3.0
  */
 
 :root {
-  /* Primary Colors - Pure Black & White */
-  --bg: #000000;
-  --bg-primary: #000000;
-  --bg-secondary: #050505;
-  --surface: #0a0a0a;
-  --surface-2: #0f0f0f;
-  --surface-3: #141414;
-  --panel: #0a0a0a;
-  --muted: rgba(255,255,255,0.4);
-  --text: #ffffff;
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255,255,255,0.6);
-  --text-tertiary: rgba(255,255,255,0.35);
-  --accent: #ffffff;
-  --accent-2: rgba(255,255,255,0.8);
-  --accent-purple: #ffffff;
-  --glass: rgba(10, 10, 10, 0.9);
-  --radius: 0px;
-  --radius-lg: 0px;
-  --gap: 24px;
-  --container: 1400px;
+  /* ═══════════════════════════════════════════════════════════════════════════
+     COLORS — Background Hierarchy
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --bg-base: #09090b;
+  --bg-elevated: #111113;
+  --bg-card: #161618;
+  --bg-overlay: #1c1c1f;
+  --bg-hover: rgba(255, 255, 255, 0.03);
+  --bg-active: rgba(255, 255, 255, 0.06);
   
-  /* Semantic Colors - Monochrome */
-  --green: rgba(255,255,255,0.8);
-  --green-dim: rgba(255,255,255,0.05);
-  --red: rgba(255,255,255,0.6);
-  --red-dim: rgba(255,255,255,0.05);
-  --yellow: rgba(255,255,255,0.7);
-  --yellow-dim: rgba(255,255,255,0.05);
-  --purple: #ffffff;
-  --purple-dim: rgba(255,255,255,0.05);
-  --cyan: rgba(255,255,255,0.75);
-  --cyan-dim: rgba(255,255,255,0.05);
-  --orange: rgba(255,255,255,0.65);
-  --orange-dim: rgba(255,255,255,0.05);
-  --pink: rgba(255,255,255,0.7);
-  --pink-dim: rgba(255,255,255,0.05);
+  /* Legacy aliases (for backward compatibility) */
+  --bg: #09090b;
+  --bg-primary: #09090b;
+  --bg-secondary: #111113;
+  --surface: #111113;
+  --surface-2: #161618;
+  --surface-3: #1c1c1f;
+  --panel: #111113;
+  --glass: rgba(17, 17, 19, 0.95);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     COLORS — Text Hierarchy
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --text-primary: #fafafa;
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --text-disabled: rgba(255, 255, 255, 0.25);
   
-  /* Borders */
-  --border: rgba(255,255,255,0.08);
-  --border-hover: rgba(255,255,255,0.15);
-  --border-subtle: rgba(255,255,255,0.04);
-  --border-default: rgba(255,255,255,0.08);
+  /* Legacy aliases */
+  --text: #fafafa;
+  --text-tertiary: rgba(255, 255, 255, 0.4);
+  --muted: rgba(255, 255, 255, 0.4);
+  --muted-text: rgba(255, 255, 255, 0.4);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     COLORS — Border Hierarchy
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-hover: rgba(255, 255, 255, 0.15);
+  --border-active: rgba(255, 255, 255, 0.20);
   
-  /* Font Families */
+  /* Legacy alias */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-color: rgba(255, 255, 255, 0.08);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     COLORS — Brand Accent
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --accent-primary: #a855f7;
+  --accent-primary-hover: #9333ea;
+  --accent-primary-dim: rgba(168, 85, 247, 0.12);
+  --accent-secondary: #22c55e;
+  --accent-secondary-hover: #16a34a;
+  --accent-secondary-dim: rgba(34, 197, 94, 0.12);
+  
+  /* Legacy aliases */
+  --accent: #a855f7;
+  --accent-2: #9333ea;
+  --accent-purple: #a855f7;
+  --purple: #a855f7;
+  --purple-dim: rgba(168, 85, 247, 0.12);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     COLORS — Semantic (Meaning-based)
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --semantic-success: #22c55e;
+  --semantic-success-dim: rgba(34, 197, 94, 0.12);
+  --semantic-success-border: rgba(34, 197, 94, 0.25);
+  
+  --semantic-warning: #f59e0b;
+  --semantic-warning-dim: rgba(245, 158, 11, 0.12);
+  --semantic-warning-border: rgba(245, 158, 11, 0.25);
+  
+  --semantic-error: #ef4444;
+  --semantic-error-dim: rgba(239, 68, 68, 0.12);
+  --semantic-error-border: rgba(239, 68, 68, 0.25);
+  
+  --semantic-info: #3b82f6;
+  --semantic-info-dim: rgba(59, 130, 246, 0.12);
+  --semantic-info-border: rgba(59, 130, 246, 0.25);
+  
+  /* Legacy aliases */
+  --success: #22c55e;
+  --success-dim: rgba(34, 197, 94, 0.12);
+  --success-border: rgba(34, 197, 94, 0.25);
+  --warning: #f59e0b;
+  --warning-dim: rgba(245, 158, 11, 0.12);
+  --warning-border: rgba(245, 158, 11, 0.25);
+  --error: #ef4444;
+  --error-dim: rgba(239, 68, 68, 0.12);
+  --error-border: rgba(239, 68, 68, 0.25);
+  --info: #3b82f6;
+  --info-dim: rgba(59, 130, 246, 0.12);
+  --info-border: rgba(59, 130, 246, 0.25);
+  --green: #22c55e;
+  --green-dim: rgba(34, 197, 94, 0.12);
+  --red: #ef4444;
+  --red-dim: rgba(239, 68, 68, 0.12);
+  --yellow: #f59e0b;
+  --yellow-dim: rgba(245, 158, 11, 0.12);
+  --cyan: #06b6d4;
+  --cyan-dim: rgba(6, 182, 212, 0.12);
+  --orange: #f97316;
+  --orange-dim: rgba(249, 115, 22, 0.12);
+  --pink: #ec4899;
+  --pink-dim: rgba(236, 72, 153, 0.12);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     COLORS — Trading (Long/Short)
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --long: #22c55e;
+  --long-dim: rgba(34, 197, 94, 0.12);
+  --long-border: rgba(34, 197, 94, 0.25);
+  
+  --short: #ef4444;
+  --short-dim: rgba(239, 68, 68, 0.12);
+  --short-border: rgba(239, 68, 68, 0.25);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     COLORS — Strategy Risk Levels
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --accent-safe: #22c55e;
+  --accent-balanced: #3b82f6;
+  --accent-aggressive: #a855f7;
+  --accent-degen: #ef4444;
+  
+  /* Legacy aliases */
+  --accent-trade: #3b82f6;
+  --accent-oppor: #a855f7;
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     TYPOGRAPHY — Font Families
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  
+  /* Legacy aliases */
   --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --mono: 'JetBrains Mono', monospace;
   --sans: 'Inter', -apple-system, sans-serif;
 
-  /* Spacing tokens */
-  --space-hero: 100px;
-  --space-mission: 60px;
-  --space-nusd: 80px;
-  --space-agents: 80px;
-  --space-portfolio: 80px;
-  --space-waitlist: 100px;
-  --space-footer: 60px;
+  /* ═══════════════════════════════════════════════════════════════════════════
+     TYPOGRAPHY — Font Sizes
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --font-display: 32px;
+  --font-title: 20px;
+  --font-body: 14px;
+  --font-caption: 12px;
+  --font-micro: 10px;
 
-  /* Enhanced Shadows - Subtle */
-  --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.8);
-  --shadow-glow: none;
-}
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
 
-@media (max-width: 900px) {
-  :root {
-    --space-hero: 60px;
-    --space-mission: 40px;
-    --space-nusd: 50px;
-    --space-agents: 50px;
-    --space-portfolio: 50px;
-    --space-waitlist: 60px;
-  }
-}
+  /* ═══════════════════════════════════════════════════════════════════════════
+     TYPOGRAPHY — Font Weights
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
 
-/* Icon and card tokens */
-:root {
-  --icon-size: 42px;
-  --icon-bg: rgba(255, 255, 255, 0.03);
-  --card-pad: 16px;
-  --muted-text: rgba(255,255,255,0.4);
+  /* ═══════════════════════════════════════════════════════════════════════════
+     SPACING — 4px Base Unit Scale
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
   
-  /* Strategy Risk Colors - Monochrome */
-  --accent-safe: rgba(255,255,255,0.8);
-  --accent-trade: rgba(255,255,255,0.7);
-  --accent-oppor: rgba(255,255,255,0.6);
-  --accent-degen: rgba(255,255,255,0.5);
+  /* Legacy aliases */
+  --gap: 24px;
+  --card-pad: 16px;
+  --icon-size: 40px;
+  --icon-bg: rgba(255, 255, 255, 0.04);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     BORDER RADIUS
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  
+  /* Legacy aliases */
+  --radius: 8px;
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     SHADOWS
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+  
+  /* Legacy alias */
+  --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 20px rgba(168, 85, 247, 0.15);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     TRANSITIONS
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease-out;
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     Z-INDEX SCALE
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     LAYOUT
+     ═══════════════════════════════════════════════════════════════════════════ */
+  --header-height: 56px;
+  --container-max: 1200px;
+  --container-wide: 1400px;
+  --container: 1400px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE RESET & DEFAULTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+  color: var(--text-secondary);
+  background: var(--bg-base);
+  min-height: 100vh;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPOGRAPHY UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.text-display {
+  font-size: var(--text-display);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.text-title {
+  font-size: var(--text-title);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.text-body {
+  font-size: var(--text-body);
+  font-weight: var(--weight-normal);
+  line-height: var(--leading-relaxed);
+  color: var(--text-secondary);
+}
+
+.text-caption {
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-normal);
+  color: var(--text-muted);
+}
+
+.text-micro {
+  font-size: var(--text-micro);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-normal);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.text-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' on, 'lnum' on;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COLOR UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.color-primary { color: var(--text-primary); }
+.color-secondary { color: var(--text-secondary); }
+.color-muted { color: var(--text-muted); }
+.color-success { color: var(--success); }
+.color-warning { color: var(--warning); }
+.color-error { color: var(--error); }
+.color-long { color: var(--long); }
+.color-short { color: var(--short); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GRADIENT TEXT
+   ═══════════════════════════════════════════════════════════════════════════ */
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOCUS STATES (Accessibility)
+   ═══════════════════════════════════════════════════════════════════════════ */
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBAR STYLING
+   ═══════════════════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SELECTION
+   ═══════════════════════════════════════════════════════════════════════════ */
+::selection {
+  background: var(--accent-primary-dim);
+  color: var(--text-primary);
 }
