@@ -104,8 +104,12 @@ class AppState:
     signal_generator = None
     collectors = {}
     
-    # WebSocket connections
+    # WebSocket connections with thread-safe access
     ws_connections: List[WebSocket] = []
+    ws_lock: asyncio.Lock = None
+    
+    def __init__(self):
+        self.ws_lock = asyncio.Lock()
 
 
 state = AppState()
@@ -118,16 +122,22 @@ async def lifespan(app: FastAPI):
     """Manage application lifecycle"""
     logger.info("Starting Research Bot API...")
     
+    # Validate required environment variables
+    db_password = os.getenv('DB_PASSWORD')
+    if not db_password:
+        raise ValueError("DB_PASSWORD environment variable is required")
+    
     # Initialize database pool
     try:
         state.db_pool = await asyncpg.create_pool(
             host=os.getenv('DB_HOST', 'localhost'),
-            port=int(os.getenv('DB_PORT', 5432)),
+            port=int(os.getenv('DB_PORT', '5432')),
             user=os.getenv('DB_USER', 'research_bot'),
-            password=os.getenv('DB_PASSWORD', 'research_bot_password'),
+            password=db_password,
             database=os.getenv('DB_NAME', 'research_bot'),
             min_size=5,
-            max_size=20
+            max_size=20,
+            command_timeout=60
         )
         logger.info("Database pool created")
     except Exception as e:
@@ -160,12 +170,13 @@ async def lifespan(app: FastAPI):
     if state.redis:
         await state.redis.close()
     
-    # Close WebSocket connections
-    for ws in state.ws_connections:
-        try:
-            await ws.close()
-        except:
-            pass
+    # Close WebSocket connections safely
+    async with state.ws_lock:
+        for ws in state.ws_connections:
+            try:
+                await ws.close()
+            except Exception as e:
+                logger.warning(f"Error closing WebSocket: {e}")
 
 
 # ============== FastAPI App ==============
@@ -177,12 +188,13 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware
+# CORS middleware - configure allowed origins via environment variable
+allowed_origins = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:8000').split(',')
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -198,12 +210,14 @@ async def health_check():
     try:
         async with state.db_pool.acquire() as conn:
             await conn.execute("SELECT 1")
-    except:
+    except (asyncpg.PostgresError, Exception) as e:
+        logger.error(f"Database health check failed: {e}")
         db_status = "disconnected"
     
     try:
         await state.redis.ping()
-    except:
+    except (aioredis.ConnectionError, Exception) as e:
+        logger.error(f"Redis health check failed: {e}")
         redis_status = "disconnected"
     
     return HealthResponse(
@@ -525,7 +539,10 @@ async def get_data_quality():
 async def websocket_setups(websocket: WebSocket):
     """WebSocket for real-time setup updates"""
     await websocket.accept()
-    state.ws_connections.append(websocket)
+    
+    # Thread-safe addition to connections list
+    async with state.ws_lock:
+        state.ws_connections.append(websocket)
     
     try:
         # Send initial data
@@ -547,18 +564,24 @@ async def websocket_setups(websocket: WebSocket):
             })
             
     except WebSocketDisconnect:
-        state.ws_connections.remove(websocket)
+        logger.info("WebSocket client disconnected")
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
-        if websocket in state.ws_connections:
-            state.ws_connections.remove(websocket)
+    finally:
+        # Thread-safe removal from connections list
+        async with state.ws_lock:
+            if websocket in state.ws_connections:
+                state.ws_connections.remove(websocket)
 
 
 # ============== Utility Functions ==============
 
 async def broadcast_setup_update(setup: Dict):
     """Broadcast new setup to all WebSocket clients"""
-    for ws in state.ws_connections:
+    async with state.ws_lock:
+        connections = state.ws_connections.copy()
+    
+    for ws in connections:
         try:
             await ws.send_json({
                 "type": "new_setup",

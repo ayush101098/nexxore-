@@ -77,15 +77,21 @@ class ResearchBot:
         """Initialize all components"""
         logger.info("Initializing Research Bot...")
         
+        # Validate required environment variables
+        db_password = os.getenv('DB_PASSWORD')
+        if not db_password:
+            raise ValueError("DB_PASSWORD environment variable is required")
+        
         # Create database pool
         self.db_pool = await asyncpg.create_pool(
             host=os.getenv('DB_HOST', 'localhost'),
-            port=int(os.getenv('DB_PORT', 5432)),
+            port=int(os.getenv('DB_PORT', '5432')),
             user=os.getenv('DB_USER', 'research_bot'),
-            password=os.getenv('DB_PASSWORD', 'research_bot_password'),
+            password=db_password,
             database=os.getenv('DB_NAME', 'research_bot'),
             min_size=5,
-            max_size=20
+            max_size=20,
+            command_timeout=60
         )
         logger.info("Database pool created")
         
