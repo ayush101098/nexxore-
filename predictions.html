@@ -2012,6 +2012,8 @@
     const KALSHI_API = 'https://api.elections.kalshi.com/v1';
     const CLOB_API = 'https://clob.polymarket.com';
     const WS_CLOB = 'wss://ws-subscriptions-clob.polymarket.com/ws/market';
+    const STRAPI_API = 'https://strapi-matic.poly.market';
+    const POLY_SUBGRAPH = 'https://api.thegraph.com/subgraphs/name/polymarket/matic-markets-5';
     
     // State
     let markets = [];
@@ -2023,6 +2025,10 @@
     let wsReconnectTimer = null;
     let dynamicTags = [];
     let sportsLeagues = [];
+    let whaleTrades = [];
+    let marketMovers = [];
+    let arbitrageOpportunities = [];
+    let recentActivity = [];
     
     // ML Model for predictions - Using real market data
     const MLModel = {
@@ -2220,25 +2226,163 @@
       }
     }
     
+    // Fetch whale/large trades from CLOB API
+    async function fetchWhaleTrades() {
+      try {
+        const responses = await Promise.allSettled([
+          fetch(`${GAMMA_API}/activity?limit=200`),
+          fetch(`${CLOB_API}/trades?limit=100`)
+        ]);
+        
+        const trades = [];
+        for (const result of responses) {
+          if (result.status === 'fulfilled' && result.value.ok) {
+            const data = await result.value.json();
+            if (Array.isArray(data)) trades.push(...data);
+            else if (data.data) trades.push(...data.data);
+          }
+        }
+        
+        // Filter for whale trades (>$10K)
+        whaleTrades = trades
+          .filter(t => {
+            const size = parseFloat(t.amount || t.size || t.value || 0);
+            return size > 10000;
+          })
+          .slice(0, 50)
+          .map(t => ({
+            market: t.market || t.title || 'Unknown',
+            side: t.side || (t.outcome === 'Yes' ? 'BUY' : 'SELL'),
+            size: parseFloat(t.amount || t.size || t.value || 0),
+            price: parseFloat(t.price || 0.5) * 100,
+            timestamp: t.timestamp || t.createdAt || new Date().toISOString(),
+            trader: t.maker || t.trader || 'Whale'
+          }));
+        
+        console.log(`Tracked ${whaleTrades.length} whale trades`);
+      } catch (err) {
+        console.log('Whale tracking unavailable:', err.message);
+      }
+    }
+    
+    // Identify market movers (biggest price changes)
+    function identifyMarketMovers() {
+      marketMovers = [...markets]
+        .filter(m => m.platform === 'Polymarket')
+        .map(m => ({
+          ...m,
+          priceChangeNum: parseFloat(m.yesChange || 0)
+        }))
+        .sort((a, b) => Math.abs(b.priceChangeNum) - Math.abs(a.priceChangeNum))
+        .slice(0, 10);
+      
+      console.log(`Identified ${marketMovers.length} market movers`);
+    }
+    
+    // Detect arbitrage opportunities between platforms
+    function detectArbitrageOpportunities() {
+      arbitrageOpportunities = [];
+      
+      // Group markets by similar titles
+      const polyMarkets = markets.filter(m => m.platform === 'Polymarket');
+      const kalshiMarkets = markets.filter(m => m.platform === 'Kalshi');
+      
+      for (const pm of polyMarkets) {
+        for (const km of kalshiMarkets) {
+          // Check if markets are similar (simple title matching)
+          const pmTitle = pm.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const kmTitle = km.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+          
+          if (pmTitle.length > 20 && kmTitle.length > 20) {
+            const similarity = calculateSimilarity(pmTitle, kmTitle);
+            
+            if (similarity > 0.6) {
+              const priceDiff = Math.abs(pm.yesOdds - km.yesOdds);
+              
+              if (priceDiff >= 3) {
+                const buyPlatform = pm.yesOdds < km.yesOdds ? 'Polymarket' : 'Kalshi';
+                const buyPrice = Math.min(pm.yesOdds, km.yesOdds);
+                const sellPrice = Math.max(pm.yesOdds, km.yesOdds);
+                
+                arbitrageOpportunities.push({
+                  market1: pm,
+                  market2: km,
+                  priceDiff,
+                  buyPlatform,
+                  buyPrice,
+                  sellPrice,
+                  potentialProfit: ((sellPrice - buyPrice) / buyPrice * 100).toFixed(1),
+                  confidence: (similarity * 100).toFixed(0)
+                });
+              }
+            }
+          }
+        }
+      }
+      
+      arbitrageOpportunities.sort((a, b) => b.priceDiff - a.priceDiff);
+      console.log(`Found ${arbitrageOpportunities.length} arbitrage opportunities`);
+    }
+    
+    function calculateSimilarity(str1, str2) {
+      const words1 = new Set(str1.match(/[a-z0-9]+/g) || []);
+      const words2 = new Set(str2.match(/[a-z0-9]+/g) || []);
+      const intersection = [...words1].filter(w => words2.has(w));
+      const union = new Set([...words1, ...words2]);
+      return intersection.length / union.size;
+    }
+    
+    // Fetch recent market activity
+    async function fetchRecentActivity() {
+      try {
+        const res = await fetch(`${GAMMA_API}/activity?limit=50`);
+        if (res.ok) {
+          const data = await res.json();
+          recentActivity = (Array.isArray(data) ? data : data.data || []).slice(0, 30).map(a => ({
+            type: a.type || 'trade',
+            market: a.title || a.market || 'Unknown',
+            side: a.outcome || a.side || 'YES',
+            amount: parseFloat(a.amount || a.value || 0),
+            timestamp: a.timestamp || a.createdAt || new Date().toISOString()
+          }));
+          console.log(`Fetched ${recentActivity.length} recent activities`);
+        }
+      } catch (err) {
+        console.log('Activity feed unavailable');
+      }
+    }
+
     // Enhanced Polymarket Data Fetching
     async function fetchPolymarketData() {
       const allMarkets = [];
       const seenIds = new Set();
       
-      // Multiple search queries for comprehensive market coverage
+      // Expanded search queries for comprehensive market coverage
       const queries = [
         '', 'bitcoin', 'ethereum', 'trump', 'election', 'fed', 'rate', 
         'ai', 'openai', 'crypto', 'sports', 'tech', 'economy', 'climate',
-        'china', 'war', 'inflation', 'recession', 'stock', 'gold', 'oil'
+        'china', 'war', 'inflation', 'recession', 'stock', 'gold', 'oil',
+        'solana', 'xrp', 'biden', 'congress', 'senate', 'supreme court',
+        'nba', 'nfl', 'super bowl', 'world cup', 'champions league',
+        'nvidia', 'tesla', 'apple', 'microsoft', 'amazon', 'google', 'meta',
+        'gpt', 'anthropic', 'spacex', 'tariff', 'ukraine', 'russia',
+        'interest rate', 'gdp', 'unemployment', 'housing', 'energy',
+        'celebrity', 'entertainment', 'movie', 'music', 'award'
       ];
       
       try {
-        // Parallel fetch from multiple endpoints
+        // Parallel fetch from multiple endpoints with higher limits
         const responses = await Promise.allSettled([
-          fetch(`${GAMMA_API}/events?active=true&closed=false&limit=200`),
-          fetch(`${GAMMA_API}/public-search?q=&events_status=active&limit_per_type=100`),
+          fetch(`${GAMMA_API}/events?active=true&closed=false&limit=500`),
+          fetch(`${GAMMA_API}/public-search?q=&events_status=active&limit_per_type=200`),
+          fetch(`${GAMMA_API}/markets?active=true&closed=false&limit=500`),
+          fetch(`${GAMMA_API}/events?category=sports&active=true&limit=100`),
+          fetch(`${GAMMA_API}/events?category=politics&active=true&limit=100`),
+          fetch(`${GAMMA_API}/events?category=crypto&active=true&limit=100`),
+          fetch(`${GAMMA_API}/events?order=volume&active=true&ascending=false&limit=200`),
+          fetch(`${GAMMA_API}/events?order=liquidity&active=true&ascending=false&limit=200`),
           ...queries.slice(1).map(q => 
-            fetch(`${GAMMA_API}/public-search?q=${encodeURIComponent(q)}&events_status=active&limit_per_type=50`)
+            fetch(`${GAMMA_API}/public-search?q=${encodeURIComponent(q)}&events_status=active&limit_per_type=100`)
           )
         ]);
         
@@ -2723,6 +2867,37 @@
       }).join('');
     }
     
+    // Render whale activity and market movers
+    function renderWhaleActivity() {
+      // Update market movers in arbitrage section with real data
+      const arbContainer = document.getElementById('arbOpportunities');
+      if (arbitrageOpportunities.length > 0) {
+        const arbHtml = arbitrageOpportunities.slice(0, 5).map(arb => `
+          <div class="arb-card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(139, 92, 246, 0.1)); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+            <div style="font-weight: 600; color: #10b981; font-size: 12px;">⚡ ${arb.priceDiff}¢ Spread</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.8); margin: 4px 0;">${arb.market1.title.slice(0, 40)}...</div>
+            <div style="display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,0.6);">
+              <span>Buy ${arb.buyPlatform} @ ${arb.buyPrice}¢</span>
+              <span>+${arb.potentialProfit}% potential</span>
+            </div>
+          </div>
+        `).join('');
+        arbContainer.innerHTML = arbHtml || arbContainer.innerHTML;
+      }
+      
+      // Add whale trades indicator
+      if (whaleTrades.length > 0) {
+        const whaleCount = whaleTrades.length;
+        const totalWhaleVol = whaleTrades.reduce((sum, t) => sum + t.size, 0);
+        console.log(`🐋 ${whaleCount} whale trades totaling ${formatVolume(totalWhaleVol)}`);
+      }
+      
+      // Log market movers
+      if (marketMovers.length > 0) {
+        console.log(`📊 Top movers: ${marketMovers.slice(0, 3).map(m => `${m.title.slice(0, 20)}... (${m.priceChangeNum > 0 ? '+' : ''}${m.priceChangeNum.toFixed(1)}%)`).join(', ')}`);
+      }
+    }
+
     async function init() {
       // Fetch tags and sports leagues in parallel with market data
       await Promise.all([
@@ -2738,6 +2913,16 @@
       markets = [...polymarkets, ...kalshiMarkets];
       markets.sort((a, b) => b.volume - a.volume);
       
+      // Fetch additional intelligence data
+      await Promise.all([
+        fetchWhaleTrades(),
+        fetchRecentActivity()
+      ]);
+      
+      // Analyze market data
+      identifyMarketMovers();
+      detectArbitrageOpportunities();
+      
       // Update stats
       const totalVol = markets.reduce((sum, m) => sum + m.volume, 0);
       const openInterest = totalVol * 0.35; // Approximate OI
@@ -2750,6 +2935,7 @@
       renderMarketList();
       renderArbitrage();
       renderSignals();
+      renderWhaleActivity();
       
       // Select first market
       if (markets.length > 0) selectMarket(markets[0]);
@@ -2758,7 +2944,9 @@
       connectWebSocket();
       
       // Update data status
-      document.getElementById('dataStatus').textContent = `${markets.length} Markets Live`;
+      const polyCount = markets.filter(m => m.platform === 'Polymarket').length;
+      const kalshiCount = markets.filter(m => m.platform === 'Kalshi').length;
+      document.getElementById('dataStatus').textContent = `${markets.length} Markets (${polyCount} Poly, ${kalshiCount} Kalshi)`;
     }
     
     // Search functionality
