@@ -3243,6 +3243,9 @@
           <input type="text" class="access-verify-input" id="verifyWalletInput" placeholder="0x... or ENS name">
           <button class="access-verify-btn" id="verifyAccessBtn">Verify</button>
         </div>
+        <button class="access-verify-btn" id="connectWalletBtn" style="width: 100%; margin-top: 10px; background: linear-gradient(135deg, var(--accent), var(--green)); border: none; color: white;">
+          🔗 Connect Wallet
+        </button>
         <div class="access-status" id="accessStatus"></div>
       </div>
 
@@ -6460,8 +6463,75 @@
       });
     }
     
-    // Check stored access on page load
-    checkStoredAccess();
+    // Auto-detect connected wallet and check whitelist on page load
+    async function autoDetectWallet() {
+      // First check stored access
+      if (checkStoredAccess()) return;
+      
+      // Try to detect connected wallet
+      if (typeof window.ethereum !== 'undefined') {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts && accounts.length > 0) {
+            const connectedWallet = accounts[0].toLowerCase();
+            console.log('Detected wallet:', connectedWallet);
+            
+            // Check if connected wallet is whitelisted
+            if (WHITELISTED_WALLETS.includes(connectedWallet)) {
+              const accessData = {
+                verified: true,
+                wallet: connectedWallet,
+                amount: 'whitelisted',
+                timestamp: Date.now(),
+                type: 'whitelist-auto'
+              };
+              localStorage.setItem(ACCESS_KEY, JSON.stringify(accessData));
+              console.log('✅ Whitelisted wallet auto-detected!');
+              unlockPremiumAccess();
+              return;
+            }
+            
+            // Pre-fill the input with connected wallet
+            if (verifyWalletInput) {
+              verifyWalletInput.value = accounts[0];
+            }
+          }
+        } catch (err) {
+          console.log('Wallet detection failed:', err);
+        }
+      }
+    }
+    
+    // Connect Wallet button handler
+    const connectWalletBtn = document.getElementById('connectWalletBtn');
+    if (connectWalletBtn) {
+      connectWalletBtn.addEventListener('click', async () => {
+        if (typeof window.ethereum !== 'undefined') {
+          try {
+            connectWalletBtn.textContent = 'Connecting...';
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            if (accounts && accounts.length > 0) {
+              const wallet = accounts[0];
+              verifyWalletInput.value = wallet;
+              connectWalletBtn.textContent = '✓ Connected';
+              connectWalletBtn.style.background = 'var(--green)';
+              
+              // Auto-verify after connecting
+              setTimeout(() => verifyDeposit(wallet), 500);
+            }
+          } catch (err) {
+            console.error('Connect wallet error:', err);
+            showAccessStatus('Failed to connect wallet. Please try again.', 'error');
+            connectWalletBtn.textContent = '🔗 Connect Wallet';
+          }
+        } else {
+          showAccessStatus('Please install MetaMask or another Web3 wallet', 'error');
+        }
+      });
+    }
+    
+    // Run auto-detection
+    autoDetectWallet();
   </script>
   
   <script>
