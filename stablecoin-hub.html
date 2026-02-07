@@ -33,6 +33,7 @@
     .hero h1 { font-size: 1.9rem; }
     .hero p { color: var(--muted); line-height: 1.6; }
     .stats { display:grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+    @media (min-width: 1100px) { .stats { grid-template-columns: repeat(8,1fr); } }
     .stat { background: var(--panel); border:1px solid var(--border); padding: 12px; border-radius: 12px; }
     .stat-label { font-size: 0.7rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; }
     .stat-value { font-size: 1.1rem; font-weight: 700; margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
@@ -44,9 +45,11 @@
     .table th, .table td { padding: 8px; border-bottom:1px solid var(--border); text-align: left; color: var(--muted); }
     .table th { color: var(--dim); font-size: 0.7rem; text-transform: uppercase; }
     .badge { padding: 2px 8px; border-radius: 999px; font-size: 0.65rem; border:1px solid var(--border); color: var(--muted); }
-    .badge.green { color: var(--green); border-color: rgba(34,197,94,0.3); }
-    .badge.yellow { color: var(--yellow); border-color: rgba(245,158,11,0.3); }
-    .badge.red { color: var(--red); border-color: rgba(239,68,68,0.3); }
+    .badge.green { color: var(--green); border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); }
+    .badge.yellow { color: var(--yellow); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.1); }
+    .badge.red { color: var(--red); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
+    .badge.blue { color: var(--blue); border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.1); }
+    .badge.purple { color: var(--accent); border-color: rgba(168,85,247,0.3); background: rgba(168,85,247,0.1); }
     .section { margin-top: 22px; }
     .section-title { font-size: 1.1rem; margin-bottom: 10px; }
     .cards { display:grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
@@ -72,6 +75,60 @@
     .progress > span { display:block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--blue)); }
     .alert { padding: 10px 12px; border-radius: 10px; border:1px solid rgba(239,68,68,0.4); background: rgba(239,68,68,0.08); color: #fecaca; font-size: 0.8rem; }
     .chip { padding: 4px 8px; border-radius: 999px; border:1px solid var(--border); font-size: 0.65rem; color: var(--muted); }
+    
+    /* Enhanced Yield Table Styles */
+    .yield-section { margin-top: 24px; }
+    .yield-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+    .yield-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 0.7rem; cursor: pointer; transition: all 0.2s; }
+    .filter-btn:hover, .filter-btn.active { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.4); color: #fff; }
+    .yield-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+    .yield-table th { padding: 10px 8px; text-align: left; color: var(--dim); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+    .yield-table td { padding: 12px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .yield-table tr:hover { background: rgba(255,255,255,0.02); }
+    .asset-cell { display: flex; align-items: center; gap: 8px; }
+    .asset-icon { width: 24px; height: 24px; border-radius: 50%; background: var(--panel-soft); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; }
+    .asset-icon.usdc { background: #2775ca; color: #fff; }
+    .asset-icon.usdt { background: #26a17b; color: #fff; }
+    .asset-icon.dai { background: #f5ac37; color: #000; }
+    .asset-icon.frax { background: #000; border: 1px solid #fff; color: #fff; }
+    .asset-icon.usdd { background: #1db857; color: #fff; }
+    .asset-icon.gho { background: #6e64ff; color: #fff; }
+    .asset-icon.crvusd { background: #a855f7; color: #fff; }
+    .asset-icon.pyusd { background: #0070e0; color: #fff; }
+    .asset-icon.eusd { background: #ef4444; color: #fff; }
+    .asset-icon.lusd { background: #3b82f6; color: #fff; }
+    .asset-icon.susd { background: #1e1a31; color: #fff; }
+    .asset-icon.mkusd { background: #f59e0b; color: #000; }
+    .apy-cell { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+    .apy-high { color: var(--green); }
+    .apy-medium { color: var(--yellow); }
+    .apy-low { color: var(--muted); }
+    .chain-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 500; }
+    .chain-eth { background: rgba(98,126,234,0.2); color: #627eea; }
+    .chain-arb { background: rgba(40,160,240,0.2); color: #28a0f0; }
+    .chain-op { background: rgba(255,4,32,0.2); color: #ff0420; }
+    .chain-base { background: rgba(0,82,255,0.2); color: #0052ff; }
+    .chain-poly { background: rgba(130,71,229,0.2); color: #8247e5; }
+    .chain-bsc { background: rgba(243,186,47,0.2); color: #f3ba2f; }
+    .chain-avax { background: rgba(232,65,66,0.2); color: #e84142; }
+    .chain-sol { background: rgba(0,255,163,0.2); color: #00ffa3; }
+    .risk-indicator { display: flex; align-items: center; gap: 4px; }
+    .risk-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .risk-dot.low { background: var(--green); }
+    .risk-dot.medium { background: var(--yellow); }
+    .risk-dot.high { background: var(--red); }
+    .action-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 0.65rem; cursor: pointer; transition: all 0.15s; }
+    .action-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .strategy-card { background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(34,197,94,0.05)); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 14px; }
+    .strategy-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .strategy-title { font-size: 0.9rem; font-weight: 600; }
+    .strategy-apy { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--green); }
+    .strategy-steps { display: grid; gap: 6px; font-size: 0.75rem; color: var(--muted); }
+    .strategy-step { display: flex; align-items: center; gap: 8px; }
+    .step-num { width: 18px; height: 18px; border-radius: 50%; background: rgba(168,85,247,0.2); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 600; color: var(--accent); }
+    .tvl-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+    .tvl-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); }
 
     @media (max-width: 960px) {
       .stats { grid-template-columns: 1fr 1fr; }
@@ -79,6 +136,8 @@
       .cards { grid-template-columns: 1fr; }
       .tab-panel.active { grid-template-columns: 1fr; }
       .lp-grid { grid-template-columns: 1fr; }
+      .yield-table { font-size: 0.7rem; }
+      .yield-table th, .yield-table td { padding: 8px 4px; }
     }
   </style>
 </head>
@@ -99,7 +158,700 @@
         <div class="stat"><div class="stat-label">Total Stablecoins</div><div class="stat-value">$482.4M</div></div>
         <div class="stat"><div class="stat-label">Weighted APY</div><div class="stat-value">7.8%</div></div>
         <div class="stat"><div class="stat-label">Depeg Alerts</div><div class="stat-value">0 Active</div></div>
-        <div class="stat"><div class="stat-label">Chains</div><div class="stat-value">7</div></div>
+        <div class="stat"><div class="stat-label">Chains</div><div class="stat-value">12</div></div>
+        <div class="stat"><div class="stat-label">Protocols</div><div class="stat-value">48</div></div>
+        <div class="stat"><div class="stat-label">Stablecoins</div><div class="stat-value">14</div></div>
+        <div class="stat"><div class="stat-label">Best APY</div><div class="stat-value" style="color: var(--green);">18.4%</div></div>
+        <div class="stat"><div class="stat-label">Risk Score</div><div class="stat-value">B+</div></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════════ -->
+    <!-- COMPREHENSIVE YIELD OPPORTUNITIES SECTION -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════════ -->
+    <section class="yield-section" id="yield-opportunities">
+      <div class="yield-header">
+        <h2 class="section-title">🎯 Yield Opportunities — All Major Stablecoins</h2>
+        <div class="yield-filters">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="usdc">USDC</button>
+          <button class="filter-btn" data-filter="usdt">USDT</button>
+          <button class="filter-btn" data-filter="dai">DAI</button>
+          <button class="filter-btn" data-filter="frax">FRAX</button>
+          <button class="filter-btn" data-filter="gho">GHO</button>
+          <button class="filter-btn" data-filter="crvusd">crvUSD</button>
+          <button class="filter-btn" data-filter="high-yield">High Yield</button>
+          <button class="filter-btn" data-filter="low-risk">Low Risk</button>
+        </div>
+      </div>
+
+      <div class="panel" style="overflow-x: auto;">
+        <table class="yield-table" id="yieldTable">
+          <thead>
+            <tr>
+              <th>Asset</th>
+              <th>Protocol</th>
+              <th>Strategy</th>
+              <th>Base APY</th>
+              <th>Rewards</th>
+              <th>Total APY</th>
+              <th>TVL</th>
+              <th>Chain</th>
+              <th>Risk</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- USDC Opportunities -->
+            <tr data-asset="usdc" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon usdc">U</div><strong>USDC</strong></div></td>
+              <td>Aave V3</td>
+              <td>Lending</td>
+              <td class="apy-cell apy-medium">6.2%</td>
+              <td>—</td>
+              <td class="apy-cell apy-medium">6.2%</td>
+              <td>$2.4B</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="usdc" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon usdc">U</div><strong>USDC</strong></div></td>
+              <td>Morpho Blue</td>
+              <td>Optimized Lending</td>
+              <td class="apy-cell apy-high">8.4%</td>
+              <td>+1.2% MORPHO</td>
+              <td class="apy-cell apy-high">9.6%</td>
+              <td>$890M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="usdc" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon usdc">U</div><strong>USDC</strong></div></td>
+              <td>Compound V3</td>
+              <td>Lending</td>
+              <td class="apy-cell apy-medium">5.8%</td>
+              <td>+0.9% COMP</td>
+              <td class="apy-cell apy-medium">6.7%</td>
+              <td>$1.2B</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="usdc" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon usdc">U</div><strong>USDC</strong></div></td>
+              <td>Pendle</td>
+              <td>PT-sUSDe</td>
+              <td class="apy-cell apy-high">12.8%</td>
+              <td>—</td>
+              <td class="apy-cell apy-high">12.8%</td>
+              <td>$340M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="usdc" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon usdc">U</div><strong>USDC</strong></div></td>
+              <td>Aave V3</td>
+              <td>Lending</td>
+              <td class="apy-cell apy-high">7.9%</td>
+              <td>+0.5% ARB</td>
+              <td class="apy-cell apy-high">8.4%</td>
+              <td>$680M</td>
+              <td><span class="chain-badge chain-arb">ARB</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="usdc" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon usdc">U</div><strong>USDC</strong></div></td>
+              <td>Moonwell</td>
+              <td>Lending</td>
+              <td class="apy-cell apy-high">9.2%</td>
+              <td>+2.1% WELL</td>
+              <td class="apy-cell apy-high">11.3%</td>
+              <td>$245M</td>
+              <td><span class="chain-badge chain-base">BASE</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="usdc" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon usdc">U</div><strong>USDC</strong></div></td>
+              <td>Stargate</td>
+              <td>Bridge LP</td>
+              <td class="apy-cell apy-medium">4.2%</td>
+              <td>+3.8% STG</td>
+              <td class="apy-cell apy-high">8.0%</td>
+              <td>$156M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            
+            <!-- USDT Opportunities -->
+            <tr data-asset="usdt" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon usdt">T</div><strong>USDT</strong></div></td>
+              <td>Aave V3</td>
+              <td>Lending</td>
+              <td class="apy-cell apy-medium">5.9%</td>
+              <td>—</td>
+              <td class="apy-cell apy-medium">5.9%</td>
+              <td>$1.8B</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="usdt" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon usdt">T</div><strong>USDT</strong></div></td>
+              <td>Morpho Aave</td>
+              <td>Optimized Lending</td>
+              <td class="apy-cell apy-high">7.8%</td>
+              <td>+1.0% MORPHO</td>
+              <td class="apy-cell apy-high">8.8%</td>
+              <td>$520M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="usdt" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon usdt">T</div><strong>USDT</strong></div></td>
+              <td>Venus</td>
+              <td>Lending</td>
+              <td class="apy-cell apy-high">8.6%</td>
+              <td>+1.5% XVS</td>
+              <td class="apy-cell apy-high">10.1%</td>
+              <td>$380M</td>
+              <td><span class="chain-badge chain-bsc">BSC</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="usdt" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon usdt">T</div><strong>USDT</strong></div></td>
+              <td>Curve 3pool</td>
+              <td>LP + Convex</td>
+              <td class="apy-cell apy-medium">3.2%</td>
+              <td>+5.4% CVX/CRV</td>
+              <td class="apy-cell apy-high">8.6%</td>
+              <td>$890M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="usdt" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon usdt">T</div><strong>USDT</strong></div></td>
+              <td>Radiant</td>
+              <td>Lending</td>
+              <td class="apy-cell apy-high">9.4%</td>
+              <td>+3.2% RDNT</td>
+              <td class="apy-cell apy-high">12.6%</td>
+              <td>$165M</td>
+              <td><span class="chain-badge chain-arb">ARB</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            
+            <!-- DAI Opportunities -->
+            <tr data-asset="dai" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon dai">D</div><strong>DAI</strong></div></td>
+              <td>Spark (sDAI)</td>
+              <td>DSR</td>
+              <td class="apy-cell apy-high">8.0%</td>
+              <td>—</td>
+              <td class="apy-cell apy-high">8.0%</td>
+              <td>$1.6B</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="dai" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon dai">D</div><strong>DAI</strong></div></td>
+              <td>Aave V3</td>
+              <td>Lending</td>
+              <td class="apy-cell apy-medium">5.4%</td>
+              <td>—</td>
+              <td class="apy-cell apy-medium">5.4%</td>
+              <td>$420M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="dai" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon dai">D</div><strong>DAI</strong></div></td>
+              <td>Yearn</td>
+              <td>Multi-Strategy</td>
+              <td class="apy-cell apy-high">9.2%</td>
+              <td>—</td>
+              <td class="apy-cell apy-high">9.2%</td>
+              <td>$78M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="dai" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon dai">D</div><strong>DAI</strong></div></td>
+              <td>Sommelier</td>
+              <td>Real Yield USD</td>
+              <td class="apy-cell apy-high">11.4%</td>
+              <td>—</td>
+              <td class="apy-cell apy-high">11.4%</td>
+              <td>$42M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            
+            <!-- FRAX Opportunities -->
+            <tr data-asset="frax" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon frax">F</div><strong>FRAX</strong></div></td>
+              <td>Fraxlend</td>
+              <td>Lending</td>
+              <td class="apy-cell apy-high">7.6%</td>
+              <td>+2.4% FXS</td>
+              <td class="apy-cell apy-high">10.0%</td>
+              <td>$145M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="frax" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon frax">F</div><strong>sFRAX</strong></div></td>
+              <td>Frax Finance</td>
+              <td>Staking</td>
+              <td class="apy-cell apy-high">8.5%</td>
+              <td>—</td>
+              <td class="apy-cell apy-high">8.5%</td>
+              <td>$280M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="frax" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon frax">F</div><strong>FRAX</strong></div></td>
+              <td>Curve FRAX/USDC</td>
+              <td>LP + Convex</td>
+              <td class="apy-cell apy-medium">2.8%</td>
+              <td>+6.2% CVX/CRV</td>
+              <td class="apy-cell apy-high">9.0%</td>
+              <td>$320M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            
+            <!-- GHO (Aave Stablecoin) -->
+            <tr data-asset="gho" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon gho">G</div><strong>GHO</strong></div></td>
+              <td>Aave (stkGHO)</td>
+              <td>Staking</td>
+              <td class="apy-cell apy-high">9.8%</td>
+              <td>—</td>
+              <td class="apy-cell apy-high">9.8%</td>
+              <td>$48M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="gho" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon gho">G</div><strong>GHO</strong></div></td>
+              <td>Curve GHO/USDC</td>
+              <td>LP</td>
+              <td class="apy-cell apy-medium">4.2%</td>
+              <td>+5.8% CRV</td>
+              <td class="apy-cell apy-high">10.0%</td>
+              <td>$86M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="gho" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon gho">G</div><strong>GHO</strong></div></td>
+              <td>Balancer</td>
+              <td>GHO/USDC/USDT</td>
+              <td class="apy-cell apy-medium">3.6%</td>
+              <td>+7.2% BAL/AURA</td>
+              <td class="apy-cell apy-high">10.8%</td>
+              <td>$52M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            
+            <!-- crvUSD (Curve Stablecoin) -->
+            <tr data-asset="crvusd" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon crvusd">C</div><strong>crvUSD</strong></div></td>
+              <td>Curve</td>
+              <td>crvUSD/USDC</td>
+              <td class="apy-cell apy-medium">5.4%</td>
+              <td>+8.2% CRV</td>
+              <td class="apy-cell apy-high">13.6%</td>
+              <td>$124M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="crvusd" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon crvusd">C</div><strong>crvUSD</strong></div></td>
+              <td>Curve Llamalend</td>
+              <td>Lending</td>
+              <td class="apy-cell apy-high">11.2%</td>
+              <td>+2.8% CRV</td>
+              <td class="apy-cell apy-high">14.0%</td>
+              <td>$68M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            
+            <!-- PYUSD (PayPal USD) -->
+            <tr data-asset="pyusd" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon pyusd">P</div><strong>PYUSD</strong></div></td>
+              <td>Aave V3</td>
+              <td>Lending</td>
+              <td class="apy-cell apy-high">7.2%</td>
+              <td>—</td>
+              <td class="apy-cell apy-high">7.2%</td>
+              <td>$86M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="pyusd" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon pyusd">P</div><strong>PYUSD</strong></div></td>
+              <td>Curve PYUSD/USDC</td>
+              <td>LP</td>
+              <td class="apy-cell apy-medium">4.8%</td>
+              <td>+6.4% CRV</td>
+              <td class="apy-cell apy-high">11.2%</td>
+              <td>$42M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            
+            <!-- USDD (Tron) -->
+            <tr data-asset="usdd" data-risk="high">
+              <td><div class="asset-cell"><div class="asset-icon usdd">D</div><strong>USDD</strong></div></td>
+              <td>JustLend</td>
+              <td>Lending</td>
+              <td class="apy-cell apy-high">12.4%</td>
+              <td>+3.2% JST</td>
+              <td class="apy-cell apy-high">15.6%</td>
+              <td>$320M</td>
+              <td><span class="chain-badge chain-bsc">TRON</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot high"></span>High</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="usdd" data-risk="high">
+              <td><div class="asset-cell"><div class="asset-icon usdd">D</div><strong>USDD</strong></div></td>
+              <td>Venus</td>
+              <td>Lending</td>
+              <td class="apy-cell apy-high">9.1%</td>
+              <td>+2.8% XVS</td>
+              <td class="apy-cell apy-high">11.9%</td>
+              <td>$42M</td>
+              <td><span class="chain-badge chain-bsc">BSC</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot high"></span>High</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            
+            <!-- LUSD (Liquity) -->
+            <tr data-asset="lusd" data-risk="low">
+              <td><div class="asset-cell"><div class="asset-icon lusd">L</div><strong>LUSD</strong></div></td>
+              <td>Liquity SP</td>
+              <td>Stability Pool</td>
+              <td class="apy-cell apy-high">8.6%</td>
+              <td>+LQTY Rewards</td>
+              <td class="apy-cell apy-high">~12%</td>
+              <td>$185M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot low"></span>Low</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="lusd" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon lusd">L</div><strong>LUSD</strong></div></td>
+              <td>Curve LUSD/3CRV</td>
+              <td>LP + Convex</td>
+              <td class="apy-cell apy-medium">3.4%</td>
+              <td>+5.8% CVX/CRV</td>
+              <td class="apy-cell apy-high">9.2%</td>
+              <td>$48M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            
+            <!-- sUSD (Synthetix) -->
+            <tr data-asset="susd" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon susd">S</div><strong>sUSD</strong></div></td>
+              <td>Synthetix</td>
+              <td>Staking</td>
+              <td class="apy-cell apy-high">14.2%</td>
+              <td>+SNX</td>
+              <td class="apy-cell apy-high">~18%</td>
+              <td>$82M</td>
+              <td><span class="chain-badge chain-op">OP</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            
+            <!-- mkUSD (Prisma) -->
+            <tr data-asset="mkusd" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon mkusd">M</div><strong>mkUSD</strong></div></td>
+              <td>Prisma SP</td>
+              <td>Stability Pool</td>
+              <td class="apy-cell apy-high">9.8%</td>
+              <td>+PRISMA</td>
+              <td class="apy-cell apy-high">~15%</td>
+              <td>$42M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="mkusd" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon mkusd">M</div><strong>mkUSD</strong></div></td>
+              <td>Curve mkUSD/FRAX</td>
+              <td>LP + Convex</td>
+              <td class="apy-cell apy-medium">4.6%</td>
+              <td>+9.8% CVX/PRISMA</td>
+              <td class="apy-cell apy-high">14.4%</td>
+              <td>$28M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            
+            <!-- USDe (Ethena) -->
+            <tr data-asset="usde" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon" style="background:#000;border:1px solid #06b6d4;color:#06b6d4;">E</div><strong>USDe</strong></div></td>
+              <td>Ethena (sUSDe)</td>
+              <td>Staking</td>
+              <td class="apy-cell apy-high">18.4%</td>
+              <td>—</td>
+              <td class="apy-cell apy-high">18.4%</td>
+              <td>$2.8B</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="usde" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon" style="background:#000;border:1px solid #06b6d4;color:#06b6d4;">E</div><strong>USDe</strong></div></td>
+              <td>Pendle PT-sUSDe</td>
+              <td>Fixed Yield</td>
+              <td class="apy-cell apy-high">14.2%</td>
+              <td>—</td>
+              <td class="apy-cell apy-high">14.2%</td>
+              <td>$420M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+            <tr data-asset="usde" data-risk="medium">
+              <td><div class="asset-cell"><div class="asset-icon" style="background:#000;border:1px solid #06b6d4;color:#06b6d4;">E</div><strong>USDe</strong></div></td>
+              <td>Morpho Blue</td>
+              <td>Lending</td>
+              <td class="apy-cell apy-high">12.6%</td>
+              <td>+1.4% MORPHO</td>
+              <td class="apy-cell apy-high">14.0%</td>
+              <td>$180M</td>
+              <td><span class="chain-badge chain-eth">ETH</span></td>
+              <td><div class="risk-indicator"><span class="risk-dot medium"></span>Med</div></td>
+              <td><button class="action-btn">Deposit</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════════ -->
+    <!-- RECOMMENDED STRATEGIES SECTION -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════════ -->
+    <section class="section">
+      <h2 class="section-title">🚀 Recommended Strategies by Risk Profile</h2>
+      <div class="cards" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="strategy-card">
+          <div class="strategy-header">
+            <div>
+              <div class="strategy-title">Conservative</div>
+              <div style="font-size: 0.7rem; color: var(--muted);">Low Risk • Capital Preservation</div>
+            </div>
+            <div class="strategy-apy">6-9%</div>
+          </div>
+          <div class="strategy-steps">
+            <div class="strategy-step"><span class="step-num">1</span>Deposit USDC into Aave V3 (6.2%)</div>
+            <div class="strategy-step"><span class="step-num">2</span>Or use Morpho Blue for optimized (8.4%)</div>
+            <div class="strategy-step"><span class="step-num">3</span>Keep DAI in Spark sDAI (8.0%)</div>
+            <div class="strategy-step"><span class="step-num">4</span>Diversify across chains (ETH + ARB)</div>
+          </div>
+          <div style="margin-top: 12px;">
+            <span class="badge green">Low Risk</span>
+            <span class="badge blue">Battle-tested Protocols</span>
+          </div>
+        </div>
+        
+        <div class="strategy-card">
+          <div class="strategy-header">
+            <div>
+              <div class="strategy-title">Balanced</div>
+              <div style="font-size: 0.7rem; color: var(--muted);">Medium Risk • Optimized Yield</div>
+            </div>
+            <div class="strategy-apy">10-14%</div>
+          </div>
+          <div class="strategy-steps">
+            <div class="strategy-step"><span class="step-num">1</span>50% in Ethena sUSDe (18.4%)</div>
+            <div class="strategy-step"><span class="step-num">2</span>25% in Moonwell USDC on Base (11.3%)</div>
+            <div class="strategy-step"><span class="step-num">3</span>15% in Curve LP + Convex (~9%)</div>
+            <div class="strategy-step"><span class="step-num">4</span>10% in Pendle PT for fixed yield</div>
+          </div>
+          <div style="margin-top: 12px;">
+            <span class="badge yellow">Medium Risk</span>
+            <span class="badge purple">Yield Optimized</span>
+          </div>
+        </div>
+        
+        <div class="strategy-card">
+          <div class="strategy-header">
+            <div>
+              <div class="strategy-title">Aggressive</div>
+              <div style="font-size: 0.7rem; color: var(--muted);">Higher Risk • Maximum Yield</div>
+            </div>
+            <div class="strategy-apy">15-20%</div>
+          </div>
+          <div class="strategy-steps">
+            <div class="strategy-step"><span class="step-num">1</span>40% in Ethena sUSDe (18.4%)</div>
+            <div class="strategy-step"><span class="step-num">2</span>25% in crvUSD Llamalend (14%)</div>
+            <div class="strategy-step"><span class="step-num">3</span>20% in Synthetix sUSD (~18%)</div>
+            <div class="strategy-step"><span class="step-num">4</span>15% in USDD JustLend (15.6%)</div>
+          </div>
+          <div style="margin-top: 12px;">
+            <span class="badge red">Higher Risk</span>
+            <span class="badge green">Max APY</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════════ -->
+    <!-- STABLECOIN COMPARISON TABLE -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════════ -->
+    <section class="section">
+      <h2 class="section-title">📊 Stablecoin Comparison — Safety & Yield</h2>
+      <div class="panel" style="overflow-x: auto;">
+        <table class="yield-table">
+          <thead>
+            <tr>
+              <th>Stablecoin</th>
+              <th>Issuer</th>
+              <th>Backing</th>
+              <th>Market Cap</th>
+              <th>Best APY</th>
+              <th>Peg Stability</th>
+              <th>Risk Score</th>
+              <th>Audits</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="asset-cell"><div class="asset-icon usdc">U</div><strong>USDC</strong></div></td>
+              <td>Circle</td>
+              <td>100% USD Reserves</td>
+              <td>$45.2B</td>
+              <td class="apy-cell apy-high">12.8%</td>
+              <td><span class="badge green">Excellent</span></td>
+              <td><span class="badge green">A+</span></td>
+              <td>✓ Deloitte</td>
+            </tr>
+            <tr>
+              <td><div class="asset-cell"><div class="asset-icon usdt">T</div><strong>USDT</strong></div></td>
+              <td>Tether</td>
+              <td>Mixed Reserves</td>
+              <td>$92.4B</td>
+              <td class="apy-cell apy-high">12.6%</td>
+              <td><span class="badge green">Good</span></td>
+              <td><span class="badge yellow">B+</span></td>
+              <td>✓ BDO</td>
+            </tr>
+            <tr>
+              <td><div class="asset-cell"><div class="asset-icon dai">D</div><strong>DAI</strong></div></td>
+              <td>MakerDAO</td>
+              <td>Crypto + RWA</td>
+              <td>$5.4B</td>
+              <td class="apy-cell apy-high">11.4%</td>
+              <td><span class="badge green">Good</span></td>
+              <td><span class="badge green">A</span></td>
+              <td>✓ Multiple</td>
+            </tr>
+            <tr>
+              <td><div class="asset-cell"><div class="asset-icon" style="background:#000;border:1px solid #06b6d4;color:#06b6d4;">E</div><strong>USDe</strong></div></td>
+              <td>Ethena</td>
+              <td>Delta-Neutral</td>
+              <td>$2.8B</td>
+              <td class="apy-cell apy-high">18.4%</td>
+              <td><span class="badge yellow">Good</span></td>
+              <td><span class="badge yellow">B+</span></td>
+              <td>✓ Multiple</td>
+            </tr>
+            <tr>
+              <td><div class="asset-cell"><div class="asset-icon frax">F</div><strong>FRAX</strong></div></td>
+              <td>Frax Finance</td>
+              <td>100% Collateralized</td>
+              <td>$640M</td>
+              <td class="apy-cell apy-high">10.0%</td>
+              <td><span class="badge yellow">Medium</span></td>
+              <td><span class="badge yellow">B</span></td>
+              <td>✓ Trail of Bits</td>
+            </tr>
+            <tr>
+              <td><div class="asset-cell"><div class="asset-icon gho">G</div><strong>GHO</strong></div></td>
+              <td>Aave DAO</td>
+              <td>Over-collateralized</td>
+              <td>$180M</td>
+              <td class="apy-cell apy-high">10.8%</td>
+              <td><span class="badge green">Good</span></td>
+              <td><span class="badge green">A-</span></td>
+              <td>✓ Certora</td>
+            </tr>
+            <tr>
+              <td><div class="asset-cell"><div class="asset-icon crvusd">C</div><strong>crvUSD</strong></div></td>
+              <td>Curve DAO</td>
+              <td>LLAMMA System</td>
+              <td>$120M</td>
+              <td class="apy-cell apy-high">14.0%</td>
+              <td><span class="badge yellow">Good</span></td>
+              <td><span class="badge yellow">B+</span></td>
+              <td>✓ Multiple</td>
+            </tr>
+            <tr>
+              <td><div class="asset-cell"><div class="asset-icon pyusd">P</div><strong>PYUSD</strong></div></td>
+              <td>PayPal/Paxos</td>
+              <td>100% USD Reserves</td>
+              <td>$420M</td>
+              <td class="apy-cell apy-high">11.2%</td>
+              <td><span class="badge green">Excellent</span></td>
+              <td><span class="badge green">A</span></td>
+              <td>✓ Withum</td>
+            </tr>
+            <tr>
+              <td><div class="asset-cell"><div class="asset-icon lusd">L</div><strong>LUSD</strong></div></td>
+              <td>Liquity</td>
+              <td>110%+ ETH</td>
+              <td>$320M</td>
+              <td class="apy-cell apy-high">~12%</td>
+              <td><span class="badge green">Good</span></td>
+              <td><span class="badge green">A-</span></td>
+              <td>✓ Trail of Bits</td>
+            </tr>
+            <tr>
+              <td><div class="asset-cell"><div class="asset-icon usdd">D</div><strong>USDD</strong></div></td>
+              <td>Tron DAO</td>
+              <td>TRX + BTC + USDT</td>
+              <td>$740M</td>
+              <td class="apy-cell apy-high">15.6%</td>
+              <td><span class="badge red">Volatile</span></td>
+              <td><span class="badge red">C+</span></td>
+              <td>✓ SlowMist</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -683,6 +1435,67 @@
         ? `Exposure above 30%: ${riskBreaches.join(', ')}`
         : 'All exposures within threshold.';
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // YIELD TABLE FILTERING
+    // ═══════════════════════════════════════════════════════════════════════════════
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const yieldTableRows = document.querySelectorAll('#yieldTable tbody tr');
+
+    filterButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const filter = btn.dataset.filter;
+        
+        // Update active button
+        filterButtons.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Filter rows
+        yieldTableRows.forEach((row) => {
+          const asset = row.dataset.asset;
+          const risk = row.dataset.risk;
+          
+          if (filter === 'all') {
+            row.style.display = '';
+          } else if (filter === 'high-yield') {
+            // Show rows with APY >= 12%
+            const totalApyCell = row.querySelector('td:nth-child(6)');
+            const apyText = totalApyCell?.textContent || '0';
+            const apyValue = parseFloat(apyText.replace('%', '').replace('~', ''));
+            row.style.display = apyValue >= 12 ? '' : 'none';
+          } else if (filter === 'low-risk') {
+            row.style.display = risk === 'low' ? '' : 'none';
+          } else {
+            row.style.display = asset === filter ? '' : 'none';
+          }
+        });
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // LIVE DATA SIMULATION (for demo purposes)
+    // ═══════════════════════════════════════════════════════════════════════════════
+    function updateYieldData() {
+      const apyCells = document.querySelectorAll('.apy-cell');
+      apyCells.forEach((cell) => {
+        const currentValue = parseFloat(cell.textContent.replace('%', '').replace('~', ''));
+        if (!isNaN(currentValue) && Math.random() > 0.8) {
+          const variation = (Math.random() - 0.5) * 0.2;
+          const newValue = Math.max(0.1, currentValue + variation);
+          cell.textContent = newValue.toFixed(1) + '%';
+          
+          // Flash effect
+          cell.style.transition = 'background 0.3s';
+          cell.style.background = 'rgba(168,85,247,0.2)';
+          setTimeout(() => {
+            cell.style.background = 'transparent';
+          }, 500);
+        }
+      });
+    }
+
+    // Update yields every 30 seconds (demo)
+    setInterval(updateYieldData, 30000);
   </script>
 </body>
 </html>
