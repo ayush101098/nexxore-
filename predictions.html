@@ -4306,6 +4306,11 @@
   </div>
 
   <script>
+    // ═══════════════════════════════════════════════════════════════════════
+    // PRED AGENT v5.0 - ENHANCED POLYMARKET TRADER
+    // Real-time CLOB API, WebSocket Streaming, Live Orderbook, Smart Trading
+    // ═══════════════════════════════════════════════════════════════════════
+    
     // API Endpoints
     const GAMMA_API = 'https://gamma-api.polymarket.com';
     const KALSHI_API = 'https://api.elections.kalshi.com/v1';
@@ -4328,6 +4333,305 @@
     let marketMovers = [];
     let arbitrageOpportunities = [];
     let recentActivity = [];
+    let liveOrderbooks = new Map();
+    let livePrices = new Map();
+    let lastDataRefresh = 0;
+    let priceUpdateInterval = null;
+    let dataRefreshInterval = null;
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // LIVE WEBSOCKET CONNECTION - Real-time Polymarket Data
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    class PolymarketLiveStream {
+      constructor() {
+        this.ws = null;
+        this.subscriptions = new Set();
+        this.reconnectAttempts = 0;
+        this.maxReconnects = 5;
+        this.isConnected = false;
+      }
+      
+      connect() {
+        if (this.ws?.readyState === WebSocket.OPEN) return;
+        
+        updateWsStatus('connecting');
+        console.log('🔌 Connecting to Polymarket CLOB WebSocket...');
+        
+        try {
+          this.ws = new WebSocket(WS_CLOB);
+          
+          this.ws.onopen = () => {
+            console.log('✅ WebSocket connected to Polymarket');
+            this.isConnected = true;
+            this.reconnectAttempts = 0;
+            updateWsStatus('connected');
+            
+            // Resubscribe to watched markets
+            this.subscriptions.forEach(tokenId => this.subscribe(tokenId));
+          };
+          
+          this.ws.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              this.handleMessage(data);
+            } catch (e) {
+              // Handle binary or non-JSON messages
+            }
+          };
+          
+          this.ws.onclose = () => {
+            this.isConnected = false;
+            updateWsStatus('disconnected');
+            this.scheduleReconnect();
+          };
+          
+          this.ws.onerror = (err) => {
+            console.warn('WebSocket error, will reconnect');
+            updateWsStatus('disconnected');
+          };
+        } catch (e) {
+          console.error('WS connection failed:', e);
+          this.simulateLiveUpdates();
+        }
+      }
+      
+      handleMessage(data) {
+        const msgType = data.event_type || data.type || data.channel;
+        
+        switch (msgType) {
+          case 'price_change':
+          case 'last_trade_price':
+            this.onPriceUpdate(data);
+            break;
+          case 'book':
+          case 'orderbook':
+            this.onOrderbookUpdate(data);
+            break;
+          case 'trade':
+            this.onTradeUpdate(data);
+            break;
+        }
+      }
+      
+      onPriceUpdate(data) {
+        const tokenId = data.asset_id || data.token_id;
+        const price = parseFloat(data.price || data.last_trade_price);
+        
+        if (tokenId && !isNaN(price)) {
+          livePrices.set(tokenId, { price, timestamp: Date.now() });
+          
+          // Update market in list
+          const market = markets.find(m => m.clobTokenIds?.includes(tokenId));
+          if (market) {
+            const oldPrice = market.yesOdds;
+            market.yesOdds = Math.round(price * 100);
+            market.noOdds = 100 - market.yesOdds;
+            market.yesChange = ((market.yesOdds - oldPrice) / oldPrice * 100).toFixed(1);
+            
+            // Update UI if selected
+            if (selectedMarket?.id === market.id) {
+              updateSelectedMarketPrice(market);
+            }
+          }
+        }
+      }
+      
+      onOrderbookUpdate(data) {
+        const tokenId = data.asset_id || data.token_id;
+        if (tokenId) {
+          liveOrderbooks.set(tokenId, {
+            bids: (data.bids || []).slice(0, 8),
+            asks: (data.asks || []).slice(0, 8),
+            spread: data.spread,
+            timestamp: Date.now()
+          });
+          
+          if (selectedMarket?.clobTokenIds?.includes(tokenId)) {
+            renderLiveOrderbook(data);
+          }
+        }
+      }
+      
+      onTradeUpdate(data) {
+        const size = parseFloat(data.size || data.amount || 0);
+        if (size > 5000) {
+          addWhaleTradeFromWS(data);
+        }
+      }
+      
+      subscribe(tokenId) {
+        if (!tokenId) return;
+        this.subscriptions.add(tokenId);
+        
+        if (this.ws?.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify({
+            type: 'subscribe',
+            channel: 'market',
+            assets_ids: [tokenId]
+          }));
+        }
+      }
+      
+      unsubscribe(tokenId) {
+        this.subscriptions.delete(tokenId);
+        if (this.ws?.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify({
+            type: 'unsubscribe',
+            channel: 'market',
+            assets_ids: [tokenId]
+          }));
+        }
+      }
+      
+      scheduleReconnect() {
+        if (this.reconnectAttempts >= this.maxReconnects) {
+          console.log('Max reconnects reached, using polling fallback');
+          this.simulateLiveUpdates();
+          return;
+        }
+        
+        const delay = Math.min(2000 * Math.pow(2, this.reconnectAttempts), 30000);
+        this.reconnectAttempts++;
+        setTimeout(() => this.connect(), delay);
+      }
+      
+      simulateLiveUpdates() {
+        // Fallback: Fetch prices periodically if WS fails
+        console.log('📊 Using REST API polling for live data');
+        updateWsStatus('polling');
+        
+        if (priceUpdateInterval) clearInterval(priceUpdateInterval);
+        priceUpdateInterval = setInterval(() => {
+          this.fetchLivePrices();
+        }, 5000);
+      }
+      
+      async fetchLivePrices() {
+        if (!selectedMarket?.clobTokenIds?.[0]) return;
+        
+        try {
+          const tokenId = selectedMarket.clobTokenIds[0];
+          const [priceRes, bookRes] = await Promise.all([
+            fetch(`${CLOB_API}/price?token_id=${tokenId}`).catch(() => null),
+            fetch(`${CLOB_API}/book?token_id=${tokenId}`).catch(() => null)
+          ]);
+          
+          if (priceRes?.ok) {
+            const priceData = await priceRes.json();
+            if (priceData.price) {
+              const price = parseFloat(priceData.price);
+              selectedMarket.yesOdds = Math.round(price * 100);
+              selectedMarket.noOdds = 100 - selectedMarket.yesOdds;
+              updateSelectedMarketPrice(selectedMarket);
+            }
+          }
+          
+          if (bookRes?.ok) {
+            const bookData = await bookRes.json();
+            renderLiveOrderbook(bookData);
+          }
+        } catch (e) {
+          // Silent fail, will retry
+        }
+      }
+      
+      disconnect() {
+        if (this.ws) {
+          this.ws.close();
+          this.ws = null;
+        }
+        this.subscriptions.clear();
+        if (priceUpdateInterval) clearInterval(priceUpdateInterval);
+      }
+    }
+    
+    const liveStream = new PolymarketLiveStream();
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // LIVE UI UPDATES
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    function updateSelectedMarketPrice(market) {
+      const yesEl = document.getElementById('detailYes');
+      const noEl = document.getElementById('detailNo');
+      const tickerEl = document.getElementById('tickerPrice');
+      
+      if (yesEl) {
+        const oldVal = parseInt(yesEl.textContent);
+        const newVal = Math.round(market.yesOdds);
+        yesEl.textContent = `${newVal}¢`;
+        
+        // Flash animation on change
+        if (oldVal !== newVal) {
+          yesEl.style.transition = 'background 0.3s';
+          yesEl.style.background = newVal > oldVal ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+          setTimeout(() => { yesEl.style.background = 'transparent'; }, 500);
+        }
+      }
+      
+      if (noEl) noEl.textContent = `${Math.round(market.noOdds)}¢`;
+      if (tickerEl) tickerEl.textContent = `${Math.round(market.yesOdds)}¢`;
+    }
+    
+    function renderLiveOrderbook(data) {
+      const container = document.getElementById('orderbookBids');
+      const asksContainer = document.getElementById('orderbookAsks');
+      if (!container || !asksContainer) return;
+      
+      const bids = (data.bids || []).slice(0, 6);
+      const asks = (data.asks || []).slice(0, 6);
+      
+      const maxBidSize = Math.max(...bids.map(b => parseFloat(b.size || b[1] || 0)), 1);
+      const maxAskSize = Math.max(...asks.map(a => parseFloat(a.size || a[1] || 0)), 1);
+      
+      container.innerHTML = bids.map(bid => {
+        const price = parseFloat(bid.price || bid[0]) * 100;
+        const size = parseFloat(bid.size || bid[1]);
+        const depth = (size / maxBidSize) * 100;
+        return `
+          <div class="orderbook-row" style="--depth: ${depth}%;">
+            <span class="orderbook-price" style="color: var(--green);">${price.toFixed(1)}¢</span>
+            <span class="orderbook-size">$${(size / 1000).toFixed(1)}K</span>
+          </div>`;
+      }).join('');
+      
+      asksContainer.innerHTML = asks.map(ask => {
+        const price = parseFloat(ask.price || ask[0]) * 100;
+        const size = parseFloat(ask.size || ask[1]);
+        const depth = (size / maxAskSize) * 100;
+        return `
+          <div class="orderbook-row" style="--depth: ${depth}%;">
+            <span class="orderbook-price" style="color: var(--red);">${price.toFixed(1)}¢</span>
+            <span class="orderbook-size">$${(size / 1000).toFixed(1)}K</span>
+          </div>`;
+      }).join('');
+      
+      // Update spread
+      if (bids.length && asks.length) {
+        const bestBid = parseFloat(bids[0].price || bids[0][0]) * 100;
+        const bestAsk = parseFloat(asks[0].price || asks[0][0]) * 100;
+        const spread = Math.abs(bestAsk - bestBid).toFixed(1);
+        const spreadEl = document.getElementById('orderbookSpread');
+        if (spreadEl) spreadEl.textContent = `Spread: ${spread}¢`;
+      }
+    }
+    
+    function addWhaleTradeFromWS(data) {
+      const trade = {
+        market: selectedMarket?.title || 'Unknown',
+        side: data.side || 'BUY',
+        size: parseFloat(data.size || data.amount),
+        price: parseFloat(data.price) * 100,
+        timestamp: Date.now(),
+        trader: data.maker?.slice(0, 8) || 'Whale'
+      };
+      
+      whaleTrades.unshift(trade);
+      if (whaleTrades.length > 50) whaleTrades.pop();
+      
+      renderSmartMoneyTracker();
+    }
     
     // ML Model for predictions - Using real market data
     const MLModel = {
@@ -4440,62 +4744,69 @@
       }
     };
     
-    // WebSocket Management
+    // ═══════════════════════════════════════════════════════════════════════
+    // WebSocket Status Management
+    // ═══════════════════════════════════════════════════════════════════════
+    
     function connectWebSocket() {
-      if (websocket?.readyState === WebSocket.OPEN) return;
-      
-      updateWsStatus('connecting');
-      
-      try {
-        // Simulate WebSocket behavior for demo (Polymarket WS requires authentication)
-        console.log('Simulating WebSocket connection...');
-        setTimeout(() => {
-          updateWsStatus('connected');
-          startPriceUpdates();
-        }, 1500);
-      } catch (err) {
-        console.error('WebSocket error:', err);
-        updateWsStatus('disconnected');
-        scheduleReconnect();
-      }
+      // Use the new liveStream class instead
+      liveStream.connect();
     }
     
     function updateWsStatus(status) {
       const wsEl = document.getElementById('wsStatus');
       const wsText = document.getElementById('wsStatusText');
+      if (!wsEl || !wsText) return;
+      
       wsEl.className = `ws-status ${status}`;
       
       switch(status) {
-        case 'connected': wsText.textContent = 'WS Connected'; break;
-        case 'connecting': wsText.textContent = 'Connecting...'; break;
-        case 'disconnected': wsText.textContent = 'Disconnected'; break;
+        case 'connected': 
+          wsText.textContent = '● LIVE'; 
+          wsEl.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+          break;
+        case 'connecting': 
+          wsText.textContent = '◌ Connecting...'; 
+          wsEl.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+          break;
+        case 'disconnected': 
+          wsText.textContent = '○ Offline'; 
+          wsEl.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+          break;
+        case 'polling':
+          wsText.textContent = '◐ Polling';
+          wsEl.style.borderColor = 'rgba(59, 130, 246, 0.4)';
+          break;
       }
     }
     
     function scheduleReconnect() {
       if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
-      wsReconnectTimer = setTimeout(connectWebSocket, 5000);
+      wsReconnectTimer = setTimeout(() => liveStream.connect(), 5000);
     }
     
+    // Legacy function - now uses liveStream
     function startPriceUpdates() {
-      // Simulate real-time price updates
-      setInterval(() => {
-        if (selectedMarket && markets.length > 0) {
-          const market = markets.find(m => m.id === selectedMarket.id);
-          if (market) {
-            const change = (Math.random() - 0.48) * 0.5;
-            market.yesOdds = Math.max(5, Math.min(95, market.yesOdds + change));
-            market.noOdds = 100 - market.yesOdds;
-            updatePriceDisplay(market);
+      // Real-time updates now handled by liveStream.onPriceUpdate()
+      // This is a fallback for simulated updates when WebSocket is unavailable
+      if (!liveStream.isConnected) {
+        setInterval(() => {
+          if (selectedMarket && markets.length > 0) {
+            const market = markets.find(m => m.id === selectedMarket.id);
+            if (market) {
+              // Small random fluctuation for demo
+              const change = (Math.random() - 0.48) * 0.3;
+              market.yesOdds = Math.max(5, Math.min(95, market.yesOdds + change));
+              market.noOdds = 100 - market.yesOdds;
+              updateSelectedMarketPrice(market);
+            }
           }
-        }
-      }, 3000);
+        }, 5000);
+      }
     }
     
     function updatePriceDisplay(market) {
-      document.getElementById('detailYes').textContent = `${Math.round(market.yesOdds)}¢`;
-      document.getElementById('detailNo').textContent = `${Math.round(market.noOdds)}¢`;
-      document.getElementById('tickerPrice').textContent = `${Math.round(market.yesOdds)}¢`;
+      updateSelectedMarketPrice(market);
     }
     
     // Fetch Dynamic Tags from Gamma API
@@ -5065,8 +5376,22 @@
     
     function selectMarket(market) {
       if (!market) return;
+      
+      // Unsubscribe from previous market
+      if (selectedMarket?.clobTokenIds?.[0]) {
+        liveStream.unsubscribe(selectedMarket.clobTokenIds[0]);
+      }
+      
       selectedMarket = market;
       renderMarketList();
+      
+      // Subscribe to new market for live updates
+      if (market.clobTokenIds?.[0] && market.platform === 'Polymarket') {
+        liveStream.subscribe(market.clobTokenIds[0]);
+        
+        // Also fetch initial live orderbook
+        fetchLiveOrderbookForMarket(market);
+      }
       
       const fairValue = MLModel.calculateFairValue(market);
       const signal = MLModel.generateSignal(market, fairValue);
@@ -5154,6 +5479,10 @@
       document.getElementById('kellyOdds').value = Math.round(market.yesOdds);
       calculateKelly();
       
+      // Update v4.0 features for this market
+      updateAIConsensus(market);
+      updateEdgeCalculator(market);
+      
       // Draw chart
       drawOddsChart(market);
       
@@ -5168,6 +5497,41 @@
       // Update trading terminal if open
       if (terminalOpen) {
         updateTerminalMarket(market);
+      }
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // LIVE ORDERBOOK FETCHING - Real CLOB Data
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    async function fetchLiveOrderbookForMarket(market) {
+      if (!market.clobTokenIds?.[0]) return;
+      
+      const tokenId = market.clobTokenIds[0];
+      
+      try {
+        const response = await fetch(`${CLOB_API}/book?token_id=${tokenId}`);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        
+        if (data.bids || data.asks) {
+          renderLiveOrderbook(data);
+          
+          // Update spread display
+          if (data.bids?.length && data.asks?.length) {
+            const bestBid = parseFloat(data.bids[0].price || data.bids[0][0]);
+            const bestAsk = parseFloat(data.asks[0].price || data.asks[0][0]);
+            const spread = Math.abs(bestAsk - bestBid) * 100;
+            
+            const spreadEl = document.getElementById('obSpread');
+            if (spreadEl) spreadEl.textContent = `${spread.toFixed(1)}¢`;
+          }
+          
+          console.log(`📊 Live orderbook loaded for ${market.title.slice(0, 30)}...`);
+        }
+      } catch (e) {
+        console.warn('Live orderbook fetch failed:', e.message);
       }
     }
     
@@ -6043,6 +6407,12 @@
     });
 
     async function init() {
+      console.log('🚀 PRED Agent v5.0 - Initializing...');
+      const startTime = Date.now();
+      
+      // Show loading state
+      updateWsStatus('connecting');
+      
       // Fetch tags and sports leagues in parallel with market data
       await Promise.all([
         fetchTags(),
@@ -6057,6 +6427,9 @@
       ]);
       markets = [...polymarkets, ...kalshiMarkets];
       markets.sort((a, b) => b.volume - a.volume);
+      lastDataRefresh = Date.now();
+      
+      console.log(`📊 Loaded ${markets.length} markets in ${Date.now() - startTime}ms`);
       
       // Fetch additional intelligence data
       await Promise.all([
@@ -6094,21 +6467,61 @@
       // Select first market
       if (markets.length > 0) selectMarket(markets[0]);
       
-      // Connect WebSocket for live updates
-      connectWebSocket();
+      // Connect LIVE WebSocket for real-time updates
+      liveStream.connect();
       
       // Update data status
       const polyCount = markets.filter(m => m.platform === 'Polymarket').length;
       const kalshiCount = markets.filter(m => m.platform === 'Kalshi').length;
       document.getElementById('dataStatus').textContent = `${markets.length} Markets (${polyCount} Poly, ${kalshiCount} Kalshi)`;
       
-      // Start periodic updates for late-entry signals
+      // Start periodic data refresh (every 60 seconds for full refresh)
+      dataRefreshInterval = setInterval(async () => {
+        console.log('🔄 Refreshing market data...');
+        const [newPoly, newKalshi] = await Promise.all([
+          fetchPolymarketData(),
+          fetchKalshiData()
+        ]);
+        
+        // Merge new data while preserving live price updates
+        const newMarkets = [...newPoly, ...newKalshi];
+        newMarkets.forEach(nm => {
+          const existing = markets.find(m => m.id === nm.id);
+          if (existing) {
+            // Preserve live price if newer
+            if (livePrices.has(nm.clobTokenIds?.[0])) {
+              const liveData = livePrices.get(nm.clobTokenIds[0]);
+              nm.yesOdds = Math.round(liveData.price * 100);
+              nm.noOdds = 100 - nm.yesOdds;
+            }
+          }
+        });
+        
+        markets = newMarkets.sort((a, b) => b.volume - a.volume);
+        lastDataRefresh = Date.now();
+        
+        // Update UI
+        renderMarketList();
+        renderTrendingMarkets();
+        identifyMarketMovers();
+        detectArbitrageOpportunities();
+        renderArbitrageOpportunities();
+        
+        // Update selected market if still valid
+        if (selectedMarket) {
+          const updated = markets.find(m => m.id === selectedMarket.id);
+          if (updated) selectMarket(updated);
+        }
+      }, 60000);
+      
+      // Faster updates for UI elements
       setInterval(() => {
         renderLateEntrySignals();
         renderSmartMoneyTracker();
-        renderArbitrageOpportunities();
         updatePerformanceTracker();
-      }, 30000); // Update every 30 seconds
+      }, 15000);
+      
+      console.log(`✅ PRED Agent ready in ${Date.now() - startTime}ms`);
     }
     
     // Search functionality
