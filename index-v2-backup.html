@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexxore — Intelligence-Driven DeFi Execution Engine</title>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6QGB2RQVP0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-6QGB2RQVP0');
+  </script>
+
+  <meta name="description" content="Nexxore is an intelligence-driven DeFi execution engine. AI prediction agents, autonomous delta-neutral strategies, and decentralized multi-source liquidity routing — 24/7.">
+  <meta name="keywords" content="DeFi, DeFAI, AI agents, delta-neutral, prediction markets, perpetuals, vaults, autonomous execution, liquidity routing, yield farming, cross-chain">
+  <meta name="author" content="Nexxore">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://nexxore.xyz/">
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%23a855f7'/><stop offset='100%25' stop-color='%2322c55e'/></linearGradient></defs><rect width='32' height='32' rx='6' fill='%2308080a'/><circle cx='12' cy='11' r='6' stroke='url(%23g)' stroke-width='2' fill='none'/><circle cx='20' cy='11' r='6' stroke='url(%23g)' stroke-width='2' fill='none' opacity='.9'/><circle cx='16' cy='18' r='6' stroke='url(%23g)' stroke-width='2' fill='none' opacity='.9'/></svg>" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="frontend/assets/icons/favicon.svg">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nexxore.xyz/">
+  <meta property="og:title" content="Nexxore — Intelligence-Driven DeFi Execution Engine">
+  <meta property="og:description" content="AI prediction agents, delta-neutral autonomy, and multi-source liquidity routing. The Bloomberg + BlackRock of the agent economy.">
+  <meta property="og:site_name" content="Nexxore">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Nexxore — Intelligence-Driven DeFi Execution Engine">
+  <meta name="twitter:description" content="AI prediction agents, delta-neutral autonomy, and multi-source liquidity routing.">
+  <meta name="twitter:site" content="@nexxore">
+
+  <meta name="theme-color" content="#08080a">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Nexxore",
+    "url": "https://nexxore.xyz",
+    "description": "Intelligence-driven DeFi execution engine with AI prediction agents, autonomous delta-neutral strategies, and decentralized multi-source liquidity routing.",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web Browser",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+
+  <style>
+    :root {
+      --purple: #a855f7;
+      --green: #22c55e;
+      --cyan: #06b6d4;
+      --orange: #f59e0b;
+      --red: #ef4444;
+      --pink: #ec4899;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg-base); color: var(--text-primary); font-family: var(--font-family-sans); overflow-x: hidden; }
+    .mono { font-family: var(--font-family-mono); }
+
+    /* ═══════════════ NAVBAR ═══════════════ */
+    .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(8,8,10,0.92); backdrop-filter: blur(24px); border-bottom: 1px solid var(--border-subtle); padding: 12px 0; }
+    .navbar .container { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .nav-links { display: flex; align-items: center; gap: 10px; }
+    .nav-link { font-size: 0.8rem; color: var(--text-secondary); text-decoration: none; padding: 8px 14px; border-radius: 8px; transition: all 0.2s; }
+    .nav-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+    .nav-cta { padding: 9px 20px; background: var(--purple); border: none; border-radius: 8px; color: white; font-weight: 600; font-size: 0.82rem; text-decoration: none; transition: all 0.2s; }
+    .nav-cta:hover { background: #9333ea; transform: translateY(-1px); }
+
+    /* ═══════════════ HERO ═══════════════ */
+    .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 120px 24px 60px; position: relative; }
+    .hero-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 30% 20%, rgba(168,85,247,0.07), transparent 50%), radial-gradient(ellipse at 70% 30%, rgba(34,197,94,0.04), transparent 50%); z-index: 0; }
+    .hero-content { position: relative; z-index: 1; max-width: 860px; }
+    .hero-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.2); color: var(--purple); margin-bottom: 24px; }
+    .hero-chip .dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
+    .hero h1 { font-size: clamp(2.2rem, 5.5vw, 3.6rem); font-weight: 800; line-height: 1.12; margin-bottom: 20px; letter-spacing: -0.02em; }
+    .hero h1 .grad { background: linear-gradient(135deg, var(--purple), var(--green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-sub { font-size: 1.1rem; color: var(--text-secondary); line-height: 1.65; max-width: 620px; margin: 0 auto 36px; }
+    .hero-sub strong { color: var(--text-primary); font-weight: 600; }
+    .hero-actions { display: flex; gap: 14px; justify-content: center; margin-bottom: 40px; flex-wrap: wrap; }
+    .btn-primary { padding: 14px 32px; background: var(--purple); border: none; border-radius: 10px; color: white; font-weight: 600; font-size: 0.95rem; text-decoration: none; transition: all 0.25s; }
+    .btn-primary:hover { background: #9333ea; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(168,85,247,0.25); }
+    .btn-secondary { padding: 14px 32px; background: transparent; border: 1px solid var(--border-default); border-radius: 10px; color: var(--text-secondary); font-weight: 500; font-size: 0.95rem; text-decoration: none; transition: all 0.25s; }
+    .btn-secondary:hover { border-color: var(--purple); color: var(--text-primary); background: rgba(168,85,247,0.05); }
+
+    /* Hero Stats */
+    .hero-stats { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; }
+    .hero-stat { text-align: center; }
+    .hero-stat .val { font-size: 1.3rem; font-weight: 700; font-family: var(--font-family-mono); color: var(--text-primary); }
+    .hero-stat .label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+    /* ═══════════════ SECTIONS ═══════════════ */
+    section { padding: 100px 24px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-label { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 999px; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; border: 1px solid; margin-bottom: 16px; }
+    .section-title { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; line-height: 1.2; }
+    .section-title .grad { background: linear-gradient(135deg, var(--purple), var(--green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .section-desc { font-size: 1rem; color: var(--text-secondary); line-height: 1.6; max-width: 600px; }
+    .section-desc.center { margin: 0 auto; text-align: center; }
+    .text-center { text-align: center; }
+
+    /* ═══════════════ 3-LAYER STACK ═══════════════ */
+    .stack-section { background: var(--bg-elevated); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+    .stack-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 48px; }
+    .stack-card { padding: 32px 24px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; transition: all 0.3s; position: relative; overflow: hidden; }
+    .stack-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 16px 16px 0 0; }
+    .stack-card:hover { border-color: rgba(168,85,247,0.3); transform: translateY(-4px); }
+    .stack-card.brain::before { background: linear-gradient(90deg, var(--purple), var(--cyan)); }
+    .stack-card.logic::before { background: linear-gradient(90deg, var(--orange), var(--purple)); }
+    .stack-card.muscle::before { background: linear-gradient(90deg, var(--green), var(--cyan)); }
+    .stack-layer-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; }
+    .stack-layer-tag.l1 { background: rgba(168,85,247,0.12); color: var(--purple); }
+    .stack-layer-tag.l2 { background: rgba(245,158,11,0.12); color: var(--orange); }
+    .stack-layer-tag.l3 { background: rgba(34,197,94,0.12); color: var(--green); }
+    .stack-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; font-size: 1.5rem; }
+    .stack-icon.brain-icon { background: rgba(168,85,247,0.1); }
+    .stack-icon.logic-icon { background: rgba(245,158,11,0.1); }
+    .stack-icon.muscle-icon { background: rgba(34,197,94,0.1); }
+    .stack-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 10px; color: var(--text-primary); }
+    .stack-card .stack-sub { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 18px; }
+    .stack-card .stack-usp { font-size: 0.75rem; color: var(--text-muted); line-height: 1.5; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid rgba(255,255,255,0.04); }
+    .stack-card .stack-usp strong { color: var(--text-secondary); }
+
+    /* ═══════════════ PRODUCTS ═══════════════ */
+    .products-section { border-bottom: 1px solid var(--border-subtle); }
+    .products-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 40px; }
+    .product-card { padding: 28px 22px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; text-decoration: none; transition: all 0.25s; display: block; }
+    .product-card:hover { border-color: rgba(168,85,247,0.3); transform: translateY(-3px); }
+    .product-icon { font-size: 1.6rem; margin-bottom: 14px; }
+    .product-card h4 { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+    .product-card .product-desc { font-size: 0.78rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 14px; }
+    .product-card .product-tag { font-size: 0.62rem; padding: 4px 10px; border-radius: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+    .product-tag.live { background: rgba(34,197,94,0.12); color: var(--green); }
+    .product-tag.beta { background: rgba(245,158,11,0.12); color: var(--orange); }
+    .product-tag.soon { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+
+    /* ═══════════════ USER SEGMENTS ═══════════════ */
+    .users-section { background: var(--bg-elevated); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+    .users-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 40px; }
+    .user-card { padding: 28px 20px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; text-align: center; transition: all 0.25s; }
+    .user-card:hover { border-color: rgba(168,85,247,0.25); transform: translateY(-3px); }
+    .user-icon { width: 48px; height: 48px; margin: 0 auto 14px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+    .user-card h4 { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .user-card .user-role { font-size: 0.72rem; color: var(--purple); font-weight: 600; margin-bottom: 10px; }
+    .user-card .user-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* ═══════════════ USPs ═══════════════ */
+    .usps-section { border-bottom: 1px solid var(--border-subtle); }
+    .usps-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 40px; }
+    .usp-card { padding: 32px 28px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; transition: all 0.3s; position: relative; text-align: left; }
+    .usp-card:hover { border-color: rgba(168,85,247,0.3); transform: translateY(-3px); }
+    .usp-number { font-size: 0.65rem; font-weight: 700; color: var(--purple); font-family: var(--font-family-mono); margin-bottom: 12px; letter-spacing: 1px; }
+    .usp-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; color: var(--text-primary); }
+    .usp-card p { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+    .usp-card .usp-highlight { margin-top: 14px; padding: 10px 14px; background: rgba(168,85,247,0.06); border-radius: 10px; border: 1px solid rgba(168,85,247,0.1); font-size: 0.72rem; color: var(--text-muted); line-height: 1.5; }
+    .usp-card .usp-highlight strong { color: var(--purple); }
+
+    /* ═══════════════ ROADMAP ═══════════════ */
+    .roadmap-section { background: var(--bg-elevated); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+    .roadmap-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 40px; }
+    .roadmap-card { padding: 24px 20px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; position: relative; transition: all 0.25s; text-align: left; }
+    .roadmap-card:hover { border-color: rgba(168,85,247,0.25); transform: translateY(-2px); }
+    .roadmap-card.active { border-color: rgba(34,197,94,0.4); }
+    .roadmap-card.active::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--green); border-radius: 14px 14px 0 0; }
+    .roadmap-phase { font-size: 0.65rem; font-weight: 700; font-family: var(--font-family-mono); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px; }
+    .roadmap-phase.current { color: var(--green); }
+    .roadmap-phase.upcoming { color: var(--text-muted); }
+    .roadmap-card h4 { font-size: 0.92rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+    .roadmap-card p { font-size: 0.75rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
+    .roadmap-milestones { display: flex; flex-direction: column; gap: 6px; }
+    .roadmap-milestone { font-size: 0.7rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+    .roadmap-milestone .check { color: var(--green); font-size: 0.75rem; }
+    .roadmap-milestone .pending { color: var(--text-muted); font-size: 0.75rem; }
+
+    /* ═══════════════ LIVE PERPS ═══════════════ */
+    .perps-section { border-bottom: 1px solid var(--border-subtle); }
+    .perps-inner { display: grid; grid-template-columns: 1fr 1.2fr; gap: 32px; align-items: center; margin-top: 40px; }
+    .perps-left h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; }
+    .perps-price-row { display: flex; align-items: baseline; gap: 12px; margin-bottom: 20px; }
+    .perps-price-row .pair { font-size: 0.85rem; color: var(--text-muted); }
+    .perps-price-row .price { font-size: 2rem; font-weight: 700; font-family: var(--font-family-mono); }
+    .perps-price-row .change { font-size: 0.82rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
+    .perps-price-row .change.up { background: rgba(34,197,94,0.15); color: var(--green); }
+    .perps-price-row .change.down { background: rgba(239,68,68,0.15); color: var(--red); }
+    .perps-stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .perps-stat { padding: 12px 18px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; min-width: 100px; }
+    .perps-stat .label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .perps-stat .value { font-size: 0.95rem; font-weight: 700; font-family: var(--font-family-mono); color: var(--text-primary); margin-top: 2px; }
+    .perps-chart { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px; }
+    .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .chart-pair { font-size: 0.9rem; font-weight: 600; }
+    .chart-tfs { display: flex; gap: 2px; background: var(--bg-elevated); padding: 3px; border-radius: 6px; }
+    .chart-tf { padding: 5px 10px; font-size: 0.7rem; background: transparent; border: none; color: var(--text-muted); cursor: pointer; border-radius: 4px; font-weight: 500; }
+    .chart-tf.active { background: var(--bg-card); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .chart-svg { width: 100%; height: 140px; display: block; }
+
+    /* ═══════════════ AGENTS ═══════════════ */
+    .agents-section { background: var(--bg-elevated); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+    .agents-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 40px; }
+    .agent-card { padding: 24px 16px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; text-align: center; transition: all 0.25s; text-decoration: none; color: inherit; display: block; }
+    .agent-card:hover { border-color: rgba(168,85,247,0.3); transform: translateY(-3px); }
+    .agent-card .a-icon { width: 42px; height: 42px; margin: 0 auto 12px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .agent-card h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+    .agent-card p { font-size: 0.7rem; color: var(--text-muted); }
+    .agent-live { font-size: 0.6rem; padding: 2px 8px; border-radius: 4px; font-weight: 600; margin-top: 6px; display: inline-block; }
+
+    /* ═══════════════ WAITLIST ═══════════════ */
+    .waitlist-section { border-bottom: 1px solid var(--border-subtle); }
+    .waitlist-form { display: flex; gap: 12px; justify-content: center; max-width: 440px; margin: 32px auto 0; }
+    .waitlist-form input { flex: 1; padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; color: var(--text-primary); font-size: 0.9rem; transition: border-color 0.2s; }
+    .waitlist-form input:focus { outline: none; border-color: var(--purple); }
+    .waitlist-form input::placeholder { color: var(--text-muted); }
+    .waitlist-form button { padding: 14px 28px; background: var(--purple); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; }
+    .waitlist-form button:hover { background: #9333ea; }
+
+    /* ═══════════════ FOOTER ═══════════════ */
+    footer { padding: 48px 24px 28px; border-top: 1px solid var(--border-subtle); }
+    .footer-content { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 40px; margin-bottom: 36px; }
+    .footer-links { display: flex; gap: 56px; }
+    .footer-col h4 { font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .footer-col a { display: block; font-size: 0.85rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 10px; transition: color 0.2s; }
+    .footer-col a:hover { color: var(--text-primary); }
+    .footer-bottom { text-align: center; font-size: 0.78rem; color: var(--text-muted); padding-top: 28px; border-top: 1px solid var(--border-subtle); }
+
+    /* ═══════════════ RESPONSIVE ═══════════════ */
+    @media (max-width: 900px) {
+      .stack-grid { grid-template-columns: 1fr; }
+      .products-grid { grid-template-columns: repeat(2, 1fr); }
+      .users-grid { grid-template-columns: repeat(2, 1fr); }
+      .usps-grid { grid-template-columns: 1fr; }
+      .roadmap-grid { grid-template-columns: repeat(2, 1fr); }
+      .perps-inner { grid-template-columns: 1fr; }
+      .agents-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .products-grid { grid-template-columns: 1fr; }
+      .users-grid { grid-template-columns: 1fr; }
+      .roadmap-grid { grid-template-columns: 1fr; }
+      .agents-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-actions { flex-direction: column; align-items: center; }
+      .hero-stats { gap: 24px; }
+      .footer-links { gap: 28px; flex-wrap: wrap; }
+      .waitlist-form { flex-direction: column; }
+      .nav-link { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════ NAVBAR ═══════════════════════ -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" style="display:flex;align-items:center;text-decoration:none;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" style="height:38px;">
+          <defs><linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs>
+          <g transform="translate(40,40) scale(0.9)"><circle cx="50" cy="40" r="28" stroke="url(#lg)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#lg)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#lg)" stroke-width="6" fill="none" opacity="0.85"/></g>
+          <g transform="translate(150,110)"><text x="0" y="0" font-family="Inter,sans-serif" font-weight="700" font-size="56" fill="currentColor">nexxore</text></g>
+        </svg>
+      </a>
+      <div class="nav-links">
+        <a href="#stack" class="nav-link">Architecture</a>
+        <a href="#products" class="nav-link">Products</a>
+        <a href="#roadmap" class="nav-link">Roadmap</a>
+        <a href="https://x.com/nexxore" target="_blank" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a href="#waitlist" class="nav-cta">Join Waitlist</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════ HERO ═══════════════════════ -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-chip"><span class="dot"></span> DeFAI Infrastructure — Live</div>
+      <h1>Intelligence-Driven<br><span class="grad">DeFi Execution Engine</span></h1>
+      <p class="hero-sub">
+        AI agents that <strong>predict volatility</strong> before it happens, build <strong>delta-neutral strategies</strong> that survive any market, and route execution across the <strong>entire DeFi ecosystem</strong> — autonomously, 24/7.
+      </p>
+      <div class="hero-actions">
+        <a href="perps.html" class="btn-primary">Launch App →</a>
+        <a href="#stack" class="btn-secondary">Explore Architecture</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="val">3</div>
+          <div class="label">Execution Layers</div>
+        </div>
+        <div class="hero-stat">
+          <div class="val">6</div>
+          <div class="label">Live Agents</div>
+        </div>
+        <div class="hero-stat">
+          <div class="val">24/7</div>
+          <div class="label">Autonomous</div>
+        </div>
+        <div class="hero-stat">
+          <div class="val" id="ethPriceHero">$--</div>
+          <div class="label">ETH Live</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 3-LAYER STACK ═══════════════════════ -->
+  <section class="stack-section" id="stack">
+    <div class="container text-center">
+      <div class="section-label" style="color:var(--purple);border-color:rgba(168,85,247,0.25);background:rgba(168,85,247,0.06);">Architecture</div>
+      <h2 class="section-title">Nexxore's <span class="grad">3-Layer Vertical Stack</span></h2>
+      <p class="section-desc center">Each layer feeds the next. Prediction → Strategy → Execution. One vertical pipeline from intelligence to trade settlement.</p>
+
+      <div class="stack-grid">
+        <!-- Layer 1: Brain -->
+        <div class="stack-card brain">
+          <div class="stack-layer-tag l1">Layer 1 — The Brain</div>
+          <div class="stack-icon brain-icon">🧠</div>
+          <h3>Prediction Agent Tooling</h3>
+          <p class="stack-sub">A specialized environment where AI agents ingest multi-source data — on-chain flows, social sentiment, order book depth — to generate <strong style="color:var(--purple)">Intent Signals</strong>.</p>
+          <div class="stack-usp">
+            <strong>The USP:</strong> Most platforms react to price. Nexxore <strong>predicts volatility</strong>. Agents anticipate liquidity squeezes and delta shifts before they happen.
+          </div>
+        </div>
+
+        <!-- Layer 2: Logic -->
+        <div class="stack-card logic">
+          <div class="stack-layer-tag l2">Layer 2 — The Logic</div>
+          <div class="stack-icon logic-icon">⚙️</div>
+          <h3>Strategy Builder</h3>
+          <p class="stack-sub">A modular workspace where the Brain's predictions are turned into <strong style="color:var(--orange)">Actionable Trades</strong>. "If Agent A predicts a 5% move → open a delta-neutral hedged position."</p>
+          <div class="stack-usp">
+            <strong>The USP:</strong> Visual building blocks, backtesting, risk controls. Pro traders design the logic — passive allocators deposit into the best-performing strategies.
+          </div>
+        </div>
+
+        <!-- Layer 3: Muscle -->
+        <div class="stack-card muscle">
+          <div class="stack-layer-tag l3">Layer 3 — The Muscle</div>
+          <div class="stack-icon muscle-icon">⚡</div>
+          <h3>Autonomous Execution</h3>
+          <p class="stack-sub">The decentralized routing engine that finds the best liquidity across DEXs, Perp DEXs, and chains — executing with <strong style="color:var(--green)">zero human intervention</strong>.</p>
+          <div class="stack-usp">
+            <strong>The USP:</strong> If a prediction triggers on Solana but the best liquidity for the hedge is on Arbitrum, the agent executes cross-chain autonomously.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ PRODUCTS ═══════════════════════ -->
+  <section class="products-section" id="products">
+    <div class="container text-center">
+      <div class="section-label" style="color:var(--green);border-color:rgba(34,197,94,0.25);background:rgba(34,197,94,0.06);">Products</div>
+      <h2 class="section-title">The <span class="grad">Platform</span></h2>
+      <p class="section-desc center">Every product maps to a layer. Predictions feed strategy builders, which feed autonomous execution.</p>
+
+      <div class="products-grid">
+        <a href="predictions.html" class="product-card">
+          <div class="product-icon">🎯</div>
+          <h4>PRED Agent</h4>
+          <p class="product-desc">6-agent Polymarket system. Monitor, research, trade, and report on prediction markets — autonomously.</p>
+          <span class="product-tag live">● Live</span>
+        </a>
+        <a href="perps.html" class="product-card">
+          <div class="product-icon">📈</div>
+          <h4>NX-Perps</h4>
+          <p class="product-desc">Trade perpetuals with up to 50x leverage on a fully decentralized exchange. Sub-second execution.</p>
+          <span class="product-tag live">● Live</span>
+        </a>
+        <a href="vaults.html" class="product-card">
+          <div class="product-icon">🏦</div>
+          <h4>Vaults</h4>
+          <p class="product-desc">One-click yield strategies with clear APY tracking and transparent risk metrics. Safe Yield to Advanced Realloc.</p>
+          <span class="product-tag live">● Live</span>
+        </a>
+        <a href="strategy-builder.html" class="product-card">
+          <div class="product-icon">🔧</div>
+          <h4>Strategy Builder</h4>
+          <p class="product-desc">Design custom trading strategies with visual blocks. Set conditions, triggers, and execution parameters.</p>
+          <span class="product-tag live">● Live</span>
+        </a>
+        <a href="delta-neutral.html" class="product-card">
+          <div class="product-icon">⚖️</div>
+          <h4>Delta-Neutral Builder</h4>
+          <p class="product-desc">Construct market-neutral positions that profit regardless of direction. Auto-hedging and rebalancing.</p>
+          <span class="product-tag beta">Beta</span>
+        </a>
+        <a href="stablecoin-hub.html" class="product-card">
+          <div class="product-icon">💎</div>
+          <h4>Stablecoin Hub</h4>
+          <p class="product-desc">Peg monitoring, yield deployment, depeg insurance, and stablecoin perps across chains.</p>
+          <span class="product-tag live">● Live</span>
+        </a>
+        <a href="research-agent.html" class="product-card">
+          <div class="product-icon">🔬</div>
+          <h4>On-Chain Analyst</h4>
+          <p class="product-desc">Alpha signals, trade ideas, on-chain flow analysis, and institutional-grade research intelligence.</p>
+          <span class="product-tag live">● Live</span>
+        </a>
+        <a href="agents.html" class="product-card">
+          <div class="product-icon">🤖</div>
+          <h4>Agent API</h4>
+          <p class="product-desc">The Agent Economy layer. Deploy, compose, and integrate autonomous agents into any dApp or protocol.</p>
+          <span class="product-tag beta">Beta</span>
+        </a>
+        <a href="analytics.html" class="product-card">
+          <div class="product-icon">📊</div>
+          <h4>Analytics</h4>
+          <p class="product-desc">Portfolio tracking, performance attribution, risk metrics, and P&L breakdown across all strategies.</p>
+          <span class="product-tag live">● Live</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ USER SEGMENTS ═══════════════════════ -->
+  <section class="users-section" id="users">
+    <div class="container text-center">
+      <div class="section-label" style="color:var(--cyan);border-color:rgba(6,182,212,0.25);background:rgba(6,182,212,0.06);">Who It's For</div>
+      <h2 class="section-title">Built for <span class="grad">Every Participant</span></h2>
+      <p class="section-desc center">From quants building proprietary models to passive LPs allocating capital — Nexxore serves the entire spectrum.</p>
+
+      <div class="users-grid">
+        <div class="user-card">
+          <div class="user-icon" style="background:rgba(168,85,247,0.1);">🏗️</div>
+          <h4>Strategy Quants</h4>
+          <div class="user-role">The Architects</div>
+          <p class="user-desc">Use the Prediction Tooling Layer to build proprietary models. Plug your alpha into our execution muscle.</p>
+        </div>
+        <div class="user-card">
+          <div class="user-icon" style="background:rgba(34,197,94,0.1);">🌱</div>
+          <h4>Yield Maximizers</h4>
+          <div class="user-role">The Passive LPs</div>
+          <p class="user-desc">Browse the leaderboard, pick the best-performing agents, deposit capital. High-yield, delta-neutral exposure.</p>
+        </div>
+        <div class="user-card">
+          <div class="user-icon" style="background:rgba(6,182,212,0.1);">🔌</div>
+          <h4>DeFi Developers</h4>
+          <div class="user-role">The Integrators</div>
+          <p class="user-desc">Use the Agent API to power other dApps. Trigger liquidations, rebalancing, and cross-chain actions.</p>
+        </div>
+        <div class="user-card">
+          <div class="user-icon" style="background:rgba(245,158,11,0.1);">🚀</div>
+          <h4>Venture Investors</h4>
+          <div class="user-role">The Fuel</div>
+          <p class="user-desc">DeFAI infrastructure. Clear protocol fees, TVL growth trajectory, security-first architecture. The Bloomberg + BlackRock of the agent economy.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 4 USPs ═══════════════════════ -->
+  <section class="usps-section" id="usps">
+    <div class="container text-center">
+      <div class="section-label" style="color:var(--orange);border-color:rgba(245,158,11,0.25);background:rgba(245,158,11,0.06);">Competitive Moat</div>
+      <h2 class="section-title">Why <span class="grad">Nexxore Wins</span></h2>
+      <p class="section-desc center">Four structural advantages that compound over time.</p>
+
+      <div class="usps-grid">
+        <div class="usp-card">
+          <div class="usp-number">USP 01</div>
+          <h3>🔍 Verifiable Predictive Alpha</h3>
+          <p>Unlike "black box" bots, Nexxore's Prediction Layer can use zk-proofs or TEEs (Trusted Execution Environments) to prove that an agent actually followed its logic.</p>
+          <div class="usp-highlight"><strong>Investor Signal:</strong> Builds trust with institutions wary of "fake AI." Every prediction is auditable.</div>
+        </div>
+        <div class="usp-card">
+          <div class="usp-number">USP 02</div>
+          <h3>⚖️ Delta-Neutral Autonomy</h3>
+          <p>Most agents fail during market crashes. Nexxore's specific focus on delta-neutrality means agents are programmed to survive — and profit from — volatility.</p>
+          <div class="usp-highlight"><strong>Investor Signal:</strong> The "Safe Haven" USP for institutional capital. Crash-resistant yield generation.</div>
+        </div>
+        <div class="usp-card">
+          <div class="usp-number">USP 03</div>
+          <h3>🌐 Multi-Source Liquidity Routing</h3>
+          <p>Nexxore doesn't trade on one chain. Agents route "Intent" across the entire DeFi ecosystem. Prediction on Solana, hedge on Arbitrum — executed cross-chain autonomously.</p>
+          <div class="usp-highlight"><strong>Investor Signal:</strong> Chain-agnostic execution eliminates liquidity fragmentation. Best price, every time.</div>
+        </div>
+        <div class="usp-card">
+          <div class="usp-number">USP 04</div>
+          <h3>🤖 Machine-to-Machine Economy</h3>
+          <p>By 2026, agents pay other agents. Nexxore integrates x402 payment standards — a "Prediction Agent" can buy data from an "Indexing Agent" autonomously to improve accuracy.</p>
+          <div class="usp-highlight"><strong>Investor Signal:</strong> Network effects compound. More agents → more data → better predictions → more capital.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ ROADMAP ═══════════════════════ -->
+  <section class="roadmap-section" id="roadmap">
+    <div class="container text-center">
+      <div class="section-label" style="color:var(--green);border-color:rgba(34,197,94,0.25);background:rgba(34,197,94,0.06);">Roadmap</div>
+      <h2 class="section-title">The <span class="grad">Path Forward</span></h2>
+      <p class="section-desc center">From building the tech to scaling institutional capital.</p>
+
+      <div class="roadmap-grid">
+        <div class="roadmap-card active">
+          <div class="roadmap-phase current">Phase 1 — Current</div>
+          <h4>Foundation & Security</h4>
+          <p>Prove the tech works with zero security breaches.</p>
+          <div class="roadmap-milestones">
+            <div class="roadmap-milestone"><span class="check">✓</span> MVP autonomous agent</div>
+            <div class="roadmap-milestone"><span class="check">✓</span> Strategy builder live</div>
+            <div class="roadmap-milestone"><span class="check">✓</span> PRED Agent 6-agent system</div>
+            <div class="roadmap-milestone"><span class="check">✓</span> Backtesting environment</div>
+            <div class="roadmap-milestone"><span class="pending">○</span> Smart contract audits</div>
+            <div class="roadmap-milestone"><span class="pending">○</span> Testnet paper trading</div>
+          </div>
+        </div>
+
+        <div class="roadmap-card">
+          <div class="roadmap-phase upcoming">Phase 2 — Alpha Launch</div>
+          <h4>Strategy Creators</h4>
+          <p>Invite-only mainnet for pro traders.</p>
+          <div class="roadmap-milestones">
+            <div class="roadmap-milestone"><span class="pending">○</span> Invite-only mainnet access</div>
+            <div class="roadmap-milestone"><span class="pending">○</span> Manual + semi-auto positions</div>
+            <div class="roadmap-milestone"><span class="pending">○</span> Community feedback loop</div>
+            <div class="roadmap-milestone"><span class="pending">○</span> Zero security breaches</div>
+          </div>
+        </div>
+
+        <div class="roadmap-card">
+          <div class="roadmap-phase upcoming">Phase 3 — Autonomous Era</div>
+          <h4>Passive Allocators</h4>
+          <p>Fully autonomous agents for the public.</p>
+          <div class="roadmap-milestones">
+            <div class="roadmap-milestone"><span class="pending">○</span> Public autonomous agents</div>
+            <div class="roadmap-milestone"><span class="pending">○</span> Simplified vaults</div>
+            <div class="roadmap-milestone"><span class="pending">○</span> Strategy leaderboard</div>
+            <div class="roadmap-milestone"><span class="pending">○</span> TVL growth milestone</div>
+          </div>
+        </div>
+
+        <div class="roadmap-card">
+          <div class="roadmap-phase upcoming">Phase 4 — Institutional Scale</div>
+          <h4>Cross-Chain & APIs</h4>
+          <p>Multi-chain execution for institutions.</p>
+          <div class="roadmap-milestones">
+            <div class="roadmap-milestone"><span class="pending">○</span> Cross-chain execution</div>
+            <div class="roadmap-milestone"><span class="pending">○</span> Institutional-grade APIs</div>
+            <div class="roadmap-milestone"><span class="pending">○</span> Decentralized governance</div>
+            <div class="roadmap-milestone"><span class="pending">○</span> M2M agent economy</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ LIVE PERPS ═══════════════════════ -->
+  <section class="perps-section">
+    <div class="container">
+      <div class="text-center">
+        <div class="section-label" style="color:var(--green);border-color:rgba(34,197,94,0.25);background:rgba(34,197,94,0.06);">● Live Trading</div>
+        <h2 class="section-title"><span class="grad">NX-Perps</span></h2>
+        <p class="section-desc center">50x leverage perpetuals. Decentralized. Sub-second execution.</p>
+      </div>
+
+      <div class="perps-inner">
+        <div class="perps-left">
+          <div class="perps-price-row">
+            <span class="pair">ETH/USD</span>
+            <span class="price" id="ethPrice">$--</span>
+            <span class="change up" id="ethChange">--%</span>
+          </div>
+          <div class="perps-stats">
+            <div class="perps-stat"><div class="label">Open Interest</div><div class="value">$0.00</div></div>
+            <div class="perps-stat"><div class="label">24h Volume</div><div class="value">$0.00</div></div>
+            <div class="perps-stat"><div class="label">LP TVL</div><div class="value">$0.00</div></div>
+          </div>
+          <div style="display:flex;gap:12px;">
+            <a href="perps.html" class="btn-primary" style="padding:12px 24px;font-size:0.88rem;">Start Trading</a>
+            <a href="perps.html#lp" class="btn-secondary" style="padding:12px 24px;font-size:0.88rem;">Provide Liquidity</a>
+          </div>
+        </div>
+
+        <div class="perps-chart">
+          <div class="chart-header">
+            <span class="chart-pair">ETH-PERP</span>
+            <div class="chart-tfs">
+              <button class="chart-tf">1H</button>
+              <button class="chart-tf active">4H</button>
+              <button class="chart-tf">1D</button>
+            </div>
+          </div>
+          <svg class="chart-svg" viewBox="0 0 400 140" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(34,197,94,0.3)"/>
+                <stop offset="100%" stop-color="rgba(34,197,94,0)"/>
+              </linearGradient>
+            </defs>
+            <path fill="url(#cg)" d="M0,100 C20,95 40,80 60,85 C80,90 100,70 120,65 C140,60 160,75 180,70 C200,65 220,50 240,55 C260,60 280,45 300,40 C320,35 340,50 360,35 C380,20 400,25 400,25 L400,140 L0,140 Z"/>
+            <path fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" d="M0,100 C20,95 40,80 60,85 C80,90 100,70 120,65 C140,60 160,75 180,70 C200,65 220,50 240,55 C260,60 280,45 300,40 C320,35 340,50 360,35 C380,20 400,25 400,25"/>
+            <circle cx="400" cy="25" r="4" fill="#22c55e" style="filter:drop-shadow(0 0 4px rgba(34,197,94,0.5))"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ AGENTS ═══════════════════════ -->
+  <section class="agents-section">
+    <div class="container text-center">
+      <div class="section-label" style="color:var(--purple);border-color:rgba(168,85,247,0.25);background:rgba(168,85,247,0.06);">Agents</div>
+      <h2 class="section-title"><span class="grad">Hedge Fund OS</span></h2>
+      <p class="section-desc center">Five specialized agents. One job each. Zero overlap. Institutional-grade autonomy.</p>
+
+      <div class="agents-grid">
+        <a href="research-agent.html" class="agent-card" style="border-color:rgba(34,197,94,0.4);">
+          <div class="a-icon" style="background:rgba(34,197,94,0.1);">🔬</div>
+          <h4>On-Chain Analyst</h4>
+          <p>Trading Intelligence</p>
+          <span class="agent-live" style="background:rgba(34,197,94,0.12);color:var(--green);">● Live</span>
+        </a>
+        <a href="agents.html" class="agent-card">
+          <div class="a-icon" style="background:rgba(245,158,11,0.1);">📦</div>
+          <h4>Portfolio Optimiser</h4>
+          <p>Capital Brain</p>
+        </a>
+        <a href="agents.html" class="agent-card">
+          <div class="a-icon" style="background:rgba(34,197,94,0.1);">⚡</div>
+          <h4>Execution Agent</h4>
+          <p>Hyperliquid</p>
+        </a>
+        <a href="agents.html" class="agent-card">
+          <div class="a-icon" style="background:rgba(239,68,68,0.1);">📉</div>
+          <h4>Performance Agent</h4>
+          <p>Truth Teller</p>
+        </a>
+        <a href="predictions.html" class="agent-card" style="border-color:rgba(6,182,212,0.4);">
+          <div class="a-icon" style="background:rgba(6,182,212,0.1);">🎯</div>
+          <h4>PRED Agent</h4>
+          <p>Prediction Markets</p>
+          <span class="agent-live" style="background:rgba(6,182,212,0.12);color:var(--cyan);">● Live</span>
+        </a>
+      </div>
+
+      <div style="margin-top:28px;">
+        <a href="agents.html" class="btn-secondary" style="display:inline-flex;align-items:center;gap:8px;padding:10px 22px;font-size:0.85rem;">
+          Explore Agent Architecture
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ WAITLIST ═══════════════════════ -->
+  <section class="waitlist-section" id="waitlist">
+    <div class="container text-center">
+      <h2 class="section-title"><span class="grad">Join the Waitlist</span></h2>
+      <p class="section-desc center">Get early access to the Alpha Launch. Priority allocation for strategy creators and yield maximizers.</p>
+      <form class="waitlist-form" id="waitlistForm">
+        <input type="email" id="email" placeholder="Enter your email" required>
+        <button type="submit">Join</button>
+      </form>
+      <p style="font-size:0.72rem;color:var(--text-muted);margin-top:14px;">We respect your privacy. No spam, ever.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" style="height:30px;">
+          <defs><linearGradient id="flg" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs>
+          <g transform="translate(40,40) scale(0.9)"><circle cx="50" cy="40" r="28" stroke="url(#flg)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#flg)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#flg)" stroke-width="6" fill="none" opacity="0.85"/></g>
+          <g transform="translate(150,110)"><text x="0" y="0" font-family="Inter,sans-serif" font-weight="700" font-size="56" fill="currentColor">nexxore</text></g>
+        </svg>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Products</h4>
+            <a href="perps.html">Perpetuals</a>
+            <a href="vaults.html">Vaults</a>
+            <a href="stablecoin-hub.html">Stablecoin Hub</a>
+            <a href="predictions.html">PRED Agent</a>
+            <a href="strategy-builder.html">Strategy Builder</a>
+          </div>
+          <div class="footer-col">
+            <h4>Intelligence</h4>
+            <a href="research-agent.html">On-Chain Analyst</a>
+            <a href="agents.html">Agent API</a>
+            <a href="analytics.html">Analytics</a>
+            <a href="delta-neutral.html">Delta-Neutral</a>
+          </div>
+          <div class="footer-col">
+            <h4>Community</h4>
+            <a href="#">Discord</a>
+            <a href="https://x.com/nexxore" target="_blank">X (Twitter)</a>
+            <a href="#">Telegram</a>
+            <a href="#">Blog</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 nexxore. Intelligence-driven DeFi execution. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════ SCRIPTS ═══════════════════════ -->
+  <script>
+    // Real-time ETH price
+    async function fetchEthPrice() {
+      try {
+        const res = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT');
+        const data = await res.json();
+        const price = parseFloat(data.lastPrice);
+        const change = parseFloat(data.priceChangePercent);
+        const fmt = '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        document.getElementById('ethPrice').textContent = fmt;
+        document.getElementById('ethPriceHero').textContent = fmt;
+
+        const changeEl = document.getElementById('ethChange');
+        changeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+        changeEl.className = 'change ' + (change >= 0 ? 'up' : 'down');
+      } catch (err) { console.log('Price fetch error:', err); }
+    }
+    fetchEthPrice();
+    setInterval(fetchEthPrice, 10000);
+  </script>
+
+  <script>
+    // Clean .html extensions from links
+    document.querySelectorAll('a[href$=".html"]').forEach(link => {
+      const href = link.getAttribute('href');
+      if (!href) return;
+      const [path, hash] = href.split('#');
+      const cleaned = path.replace(/\.html$/, '');
+      link.setAttribute('href', hash ? `${cleaned}#${hash}` : cleaned);
+    });
+    if (window.location.pathname.endsWith('.html')) {
+      const cleanPath = window.location.pathname.replace(/\.html$/, '');
+      window.history.replaceState({}, '', cleanPath + window.location.search + window.location.hash);
+    }
+  </script>
+
+  <script>
+    // Waitlist form
+    (function() {
+      const form = document.getElementById('waitlistForm');
+      if (!form) return;
+
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const emailInput = document.getElementById('email');
+        const email = emailInput.value.trim();
+        const btn = form.querySelector('button[type="submit"]');
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showNotif('Please enter a valid email', 'error'); return; }
+
+        const orig = btn.textContent;
+        btn.textContent = 'Joining...';
+        btn.disabled = true;
+
+        try {
+          await fetch('https://script.google.com/macros/s/AKfycbzfgnxfO9tUHiE5w642YB5V7B7uA82m58DYF6dF_vRbQ2n2mdkqmzUmnPwwJxhAYdSq/exec', {
+            method: 'POST', body: JSON.stringify({ email }), mode: 'no-cors'
+          });
+          form.reset();
+          showNotif('Successfully joined the waitlist! We\'ll be in touch soon.', 'success');
+        } catch (err) {
+          showNotif('Submission failed. Please try again.', 'error');
+        } finally {
+          btn.textContent = orig;
+          btn.disabled = false;
+        }
+      });
+
+      function showNotif(msg, type) {
+        const existing = document.querySelector('.wl-notif');
+        if (existing) existing.remove();
+        const el = document.createElement('div');
+        el.className = 'wl-notif';
+        el.textContent = msg;
+        el.style.cssText = `position:fixed;bottom:24px;right:24px;padding:16px 24px;background:${type === 'success' ? 'rgba(34,197,94,0.95)' : 'rgba(239,68,68,0.95)'};color:white;border-radius:10px;font-size:0.9rem;font-weight:500;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.3);`;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 5000);
+      }
+    })();
+  </script>
+
+  <script>
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      });
+    });
+  </script>
+</body>
+</html>

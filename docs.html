@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docs — Nexxore</title>
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6QGB2RQVP0"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-6QGB2RQVP0');</script>
+
+  <meta name="description" content="Nexxore documentation. Architecture, API references, agent guides, and integration docs.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://nexxore.xyz/docs">
+  <meta name="theme-color" content="#09090b">
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%23a855f7'/><stop offset='100%25' stop-color='%2322c55e'/></linearGradient></defs><rect width='32' height='32' rx='6' fill='%2308080a'/><circle cx='12' cy='11' r='6' stroke='url(%23g)' stroke-width='2' fill='none'/><circle cx='20' cy='11' r='6' stroke='url(%23g)' stroke-width='2' fill='none' opacity='.9'/><circle cx='16' cy='18' r='6' stroke='url(%23g)' stroke-width='2' fill='none' opacity='.9'/></svg>" type="image/svg+xml">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--bg-base); color:var(--text-primary); font-family:var(--font-family-sans); line-height:1.7; }
+    a { color:inherit; }
+
+    /* layout */
+    .docs-layout { display:grid; grid-template-columns:240px 1fr; min-height:100vh; }
+    .docs-sidebar { position:sticky; top:0; height:100vh; overflow-y:auto; border-right:1px solid var(--border-subtle); padding:24px 0; background:var(--bg-elevated); }
+    .docs-main { padding:48px 56px 80px; max-width:820px; }
+
+    /* sidebar */
+    .sidebar-logo { padding:0 20px 28px; display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .sidebar-logo span { font-weight:700; font-size:1rem; }
+    .sidebar-logo .badge { font-size:0.58rem; padding:2px 7px; border-radius:4px; background:rgba(168,85,247,0.12); color:#a855f7; font-weight:600; }
+
+    .sidebar-section { padding:0 12px; margin-bottom:8px; }
+    .sidebar-section-title { font-size:0.65rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px; padding:8px 12px 6px; }
+    .sidebar-link { display:block; font-size:0.84rem; color:var(--text-secondary); text-decoration:none; padding:7px 12px; border-radius:6px; transition:all 0.15s; }
+    .sidebar-link:hover { color:var(--text-primary); background:rgba(255,255,255,0.04); }
+    .sidebar-link.active { color:var(--text-primary); background:rgba(168,85,247,0.08); font-weight:500; }
+
+    /* content */
+    h1 { font-size:2rem; font-weight:700; letter-spacing:-0.02em; margin-bottom:8px; line-height:1.2; }
+    h1 + .subtitle { font-size:1.05rem; color:var(--text-secondary); margin-bottom:40px; line-height:1.6; }
+    h2 { font-size:1.35rem; font-weight:700; margin-top:56px; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--border-subtle); letter-spacing:-0.01em; }
+    h3 { font-size:1.05rem; font-weight:600; margin-top:32px; margin-bottom:10px; }
+    p { margin-bottom:16px; color:var(--text-secondary); font-size:0.92rem; }
+    p strong { color:var(--text-primary); font-weight:600; }
+    ul, ol { margin-bottom:16px; padding-left:20px; }
+    li { font-size:0.92rem; color:var(--text-secondary); margin-bottom:8px; line-height:1.6; }
+    li strong { color:var(--text-primary); }
+
+    /* code blocks */
+    code { font-family:var(--font-family-mono); font-size:0.82rem; background:var(--bg-card); padding:2px 6px; border-radius:4px; color:#c4b5fd; }
+    pre { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:10px; padding:20px 24px; margin-bottom:20px; overflow-x:auto; }
+    pre code { background:none; padding:0; font-size:0.8rem; line-height:1.65; color:var(--text-secondary); }
+    .code-label { font-size:0.65rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
+
+    /* callout boxes */
+    .callout { padding:16px 20px; border-radius:10px; margin-bottom:20px; font-size:0.88rem; border-left:3px solid; }
+    .callout.info { background:rgba(6,182,212,0.06); border-color:#06b6d4; }
+    .callout.warn { background:rgba(245,158,11,0.06); border-color:#f59e0b; }
+    .callout.tip { background:rgba(34,197,94,0.06); border-color:#22c55e; }
+    .callout p { margin-bottom:0; }
+    .callout strong { color:var(--text-primary); }
+
+    /* table */
+    table { width:100%; border-collapse:collapse; margin-bottom:20px; font-size:0.85rem; }
+    th { text-align:left; font-weight:600; padding:10px 14px; border-bottom:1px solid var(--border-default); color:var(--text-primary); font-size:0.78rem; text-transform:uppercase; letter-spacing:0.3px; }
+    td { padding:10px 14px; border-bottom:1px solid var(--border-subtle); color:var(--text-secondary); }
+
+    /* diagram */
+    .arch-diagram { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; padding:28px; margin:24px 0; text-align:center; }
+    .arch-flow { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
+    .arch-box { padding:14px 22px; border-radius:8px; font-size:0.82rem; font-weight:600; text-align:center; }
+    .arch-box.brain { background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.2); color:#c4b5fd; }
+    .arch-box.logic { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); color:#fcd34d; }
+    .arch-box.muscle { background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); color:#86efac; }
+    .arch-arrow { color:var(--text-muted); font-size:1.2rem; }
+
+    /* back link */
+    .back-link { display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; color:var(--text-muted); text-decoration:none; margin-bottom:24px; transition:color 0.15s; }
+    .back-link:hover { color:var(--text-primary); }
+
+    /* mobile */
+    @media (max-width:768px) {
+      .docs-layout { grid-template-columns:1fr; }
+      .docs-sidebar { display:none; }
+      .docs-main { padding:28px 20px 60px; }
+      h1 { font-size:1.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="docs-layout">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="/" class="sidebar-logo">
+        <span>nexxore</span>
+        <span class="badge">docs</span>
+      </a>
+
+      <nav>
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Getting Started</div>
+          <a href="#overview" class="sidebar-link active">Overview</a>
+          <a href="#architecture" class="sidebar-link">Architecture</a>
+          <a href="#quickstart" class="sidebar-link">Quick Start</a>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Core Concepts</div>
+          <a href="#three-layers" class="sidebar-link">The 3-Layer Stack</a>
+          <a href="#agents" class="sidebar-link">Agents</a>
+          <a href="#strategies" class="sidebar-link">Strategies</a>
+          <a href="#execution" class="sidebar-link">Execution Engine</a>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Products</div>
+          <a href="#perps" class="sidebar-link">NX-Perps</a>
+          <a href="#vaults" class="sidebar-link">Vaults</a>
+          <a href="#pred-agent" class="sidebar-link">PRED Agent</a>
+          <a href="#stablecoin-hub" class="sidebar-link">Stablecoin Hub</a>
+          <a href="#strategy-builder" class="sidebar-link">Strategy Builder</a>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">API Reference</div>
+          <a href="#api-overview" class="sidebar-link">API Overview</a>
+          <a href="#endpoints" class="sidebar-link">Endpoints</a>
+          <a href="#authentication" class="sidebar-link">Authentication</a>
+          <a href="#rate-limits" class="sidebar-link">Rate Limits</a>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Guides</div>
+          <a href="#telegram" class="sidebar-link">Telegram Alerts</a>
+          <a href="#delta-neutral" class="sidebar-link">Delta-Neutral Guide</a>
+          <a href="#deployment" class="sidebar-link">Self-Hosting</a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main class="docs-main">
+      <a href="/" class="back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to Home
+      </a>
+
+      <h1 id="overview">Nexxore Documentation</h1>
+      <p class="subtitle">Everything you need to understand, use, and build on Nexxore. From first trade to custom agent deployment.</p>
+
+      <div class="callout info">
+        <p><strong>Heads up:</strong> Nexxore is in active development. Some APIs may change. If something breaks, that's on us — open an issue or ping us on Discord.</p>
+      </div>
+
+      <!-- ═══════ ARCHITECTURE ═══════ -->
+      <h2 id="architecture">Architecture</h2>
+      <p>Nexxore is structured as a vertical stack. Data flows in one direction: <strong>intelligence → strategy → execution</strong>. Every product we build maps to one of these three layers.</p>
+
+      <div class="arch-diagram">
+        <div class="arch-flow">
+          <div class="arch-box brain">
+            Prediction Layer<br><small style="opacity:0.7">agents, signals, data</small>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box logic">
+            Strategy Layer<br><small style="opacity:0.7">builder, conditions, risk</small>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box muscle">
+            Execution Layer<br><small style="opacity:0.7">routing, settlement, chains</small>
+          </div>
+        </div>
+      </div>
+
+      <p>The prediction layer ingests on-chain data, social sentiment, order book depth, and funding rates. It produces <strong>intent signals</strong> — structured predictions about what's likely to happen next.</p>
+      <p>The strategy layer takes those signals and turns them into trade logic. "If funding rate flips negative and OI spikes, open a short hedge." This can be done visually in the Strategy Builder or programmatically via the API.</p>
+      <p>The execution layer routes the final trade across DEXs, perp protocols, and chains. It picks the best liquidity, manages slippage, and settles. No human in the loop.</p>
+
+      <!-- ═══════ QUICK START ═══════ -->
+      <h2 id="quickstart">Quick Start</h2>
+      <p>The fastest way to get going is to just use the app. No wallet needed to browse. Connect a wallet when you want to trade.</p>
+
+      <h3>1. Explore signals</h3>
+      <p>Head to the <a href="research-agent.html" style="color:#a855f7">On-Chain Analyst</a> — it surfaces trade ideas, alpha signals, and flow analysis in real time. No account required.</p>
+
+      <h3>2. Try prediction markets</h3>
+      <p>The <a href="predictions.html" style="color:#a855f7">PRED Agent</a> runs 6 autonomous agents on Polymarket. You can watch them work, check their reasoning, or post their picks directly to Telegram.</p>
+
+      <h3>3. Trade perps</h3>
+      <p>Go to <a href="perps.html" style="color:#a855f7">NX-Perps</a>, connect your wallet, and trade ETH/BTC/SOL perpetuals with up to 50x leverage. Fully on-chain.</p>
+
+      <h3>4. Build a strategy</h3>
+      <p>The <a href="strategy-builder.html" style="color:#a855f7">Strategy Builder</a> lets you wire up conditions and triggers visually. Set entry rules, stop losses, take profits — then let the agent execute it.</p>
+
+      <!-- ═══════ THE 3 LAYERS ═══════ -->
+      <h2 id="three-layers">The 3-Layer Stack</h2>
+
+      <h3>Layer 1 — Prediction</h3>
+      <p>This is where the data work happens. Agents ingest multiple data sources — on-chain flows, social feeds, order book snapshots, funding rate history — and produce structured signals.</p>
+      <p>The key insight: <strong>most platforms react to price movement. We try to predict it.</strong> That means looking at the things that cause price to move — liquidity shifts, whale flows, sentiment spikes — before the move happens.</p>
+
+      <div class="callout tip">
+        <p><strong>Example:</strong> The PRED Agent monitors Polymarket event contracts. When it detects a pricing inefficiency between on-chain odds and real-world probability, it flags it as a trade opportunity.</p>
+      </div>
+
+      <h3>Layer 2 — Strategy</h3>
+      <p>Raw signals aren't useful on their own. The strategy layer is where you define <em>what to do</em> with a signal.</p>
+      <p>The Strategy Builder provides a visual interface for this. You can also use the API to define strategies programmatically. Strategies support:</p>
+      <ul>
+        <li><strong>Conditional logic</strong> — if signal X fires, then open position Y</li>
+        <li><strong>Risk parameters</strong> — max position size, stop loss, take profit</li>
+        <li><strong>Multi-leg trades</strong> — e.g., spot + perp hedge for delta-neutral</li>
+        <li><strong>Backtesting</strong> — run your strategy against historical data before deploying</li>
+      </ul>
+
+      <h3>Layer 3 — Execution</h3>
+      <p>Once a strategy triggers, the execution engine handles routing. It finds the best liquidity across supported DEXs and chains, manages slippage, and settles the trade.</p>
+      <p>This layer is designed to be chain-agnostic. If the best fill for a position is on Arbitrum but the signal came from Solana data, the engine handles the cross-chain routing.</p>
+
+      <!-- ═══════ AGENTS ═══════ -->
+      <h2 id="agents">Agents</h2>
+      <p>Agents are the core primitive in Nexxore. Each agent has a single responsibility. They don't overlap.</p>
+
+      <table>
+        <thead>
+          <tr><th>Agent</th><th>Job</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>On-Chain Analyst</strong></td><td>Surfaces alpha, trade ideas, flow analysis</td><td style="color:#22c55e">Live</td></tr>
+          <tr><td><strong>PRED Agent</strong></td><td>6-agent Polymarket prediction system</td><td style="color:#22c55e">Live</td></tr>
+          <tr><td><strong>Portfolio Optimiser</strong></td><td>Capital allocation, rebalancing, risk</td><td style="color:var(--text-muted)">In progress</td></tr>
+          <tr><td><strong>Execution Agent</strong></td><td>Order routing, fill optimization</td><td style="color:var(--text-muted)">In progress</td></tr>
+          <tr><td><strong>Performance Agent</strong></td><td>P&L tracking, attribution, reporting</td><td style="color:var(--text-muted)">In progress</td></tr>
+        </tbody>
+      </table>
+
+      <!-- ═══════ STRATEGIES ═══════ -->
+      <h2 id="strategies">Strategies</h2>
+      <p>A strategy is a set of rules that maps signals to trades. You can build them in the visual Strategy Builder or define them as JSON via the API.</p>
+
+      <div class="code-label">Example: simple funding rate strategy</div>
+      <pre><code>{
+  "name": "ETH Funding Flip",
+  "trigger": {
+    "signal": "funding_rate",
+    "pair": "ETH-PERP",
+    "condition": "crosses_below",
+    "threshold": -0.01
+  },
+  "action": {
+    "type": "open_long",
+    "size": "5%_portfolio",
+    "leverage": 3,
+    "stop_loss": "-2%",
+    "take_profit": "+5%"
+  }
+}</code></pre>
+
+      <p>Strategies can reference multiple signals and execute multi-leg trades. A delta-neutral strategy, for example, might open a spot long and a perp short simultaneously.</p>
+
+      <!-- ═══════ EXECUTION ═══════ -->
+      <h2 id="execution">Execution Engine</h2>
+      <p>The execution engine is the "muscle" layer. When a strategy fires, it handles everything from order construction to settlement.</p>
+
+      <ul>
+        <li><strong>Smart routing</strong> — splits orders across liquidity sources for best price</li>
+        <li><strong>Slippage protection</strong> — configurable max slippage per trade</li>
+        <li><strong>Cross-chain</strong> — routes across Ethereum, Arbitrum, Solana (more coming)</li>
+        <li><strong>Gas optimization</strong> — batches transactions where possible</li>
+      </ul>
+
+      <!-- ═══════ PRODUCTS ═══════ -->
+      <h2 id="perps">NX-Perps</h2>
+      <p>Our perpetual exchange. Trade BTC, ETH, SOL, and more with up to 50x leverage, fully on-chain. The order book is decentralized and execution is sub-second.</p>
+
+      <h3>Supported pairs</h3>
+      <table>
+        <thead><tr><th>Pair</th><th>Max Leverage</th><th>Min Order</th></tr></thead>
+        <tbody>
+          <tr><td>ETH-PERP</td><td>50x</td><td>$10</td></tr>
+          <tr><td>BTC-PERP</td><td>50x</td><td>$10</td></tr>
+          <tr><td>SOL-PERP</td><td>20x</td><td>$5</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="vaults">Vaults</h2>
+      <p>Vaults are curated yield strategies. You deposit, the vault executes. There are two tiers:</p>
+      <ul>
+        <li><strong>Safe Yield</strong> — conservative, stablecoin-focused, low risk. Think of it as a high-yield savings account.</li>
+        <li><strong>Advanced Realloc</strong> — actively managed, higher risk/reward. The vault rebalances across protocols based on real-time APY data.</li>
+      </ul>
+
+      <h2 id="pred-agent">PRED Agent</h2>
+      <p>The PRED Agent is a 6-agent system that works prediction markets on Polymarket. Each agent has a distinct role:</p>
+      <ol>
+        <li><strong>Scanner</strong> — monitors all active markets for volume and edge</li>
+        <li><strong>Researcher</strong> — deep-dives into flagged markets</li>
+        <li><strong>Risk Manager</strong> — sizes positions, sets limits</li>
+        <li><strong>Executor</strong> — places trades</li>
+        <li><strong>Monitor</strong> — watches open positions in real time</li>
+        <li><strong>Reporter</strong> — generates performance summaries</li>
+      </ol>
+
+      <p>You can connect the PRED Agent to Telegram to get alerts when it finds a high-conviction trade. See the <a href="#telegram" style="color:#a855f7">Telegram guide</a> below.</p>
+
+      <h2 id="stablecoin-hub">Stablecoin Hub</h2>
+      <p>A dedicated dashboard for stablecoin management: peg monitoring, yield deployment, depeg alerts, and stablecoin-specific perps. Supports USDC, USDT, DAI, and more.</p>
+
+      <h2 id="strategy-builder">Strategy Builder</h2>
+      <p>A visual workspace for building trading strategies. Drag conditions, connect triggers, set risk parameters, and backtest — all without writing code. When you're happy with it, deploy it and the execution engine takes over.</p>
+
+      <!-- ═══════ API ═══════ -->
+      <h2 id="api-overview">API Overview</h2>
+      <p>The Nexxore API lets you access signals, manage strategies, and trigger execution programmatically. All endpoints return JSON.</p>
+
+      <div class="code-label">Base URL</div>
+      <pre><code>https://nexxore.xyz/api</code></pre>
+
+      <h2 id="endpoints">Endpoints</h2>
+
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET</code></td><td><code>/api/health</code></td><td>Health check</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/research</code></td><td>Get latest research signals and alpha</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/signals</code></td><td>Fetch active trading signals</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/analytics</code></td><td>Portfolio analytics and performance</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/safe-yield</code></td><td>Safe yield vault data and APYs</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/perps</code></td><td>Perpetuals market data</td></tr>
+          <tr><td><code>POST</code></td><td><code>/api/telegram</code></td><td>Send trade alerts to Telegram</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/trending</code></td><td>Trending tokens and narratives</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/news</code></td><td>Aggregated crypto news feed</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Example: fetch research signals</h3>
+      <div class="code-label">Request</div>
+      <pre><code>curl https://nexxore.xyz/api/research</code></pre>
+
+      <div class="code-label">Response</div>
+      <pre><code>{
+  "status": "ok",
+  "signals": [
+    {
+      "type": "alpha",
+      "title": "ETH funding rate turning negative",
+      "confidence": 0.82,
+      "timestamp": "2026-02-27T14:30:00Z"
+    }
+  ]
+}</code></pre>
+
+      <h2 id="authentication">Authentication</h2>
+      <p>Public endpoints (research, signals, health) don't require authentication. For write operations (telegram alerts, strategy deployment), you'll need an API key.</p>
+
+      <div class="callout warn">
+        <p><strong>API keys are coming.</strong> Right now, the Telegram endpoint uses server-side environment variables. A proper key-based auth system is on the Phase 2 roadmap.</p>
+      </div>
+
+      <h2 id="rate-limits">Rate Limits</h2>
+      <p>To keep things fair:</p>
+      <ul>
+        <li><strong>Public endpoints:</strong> 60 requests/minute</li>
+        <li><strong>Authenticated endpoints:</strong> 300 requests/minute</li>
+        <li>Rate limit headers are included in every response</li>
+      </ul>
+
+      <!-- ═══════ GUIDES ═══════ -->
+      <h2 id="telegram">Telegram Alerts</h2>
+      <p>The PRED Agent can post trade alerts directly to your Telegram. Here's how to set it up:</p>
+
+      <h3>1. Create a bot</h3>
+      <p>Message <code>@BotFather</code> on Telegram and run <code>/newbot</code>. Save the token it gives you.</p>
+
+      <h3>2. Get your chat ID</h3>
+      <p>Message your new bot, then hit:</p>
+      <pre><code>https://api.telegram.org/bot&lt;YOUR_TOKEN&gt;/getUpdates</code></pre>
+      <p>Look for <code>chat.id</code> in the response.</p>
+
+      <h3>3. Set environment variables</h3>
+      <pre><code>TELEGRAM_BOT_TOKEN=your_bot_token_here
+TELEGRAM_CHAT_ID=your_chat_id_here</code></pre>
+      <p>On Vercel, add these in Settings → Environment Variables.</p>
+
+      <h3>4. Test it</h3>
+      <pre><code>curl -X POST https://nexxore.xyz/api/telegram \
+  -H "Content-Type: application/json" \
+  -d '{"message": "test alert from nexxore"}'</code></pre>
+
+      <h2 id="delta-neutral">Delta-Neutral Guide</h2>
+      <p>A delta-neutral position is one where you're not exposed to the direction of the market. You profit from other things — funding rates, basis spreads, yield — while the price exposure cancels out.</p>
+
+      <h3>How it works on Nexxore</h3>
+      <ol>
+        <li>Go long on spot (buy ETH)</li>
+        <li>Go short the same amount on perps (short ETH-PERP)</li>
+        <li>If ETH goes up, your spot gains and perps lose — net zero</li>
+        <li>If ETH goes down, your spot loses and perps gain — net zero</li>
+        <li>Meanwhile, you collect funding rate payments (when funding is positive)</li>
+      </ol>
+
+      <p>The <a href="delta-neutral.html" style="color:#a855f7">Delta-Neutral Builder</a> automates this. It monitors funding rates and rebalances the hedge automatically.</p>
+
+      <h2 id="deployment">Self-Hosting</h2>
+      <p>Nexxore is deployed on Vercel. If you want to run your own instance:</p>
+
+      <pre><code>git clone https://github.com/ayush101098/nexxore-.git
+cd nexxore-
+npm install
+
+# Set env vars
+cp .env.example .env
+# Edit .env with your keys
+
+# Deploy
+vercel --prod</code></pre>
+
+      <div class="callout info">
+        <p><strong>Note:</strong> You'll need your own API keys for Binance price feeds, Telegram bot, and any other integrations you want to use. See the <code>.env.example</code> file for the full list.</p>
+      </div>
+
+      <div style="margin-top:64px; padding-top:32px; border-top:1px solid var(--border-subtle); font-size:0.82rem; color:var(--text-muted);">
+        <p>Last updated: February 2026. Something wrong or missing? <a href="https://x.com/nexxore" target="_blank" style="color:#a855f7">Let us know.</a></p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Sidebar active state on scroll
+    const sections = document.querySelectorAll('h2[id], h3[id]');
+    const links = document.querySelectorAll('.sidebar-link');
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+      links.forEach(l => {
+        l.classList.remove('active');
+        if (l.getAttribute('href') === '#' + current) l.classList.add('active');
+      });
+    });
+
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const t = document.querySelector(a.getAttribute('href'));
+        if (t) { e.preventDefault(); t.scrollIntoView({ behavior:'smooth', block:'start' }); }
+      });
+    });
+
+    // Clean .html extensions
+    document.querySelectorAll('a[href$=".html"]').forEach(l => {
+      const h = l.getAttribute('href');
+      if (h) l.setAttribute('href', h.replace(/\.html$/, ''));
+    });
+  </script>
+</body>
+</html>
