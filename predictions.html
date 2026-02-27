@@ -510,9 +510,91 @@
     <div class="header-right">
       <button class="header-btn" id="hotkeyToggle" title="Trading Terminal (T)">⌨️ <span class="kbd">T</span></button>
       <button class="header-btn" id="telegramBtn" title="Telegram Alerts">📱 Telegram</button>
+      <button class="header-btn" id="tgPostBtn" title="Post Top Trades to Telegram" style="background:rgba(0,136,204,0.15);color:#0088cc;">📤 Post Trades</button>
       <div class="header-btn active" id="wsStatus"><span class="dot"></span> <span id="wsText">Connecting...</span></div>
     </div>
   </header>
+
+  <!-- ═══════════════════════ TELEGRAM MODAL ═══════════════════════ -->
+  <div class="tg-modal-overlay" id="tgModal">
+    <div class="tg-modal">
+      <div class="tg-modal-header">
+        <span>📱 Telegram Integration</span>
+        <button class="tg-modal-close" id="tgModalClose">✕</button>
+      </div>
+      <div class="tg-modal-body">
+        <div class="tg-status" id="tgStatus">
+          <span class="tg-dot offline"></span>
+          <span id="tgStatusText">Checking connection...</span>
+        </div>
+        <div class="tg-section">
+          <label>Auto-Post Threshold</label>
+          <p class="tg-hint">Trades with edge above this are posted automatically</p>
+          <div class="tg-threshold-row">
+            <input type="range" id="tgThreshold" min="3" max="20" value="8" class="tg-slider">
+            <span id="tgThresholdVal" class="tg-threshold-val">≥ 8¢ edge</span>
+          </div>
+        </div>
+        <div class="tg-section">
+          <label>Auto-Post</label>
+          <div class="tg-toggle-row">
+            <span>Send alerts every 30 min</span>
+            <button class="tg-toggle" id="tgAutoToggle"><span class="tg-toggle-dot"></span></button>
+          </div>
+        </div>
+        <div class="tg-section">
+          <button class="tg-send-btn" id="tgSendNow">📤 Post Top Trades Now</button>
+        </div>
+        <div class="tg-log" id="tgLog">
+          <div class="tg-log-title">Recent Posts</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ TELEGRAM TOAST ═══════════════════════ -->
+  <div class="tg-toast" id="tgToast"></div>
+
+  <style>
+    .tg-modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);z-index:9999;display:none;align-items:center;justify-content:center; }
+    .tg-modal-overlay.open { display:flex; }
+    .tg-modal { background:var(--bg-card);border:1px solid var(--border);border-radius:16px;width:400px;max-width:90vw;overflow:hidden; }
+    .tg-modal-header { display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);font-weight:600;font-size:0.9rem; }
+    .tg-modal-close { background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer; }
+    .tg-modal-body { padding:20px; }
+    .tg-status { display:flex;align-items:center;gap:8px;padding:12px;background:var(--bg-elevated);border-radius:10px;margin-bottom:16px;font-size:0.8rem; }
+    .tg-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+    .tg-dot.online { background:var(--green);box-shadow:0 0 6px var(--green); }
+    .tg-dot.offline { background:var(--red);box-shadow:0 0 6px var(--red); }
+    .tg-dot.checking { background:var(--orange);animation:pulse 1s infinite; }
+    .tg-section { margin-bottom:16px; }
+    .tg-section label { font-size:0.75rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px; }
+    .tg-hint { font-size:0.65rem;color:var(--text-muted);margin-bottom:8px; }
+    .tg-threshold-row { display:flex;align-items:center;gap:12px; }
+    .tg-slider { flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:var(--border);outline:none; }
+    .tg-slider::-webkit-slider-thumb { -webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer; }
+    .tg-threshold-val { font-family:var(--mono);font-size:0.75rem;color:var(--accent);min-width:70px; }
+    .tg-toggle-row { display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg-elevated);border-radius:10px; }
+    .tg-toggle-row span { font-size:0.75rem;color:var(--text-secondary); }
+    .tg-toggle { width:40px;height:22px;border-radius:11px;background:var(--border);border:none;cursor:pointer;position:relative;transition:background 0.2s; }
+    .tg-toggle.active { background:var(--green); }
+    .tg-toggle-dot { position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:white;transition:transform 0.2s; }
+    .tg-toggle.active .tg-toggle-dot { transform:translateX(18px); }
+    .tg-send-btn { width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#0088cc,#00aaff);color:white;font-weight:600;font-size:0.85rem;cursor:pointer;transition:opacity 0.2s; }
+    .tg-send-btn:hover { opacity:0.9; }
+    .tg-send-btn:disabled { opacity:0.5;cursor:not-allowed; }
+    .tg-log { max-height:150px;overflow-y:auto;margin-top:8px; }
+    .tg-log-title { font-size:0.7rem;color:var(--text-muted);margin-bottom:6px;font-weight:600; }
+    .tg-log-entry { font-size:0.65rem;color:var(--text-secondary);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:6px; }
+    .tg-log-entry .tg-log-time { color:var(--text-muted);font-family:var(--mono);white-space:nowrap; }
+    .tg-log-entry .tg-log-msg { flex:1; }
+    .tg-log-entry.success .tg-log-msg { color:var(--green); }
+    .tg-log-entry.error .tg-log-msg { color:var(--red); }
+    .tg-toast { position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--bg-card);border:1px solid var(--border);padding:12px 20px;border-radius:12px;font-size:0.8rem;z-index:10000;transition:transform 0.3s ease;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,0.3); }
+    .tg-toast.show { transform:translateX(-50%) translateY(0); }
+    .tg-toast.success { border-color:var(--green); }
+    .tg-toast.error { border-color:var(--red); }
+  </style>
 
   <!-- ═══════════════════════ MAIN ═══════════════════════ -->
   <main class="main">
@@ -1584,6 +1666,166 @@
     }
 
     init();
+
+    // ═══════════════════════ TELEGRAM INTEGRATION ═══════════════════════
+
+    const TG_API = '/api/telegram';
+    let tgAutoPost = false;
+    let tgThreshold = 8;
+    let tgAutoInterval = null;
+    let tgPostHistory = [];
+
+    // Modal controls
+    document.getElementById('telegramBtn').addEventListener('click', () => {
+      document.getElementById('tgModal').classList.add('open');
+      checkTelegramStatus();
+    });
+    document.getElementById('tgModalClose').addEventListener('click', () => {
+      document.getElementById('tgModal').classList.remove('open');
+    });
+    document.getElementById('tgModal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+    });
+
+    // Quick post button in header
+    document.getElementById('tgPostBtn').addEventListener('click', () => postTradesToTelegram());
+
+    // Threshold slider
+    const tgSlider = document.getElementById('tgThreshold');
+    const tgThreshVal = document.getElementById('tgThresholdVal');
+    tgSlider.addEventListener('input', () => {
+      tgThreshold = parseInt(tgSlider.value);
+      tgThreshVal.textContent = `≥ ${tgThreshold}¢ edge`;
+    });
+
+    // Auto-post toggle
+    document.getElementById('tgAutoToggle').addEventListener('click', function() {
+      tgAutoPost = !tgAutoPost;
+      this.classList.toggle('active', tgAutoPost);
+      if (tgAutoPost) {
+        tgAutoInterval = setInterval(() => postTradesToTelegram(true), 30 * 60 * 1000);
+        showTgToast('✅ Auto-post enabled — every 30 min', 'success');
+        addMemoryLine('watchdog', 'Telegram auto-post <span class="highlight">ENABLED</span> — alerts every 30 min for ≥' + tgThreshold + '¢ edge');
+      } else {
+        clearInterval(tgAutoInterval);
+        tgAutoInterval = null;
+        showTgToast('⏸ Auto-post disabled', '');
+        addMemoryLine('watchdog', 'Telegram auto-post <span class="highlight">DISABLED</span>');
+      }
+    });
+
+    // Send now button inside modal
+    document.getElementById('tgSendNow').addEventListener('click', () => postTradesToTelegram());
+
+    async function checkTelegramStatus() {
+      const dot = document.querySelector('#tgStatus .tg-dot');
+      const text = document.getElementById('tgStatusText');
+      dot.className = 'tg-dot checking';
+      text.textContent = 'Checking connection...';
+      try {
+        const res = await fetch(TG_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: '🔗 PRED Agent — Connection test ✓' }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          dot.className = 'tg-dot online';
+          text.textContent = 'Connected — Bot active';
+        } else {
+          dot.className = 'tg-dot offline';
+          text.textContent = data.error || 'Not configured';
+        }
+      } catch (err) {
+        dot.className = 'tg-dot offline';
+        text.textContent = 'API unreachable';
+      }
+    }
+
+    function getTopTrades(minEdge) {
+      return markets
+        .map(m => {
+          const fv = MLModel.calculateFairValue(m);
+          const sig = MLModel.generateSignal(m, fv);
+          return { ...m, fairValue: fv, edge: sig.edge, confidence: sig.confidence, verdict: sig.verdict };
+        })
+        .filter(m => Math.abs(m.edge) >= (minEdge || tgThreshold))
+        .sort((a, b) => Math.abs(b.edge) - Math.abs(a.edge))
+        .slice(0, 10);
+    }
+
+    async function postTradesToTelegram(isAuto = false) {
+      const btn = document.getElementById('tgSendNow');
+      const headerBtn = document.getElementById('tgPostBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Sending...';
+      headerBtn.style.opacity = '0.5';
+
+      const trades = getTopTrades();
+      if (trades.length === 0) {
+        btn.disabled = false;
+        btn.textContent = '📤 Post Top Trades Now';
+        headerBtn.style.opacity = '1';
+        showTgToast('⚠️ No trades above ' + tgThreshold + '¢ threshold', 'error');
+        return;
+      }
+
+      const payload = trades.map(t => ({
+        title: t.title,
+        edge: t.edge,
+        yesOdds: t.yesOdds,
+        fairValue: t.fairValue,
+        confidence: t.confidence,
+        volume: formatVolume(t.volume),
+        platform: t.platform,
+        category: t.category,
+        expiry: t.expiry,
+      }));
+
+      try {
+        const res = await fetch(TG_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trades: payload }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          const count = data.trades_sent;
+          showTgToast(`✅ Posted ${count} trade${count > 1 ? 's' : ''} to Telegram`, 'success');
+          addMemoryLine('monitor', `📤 Telegram: Posted <span class="highlight">${count} trades</span> (threshold: ≥${tgThreshold}¢)${isAuto ? ' [AUTO]' : ''}`);
+          addTgLogEntry(`Sent ${count} trades (top edge: ${trades[0].edge > 0 ? '+' : ''}${trades[0].edge}¢)`, 'success');
+        } else {
+          showTgToast('❌ ' + (data.error || 'Send failed'), 'error');
+          addTgLogEntry(data.error || 'Send failed', 'error');
+        }
+      } catch (err) {
+        showTgToast('❌ Network error — check connection', 'error');
+        addTgLogEntry('Network error: ' + err.message, 'error');
+      }
+
+      btn.disabled = false;
+      btn.textContent = '📤 Post Top Trades Now';
+      headerBtn.style.opacity = '1';
+    }
+
+    function addTgLogEntry(msg, type) {
+      const log = document.getElementById('tgLog');
+      const now = new Date();
+      const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const entry = document.createElement('div');
+      entry.className = `tg-log-entry ${type}`;
+      entry.innerHTML = `<span class="tg-log-time">${ts}</span><span class="tg-log-msg">${msg}</span>`;
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function showTgToast(msg, type) {
+      const toast = document.getElementById('tgToast');
+      toast.textContent = msg;
+      toast.className = `tg-toast show ${type}`;
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
   </script>
 
   <script>
