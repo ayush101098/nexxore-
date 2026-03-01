@@ -9,15 +9,14 @@
   <link rel="canonical" href="https://nexxore.vercel.app/delta-neutral.html">
   
   <!-- Favicons -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%23a855f7'/><stop offset='100%25' stop-color='%2322c55e'/></linearGradient></defs><rect width='32' height='32' rx='6' fill='%2308080a'/><circle cx='12' cy='11' r='6' stroke='url(%23g)' stroke-width='2' fill='none'/><circle cx='20' cy='11' r='6' stroke='url(%23g)' stroke-width='2' fill='none' opacity='.9'/><circle cx='16' cy='18' r='6' stroke='url(%23g)' stroke-width='2' fill='none' opacity='.9'/></svg>" type="image/svg+xml">
-  <link rel="icon" type="image/svg+xml" href="frontend/assets/icons/favicon.svg">
-  
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='fg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%234a6fa5'/><stop offset='100%25' stop-color='%233d8b6e'/></linearGradient></defs><rect width='32' height='32' rx='4' fill='%230a0a0b'/><g transform='translate(4,4) scale(0.75)'><circle cx='12' cy='10' r='7' stroke='url(%23fg)' stroke-width='2' fill='none'/><circle cx='20' cy='10' r='7' stroke='url(%23fg)' stroke-width='2' fill='none' opacity='.85'/><circle cx='16' cy='17' r='7' stroke='url(%23fg)' stroke-width='2' fill='none' opacity='.85'/></g></svg>" type="image/svg+xml">
+
   <!-- Open Graph -->
   <meta property="og:title" content="Delta Neutral Builder | Nexxore">
   <meta property="og:description" content="Build market-neutral positions with automated hedging across perpetuals and options.">
   <meta property="og:image" content="https://nexxore.vercel.app/frontend/assets/icons/og-image.svg">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#08080a">
+  <meta name="theme-color" content="#0a0a0b">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,9 +53,9 @@
       --yellow: var(--semantic-warning);
       --yellow-dim: rgba(234,179,8,0.12);
       --purple: var(--accent-primary);
-      --purple-dim: rgba(168,85,247,0.12);
-      --cyan: #06b6d4;
-      --cyan-dim: rgba(6,182,212,0.12);
+      --purple-dim: rgba(74,111,165,0.12);
+      --cyan: #4a6fa5;
+      --cyan-dim: rgba(74,111,165,0.12);
       --mono: var(--font-family-mono);
       --sans: var(--font-family-sans);
       --radius: var(--radius-md);
@@ -104,8 +103,8 @@
     .logo-mark {
       width: 34px;
       height: 34px;
-      background: linear-gradient(135deg, var(--accent), var(--purple));
-      border-radius: 10px;
+      background: linear-gradient(135deg, #4a6fa5, #3d8b6e);
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -902,9 +901,9 @@
     <!-- Header -->
     <header class="header">
       <a href="/" class="logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="width: 28px; height: 28px;">
-          <defs><linearGradient id="logoGrad" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs>
-          <g transform="translate(10,15) scale(0.8)"><circle cx="50" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#logoGrad)" stroke-width="6" fill="none" opacity="0.85"/></g>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 90" style="width: 28px; height: auto;">
+          <defs><linearGradient id="logoGrad" x1="0" x2="1"><stop offset="0" stop-color="#4a6fa5"/><stop offset="1" stop-color="#3d8b6e"/></linearGradient></defs>
+          <circle cx="38" cy="30" r="22" stroke="url(#logoGrad)" stroke-width="4" fill="none" opacity="0.95"/><circle cx="62" cy="30" r="22" stroke="url(#logoGrad)" stroke-width="4" fill="none" opacity="0.85"/><circle cx="50" cy="52" r="22" stroke="url(#logoGrad)" stroke-width="4" fill="none" opacity="0.85"/>
         </svg>
         <span class="logo-text">nexxore</span>
       </a>
@@ -1639,14 +1638,14 @@
         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       });
       
-      ctx.strokeStyle = '#a855f7';
+      ctx.strokeStyle = '#4a6fa5';
       ctx.lineWidth = 2.5;
       ctx.stroke();
 
       // Gradient fill
       const gradient = ctx.createLinearGradient(0, P, 0, H - P);
       gradient.addColorStop(0, 'rgba(34,197,94,0.25)');
-      gradient.addColorStop(0.5, 'rgba(168,85,247,0.05)');
+      gradient.addColorStop(0.5, 'rgba(74,111,165,0.05)');
       gradient.addColorStop(1, 'rgba(239,68,68,0.25)');
       
       ctx.lineTo(W - P, zeroY);
@@ -1996,7 +1995,7 @@
       return ctx;
     }
 
-    function drawMiniPnL(ctx, W, H, points, color = '#a855f7') {
+    function drawMiniPnL(ctx, W, H, points, color = '#4a6fa5') {
       const maxY = Math.max(...points.map(p => Math.abs(p)));
       const zeroY = H / 2;
       
@@ -2039,7 +2038,7 @@
         const x = (i - 25) / 25;
         points.push(Math.abs(x) < 0.3 ? 0.5 : 0.5 - Math.abs(x) * 0.3);
       }
-      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#22c55e');
+      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#3d8b6e');
     }
 
     function drawCoveredCallMini(canvas) {
@@ -2050,7 +2049,7 @@
         if (x < 0.3) points.push(x * 2);
         else points.push(0.6);
       }
-      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#06b6d4');
+      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#4a6fa5');
     }
 
     function drawProtectivePutMini(canvas) {
@@ -2061,7 +2060,7 @@
         if (x < -0.2) points.push(-0.3);
         else points.push(x * 1.5 - 0.1);
       }
-      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#06b6d4');
+      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#4a6fa5');
     }
 
     function drawStraddleMini(canvas) {
@@ -2071,7 +2070,7 @@
         const x = (i - 25) / 25;
         points.push(Math.abs(x) * 1.5 - 0.3);
       }
-      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#22c55e');
+      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#3d8b6e');
     }
 
     function drawIronCondorMini(canvas) {
@@ -2093,7 +2092,7 @@
         const x = (i - 25) / 25;
         points.push(Math.sin(x * 3) * 0.4);
       }
-      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#a855f7');
+      drawMiniPnL(ctx, canvas.width, canvas.height, points, '#4a6fa5');
     }
 
     // Draw strategy charts after DOM ready

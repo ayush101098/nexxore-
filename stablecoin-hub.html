@@ -9,15 +9,15 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg: #08080a;
-      --panel: #111114;
-      --panel-soft: #14141a;
-      --border: rgba(255,255,255,0.08);
-      --text: #fff;
-      --muted: rgba(255,255,255,0.6);
-      --dim: rgba(255,255,255,0.4);
-      --accent: #a855f7;
-      --green: #22c55e;
+      --bg: #0a0a0b;
+      --panel: #0f1012;
+      --panel-soft: #141517;
+      --border: rgba(255,255,255,0.06);
+      --text: #d4d4d8;
+      --muted: #a1a1aa;
+      --dim: #71717a;
+      --accent: #4a6fa5;
+      --green: #3d8b6e;
       --red: #ef4444;
       --yellow: #f59e0b;
       --blue: #3b82f6;
@@ -29,7 +29,7 @@
     .logo span { font-weight: 700; }
     .cta { padding: 8px 14px; background: var(--accent); color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.85rem; }
     .container { max-width: 1300px; margin: 0 auto; padding: 24px; }
-    .hero { background: linear-gradient(135deg, rgba(168,85,247,0.15), rgba(34,197,94,0.1)); border:1px solid var(--border); border-radius: 16px; padding: 24px; display:grid; gap: 14px; }
+    .hero { background: linear-gradient(135deg, rgba(74,111,165,0.15), rgba(61,139,110,0.1)); border:1px solid var(--border); border-radius: 16px; padding: 24px; display:grid; gap: 14px; }
     .hero h1 { font-size: 1.9rem; }
     .hero p { color: var(--muted); line-height: 1.6; }
     .stats { display:grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
@@ -45,22 +45,22 @@
     .table th, .table td { padding: 8px; border-bottom:1px solid var(--border); text-align: left; color: var(--muted); }
     .table th { color: var(--dim); font-size: 0.7rem; text-transform: uppercase; }
     .badge { padding: 2px 8px; border-radius: 999px; font-size: 0.65rem; border:1px solid var(--border); color: var(--muted); }
-    .badge.green { color: var(--green); border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); }
+    .badge.green { color: var(--green); border-color: rgba(34,197,94,0.3); background: rgba(61,139,110,0.1); }
     .badge.yellow { color: var(--yellow); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.1); }
     .badge.red { color: var(--red); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
     .badge.blue { color: var(--blue); border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.1); }
-    .badge.purple { color: var(--accent); border-color: rgba(168,85,247,0.3); background: rgba(168,85,247,0.1); }
+    .badge.purple { color: var(--accent); border-color: rgba(74,111,165,0.3); background: rgba(74,111,165,0.1); }
     .section { margin-top: 22px; }
     .section-title { font-size: 1.1rem; margin-bottom: 10px; }
     .cards { display:grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
     .card { background: var(--panel-soft); border:1px solid var(--border); border-radius: 12px; padding: 12px; }
     .card h4 { font-size: 0.9rem; margin-bottom: 6px; }
     .list { display:grid; gap: 6px; color: var(--muted); font-size: 0.8rem; }
-    .cta-strip { margin-top: 16px; padding: 12px; border:1px solid rgba(168,85,247,0.3); border-radius: 12px; background: rgba(168,85,247,0.08); text-align:center; font-weight:600; }
+    .cta-strip { margin-top: 16px; padding: 12px; border:1px solid rgba(74,111,165,0.3); border-radius: 12px; background: rgba(74,111,165,0.08); text-align:center; font-weight:600; }
     .feature-tabs { margin-top: 18px; background: var(--panel); border:1px solid var(--border); border-radius: 16px; padding: 16px; }
     .tab-bar { display:flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
     .tab-btn { padding: 8px 12px; border-radius: 999px; border:1px solid var(--border); background: transparent; color: var(--muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
-    .tab-btn.active { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.35); color: #fff; }
+    .tab-btn.active { background: rgba(74,111,165,0.15); border-color: rgba(74,111,165,0.35); color: #fff; }
     .tab-panel { display:none; gap: 12px; }
     .tab-panel.active { display:grid; grid-template-columns: 1.2fr 1fr; }
     .tab-cta { display:flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
@@ -81,7 +81,7 @@
     .yield-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
     .yield-filters { display: flex; gap: 8px; flex-wrap: wrap; }
     .filter-btn { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 0.7rem; cursor: pointer; transition: all 0.2s; }
-    .filter-btn:hover, .filter-btn.active { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.4); color: #fff; }
+    .filter-btn:hover, .filter-btn.active { background: rgba(74,111,165,0.15); border-color: rgba(74,111,165,0.4); color: #fff; }
     .yield-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
     .yield-table th { padding: 10px 8px; text-align: left; color: var(--dim); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
     .yield-table td { padding: 12px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
@@ -94,7 +94,7 @@
     .asset-icon.frax { background: #000; border: 1px solid #fff; color: #fff; }
     .asset-icon.usdd { background: #1db857; color: #fff; }
     .asset-icon.gho { background: #6e64ff; color: #fff; }
-    .asset-icon.crvusd { background: #a855f7; color: #fff; }
+    .asset-icon.crvusd { background: #4a6fa5; color: #fff; }
     .asset-icon.pyusd { background: #0070e0; color: #fff; }
     .asset-icon.eusd { background: #ef4444; color: #fff; }
     .asset-icon.lusd { background: #3b82f6; color: #fff; }
@@ -120,13 +120,13 @@
     .risk-dot.high { background: var(--red); }
     .action-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 0.65rem; cursor: pointer; transition: all 0.15s; }
     .action-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .strategy-card { background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(34,197,94,0.05)); border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 14px; }
+    .strategy-card { background: linear-gradient(135deg, rgba(74,111,165,0.1), rgba(61,139,110,0.05)); border: 1px solid rgba(74,111,165,0.2); border-radius: 12px; padding: 14px; }
     .strategy-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .strategy-title { font-size: 0.9rem; font-weight: 600; }
     .strategy-apy { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--green); }
     .strategy-steps { display: grid; gap: 6px; font-size: 0.75rem; color: var(--muted); }
     .strategy-step { display: flex; align-items: center; gap: 8px; }
-    .step-num { width: 18px; height: 18px; border-radius: 50%; background: rgba(168,85,247,0.2); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 600; color: var(--accent); }
+    .step-num { width: 18px; height: 18px; border-radius: 50%; background: rgba(74,111,165,0.2); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 600; color: var(--accent); }
     .tvl-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-top: 4px; }
     .tvl-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); }
 
@@ -144,7 +144,7 @@
 <body>
   <header class="header">
     <a href="index" class="logo">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="width:28px;height:28px;"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs><g transform="translate(10,15) scale(0.8)"><circle cx="50" cy="40" r="28" stroke="url(#g)" stroke-width="6" fill="none" opacity="0.95"/><circle cx="78" cy="40" r="28" stroke="url(#g)" stroke-width="6" fill="none" opacity="0.85"/><circle cx="64" cy="64" r="28" stroke="url(#g)" stroke-width="6" fill="none" opacity="0.85"/></g></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 90" style="width:28px;height:auto;"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#4a6fa5"/><stop offset="1" stop-color="#3d8b6e"/></linearGradient></defs><circle cx="38" cy="30" r="22" stroke="url(#g)" stroke-width="4" fill="none" opacity="0.95"/><circle cx="62" cy="30" r="22" stroke="url(#g)" stroke-width="4" fill="none" opacity="0.85"/><circle cx="50" cy="52" r="22" stroke="url(#g)" stroke-width="4" fill="none" opacity="0.85"/></svg>
       <span>nexxore</span>
     </a>
     <a class="cta" href="perps">Launch Perps</a>
@@ -622,7 +622,7 @@
             
             <!-- USDe (Ethena) -->
             <tr data-asset="usde" data-risk="medium">
-              <td><div class="asset-cell"><div class="asset-icon" style="background:#000;border:1px solid #06b6d4;color:#06b6d4;">E</div><strong>USDe</strong></div></td>
+              <td><div class="asset-cell"><div class="asset-icon" style="background:#000;border:1px solid #4a6fa5;color:#4a6fa5;">E</div><strong>USDe</strong></div></td>
               <td>Ethena (sUSDe)</td>
               <td>Staking</td>
               <td class="apy-cell apy-high">18.4%</td>
@@ -634,7 +634,7 @@
               <td><button class="action-btn">Deposit</button></td>
             </tr>
             <tr data-asset="usde" data-risk="medium">
-              <td><div class="asset-cell"><div class="asset-icon" style="background:#000;border:1px solid #06b6d4;color:#06b6d4;">E</div><strong>USDe</strong></div></td>
+              <td><div class="asset-cell"><div class="asset-icon" style="background:#000;border:1px solid #4a6fa5;color:#4a6fa5;">E</div><strong>USDe</strong></div></td>
               <td>Pendle PT-sUSDe</td>
               <td>Fixed Yield</td>
               <td class="apy-cell apy-high">14.2%</td>
@@ -646,7 +646,7 @@
               <td><button class="action-btn">Deposit</button></td>
             </tr>
             <tr data-asset="usde" data-risk="medium">
-              <td><div class="asset-cell"><div class="asset-icon" style="background:#000;border:1px solid #06b6d4;color:#06b6d4;">E</div><strong>USDe</strong></div></td>
+              <td><div class="asset-cell"><div class="asset-icon" style="background:#000;border:1px solid #4a6fa5;color:#4a6fa5;">E</div><strong>USDe</strong></div></td>
               <td>Morpho Blue</td>
               <td>Lending</td>
               <td class="apy-cell apy-high">12.6%</td>
@@ -781,7 +781,7 @@
               <td>✓ Multiple</td>
             </tr>
             <tr>
-              <td><div class="asset-cell"><div class="asset-icon" style="background:#000;border:1px solid #06b6d4;color:#06b6d4;">E</div><strong>USDe</strong></div></td>
+              <td><div class="asset-cell"><div class="asset-icon" style="background:#000;border:1px solid #4a6fa5;color:#4a6fa5;">E</div><strong>USDe</strong></div></td>
               <td>Ethena</td>
               <td>Delta-Neutral</td>
               <td>$2.8B</td>
@@ -1389,7 +1389,7 @@
           labels: ['USDC', 'USDT', 'DAI', 'FRAX', 'USDD', 'Other'],
           datasets: [{
             data: [36, 28, 14, 9, 6, 7],
-            backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b', '#a855f7', '#ef4444', 'rgba(255,255,255,0.2)'],
+            backgroundColor: ['#3d8b6e', '#4a6fa5', '#b08d45', '#6b7db3', '#b94444', 'rgba(255,255,255,0.15)'],
             borderWidth: 0
           }]
         },
@@ -1486,7 +1486,7 @@
           
           // Flash effect
           cell.style.transition = 'background 0.3s';
-          cell.style.background = 'rgba(168,85,247,0.2)';
+          cell.style.background = 'rgba(74,111,165,0.2)';
           setTimeout(() => {
             cell.style.background = 'transparent';
           }, 500);
