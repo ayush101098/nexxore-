@@ -8,10 +8,10 @@ const axios = require('axios');
 // API Configuration
 const API_KEYS = {
   glassnode: process.env.GLASSNODE_API_KEY || '',
-  messari: process.env.MESSARI_API_KEY || 'XFt9ZK6NwVSRovOVTtkNmxydSRdqLlIqnQQsjlpArr+dK-uL',
+  messari: process.env.MESSARI_API_KEY || '',
   nansen: process.env.NANSEN_API_KEY || '',
   tokenTerminal: process.env.TOKEN_TERMINAL_API_KEY || '',
-  coingecko: process.env.COINGECKO_API_KEY || 'XFt9ZK6NwVSRovOVTtkNmxydSRdqLlIqnQQsjlpArr+dK-uL'
+  coingecko: process.env.COINGECKO_API_KEY || ''
 };
 
 // Market symbol mappings

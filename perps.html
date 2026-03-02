@@ -2196,29 +2196,52 @@
       };
     });
 
-    // Market-specific statistics
-    const marketStats = {
-      'BTC': { openInterest: 892.5e6, volume24h: 2.8e9, tvl: 156.3e6, fundingRate: 0.0082, maxLeverage: 50 },
-      'ETH': { openInterest: 524.3e6, volume24h: 1.6e9, tvl: 98.7e6, fundingRate: 0.0074, maxLeverage: 50 },
-      'SOL': { openInterest: 187.4e6, volume24h: 456.2e6, tvl: 42.5e6, fundingRate: 0.0091, maxLeverage: 50 },
-      'HYPE': { openInterest: 45.2e6, volume24h: 89.3e6, tvl: 18.9e6, fundingRate: 0.0125, maxLeverage: 25 },
-      'ARB': { openInterest: 92.1e6, volume24h: 234.5e6, tvl: 31.2e6, fundingRate: 0.0068, maxLeverage: 50 },
-      'OP': { openInterest: 78.3e6, volume24h: 198.7e6, tvl: 28.4e6, fundingRate: 0.0072, maxLeverage: 50 },
-      'AVAX': { openInterest: 112.5e6, volume24h: 287.4e6, tvl: 35.8e6, fundingRate: 0.0079, maxLeverage: 50 },
-      'MATIC': { openInterest: 156.8e6, volume24h: 312.9e6, tvl: 45.6e6, fundingRate: 0.0065, maxLeverage: 50 },
-      'DOGE': { openInterest: 234.6e6, volume24h: 498.2e6, tvl: 67.3e6, fundingRate: 0.0088, maxLeverage: 50 },
-      'LINK': { openInterest: 89.4e6, volume24h: 223.1e6, tvl: 29.7e6, fundingRate: 0.0076, maxLeverage: 50 },
-      'UNI': { openInterest: 67.2e6, volume24h: 167.8e6, tvl: 24.5e6, fundingRate: 0.0071, maxLeverage: 50 },
-      'ATOM': { openInterest: 54.3e6, volume24h: 134.6e6, tvl: 21.8e6, fundingRate: 0.0083, maxLeverage: 50 },
-      'LTC': { openInterest: 98.7e6, volume24h: 245.3e6, tvl: 33.4e6, fundingRate: 0.0069, maxLeverage: 50 },
-      'BCH': { openInterest: 76.5e6, volume24h: 189.2e6, tvl: 27.9e6, fundingRate: 0.0073, maxLeverage: 50 },
-      'ETC': { openInterest: 43.2e6, volume24h: 98.7e6, tvl: 16.3e6, fundingRate: 0.0081, maxLeverage: 40 },
-      'FIL': { openInterest: 38.9e6, volume24h: 87.4e6, tvl: 14.7e6, fundingRate: 0.0078, maxLeverage: 40 },
-      'APT': { openInterest: 52.1e6, volume24h: 123.5e6, tvl: 19.8e6, fundingRate: 0.0092, maxLeverage: 40 },
-      'STX': { openInterest: 29.4e6, volume24h: 67.8e6, tvl: 11.2e6, fundingRate: 0.0087, maxLeverage: 30 },
-      'INJ': { openInterest: 61.8e6, volume24h: 145.3e6, tvl: 23.6e6, fundingRate: 0.0095, maxLeverage: 40 },
-      'TIA': { openInterest: 34.6e6, volume24h: 78.9e6, tvl: 13.4e6, fundingRate: 0.0089, maxLeverage: 30 }
-    };
+    // Market-specific statistics — loaded from Hyperliquid API
+    let marketStats = {};
+
+    // Initialize with placeholder structure (will be replaced by live data)
+    Object.keys(markets).forEach(key => {
+      marketStats[key] = { openInterest: 0, volume24h: 0, tvl: 0, fundingRate: 0, maxLeverage: 50 };
+    });
+
+    // Fetch real market stats from Hyperliquid
+    async function loadLiveMarketStats() {
+      try {
+        const resp = await fetch('https://api.hyperliquid.xyz/info', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'metaAndAssetCtxs' })
+        });
+        if (!resp.ok) throw new Error('metaAndAssetCtxs fetch failed');
+        const data = await resp.json();
+        const [meta, assetCtxs] = data;
+        
+        if (meta?.universe && assetCtxs) {
+          meta.universe.forEach((asset, idx) => {
+            const coin = asset.name;
+            if (!marketStats[coin]) return;
+            const ctx = assetCtxs[idx];
+            if (!ctx) return;
+            
+            const markPx = parseFloat(ctx.markPx || '0');
+            const oiRaw = parseFloat(ctx.openInterest || '0');
+            const dayNtlVlm = parseFloat(ctx.dayNtlVlm || '0');
+            const funding = parseFloat(ctx.funding || '0');
+            
+            marketStats[coin] = {
+              openInterest: oiRaw * markPx,
+              volume24h: dayNtlVlm,
+              tvl: oiRaw * markPx * 0.15, // Approximate TVL from OI
+              fundingRate: funding,
+              maxLeverage: asset.maxLeverage || 50
+            };
+          });
+        }
+        console.log('✅ Live market stats loaded from Hyperliquid');
+      } catch (err) {
+        console.warn('Failed to load live market stats:', err);
+      }
+    }
 
     // Chart Variables
     let chart = null;
@@ -2418,12 +2441,16 @@
       ethersProvider = new ethers.BrowserProvider(walletProvider);
       state.walletAddress = accounts[0];
       state.isWalletConnected = true;
-      state.balance = 10000;
+      state.balance = 0;
       updateWalletUI();
+
+      // Fetch real balance from Hyperliquid clearinghouse
+      fetchHyperliquidBalance(accounts[0]);
 
       walletProvider.on?.('accountsChanged', (accs) => {
         state.walletAddress = accs?.[0] || null;
         state.isWalletConnected = !!state.walletAddress;
+        if (state.walletAddress) fetchHyperliquidBalance(state.walletAddress);
         updateWalletUI();
       });
     }
@@ -2448,12 +2475,16 @@
       const accounts = await ethersProvider.send('eth_accounts', []);
       state.walletAddress = accounts[0];
       state.isWalletConnected = true;
-      state.balance = 10000;
+      state.balance = 0;
       updateWalletUI();
+
+      // Fetch real balance from Hyperliquid clearinghouse
+      fetchHyperliquidBalance(accounts[0]);
 
       walletProvider.on?.('accountsChanged', (accs) => {
         state.walletAddress = accs?.[0] || null;
         state.isWalletConnected = !!state.walletAddress;
+        if (state.walletAddress) fetchHyperliquidBalance(state.walletAddress);
         updateWalletUI();
       });
     }
@@ -2470,7 +2501,86 @@
       state.isWalletConnected = true;
       walletProvider = provider;
       walletType = `solana-${type}`;
+      state.balance = 0;
       updateWalletUI();
+    }
+
+    // Fetch real balance from Hyperliquid clearinghouse
+    async function fetchHyperliquidBalance(address) {
+      try {
+        const resp = await fetch('https://api.hyperliquid.xyz/info', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'clearinghouseState', user: address })
+        });
+        if (!resp.ok) throw new Error('Clearinghouse fetch failed');
+        const data = await resp.json();
+        const accountValue = parseFloat(data?.marginSummary?.accountValue || '0');
+        const withdrawable = parseFloat(data?.withdrawable || '0');
+        state.balance = accountValue;
+        state.withdrawable = withdrawable;
+        
+        // Parse existing positions from Hyperliquid
+        if (data?.assetPositions?.length) {
+          state.positions = data.assetPositions
+            .filter(ap => ap.position && parseFloat(ap.position.szi) !== 0)
+            .map((ap, idx) => {
+              const pos = ap.position;
+              const szi = parseFloat(pos.szi);
+              const entryPx = parseFloat(pos.entryPx);
+              const markPx = priceData[pos.coin]?.price || entryPx;
+              const unrealizedPnl = parseFloat(pos.unrealizedPnl || '0');
+              return {
+                id: `hl-${pos.coin}-${idx}`,
+                market: pos.coin,
+                side: szi > 0 ? 'long' : 'short',
+                size: Math.abs(szi).toFixed(4),
+                entryPrice: entryPx,
+                markPrice: markPx,
+                leverage: parseFloat(pos.leverage?.value || '10'),
+                margin: parseFloat(pos.marginUsed || '0'),
+                pnl: unrealizedPnl,
+                pnlPercent: entryPx > 0 ? ((markPx - entryPx) / entryPx * 100 * (szi > 0 ? 1 : -1)) : 0,
+                liquidationPx: parseFloat(pos.liquidationPx || '0'),
+                source: 'hyperliquid'
+              };
+            });
+          renderPositions();
+        }
+
+        // Load open orders from Hyperliquid
+        try {
+          const ordersResp = await fetch('https://api.hyperliquid.xyz/info', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'openOrders', user: address })
+          });
+          if (ordersResp.ok) {
+            const ordersData = await ordersResp.json();
+            state.orders = (ordersData || []).map((o, idx) => ({
+              id: `hl-order-${o.oid || idx}`,
+              oid: o.oid,
+              market: o.coin,
+              side: o.side === 'B' ? 'long' : 'short',
+              orderType: o.orderType === 'Limit' ? 'limit' : 'market',
+              price: parseFloat(o.limitPx),
+              size: parseFloat(o.sz),
+              status: 'open',
+              timestamp: o.timestamp,
+              source: 'hyperliquid'
+            }));
+            renderOrders();
+          }
+        } catch (e) {
+          console.warn('Failed to load open orders:', e);
+        }
+
+        updateWalletUI();
+        console.log(`✅ Hyperliquid balance: $${accountValue.toFixed(2)} (withdrawable: $${withdrawable.toFixed(2)})`);
+      } catch (err) {
+        console.warn('Failed to fetch Hyperliquid balance:', err);
+        // Balance stays at 0 — user may not have deposited to Hyperliquid yet
+      }
     }
 
     function disconnectWallet() {
@@ -2499,10 +2609,8 @@
         document.getElementById('availableBalance').textContent = 'Available: $0.00';
       }
       updateSubmitButton();
-      if (state.isWalletConnected) {
-        loadUserPositions();
+      if (state.isWalletConnected && state.walletAddress) {
         loadUserHistory();
-        loadUserOrders();
       }
     }
 
@@ -2526,35 +2634,42 @@
     async function loadUserPositions() {
       const address = state.walletAddress || state.solanaAddress;
       if (!address) return;
-      try {
-        const data = await perpsApiRequest(`/perps/positions?address=${address}`);
-        state.positions = data.positions || [];
-        renderPositions();
-      } catch (e) {
-        console.error('Positions load failed:', e);
-      }
+      // Positions are already loaded by fetchHyperliquidBalance
+      // This is a no-op now — kept for interface compatibility
     }
 
     async function loadUserHistory() {
-      const address = state.walletAddress || state.solanaAddress;
+      const address = state.walletAddress;
       if (!address) return;
       try {
-        await perpsApiRequest(`/perps/history?address=${address}`);
+        const resp = await fetch('https://api.hyperliquid.xyz/info', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'userFills', user: address })
+        });
+        if (resp.ok) {
+          const fills = await resp.json();
+          // Store fills for display if needed
+          state.tradeHistory = (fills || []).slice(0, 50).map(f => ({
+            market: f.coin,
+            side: f.side === 'B' ? 'long' : 'short',
+            size: f.sz,
+            price: f.px,
+            fee: f.fee,
+            time: f.time,
+            hash: f.hash
+          }));
+        }
       } catch (e) {
-        console.error('History load failed:', e);
+        console.warn('History load failed:', e);
       }
     }
 
     async function loadUserOrders() {
-      const address = state.walletAddress || state.solanaAddress;
+      const address = state.walletAddress;
       if (!address) return;
-      try {
-        const data = await perpsApiRequest(`/perps/orders?address=${address}`);
-        state.orders = (data.orders || []).filter(o => o.status === 'open');
-        renderOrders();
-      } catch (e) {
-        console.error('Orders load failed:', e);
-      }
+      // Orders are already loaded by fetchHyperliquidBalance
+      // This is a no-op now — kept for interface compatibility
     }
 
     // ==========================================
@@ -2781,29 +2896,47 @@
     // ==========================================
 
     function generateOrderBook() {
-      const price = priceData[state.currentMarket].price;
-      const asks = [];
-      const bids = [];
+      // Fetch real L2 orderbook from Hyperliquid when no WS feed
+      const coin = state.currentMarket;
+      const price = priceData[coin]?.price || 0;
       
-      let askPrice = price + 0.05;
-      let bidPrice = price - 0.05;
-      let askTotal = 0;
-      let bidTotal = 0;
-
-      for (let i = 0; i < 12; i++) {
-        const askSize = Math.random() * 50 + 5;
-        const bidSize = Math.random() * 50 + 5;
-        askTotal += askSize;
-        bidTotal += bidSize;
-        
-        asks.push({ price: askPrice, size: askSize, total: askTotal });
-        bids.push({ price: bidPrice, size: bidSize, total: bidTotal });
-        
-        askPrice += Math.random() * 0.5 + 0.1;
-        bidPrice -= Math.random() * 0.5 + 0.1;
+      // Trigger async fetch for next render
+      if (!state._orderbookLoading) {
+        state._orderbookLoading = true;
+        fetch('https://api.hyperliquid.xyz/info', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'l2Book', coin })
+        }).then(r => r.json()).then(data => {
+          if (data?.levels) {
+            const [rawBids, rawAsks] = data.levels;
+            state.orderbooks[coin] = {
+              bids: rawBids.map(l => ({ price: l.px, size: l.sz })),
+              asks: rawAsks.map(l => ({ price: l.px, size: l.sz }))
+            };
+          }
+          state._orderbookLoading = false;
+        }).catch(() => { state._orderbookLoading = false; });
       }
 
-      return { asks: asks.reverse(), bids, spread: asks[asks.length - 1].price - bids[0].price };
+      // Return a minimal placeholder while loading
+      if (!price) return { asks: [], bids: [], spread: 0 };
+      const asks = [];
+      const bids = [];
+      let askPrice = price * 1.0001;
+      let bidPrice = price * 0.9999;
+      let askTotal = 0, bidTotal = 0;
+      for (let i = 0; i < 5; i++) {
+        const askSize = 0.01;
+        const bidSize = 0.01;
+        askTotal += askSize;
+        bidTotal += bidSize;
+        asks.push({ price: askPrice, size: askSize, total: askTotal });
+        bids.push({ price: bidPrice, size: bidSize, total: bidTotal });
+        askPrice *= 1.0001;
+        bidPrice *= 0.9999;
+      }
+      return { asks: asks.reverse(), bids, spread: asks[asks.length - 1]?.price - bids[0]?.price || 0 };
     }
 
     function normalizeOrderbook(raw) {
@@ -3465,33 +3598,43 @@
     // ==========================================
 
     let protocolStats = {
-      openInterest: 24800000,
-      volume24h: 156200000,
-      tvl: 42500000,
-      fundingRate: 0.0082
+      openInterest: 0,
+      volume24h: 0,
+      tvl: 0,
+      fundingRate: 0
     };
 
     function updateProtocolStats() {
-      // Simulate realistic variations
-      protocolStats.openInterest += (Math.random() - 0.48) * 100000;
-      protocolStats.volume24h += (Math.random() - 0.3) * 300000;
-      protocolStats.tvl += (Math.random() - 0.5) * 30000;
-      protocolStats.fundingRate += (Math.random() - 0.5) * 0.0003;
-
-      // Keep within bounds
-      protocolStats.openInterest = Math.max(20000000, Math.min(35000000, protocolStats.openInterest));
-      protocolStats.volume24h = Math.max(100000000, Math.min(250000000, protocolStats.volume24h));
-      protocolStats.tvl = Math.max(35000000, Math.min(55000000, protocolStats.tvl));
-      protocolStats.fundingRate = Math.max(-0.03, Math.min(0.03, protocolStats.fundingRate));
+      // Aggregate real stats from all markets
+      let totalOI = 0, totalVol = 0, totalTVL = 0;
+      let weightedFunding = 0, totalWeight = 0;
+      
+      Object.keys(marketStats).forEach(key => {
+        const s = marketStats[key];
+        if (!s) return;
+        totalOI += s.openInterest || 0;
+        totalVol += s.volume24h || 0;
+        totalTVL += s.tvl || 0;
+        if (s.openInterest > 0) {
+          weightedFunding += (s.fundingRate || 0) * s.openInterest;
+          totalWeight += s.openInterest;
+        }
+      });
+      
+      protocolStats.openInterest = totalOI;
+      protocolStats.volume24h = totalVol;
+      protocolStats.tvl = totalTVL;
+      protocolStats.fundingRate = totalWeight > 0 ? weightedFunding / totalWeight : 0;
 
       document.getElementById('statOI').textContent = '$' + formatNumber(protocolStats.openInterest);
       document.getElementById('statVolume').textContent = '$' + formatNumber(protocolStats.volume24h);
       document.getElementById('statTVL').textContent = '$' + formatNumber(protocolStats.tvl);
-      document.getElementById('statFunding').textContent = protocolStats.fundingRate.toFixed(4) + '%';
+      document.getElementById('statFunding').textContent = (protocolStats.fundingRate * 100).toFixed(4) + '%';
       
       const fundingEl = document.getElementById('currentFundingRate');
-      fundingEl.textContent = (protocolStats.fundingRate >= 0 ? '+' : '') + protocolStats.fundingRate.toFixed(4) + '%';
-      fundingEl.className = 'funding-rate-value ' + (protocolStats.fundingRate >= 0 ? 'positive' : 'negative');
+      const fundingPct = protocolStats.fundingRate * 100;
+      fundingEl.textContent = (fundingPct >= 0 ? '+' : '') + fundingPct.toFixed(4) + '%';
+      fundingEl.className = 'funding-rate-value ' + (fundingPct >= 0 ? 'positive' : 'negative');
     }
 
     // ==========================================
@@ -3695,17 +3838,20 @@
         });
       });
 
-      // Connect wallet button - DISABLED (Coming Soon)
+      // Connect wallet button — opens wallet modal or disconnects
       document.getElementById('connectWallet').addEventListener('click', async function() {
-        // Show coming soon modal instead of wallet connection
-        document.getElementById('comingSoonModal').style.display = 'flex';
+        if (state.isWalletConnected) {
+          disconnectWallet();
+        } else {
+          toggleWalletModal(true);
+        }
       });
       
-      // Close coming soon modal
-      document.getElementById('closeComingSoon').addEventListener('click', () => {
+      // Close coming soon modal (kept for backward compat)
+      document.getElementById('closeComingSoon')?.addEventListener('click', () => {
         document.getElementById('comingSoonModal').style.display = 'none';
       });
-      document.getElementById('comingSoonModal').addEventListener('click', (e) => {
+      document.getElementById('comingSoonModal')?.addEventListener('click', (e) => {
         if (e.target === document.getElementById('comingSoonModal')) {
           document.getElementById('comingSoonModal').style.display = 'none';
         }
@@ -3831,37 +3977,90 @@
 
         try {
           if (isSolana) {
+            // Solana/Drift: Build and sign transaction client-side
             const size = (amount * state.leverage) / price;
-            const prep = await perpsApiRequest('/perps/solana/prepare-open', {
-              method: 'POST',
-              body: JSON.stringify({
-                walletAddress: state.solanaAddress,
-                market: marketSymbolMap[state.currentMarket],
-                size,
-                price: orderPrice,
-                margin: amount,
-                leverage: state.leverage,
-                side: state.currentDirection
-              })
-            });
-            if (!prep?.transaction) throw new Error('Solana tx not prepared');
-            await signAndSendSolanaTx(prep.transaction);
+            // For Drift, we need to build the instruction set client-side
+            // This is a placeholder — full Drift SDK integration requires @drift-labs/sdk
+            alert('Solana/Drift perps integration coming soon. Use EVM wallet for Hyperliquid.');
+            return;
           }
 
-          const result = await perpsApiRequest('/perps/order', {
+          // EVM/Hyperliquid: Submit signed order directly to Hyperliquid L1
+          if (!payload.hyperliquidAction || !payload.hyperliquidSignature) {
+            throw new Error('Order signing failed. Please retry.');
+          }
+
+          const exchangePayload = {
+            action: payload.hyperliquidAction,
+            nonce: payload.hyperliquidNonce,
+            signature: payload.hyperliquidSignature,
+            vaultAddress: null
+          };
+
+          const exchangeResp = await fetch('https://api.hyperliquid.xyz/exchange', {
             method: 'POST',
-            body: JSON.stringify(payload)
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(exchangePayload)
           });
 
-          if (result.position) {
-            state.positions.unshift(result.position);
-            renderPositions();
-          } else if (result.order) {
-            state.orders.unshift(result.order);
-            renderOrders();
+          const result = await exchangeResp.json();
+
+          if (result.status === 'err') {
+            throw new Error(result.response || 'Hyperliquid order rejected');
           }
 
-          alert(`Order submitted!\nStatus: ${result.execution_status || result.execution?.status || 'queued'}`);
+          // Parse response — Hyperliquid returns statuses array
+          const statuses = result.response?.data?.statuses || [];
+          const firstStatus = statuses[0] || {};
+          
+          if (firstStatus.error) {
+            throw new Error(firstStatus.error);
+          }
+
+          const fillInfo = firstStatus.filled || firstStatus.resting;
+          if (fillInfo) {
+            const oid = fillInfo.oid;
+            if (firstStatus.filled) {
+              // Market order filled — add to positions
+              const newPos = {
+                id: `hl-${state.currentMarket}-${oid}`,
+                oid,
+                market: state.currentMarket,
+                side: state.currentDirection,
+                size: ((amount * state.leverage) / price).toFixed(4),
+                entryPrice: orderPrice,
+                markPrice: price,
+                leverage: state.leverage,
+                margin: amount,
+                pnl: 0,
+                pnlPercent: 0,
+                source: 'hyperliquid'
+              };
+              state.positions.unshift(newPos);
+              renderPositions();
+            } else {
+              // Limit order resting — add to orders
+              const newOrder = {
+                id: `hl-order-${oid}`,
+                oid,
+                market: state.currentMarket,
+                side: state.currentDirection,
+                orderType: state.currentOrderType,
+                price: orderPrice,
+                size: ((amount * state.leverage) / price).toFixed(4),
+                status: 'open',
+                timestamp: Date.now(),
+                source: 'hyperliquid'
+              };
+              state.orders.unshift(newOrder);
+              renderOrders();
+            }
+          }
+
+          // Refresh balance after order
+          fetchHyperliquidBalance(state.walletAddress);
+
+          alert(`Order submitted to Hyperliquid!\nStatus: ${firstStatus.filled ? 'Filled' : firstStatus.resting ? 'Resting (Limit)' : 'Accepted'}`);
         } catch (err) {
           alert(`Order failed: ${err.message}`);
         }
@@ -3962,13 +4161,15 @@
       const isLong = state.currentDirection === 'long';
       
       if (!state.isWalletConnected) {
-        btn.textContent = 'Connect Wallet';
-        btn.disabled = true;
+        btn.textContent = 'Connect Wallet to Trade';
+        btn.disabled = false;
         btn.className = 'submit-btn ' + (isLong ? 'long' : 'short');
+        btn.onclick = () => toggleWalletModal(true);
       } else {
         btn.textContent = (isLong ? 'Long ' : 'Short ') + state.currentMarket;
         btn.disabled = false;
         btn.className = 'submit-btn ' + (isLong ? 'long' : 'short');
+        btn.onclick = null; // Let the submitOrder listener handle it
       }
     }
 
@@ -4030,6 +4231,12 @@
       loadHyperliquidAssets();
       setActiveChain(state.activeChain);
 
+      // Load real market stats from Hyperliquid
+      loadLiveMarketStats().then(() => {
+        updateProtocolStats();
+        updateMarketUI();
+      });
+
       // Start intervals
       setInterval(updateFundingCountdown, 1000);
       setInterval(updateProtocolStats, 5000);
@@ -4037,78 +4244,157 @@
       setInterval(renderOrderBook, 2000);
       setInterval(renderRecentTrades, 3000);
       setInterval(updateRiskMetrics, 3000);
+      // Refresh live market stats every 30s
+      setInterval(loadLiveMarketStats, 30000);
+      // Refresh positions/orders for connected wallet every 15s
       setInterval(() => {
-        if (state.isWalletConnected) {
-          loadUserOrders();
+        if (state.isWalletConnected && state.walletAddress) {
+          fetchHyperliquidBalance(state.walletAddress);
         }
-      }, 8000);
+      }, 15000);
 
       console.log('✅ Nexxore Perps initialized');
     });
 
-    // Orders table actions (modify/cancel)
-    document.addEventListener('click', function(e) {
+    // Orders table actions (modify/cancel) — Direct to Hyperliquid
+    document.addEventListener('click', async function(e) {
       const btn = e.target.closest('.order-action-btn');
       if (!btn) return;
       const row = btn.closest('tr');
       if (!row) return;
-      const orderId = row.dataset.orderId ? parseInt(row.dataset.orderId, 10) : null;
-      const positionId = btn.dataset.id ? parseInt(btn.dataset.id, 10) : null;
+      const orderIdRaw = row.dataset.orderId;
+      const positionId = btn.dataset.id;
 
-      if (btn.dataset.action === 'cancel' && orderId) {
-        perpsApiRequest('/perps/cancel', {
-          method: 'POST',
-          body: JSON.stringify({ orderId })
-        }).then(() => {
-          state.orders = state.orders.filter(o => o.id !== orderId);
+      if (btn.dataset.action === 'cancel' && orderIdRaw) {
+        const order = state.orders.find(o => String(o.id) === String(orderIdRaw) || String(o.oid) === String(orderIdRaw));
+        if (!order) return;
+
+        try {
+          if (order.source === 'hyperliquid' && order.oid && ethersProvider) {
+            // Cancel directly on Hyperliquid
+            const asset = hyperliquidAssets[order.market]?.index ?? hyperliquidAssets[order.market];
+            const cancelAction = {
+              type: 'cancel',
+              cancels: [{ a: typeof asset === 'object' ? asset.index : asset, o: order.oid }]
+            };
+            const nonce = Date.now();
+            const signature = await signHyperliquidAction(cancelAction, nonce);
+            
+            const resp = await fetch('https://api.hyperliquid.xyz/exchange', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: cancelAction, nonce, signature, vaultAddress: null })
+            });
+            const result = await resp.json();
+            if (result.status === 'err') throw new Error(result.response || 'Cancel failed');
+          }
+          state.orders = state.orders.filter(o => String(o.id) !== String(orderIdRaw));
           renderOrders();
-        }).catch((e) => console.error('Cancel order failed', e));
+        } catch (err) {
+          console.error('Cancel order failed:', err);
+          alert(`Cancel failed: ${err.message}`);
+        }
       }
 
-      if (btn.dataset.action === 'modify' && orderId) {
-        const order = state.orders.find(o => o.id === orderId);
+      if (btn.dataset.action === 'modify' && orderIdRaw) {
+        const order = state.orders.find(o => String(o.id) === String(orderIdRaw));
         if (!order) return;
         const newPrice = prompt('Update limit price', order.price || '');
         if (newPrice) {
-          order.price = parseFloat(newPrice);
+          // For Hyperliquid: cancel and re-place at new price
+          if (order.source === 'hyperliquid' && order.oid && ethersProvider) {
+            try {
+              // Cancel the existing order
+              const asset = hyperliquidAssets[order.market]?.index ?? hyperliquidAssets[order.market];
+              const cancelAction = { type: 'cancel', cancels: [{ a: typeof asset === 'object' ? asset.index : asset, o: order.oid }] };
+              const cancelNonce = Date.now();
+              const cancelSig = await signHyperliquidAction(cancelAction, cancelNonce);
+              await fetch('https://api.hyperliquid.xyz/exchange', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: cancelAction, nonce: cancelNonce, signature: cancelSig, vaultAddress: null })
+              });
+
+              // Place new order at updated price
+              const newAction = buildHyperliquidAction({
+                market: order.market,
+                side: order.side,
+                type: 'limit',
+                price: parseFloat(newPrice),
+                size: parseFloat(order.size)
+              });
+              const placeNonce = Date.now();
+              const placeSig = await signHyperliquidAction(newAction, placeNonce);
+              const placeResp = await fetch('https://api.hyperliquid.xyz/exchange', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: newAction, nonce: placeNonce, signature: placeSig, vaultAddress: null })
+              });
+              const placeResult = await placeResp.json();
+              if (placeResult.status === 'err') throw new Error(placeResult.response);
+              
+              const statuses = placeResult.response?.data?.statuses || [];
+              const newOid = statuses[0]?.resting?.oid;
+              if (newOid) {
+                order.oid = newOid;
+                order.price = parseFloat(newPrice);
+              }
+            } catch (err) {
+              console.error('Modify order failed:', err);
+              alert(`Modify failed: ${err.message}`);
+              return;
+            }
+          } else {
+            order.price = parseFloat(newPrice);
+          }
           renderOrders();
         }
       }
+
       if (btn.dataset.action === 'close' && positionId) {
-        const position = state.positions.find(p => p.id === positionId);
+        const position = state.positions.find(p => String(p.id) === String(positionId));
+        if (!position) return;
         const marketKey = position?.market || state.currentMarket;
         const closePrice = priceData[marketKey]?.price || 0;
-        const isSolana = walletType && walletType.startsWith('solana');
-        const closeFlow = async () => {
-          if (isSolana) {
-            const prep = await perpsApiRequest('/perps/solana/prepare-close', {
-              method: 'POST',
-              body: JSON.stringify({
-                walletAddress: state.solanaAddress,
-                market: marketSymbolMap[marketKey],
-                price: closePrice
-              })
-            });
-            if (prep?.transaction) {
-              await signAndSendSolanaTx(prep.transaction);
-            }
-          }
-          return perpsApiRequest('/perps/close', {
-            method: 'POST',
-            body: JSON.stringify({ positionId, price: closePrice, walletAddress: state.walletAddress || state.solanaAddress, clientSigned: isSolana })
-          });
-        };
 
-        closeFlow().then((resp) => {
-          if (resp?.position) {
-            state.positions = state.positions.filter(p => p.id !== positionId);
-            renderPositions();
+        try {
+          if (position.source === 'hyperliquid' && ethersProvider) {
+            // Close position on Hyperliquid: place opposite market order for full size
+            const closeSide = position.side === 'long' ? 'short' : 'long';
+            const closeAction = buildHyperliquidAction({
+              market: marketKey,
+              side: closeSide,
+              type: 'market',
+              price: closePrice,
+              size: parseFloat(position.size)
+            });
+            // Mark as reduce-only
+            if (closeAction.orders?.[0]) {
+              closeAction.orders[0].r = true; // reduceOnly
+            }
+            const nonce = Date.now();
+            const signature = await signHyperliquidAction(closeAction, nonce);
+            
+            const resp = await fetch('https://api.hyperliquid.xyz/exchange', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: closeAction, nonce, signature, vaultAddress: null })
+            });
+            const result = await resp.json();
+            if (result.status === 'err') throw new Error(result.response || 'Close position failed');
           }
-        }).catch((e) => console.error('Close position failed', e));
+
+          state.positions = state.positions.filter(p => String(p.id) !== String(positionId));
+          renderPositions();
+          fetchHyperliquidBalance(state.walletAddress);
+        } catch (err) {
+          console.error('Close position failed:', err);
+          alert(`Close failed: ${err.message}`);
+        }
       }
 
       if (btn.dataset.action === 'partial' && positionId) {
-        const position = state.positions.find(p => p.id === positionId);
+        const position = state.positions.find(p => String(p.id) === String(positionId));
         if (!position) return;
         const marketKey = position?.market || state.currentMarket;
         const closePrice = priceData[marketKey]?.price || 0;
@@ -4116,37 +4402,43 @@
         const size = parseFloat(sizeInput || '0');
         if (!size || size <= 0) return;
 
-        const isSolana = walletType && walletType.startsWith('solana');
-        const partialFlow = async () => {
-          if (isSolana) {
-            const prep = await perpsApiRequest('/perps/solana/prepare-close', {
-              method: 'POST',
-              body: JSON.stringify({
-                walletAddress: state.solanaAddress,
-                market: marketSymbolMap[marketKey],
-                price: closePrice
-              })
+        try {
+          if (position.source === 'hyperliquid' && ethersProvider) {
+            const closeSide = position.side === 'long' ? 'short' : 'long';
+            const partialAction = buildHyperliquidAction({
+              market: marketKey,
+              side: closeSide,
+              type: 'market',
+              price: closePrice,
+              size
             });
-            if (prep?.transaction) {
-              await signAndSendSolanaTx(prep.transaction);
+            if (partialAction.orders?.[0]) {
+              partialAction.orders[0].r = true; // reduceOnly
             }
+            const nonce = Date.now();
+            const signature = await signHyperliquidAction(partialAction, nonce);
+            
+            const resp = await fetch('https://api.hyperliquid.xyz/exchange', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: partialAction, nonce, signature, vaultAddress: null })
+            });
+            const result = await resp.json();
+            if (result.status === 'err') throw new Error(result.response || 'Partial close failed');
           }
-          return perpsApiRequest('/perps/close', {
-            method: 'POST',
-            body: JSON.stringify({ positionId, price: closePrice, size, walletAddress: state.walletAddress || state.solanaAddress, clientSigned: isSolana })
-          });
-        };
 
-        partialFlow().then((resp) => {
-          if (resp?.position) {
-            if (resp.position.status !== 'open' || Number(resp.position.size) <= 0) {
-              state.positions = state.positions.filter(p => p.id !== positionId);
-            } else {
-              state.positions = state.positions.map(p => p.id === positionId ? resp.position : p);
-            }
-            renderPositions();
+          const remainingSize = Number(position.size) - size;
+          if (remainingSize <= 0.0001) {
+            state.positions = state.positions.filter(p => String(p.id) !== String(positionId));
+          } else {
+            position.size = remainingSize.toFixed(4);
           }
-        }).catch((e) => console.error('Partial close failed', e));
+          renderPositions();
+          fetchHyperliquidBalance(state.walletAddress);
+        } catch (err) {
+          console.error('Partial close failed:', err);
+          alert(`Partial close failed: ${err.message}`);
+        }
       }
     });
   </script>
