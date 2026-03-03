@@ -15,10 +15,26 @@
  *   GET  /api/perps/account/:addr    — User account state (positions, orders, margin)
  *   POST /api/perps/validate-order   — Server-side order validation (no execution)
  *   GET  /api/perps/exchange-config  — Exchange endpoints & signing config
+ *   POST /api/perps/log-trade       — Persist trade to protocol database
+ *   GET  /api/perps/trade-history/:addr — User trade history from protocol DB
  *   GET  /api/perps/health           — API health check
  */
 
 const axios = require('axios');
+let supabase = null;
+try {
+  const { createClient } = require('@supabase/supabase-js');
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  if (supabaseUrl && supabaseKey) {
+    supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('[Perps API] Supabase connected for trade persistence');
+  } else {
+    console.warn('[Perps API] Supabase credentials missing — trade logging disabled');
+  }
+} catch (e) {
+  console.warn('[Perps API] @supabase/supabase-js not available — trade logging disabled');
+}
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 
@@ -619,6 +635,107 @@ module.exports = async function handler(req, res) {
         }, 'public, max-age=300');
       }
 
+      // ── POST /api/perps/log-trade ────────────────────────────────
+      case 'log-trade': {
+        if (req.method !== 'POST') return error(res, 405, 'POST required');
+        if (!supabase) return error(res, 503, 'Trade logging unavailable — database not configured');
+
+        let body = req.body;
+        if (!body || typeof body === 'string') {
+          try { body = JSON.parse(body || '{}'); } catch { return error(res, 400, 'Invalid JSON body'); }
+        }
+
+        // Validate required fields
+        if (!body.wallet_address || !body.market || !body.side) {
+          return error(res, 400, 'Required fields: wallet_address, market, side');
+        }
+
+        // Sanitize wallet address
+        const walletAddr = String(body.wallet_address).toLowerCase().trim();
+        if (!/^0x[a-f0-9]{40}$/i.test(walletAddr) && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(walletAddr)) {
+          return error(res, 400, 'Invalid wallet address format');
+        }
+
+        const tradeRecord = {
+          wallet_address: walletAddr,
+          chain: String(body.chain || 'arbitrum').slice(0, 20),
+          market: String(body.market || '').toUpperCase().slice(0, 10),
+          side: ['long', 'short'].includes(body.side) ? body.side : 'long',
+          order_type: ['market', 'limit'].includes(body.order_type) ? body.order_type : 'market',
+          price: parseFloat(body.price) || 0,
+          amount: parseFloat(body.amount) || 0,
+          size: parseFloat(body.size) || 0,
+          leverage: Math.min(Math.max(parseFloat(body.leverage) || 1, 1), 100),
+          execution_status: String(body.execution_status || 'unknown').slice(0, 20),
+          venue: String(body.venue || 'hyperliquid').slice(0, 20),
+          hl_oid: body.hl_oid ? String(body.hl_oid).slice(0, 100) : null,
+          fee_rate: parseFloat(body.fee_rate) || 0,
+          reduce_only: !!body.reduce_only,
+          post_only: !!body.post_only,
+          tp_price: body.tp_price ? parseFloat(body.tp_price) : null,
+          sl_price: body.sl_price ? parseFloat(body.sl_price) : null,
+          error_message: body.error_message ? String(body.error_message).slice(0, 500) : null,
+          hl_response: body.hl_response ? String(body.hl_response).slice(0, 500) : null,
+          created_at: new Date().toISOString()
+        };
+
+        try {
+          const { data, error: dbErr } = await supabase
+            .from('perps_trades')
+            .insert(tradeRecord)
+            .select();
+
+          if (dbErr) {
+            console.error('[log-trade] Supabase insert error:', dbErr.message);
+            // If table doesn't exist, try to create it
+            if (dbErr.message?.includes('relation') && dbErr.message?.includes('does not exist')) {
+              return error(res, 503, 'Database table not initialized. Run the perps_schema migration.');
+            }
+            return error(res, 500, 'Failed to log trade', dbErr.message);
+          }
+
+          return success(res, { logged: true, id: data?.[0]?.id, trade: tradeRecord });
+        } catch (err) {
+          console.error('[log-trade] Exception:', err.message);
+          return error(res, 500, 'Trade logging failed', err.message);
+        }
+      }
+
+      // ── GET /api/perps/trade-history/:address ───────────────────
+      case 'trade-history': {
+        if (!supabase) return error(res, 503, 'Trade history unavailable — database not configured');
+        if (!param) return error(res, 400, 'Wallet address required');
+
+        const addr = param.toLowerCase().trim();
+        const limit = Math.min(parseInt(req.query?.limit) || 50, 200);
+        const offset = parseInt(req.query?.offset) || 0;
+
+        try {
+          const { data, error: dbErr, count } = await supabase
+            .from('perps_trades')
+            .select('*', { count: 'exact' })
+            .eq('wallet_address', addr)
+            .order('created_at', { ascending: false })
+            .range(offset, offset + limit - 1);
+
+          if (dbErr) {
+            console.error('[trade-history] Supabase query error:', dbErr.message);
+            return error(res, 500, 'Failed to fetch trade history', dbErr.message);
+          }
+
+          return success(res, {
+            trades: data || [],
+            total: count || 0,
+            limit,
+            offset,
+            wallet: addr
+          });
+        } catch (err) {
+          console.error('[trade-history] Exception:', err.message);
+          return error(res, 500, 'Trade history query failed', err.message);
+        }
+      }
+
       // ── GET /api/perps/health ───────────────────────────────────────
       case 'health': {
         let hlStatus = 'unknown';
@@ -631,6 +748,7 @@ module.exports = async function handler(req, res) {
           status: hlStatus === 'ok' ? 'healthy' : 'degraded',
           services: {
             hyperliquid: hlStatus,
+            database: supabase ? 'connected' : 'not-configured',
             api: 'ok',
             cache: { entries: cache.size }
           },
@@ -654,6 +772,8 @@ module.exports = async function handler(req, res) {
             'GET  /api/perps/funding',
             'GET  /api/perps/account/:address',
             'POST /api/perps/validate-order',
+            'POST /api/perps/log-trade',
+            'GET  /api/perps/trade-history/:address',
             'GET  /api/perps/exchange-config',
             'GET  /api/perps/health'
           ],

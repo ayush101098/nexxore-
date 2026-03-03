@@ -2336,24 +2336,45 @@
       return ethers.keccak256(payload);
     };
 
+    // Round size to szDecimals and price to 5 significant figures (Hyperliquid spec)
+    const roundToDecimals = (value, decimals) => {
+      const factor = Math.pow(10, decimals);
+      return Math.floor(value * factor) / factor; // always round DOWN for size
+    };
+
+    const roundPrice = (px) => {
+      // Hyperliquid requires prices with at most 5 significant figures
+      if (px === 0) return '0';
+      const magnitude = Math.floor(Math.log10(Math.abs(px)));
+      const factor = Math.pow(10, 4 - magnitude); // 5 sig figs
+      const rounded = Math.round(px * factor) / factor;
+      return toWire(rounded);
+    };
+
     const buildHyperliquidAction = (order) => {
-      const assetIndex = hyperliquidAssets[order.market];
-      if (assetIndex == null) throw new Error('Unsupported market for Hyperliquid');
+      const assetData = hyperliquidAssets[order.market];
+      if (assetData == null) throw new Error('Unsupported market for Hyperliquid');
+      // Support both old (number) and new (object) format
+      const assetIndex = typeof assetData === 'object' ? assetData.index : assetData;
+      const szDecimals = typeof assetData === 'object' ? assetData.szDecimals : 4;
       const tif = order.type === 'limit' ? 'Gtc' : 'Ioc';
-      const slippage = 0.05;
-      const px = order.type === 'limit'
+      const slippage = 0.03; // 3% slippage for market orders
+      const rawPx = order.type === 'limit'
         ? order.price
         : order.side === 'long'
           ? order.price * (1 + slippage)
           : order.price * (1 - slippage);
+      // Round size to szDecimals (Hyperliquid enforced)
+      const roundedSize = roundToDecimals(order.size, szDecimals);
+      if (roundedSize <= 0) throw new Error(`Order size too small for ${order.market} (min precision: ${szDecimals} decimals)`);
       return {
         type: 'order',
         orders: [
           {
             a: assetIndex,
             b: order.side === 'long',
-            p: toWire(px),
-            s: toWire(order.size),
+            p: roundPrice(rawPx),
+            s: toWire(roundedSize),
             r: false,
             t: { limit: { tif } }
           }
@@ -2392,8 +2413,13 @@
         const universe = Array.isArray(data) ? data[0]?.universe || [] : [];
         hyperliquidAssets = {};
         universe.forEach((item, idx) => {
-          hyperliquidAssets[item.name] = idx;
+          hyperliquidAssets[item.name] = {
+            index: idx,
+            szDecimals: item.szDecimals != null ? item.szDecimals : 4,
+            maxLeverage: item.maxLeverage || 50
+          };
         });
+        console.log(`✅ Loaded ${Object.keys(hyperliquidAssets).length} Hyperliquid assets with szDecimals`);
       } catch (e) {
         console.error('Hyperliquid asset load failed', e);
       }
@@ -2611,6 +2637,19 @@
       updateSubmitButton();
       if (state.isWalletConnected && state.walletAddress) {
         loadUserHistory();
+      }
+    }
+
+    // Fire-and-forget trade logging to protocol database
+    async function logTradeToDb(tradeData) {
+      try {
+        await fetch('/api/perps/log-trade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(tradeData)
+        });
+      } catch (e) {
+        console.warn('Trade logging failed (non-critical):', e.message);
       }
     }
 
@@ -3985,6 +4024,35 @@
             return;
           }
 
+          // Server-side validation before signing
+          const assetData = hyperliquidAssets[state.currentMarket];
+          const szDecimals = typeof assetData === 'object' ? assetData.szDecimals : 4;
+          const computedSize = roundToDecimals((amount * state.leverage) / price, szDecimals);
+          try {
+            const valResp = await fetch('/api/perps/validate-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                coin: state.currentMarket,
+                side: state.currentDirection === 'long' ? 'buy' : 'sell',
+                orderType: state.currentOrderType,
+                size: computedSize,
+                price: orderPrice,
+                leverage: state.leverage,
+                reduceOnly, postOnly,
+                tpPrice: Number.isFinite(tpPrice) ? tpPrice : null,
+                slPrice: Number.isFinite(slPrice) ? slPrice : null
+              })
+            });
+            const valResult = await valResp.json();
+            if (!valResult.valid && valResult.errors?.length) {
+              alert('Order validation failed:\n' + valResult.errors.join('\n'));
+              return;
+            }
+          } catch (valErr) {
+            console.warn('Server-side validation unavailable, proceeding:', valErr.message);
+          }
+
           // EVM/Hyperliquid: Submit signed order directly to Hyperliquid L1
           if (!payload.hyperliquidAction || !payload.hyperliquidSignature) {
             throw new Error('Order signing failed. Please retry.');
@@ -4018,16 +4086,19 @@
           }
 
           const fillInfo = firstStatus.filled || firstStatus.resting;
+          const executionStatus = firstStatus.filled ? 'filled' : firstStatus.resting ? 'resting' : 'accepted';
+          let tradeOid = null;
+
           if (fillInfo) {
-            const oid = fillInfo.oid;
+            tradeOid = fillInfo.oid;
             if (firstStatus.filled) {
               // Market order filled — add to positions
               const newPos = {
-                id: `hl-${state.currentMarket}-${oid}`,
-                oid,
+                id: `hl-${state.currentMarket}-${tradeOid}`,
+                oid: tradeOid,
                 market: state.currentMarket,
                 side: state.currentDirection,
-                size: ((amount * state.leverage) / price).toFixed(4),
+                size: computedSize.toFixed(szDecimals),
                 entryPrice: orderPrice,
                 markPrice: price,
                 leverage: state.leverage,
@@ -4041,13 +4112,13 @@
             } else {
               // Limit order resting — add to orders
               const newOrder = {
-                id: `hl-order-${oid}`,
-                oid,
+                id: `hl-order-${tradeOid}`,
+                oid: tradeOid,
                 market: state.currentMarket,
                 side: state.currentDirection,
                 orderType: state.currentOrderType,
                 price: orderPrice,
-                size: ((amount * state.leverage) / price).toFixed(4),
+                size: computedSize.toFixed(szDecimals),
                 status: 'open',
                 timestamp: Date.now(),
                 source: 'hyperliquid'
@@ -4057,11 +4128,47 @@
             }
           }
 
+          // Log trade to protocol database (fire-and-forget)
+          logTradeToDb({
+            wallet_address: state.walletAddress,
+            chain: state.activeChain,
+            market: state.currentMarket,
+            side: state.currentDirection,
+            order_type: state.currentOrderType,
+            price: orderPrice,
+            amount: amount,
+            size: computedSize,
+            leverage: state.leverage,
+            execution_status: executionStatus,
+            hl_oid: tradeOid,
+            fee_rate: plan.feeRate,
+            reduce_only: reduceOnly,
+            post_only: postOnly,
+            tp_price: Number.isFinite(tpPrice) ? tpPrice : null,
+            sl_price: Number.isFinite(slPrice) ? slPrice : null,
+            venue: 'hyperliquid',
+            hl_response: JSON.stringify(result).slice(0, 500)
+          });
+
           // Refresh balance after order
           fetchHyperliquidBalance(state.walletAddress);
 
           alert(`Order submitted to Hyperliquid!\nStatus: ${firstStatus.filled ? 'Filled' : firstStatus.resting ? 'Resting (Limit)' : 'Accepted'}`);
         } catch (err) {
+          // Log failed trade attempt too
+          logTradeToDb({
+            wallet_address: state.walletAddress,
+            chain: state.activeChain,
+            market: state.currentMarket,
+            side: state.currentDirection,
+            order_type: state.currentOrderType,
+            price: orderPrice,
+            amount: amount,
+            leverage: state.leverage,
+            execution_status: 'failed',
+            error_message: err.message,
+            venue: 'hyperliquid'
+          });
           alert(`Order failed: ${err.message}`);
         }
       });
