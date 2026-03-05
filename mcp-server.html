@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hyperliquid MCP Server — Deepest Dataset for AI Trading Agents | Coinversaa</title>
+  <meta name="description" content="The most comprehensive Hyperliquid MCP server. 710K+ wallets classified into behavioral cohorts. 1.8B+ trades indexed. 26 MCP tools for Claude, Cursor, or any MCP client.">
+  <meta name="keywords" content="Hyperliquid, MCP server, Model Context Protocol, AI trading, crypto data, behavioral cohorts, Claude, Cursor, trading agents">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Hyperliquid MCP Server — Coinversaa">
+  <meta property="og:description" content="710K+ wallets classified. 1.8B+ trades indexed. 26 MCP tools for AI trading agents.">
+  <meta property="og:url" content="https://nexxore.xyz/mcp-server">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Hyperliquid MCP Server — Coinversaa">
+  <meta name="twitter:description" content="The deepest Hyperliquid dataset for AI trading agents. Cohort intelligence no one else computes.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='fg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%234a6fa5'/><stop offset='100%25' stop-color='%233d8b6e'/></linearGradient></defs><rect width='32' height='32' rx='4' fill='%230a0a0b'/><g transform='translate(4,4) scale(0.75)'><circle cx='12' cy='10' r='7' stroke='url(%23fg)' stroke-width='2' fill='none'/><circle cx='20' cy='10' r='7' stroke='url(%23fg)' stroke-width='2' fill='none' opacity='.85'/><circle cx='16' cy='17' r='7' stroke='url(%23fg)' stroke-width='2' fill='none' opacity='.85'/></g></svg>" type="image/svg+xml">
+
+  <style>
+    /* ══════════════════════════════════════════════════════
+       MCP SERVER LANDING — INSTITUTIONAL DESIGN
+       ══════════════════════════════════════════════════════ */
+    :root {
+      --bg-primary: #0a0a0b;
+      --bg-secondary: #0f1012;
+      --bg-tertiary: #141517;
+      --bg-card: #18191c;
+      --bg-card-hover: #1c1d21;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(74,111,165,0.25);
+      --border-active: rgba(61,139,110,0.3);
+      --text-primary: #d4d4d8;
+      --text-secondary: #71717a;
+      --text-muted: #3f3f46;
+      --text-heading: #e4e4e7;
+      --accent: #4a6fa5;
+      --accent-dim: rgba(74,111,165,0.12);
+      --emerald: #3d8b6e;
+      --emerald-dim: rgba(61,139,110,0.12);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+      --transition: 200ms ease;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    ::selection { background: var(--accent-dim); color: var(--text-heading); }
+
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+    /* ═══════════ NAV ═══════════ */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,10,11,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .nav-inner {
+      display: flex; justify-content: space-between;
+      align-items: center; height: 52px;
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--text-heading);
+      font-weight: 600; font-size: 15px;
+    }
+    .nav-brand svg { height: 22px; width: auto; }
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-link {
+      padding: 6px 12px; font-size: 12px; font-weight: 500;
+      color: var(--text-secondary); text-decoration: none;
+      transition: color var(--transition);
+    }
+    .nav-link:hover { color: var(--text-primary); }
+    .nav-sep { width: 1px; height: 16px; background: var(--border); margin: 0 4px; }
+    .nav-cta {
+      padding: 6px 14px; font-size: 11px; font-weight: 600;
+      color: var(--text-secondary); border: 1px solid var(--border);
+      text-decoration: none; text-transform: uppercase;
+      letter-spacing: 0.5px; transition: all var(--transition);
+    }
+    .nav-cta:hover { border-color: var(--accent); color: var(--accent); }
+
+    @media (max-width: 768px) {
+      .nav-link, .nav-sep { display: none; }
+    }
+
+    /* ═══════════ SECTION UTILS ═══════════ */
+    .section-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(22px, 3vw, 32px); font-weight: 700;
+      color: var(--text-heading); line-height: 1.2;
+      margin-bottom: 12px;
+    }
+    .section-desc {
+      font-size: 14px; color: var(--text-secondary);
+      max-width: 600px; margin-bottom: 48px; line-height: 1.7;
+    }
+    .section-divider {
+      border: none; height: 1px;
+      background: var(--border); margin: 0;
+    }
+
+    section { padding: 80px 0; }
+
+    /* ═══════════ HERO ═══════════ */
+    .hero { padding: 100px 0 80px; position: relative; text-align: center; }
+    .hero-grid-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(74,111,165,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(74,111,165,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 70% 50% at 50% 40%, black, transparent);
+    }
+    .hero .container { position: relative; z-index: 1; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.8px; text-transform: uppercase;
+      color: var(--emerald); border: 1px solid rgba(61,139,110,0.25);
+      background: rgba(61,139,110,0.06); margin-bottom: 32px;
+    }
+    .hero-badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--emerald); animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .hero h1 {
+      font-size: clamp(28px, 4.5vw, 48px); font-weight: 800;
+      color: var(--text-heading); line-height: 1.15;
+      margin-bottom: 20px; letter-spacing: -0.02em;
+    }
+    .hero h1 .dim { color: var(--text-secondary); font-weight: 600; }
+    .hero-sub {
+      font-size: 15px; color: var(--text-secondary);
+      max-width: 640px; margin: 0 auto 40px; line-height: 1.7;
+    }
+    .hero-stats {
+      display: flex; justify-content: center; gap: 48px;
+      margin-bottom: 48px; flex-wrap: wrap;
+    }
+    .hero-stat-value {
+      font-size: 28px; font-weight: 700; color: var(--text-heading);
+      font-family: var(--font-mono);
+    }
+    .hero-stat-label {
+      font-size: 11px; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;
+    }
+    .hero-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .btn-solid {
+      padding: 10px 24px; font-size: 13px; font-weight: 600;
+      background: linear-gradient(135deg, var(--accent), var(--emerald));
+      color: #fff; text-decoration: none; border: none; cursor: pointer;
+      transition: opacity var(--transition);
+    }
+    .btn-solid:hover { opacity: 0.9; }
+    .btn-ghost {
+      padding: 10px 24px; font-size: 13px; font-weight: 600;
+      background: transparent; color: var(--text-primary);
+      border: 1px solid var(--border); text-decoration: none;
+      cursor: pointer; transition: all var(--transition);
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ═══════════ TOOLS GRID ═══════════ */
+    .tools-header { text-align: center; margin-bottom: 48px; }
+    .tools-header .section-desc { margin: 12px auto 0; }
+    .tools-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border);
+    }
+    @media (max-width: 900px) { .tools-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .tools-grid { grid-template-columns: 1fr; } }
+
+    .tool-card {
+      background: var(--bg-primary); padding: 32px 24px;
+      transition: background var(--transition);
+    }
+    .tool-card:hover { background: var(--bg-secondary); }
+    .tool-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .tool-card-badge {
+      padding: 3px 8px; font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      border: 1px solid var(--border); color: var(--text-secondary);
+    }
+    .tool-card-badge.unique {
+      border-color: rgba(61,139,110,0.3); color: var(--emerald);
+      background: rgba(61,139,110,0.06);
+    }
+    .tool-card-count {
+      font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);
+    }
+    .tool-card h3 {
+      font-size: 16px; font-weight: 600; color: var(--text-heading);
+      margin-bottom: 10px;
+    }
+    .tool-card p {
+      font-size: 13px; color: var(--text-secondary); line-height: 1.65;
+    }
+
+    /* ═══════════ ARCHITECTURE ═══════════ */
+    .arch-section { background: var(--bg-secondary); }
+    .arch-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 1px; background: var(--border);
+    }
+    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+    .arch-card {
+      background: var(--bg-secondary); padding: 32px;
+      transition: background var(--transition);
+    }
+    .arch-card:hover { background: var(--bg-tertiary); }
+    .arch-card h4 {
+      font-size: 14px; font-weight: 600; color: var(--text-heading);
+      margin-bottom: 10px;
+    }
+    .arch-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
+    .arch-card .arch-stat {
+      font-size: 20px; font-weight: 700; color: var(--emerald);
+      font-family: var(--font-mono); margin-bottom: 8px;
+    }
+
+    /* ═══════════ DATA PREVIEW ═══════════ */
+    .data-section .data-layout {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 48px;
+      align-items: start;
+    }
+    @media (max-width: 768px) { .data-section .data-layout { grid-template-columns: 1fr; } }
+    .data-info { padding-top: 12px; }
+    .data-info h3 {
+      font-size: 20px; font-weight: 700; color: var(--text-heading);
+      margin-bottom: 12px;
+    }
+    .data-info p {
+      font-size: 14px; color: var(--text-secondary); line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    .data-info .tool-name {
+      font-family: var(--font-mono); font-size: 13px; color: var(--accent);
+      margin-bottom: 24px;
+    }
+    .json-block {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .json-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+      background: var(--bg-tertiary);
+    }
+    .json-header span {
+      font-size: 11px; font-weight: 600; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .json-copy {
+      padding: 3px 10px; font-size: 10px; font-weight: 600;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-secondary); cursor: pointer;
+      font-family: var(--font-sans); transition: all var(--transition);
+    }
+    .json-copy:hover { border-color: var(--accent); color: var(--accent); }
+    .json-body {
+      padding: 20px; font-family: var(--font-mono);
+      font-size: 12.5px; line-height: 1.8; overflow-x: auto;
+    }
+    .json-key { color: #8ab4f8; }
+    .json-string { color: #a8c97c; }
+    .json-number { color: #f9c859; }
+
+    /* ═══════════ CHAT DEMO ═══════════ */
+    .demo-section { background: var(--bg-secondary); }
+    .demo-layout {
+      display: grid; grid-template-columns: 1.1fr 0.9fr;
+      gap: 48px; align-items: start;
+    }
+    @media (max-width: 768px) { .demo-layout { grid-template-columns: 1fr; } }
+
+    .chat-window {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .chat-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+      background: var(--bg-tertiary);
+    }
+    .chat-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .chat-dot.red { background: #ff5f57; }
+    .chat-dot.yellow { background: #ffbd2e; }
+    .chat-dot.green { background: #28c841; }
+    .chat-title {
+      margin-left: 8px; font-size: 12px; font-weight: 500;
+      color: var(--text-secondary);
+    }
+    .chat-body { padding: 20px; }
+    .chat-msg { margin-bottom: 20px; }
+    .chat-msg-user {
+      font-size: 13px; font-weight: 500; color: var(--text-heading);
+      margin-bottom: 6px;
+    }
+    .chat-msg-label {
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px;
+    }
+    .chat-msg-tool {
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--accent); padding: 4px 0;
+    }
+    .chat-msg-response {
+      font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+    }
+
+    .demo-prompts h3 {
+      font-size: 18px; font-weight: 700; color: var(--text-heading);
+      margin-bottom: 20px;
+    }
+    .prompt-chip {
+      display: block; width: 100%; text-align: left;
+      padding: 12px 16px; margin-bottom: 8px;
+      background: var(--bg-primary); border: 1px solid var(--border);
+      color: var(--text-primary); font-size: 13px; font-weight: 500;
+      font-family: var(--font-sans); cursor: default;
+      transition: border-color var(--transition);
+    }
+    .prompt-chip:hover { border-color: var(--border-hover); }
+    .prompt-chip::before {
+      content: '"'; color: var(--text-muted); margin-right: 4px;
+    }
+    .prompt-chip::after {
+      content: '"'; color: var(--text-muted); margin-left: 4px;
+    }
+
+    /* ═══════════ SETUP ═══════════ */
+    .setup-section .section-title { text-align: center; }
+    .setup-section .section-desc { text-align: center; margin-left: auto; margin-right: auto; }
+    .setup-steps {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: var(--border); margin-bottom: 48px;
+    }
+    @media (max-width: 768px) { .setup-steps { grid-template-columns: 1fr; } }
+    .setup-step { background: var(--bg-primary); padding: 32px; }
+    .step-num {
+      font-size: 32px; font-weight: 800; color: var(--text-muted);
+      font-family: var(--font-mono); margin-bottom: 16px;
+    }
+    .setup-step h4 {
+      font-size: 14px; font-weight: 600; color: var(--text-heading);
+      margin-bottom: 8px;
+    }
+    .setup-step p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* Config code block */
+    .config-tabs { display: flex; gap: 0; margin-bottom: 0; }
+    .config-tab {
+      padding: 10px 20px; font-size: 12px; font-weight: 600;
+      background: var(--bg-tertiary); border: 1px solid var(--border);
+      border-bottom: none; color: var(--text-secondary);
+      cursor: pointer; font-family: var(--font-sans);
+      transition: all var(--transition);
+    }
+    .config-tab.active {
+      background: var(--bg-secondary); color: var(--text-heading);
+      border-bottom-color: var(--bg-secondary);
+    }
+    .config-block {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-top: none;
+    }
+    .config-block-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+    }
+    .config-block-filename {
+      font-size: 11px; font-weight: 500; color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+    .config-block-body {
+      padding: 20px; font-family: var(--font-mono);
+      font-size: 12.5px; line-height: 1.8; overflow-x: auto;
+      white-space: pre;
+    }
+
+    /* ═══════════ FAQ ═══════════ */
+    .faq-section .section-title { text-align: center; }
+    .faq-list { max-width: 720px; margin: 0 auto; }
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+    }
+    .faq-question {
+      width: 100%; padding: 20px 0; display: flex;
+      justify-content: space-between; align-items: center;
+      background: transparent; border: none; cursor: pointer;
+      font-size: 14px; font-weight: 600; color: var(--text-heading);
+      font-family: var(--font-sans); text-align: left;
+    }
+    .faq-question:hover { color: var(--accent); }
+    .faq-chevron {
+      font-size: 18px; color: var(--text-muted);
+      transition: transform 0.3s ease;
+    }
+    .faq-item.open .faq-chevron { transform: rotate(180deg); }
+    .faq-answer {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .faq-answer-inner {
+      padding: 0 0 20px;
+      font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+    }
+    .faq-item.open .faq-answer { max-height: 300px; }
+
+    /* ═══════════ CTA ═══════════ */
+    .cta-section {
+      text-align: center; padding: 100px 0;
+      background: var(--bg-secondary);
+    }
+    .cta-section h2 {
+      font-size: clamp(22px, 3vw, 32px); font-weight: 700;
+      color: var(--text-heading); margin-bottom: 20px;
+    }
+    .cta-section p {
+      font-size: 14px; color: var(--text-secondary);
+      max-width: 500px; margin: 0 auto 32px; line-height: 1.7;
+    }
+    .cta-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+    /* ═══════════ FOOTER ═══════════ */
+    footer {
+      padding: 48px 0 32px;
+      border-top: 1px solid var(--border);
+    }
+    .footer-inner {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; margin-bottom: 40px;
+    }
+    @media (max-width: 768px) {
+      .footer-inner { flex-direction: column; gap: 32px; }
+    }
+    .footer-brand-logo {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 8px;
+    }
+    .footer-brand-logo svg { height: 22px; width: auto; }
+    .footer-brand-logo span {
+      font-size: 15px; font-weight: 600; color: var(--text-heading);
+    }
+    .footer-brand-desc { font-size: 12px; color: var(--text-secondary); }
+    .footer-cols { display: flex; gap: 64px; }
+    @media (max-width: 768px) { .footer-cols { gap: 32px; } }
+    .footer-col h4 {
+      font-size: 11px; font-weight: 600; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;
+    }
+    .footer-col a {
+      display: block; font-size: 13px; color: var(--text-secondary);
+      text-decoration: none; padding: 3px 0; transition: color var(--transition);
+    }
+    .footer-col a:hover { color: var(--text-primary); }
+    .footer-bottom {
+      display: flex; justify-content: space-between;
+      border-top: 1px solid var(--border); padding-top: 20px;
+      font-size: 12px; color: var(--text-muted);
+    }
+    @media (max-width: 768px) { .footer-bottom { flex-direction: column; gap: 8px; } }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ NAV ═══════════ -->
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 90"><defs><linearGradient id="nlg" x1="0" x2="1"><stop offset="0" stop-color="#4a6fa5"/><stop offset="1" stop-color="#3d8b6e"/></linearGradient></defs><circle cx="38" cy="30" r="22" stroke="url(#nlg)" stroke-width="4" fill="none" opacity="0.95"/><circle cx="62" cy="30" r="22" stroke="url(#nlg)" stroke-width="4" fill="none" opacity="0.85"/><circle cx="50" cy="52" r="22" stroke="url(#nlg)" stroke-width="4" fill="none" opacity="0.85"/></svg>
+        nexxore
+      </a>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="perps.html" class="nav-link">Perps</a>
+        <a href="safe-yield.html" class="nav-link">Vaults</a>
+        <a href="#tools" class="nav-link">Tools</a>
+        <a href="#setup" class="nav-link">Setup</a>
+        <span class="nav-sep"></span>
+        <a href="https://github.com/coinversaa/mcp-server" target="_blank" class="nav-link" style="padding:6px 8px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12 24 5.37 18.63 0 12 0z"/></svg>
+        </a>
+        <a href="#setup" class="nav-cta">Get API Key</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <section class="hero">
+    <div class="hero-grid-bg"></div>
+    <div class="container">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        Hyperliquid MCP Server — Live
+      </div>
+      <h1>
+        The Deepest Dataset for<br>
+        <span class="dim">AI Trading Agents</span>
+      </h1>
+      <p class="hero-sub">
+        The most comprehensive Hyperliquid MCP server available. 710K+ wallets classified into behavioral cohorts in real time.
+        1.8B+ trades indexed with full lifecycle. Cohort intelligence no one else computes.
+      </p>
+
+      <div class="hero-stats">
+        <div>
+          <div class="hero-stat-value">26</div>
+          <div class="hero-stat-label">MCP Tools</div>
+        </div>
+        <div>
+          <div class="hero-stat-value">710K+</div>
+          <div class="hero-stat-label">Wallets Classified</div>
+        </div>
+        <div>
+          <div class="hero-stat-value">1.8B+</div>
+          <div class="hero-stat-label">Trades Indexed</div>
+        </div>
+      </div>
+
+      <div class="hero-actions">
+        <a href="#setup" class="btn-solid">Get API Key</a>
+        <a href="https://github.com/coinversaa/mcp-server" target="_blank" class="btn-ghost">View on GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ TOOLS GRID ═══════════ -->
+  <section id="tools">
+    <div class="container">
+      <div class="tools-header">
+        <div class="section-label">Capabilities</div>
+        <div class="section-title">26 tools. Cohorts, analytics, live data.</div>
+        <p class="section-desc">Full documentation available. Every tool returns structured, analysis-ready JSON.</p>
+      </div>
+
+      <div class="tools-grid">
+        <div class="tool-card">
+          <div class="tool-card-head">
+            <span class="tool-card-badge unique">Unique</span>
+            <span class="tool-card-count">4 tools</span>
+          </div>
+          <h3>Cohort Intelligence</h3>
+          <p>710K wallets classified into behavioral tiers. See what money_printers and whales hold right now — nobody else exposes this.</p>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-head">
+            <span class="tool-card-count">10 tools</span>
+          </div>
+          <h3>Trader Analytics</h3>
+          <p>Profile any wallet. Rank traders by PnL, win rate, or risk-adjusted returns. Surface hidden gems that leaderboards miss.</p>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-head">
+            <span class="tool-card-count">6 tools</span>
+          </div>
+          <h3>Market Intelligence</h3>
+          <p>Liquidation heatmaps, funding rate shifts, order book depth, and long/short ratios — updated in real time.</p>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-head">
+            <span class="tool-card-count">6 tools</span>
+          </div>
+          <h3>Real-Time Trade Flow</h3>
+          <p>Stream the largest trades as they happen. Track full position lifecycles from open to close with entry, exit, and PnL.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ ARCHITECTURE ═══════════ -->
+  <section class="arch-section">
+    <div class="container">
+      <div class="section-label">Architecture</div>
+      <div class="section-title">Not a wrapper — direct clearinghouse indexing</div>
+      <p class="section-desc">Most crypto data APIs relay exchange data. Our server indexes the Hyperliquid clearinghouse directly via real-time gRPC fill ingestion and computes analytics that don't exist anywhere else.</p>
+
+      <div class="arch-grid">
+        <div class="arch-card">
+          <div class="arch-stat">710K+</div>
+          <h4>Behavioral Cohorts</h4>
+          <p>Active wallets classified into PnL tiers (money_printer to giga_rekt) and size tiers (leviathan to shrimp). Updated continuously.</p>
+        </div>
+        <div class="arch-card">
+          <h4>Live Cohort Positions</h4>
+          <p>What are the best traders holding right now? Query real-time positions by tier — no other API exposes this.</p>
+        </div>
+        <div class="arch-card">
+          <div class="arch-stat">1.8B+</div>
+          <h4>Trades Indexed</h4>
+          <p>Full position lifecycle: entry, exit, hold duration, PnL. The deepest Hyperliquid dataset available as an API.</p>
+        </div>
+        <div class="arch-card">
+          <h4>Hidden Gem Discovery</h4>
+          <p>Surface skilled traders that leaderboards and ranking sites miss. Filter by win rate, PnL, trade count, and consistency.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ DATA PREVIEW ═══════════ -->
+  <section class="data-section">
+    <div class="container">
+      <div class="data-layout">
+        <div class="data-info">
+          <div class="section-label">Data Format</div>
+          <h3>What the data looks like</h3>
+          <p>A single tool call returns structured, analysis-ready JSON. Here's <code style="font-family:var(--font-mono);color:var(--accent);">pulse_trader_profile</code>.</p>
+          <p>Every field is computed — PnL tier, size tier, profit factor, largest positions — ready for downstream analysis by Claude, GPT, or your own agent stack.</p>
+        </div>
+        <div class="json-block">
+          <div class="json-header">
+            <span>JSON Response</span>
+            <button class="json-copy" id="copyJson">Copy</button>
+          </div>
+          <div class="json-body">
+{
+  <span class="json-key">"address"</span>: <span class="json-string">"0x7fda...7d1"</span>,
+  <span class="json-key">"totalPnl"</span>: <span class="json-number">847231.45</span>,
+  <span class="json-key">"tradeCount"</span>: <span class="json-number">2847</span>,
+  <span class="json-key">"winRate"</span>: <span class="json-number">68.4</span>,
+  <span class="json-key">"totalVolume"</span>: <span class="json-number">142500000</span>,
+  <span class="json-key">"largestWin"</span>: <span class="json-number">124500.00</span>,
+  <span class="json-key">"largestLoss"</span>: <span class="json-number">-31200.00</span>,
+  <span class="json-key">"pnlTier"</span>: <span class="json-string">"money_printer"</span>,
+  <span class="json-key">"sizeTier"</span>: <span class="json-string">"whale"</span>,
+  <span class="json-key">"profitFactor"</span>: <span class="json-number">2.87</span>
+}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ CHAT DEMO ═══════════ -->
+  <section class="demo-section">
+    <div class="container">
+      <div class="section-label">Live Demo</div>
+      <div class="section-title">See it in action</div>
+      <p class="section-desc">Ask Claude anything about Hyperliquid markets. The MCP server handles the rest.</p>
+
+      <div class="demo-layout">
+        <div class="chat-window">
+          <div class="chat-header">
+            <span class="chat-dot red"></span>
+            <span class="chat-dot yellow"></span>
+            <span class="chat-dot green"></span>
+            <span class="chat-title">Coinversaa MCP server running in Claude Desktop</span>
+          </div>
+          <div class="chat-body">
+            <div class="chat-msg">
+              <div class="chat-msg-label">You</div>
+              <div class="chat-msg-user">Are the smart money traders long or short ETH right now?</div>
+            </div>
+            <div class="chat-msg">
+              <div class="chat-msg-label">Claude</div>
+              <div class="chat-msg-tool">▸ live_cohort_bias("ETH")</div>
+              <div class="chat-msg-response">
+                Money printers are decisively short ETH — 85 shorts vs 28 longs, $287M short notional.
+                Smart money also leaning short at 62%. Leviathan tier is the only group with a meaningful
+                long bias at 58%.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-prompts">
+          <h3>Try asking</h3>
+          <div class="prompt-chip">Top 5 traders by PnL?</div>
+          <div class="prompt-chip">What are money_printers holding?</div>
+          <div class="prompt-chip">Biggest trades in the last 10 minutes</div>
+          <div class="prompt-chip">BTC liquidation clusters?</div>
+          <div class="prompt-chip">Traders with 70%+ win rate</div>
+          <div class="prompt-chip">Deep dive on 0x7fda...7d1</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ SETUP ═══════════ -->
+  <section class="setup-section" id="setup">
+    <div class="container">
+      <div class="section-label" style="text-align:center;">Quick Start</div>
+      <div class="section-title">Connect in 30 seconds</div>
+      <p class="section-desc">Works with any MCP-compatible client. No cloning, no building.</p>
+
+      <div class="setup-steps">
+        <div class="setup-step">
+          <div class="step-num">1</div>
+          <h4>Create a free API key</h4>
+          <p>10 seconds. No credit card required. Start with a generous free tier.</p>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">2</div>
+          <h4>Paste the config into your client</h4>
+          <p>Claude Desktop, Cursor, Claude Code, or any MCP-compatible client.</p>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">3</div>
+          <h4>Ask anything about Hyperliquid</h4>
+          <p>26 tools, ready to go. Cohorts, analytics, trade flow, market intelligence.</p>
+        </div>
+      </div>
+
+      <!-- Config Tabs -->
+      <div class="config-tabs">
+        <button class="config-tab active" data-tab="claude">Claude Desktop</button>
+        <button class="config-tab" data-tab="cursor">Cursor</button>
+        <button class="config-tab" data-tab="code">Claude Code</button>
+      </div>
+
+      <div class="config-block" id="configClaude">
+        <div class="config-block-header">
+          <span class="config-block-filename">claude_desktop_config.json</span>
+          <button class="json-copy" id="copyConfig">Copy</button>
+        </div>
+        <div class="config-block-body" id="configBody">{
+  <span class="json-key">"mcpServers"</span>: {
+    <span class="json-key">"coinversaa"</span>: {
+      <span class="json-key">"command"</span>: <span class="json-string">"npx"</span>,
+      <span class="json-key">"args"</span>: [<span class="json-string">"-y"</span>, <span class="json-string">"@coinversaa/mcp-server"</span>],
+      <span class="json-key">"env"</span>: {
+        <span class="json-key">"COINVERSAA_API_KEY"</span>: <span class="json-string">"your-api-key"</span>
+      }
+    }
+  }
+}</div>
+      </div>
+
+      <div class="config-block" id="configCursor" style="display:none;">
+        <div class="config-block-header">
+          <span class="config-block-filename">.cursor/mcp.json</span>
+          <button class="json-copy" id="copyCursorConfig">Copy</button>
+        </div>
+        <div class="config-block-body">{
+  <span class="json-key">"mcpServers"</span>: {
+    <span class="json-key">"coinversaa"</span>: {
+      <span class="json-key">"command"</span>: <span class="json-string">"npx"</span>,
+      <span class="json-key">"args"</span>: [<span class="json-string">"-y"</span>, <span class="json-string">"@coinversaa/mcp-server"</span>],
+      <span class="json-key">"env"</span>: {
+        <span class="json-key">"COINVERSAA_API_KEY"</span>: <span class="json-string">"your-api-key"</span>
+      }
+    }
+  }
+}</div>
+      </div>
+
+      <div class="config-block" id="configCode" style="display:none;">
+        <div class="config-block-header">
+          <span class="config-block-filename">~/.claude/settings.json</span>
+          <button class="json-copy" id="copyCodeConfig">Copy</button>
+        </div>
+        <div class="config-block-body">{
+  <span class="json-key">"mcpServers"</span>: {
+    <span class="json-key">"coinversaa"</span>: {
+      <span class="json-key">"command"</span>: <span class="json-string">"npx"</span>,
+      <span class="json-key">"args"</span>: [<span class="json-string">"-y"</span>, <span class="json-string">"@coinversaa/mcp-server"</span>],
+      <span class="json-key">"env"</span>: {
+        <span class="json-key">"COINVERSAA_API_KEY"</span>: <span class="json-string">"your-api-key"</span>
+      }
+    }
+  }
+}</div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ FAQ ═══════════ -->
+  <section class="faq-section">
+    <div class="container">
+      <div class="section-label" style="text-align:center;">FAQ</div>
+      <div class="section-title" style="text-align:center;">Frequently asked questions</div>
+
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-question">
+            What is a Hyperliquid MCP server?
+            <span class="faq-chevron">▾</span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              An MCP (Model Context Protocol) server exposes structured tools that AI assistants like Claude, GPT, or Cursor can call directly.
+              Our Hyperliquid MCP server provides 26 tools that give AI agents deep access to Hyperliquid market data, trader analytics,
+              behavioral cohorts, and real-time trade flow — enabling AI-native trading workflows.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            What is MCP (Model Context Protocol)?
+            <span class="faq-chevron">▾</span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              MCP is an open protocol by Anthropic that lets AI models call external tools and data sources.
+              Instead of copying data into prompts, the AI can directly query live data through structured tool calls.
+              Think of it as a USB-C port for AI — one standard interface, many capabilities.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            What Hyperliquid data does Coinversaa provide?
+            <span class="faq-chevron">▾</span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Behavioral cohort classification (710K+ wallets), trader profiling and ranking, real-time trade flow,
+              liquidation heatmaps, funding rate analytics, order book depth, long/short ratios, position lifecycle tracking,
+              and hidden gem discovery. All computed from direct clearinghouse indexing — not relayed from third parties.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            How do I connect the Hyperliquid MCP server?
+            <span class="faq-chevron">▾</span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Create a free API key, then paste the JSON config into your MCP client settings (Claude Desktop, Cursor, or Claude Code).
+              The server runs via <code style="font-family:var(--font-mono);color:var(--accent);">npx @coinversaa/mcp-server</code> — no cloning or building required.
+              See the Setup section above for exact config snippets.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            Is there a rate limit?
+            <span class="faq-chevron">▾</span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              The free tier includes generous rate limits suitable for personal use and prototyping. Paid plans offer higher throughput
+              for production agent workflows, fund-level analytics, and commercial applications. Rate limits are per-API-key.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            Which MCP clients work with Coinversaa?
+            <span class="faq-chevron">▾</span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Any MCP-compatible client works: Claude Desktop, Cursor, Claude Code, Cline, Continue, Zed, and custom MCP clients.
+              The server follows the MCP specification exactly — if your client supports MCP, Coinversaa works out of the box.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ CTA ═══════════ -->
+  <section class="cta-section">
+    <div class="container">
+      <h2>Start using the Hyperliquid MCP server</h2>
+      <p>26 tools. 710K+ classified wallets. 1.8B+ trades. Cohort intelligence no one else computes. Ready in 30 seconds.</p>
+      <div class="cta-actions">
+        <a href="#setup" class="btn-solid">Get API Key</a>
+        <a href="https://github.com/coinversaa/mcp-server" target="_blank" class="btn-ghost">View on GitHub</a>
+        <a href="#tools" class="btn-ghost">Full Docs</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <div class="footer-brand-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 90"><defs><linearGradient id="flg" x1="0" x2="1"><stop offset="0" stop-color="#4a6fa5"/><stop offset="1" stop-color="#3d8b6e"/></linearGradient></defs><circle cx="38" cy="30" r="22" stroke="url(#flg)" stroke-width="4" fill="none" opacity="0.95"/><circle cx="62" cy="30" r="22" stroke="url(#flg)" stroke-width="4" fill="none" opacity="0.85"/><circle cx="50" cy="52" r="22" stroke="url(#flg)" stroke-width="4" fill="none" opacity="0.85"/></svg>
+            <span>nexxore</span>
+          </div>
+          <div class="footer-brand-desc">On-chain risk infrastructure for crypto capital.</div>
+        </div>
+        <div class="footer-cols">
+          <div class="footer-col">
+            <h4>Product</h4>
+            <a href="perps.html">Perpetuals</a>
+            <a href="safe-yield.html">Safe Yield</a>
+            <a href="vaults.html">Vaults</a>
+            <a href="mcp-server.html">MCP Server</a>
+          </div>
+          <div class="footer-col">
+            <h4>MCP Tools</h4>
+            <a href="#tools">Cohort Intelligence</a>
+            <a href="#tools">Trader Analytics</a>
+            <a href="#tools">Market Intelligence</a>
+            <a href="#tools">Trade Flow</a>
+          </div>
+          <div class="footer-col">
+            <h4>Resources</h4>
+            <a href="https://github.com/coinversaa/mcp-server" target="_blank">GitHub</a>
+            <a href="https://x.com/nexxore" target="_blank">X / Twitter</a>
+            <a href="index.html">Home</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Nexxore × Coinversaa. All rights reserved.</p>
+        <span>Cohort intelligence no one else computes.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════ SCRIPTS ═══════════ -->
+  <script>
+    // ── FAQ Accordion ──
+    document.querySelectorAll('.faq-question').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.closest('.faq-item');
+        const wasOpen = item.classList.contains('open');
+        // Close all
+        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+        // Toggle clicked
+        if (!wasOpen) item.classList.add('open');
+      });
+    });
+
+    // ── Config Tabs ──
+    document.querySelectorAll('.config-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.config-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const target = tab.dataset.tab;
+        document.getElementById('configClaude').style.display = target === 'claude' ? 'block' : 'none';
+        document.getElementById('configCursor').style.display = target === 'cursor' ? 'block' : 'none';
+        document.getElementById('configCode').style.display   = target === 'code'   ? 'block' : 'none';
+      });
+    });
+
+    // ── Copy buttons ──
+    function copyToClipboard(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.style.color = 'var(--emerald)';
+        btn.style.borderColor = 'var(--emerald)';
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.style.color = '';
+          btn.style.borderColor = '';
+        }, 2000);
+      });
+    }
+
+    document.getElementById('copyJson')?.addEventListener('click', function() {
+      const json = `{
+  "address": "0x7fda...7d1",
+  "totalPnl": 847231.45,
+  "tradeCount": 2847,
+  "winRate": 68.4,
+  "totalVolume": 142500000,
+  "largestWin": 124500.00,
+  "largestLoss": -31200.00,
+  "pnlTier": "money_printer",
+  "sizeTier": "whale",
+  "profitFactor": 2.87
+}`;
+      copyToClipboard(json, this);
+    });
+
+    const configJson = `{
+  "mcpServers": {
+    "coinversaa": {
+      "command": "npx",
+      "args": ["-y", "@coinversaa/mcp-server"],
+      "env": {
+        "COINVERSAA_API_KEY": "your-api-key"
+      }
+    }
+  }
+}`;
+
+    document.getElementById('copyConfig')?.addEventListener('click', function() {
+      copyToClipboard(configJson, this);
+    });
+    document.getElementById('copyCursorConfig')?.addEventListener('click', function() {
+      copyToClipboard(configJson, this);
+    });
+    document.getElementById('copyCodeConfig')?.addEventListener('click', function() {
+      copyToClipboard(configJson, this);
+    });
+
+    // ── Smooth scroll ──
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // ── Clean .html extensions ──
+    document.querySelectorAll('a[href$=".html"]').forEach(link => {
+      const href = link.getAttribute('href');
+      if (!href) return;
+      const [path, hash] = href.split('#');
+      const cleaned = path.replace(/\.html$/, '');
+      link.setAttribute('href', hash ? cleaned + '#' + hash : cleaned);
+    });
+    if (window.location.pathname.endsWith('.html')) {
+      window.history.replaceState({}, '', window.location.pathname.replace(/\.html$/, '') + window.location.search + window.location.hash);
+    }
+  </script>
+
+</body>
+</html>

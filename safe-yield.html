@@ -4,40 +4,36 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Safe Yield — Capital Preservation | nexxore</title>
-  <meta name="description" content="Capital preservation vault for DAOs, treasuries, and long-term allocators.">
-  
+  <meta name="description" content="Capital preservation vault — institutional-grade yield from Aave, Compound, MakerDAO, and Lido.">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
-  <!-- Unified Design System -->
+  <script src="https://unpkg.com/ethers@6.9.0/dist/ethers.umd.min.js"></script>
+
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/animations.css">
-  
+
   <style>
     :root {
-      /* Map legacy tokens to unified system */
       --font-body: var(--font-family-sans);
       --font-mono: var(--font-family-mono);
       --bg-primary: var(--bg-base);
       --bg-secondary: var(--bg-elevated);
       --border-color: var(--border-subtle);
-      --border-hover: var(--border-hover);
-      /* Safe Yield Colors - mapped to semantic */
       --safe-green: var(--accent-secondary);
       --safe-green-bg: rgba(34, 197, 94, 0.08);
       --safe-green-border: rgba(34, 197, 94, 0.2);
       --accent-blue: var(--semantic-info);
-      --accent-gold: var(--semantic-warning);
       --positive: var(--semantic-success);
       --negative: var(--semantic-error);
     }
-    
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+
     body {
       font-family: var(--font-family-sans);
       background: var(--bg-base);
@@ -46,44 +42,21 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
-
-    /* Header */
+    /* ── Header ─────────────────────────────────── */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 14px 24px;
       border-bottom: 1px solid var(--border-color);
-      position: sticky;
-      top: 0;
+      position: sticky; top: 0;
       background: var(--bg-primary);
       z-index: 100;
     }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-
-    .back-link {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 0.75rem;
-    }
+    .header-left { display: flex; align-items: center; gap: 20px; }
+    .back-link { color: var(--text-muted); text-decoration: none; font-size: 0.75rem; }
     .back-link:hover { color: var(--text-primary); }
-
-    .header-title {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
+    .header-title { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
     .header-badge {
       padding: 4px 10px;
       border: 1px solid var(--safe-green-border);
@@ -93,7 +66,17 @@
       letter-spacing: 0.5px;
       color: var(--safe-green);
     }
-
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .network-badge {
+      padding: 4px 10px;
+      border: 1px solid var(--border-color);
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      display: none;
+    }
+    .network-badge.visible { display: inline-block; }
     .connect-btn {
       padding: 8px 20px;
       background: var(--text-primary);
@@ -102,9 +85,16 @@
       font-size: 0.75rem;
       font-weight: 600;
       cursor: pointer;
+      transition: all 0.15s;
+    }
+    .connect-btn:hover { opacity: 0.9; }
+    .connect-btn.connected {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
     }
 
-    /* Stats Bar */
+    /* ── Stats Bar ──────────────────────────────── */
     .stats-bar {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -112,38 +102,20 @@
       background: var(--border-color);
       border-bottom: 1px solid var(--border-color);
     }
-
-    @media (max-width: 768px) {
-      .stats-bar { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    .stat-card {
-      background: var(--bg-primary);
-      padding: 20px 24px;
-    }
-
+    @media (max-width: 768px) { .stats-bar { grid-template-columns: repeat(2, 1fr); } }
+    .stat-card { background: var(--bg-primary); padding: 20px 24px; }
     .stat-label {
-      font-size: 0.6rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
+      font-size: 0.6rem; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
     }
-
     .stat-value {
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      font-family: var(--font-mono);
+      font-size: 1.4rem; font-weight: 600;
+      color: var(--text-primary); font-family: var(--font-mono);
     }
+    .stat-sub { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; }
+    .stat-value.loading { opacity: 0.3; }
 
-    .stat-sub {
-      font-size: 0.65rem;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    /* Main Content */
+    /* ── Main Grid ──────────────────────────────── */
     .main-grid {
       display: grid;
       grid-template-columns: 1fr 380px;
@@ -151,311 +123,270 @@
       background: var(--border-color);
       min-height: calc(100vh - 160px);
     }
+    @media (max-width: 1024px) { .main-grid { grid-template-columns: 1fr; } }
 
-    @media (max-width: 1024px) {
-      .main-grid { grid-template-columns: 1fr; }
-    }
-
-    /* Info Panel */
-    .info-panel {
-      background: var(--bg-primary);
-      padding: 32px;
-    }
-
+    /* ── Info Panel ─────────────────────────────── */
+    .info-panel { background: var(--bg-primary); padding: 32px; }
     .section-header {
-      margin-bottom: 24px;
-      padding-bottom: 16px;
+      margin-bottom: 24px; padding-bottom: 16px;
       border-bottom: 1px solid var(--border-color);
     }
-
     .section-title {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      font-size: 0.75rem; font-weight: 600; color: var(--text-primary);
+      text-transform: uppercase; letter-spacing: 0.5px;
     }
-
     .section-badge {
-      display: inline-block;
-      margin-left: 12px;
-      padding: 3px 8px;
-      border: 1px solid var(--border-color);
-      font-size: 0.55rem;
-      text-transform: uppercase;
-      color: var(--text-muted);
+      display: inline-block; margin-left: 12px;
+      padding: 3px 8px; border: 1px solid var(--border-color);
+      font-size: 0.55rem; text-transform: uppercase; color: var(--text-muted);
     }
+    .live-dot {
+      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--safe-green); margin-left: 8px; animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-    /* Strategy Info */
     .strategy-desc {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      line-height: 1.7;
-      margin-bottom: 32px;
+      font-size: 0.9rem; color: var(--text-secondary);
+      line-height: 1.7; margin-bottom: 32px;
     }
 
-    .features-list {
-      margin-bottom: 32px;
-    }
-
+    .features-list { margin-bottom: 32px; }
     .feature-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 0; border-bottom: 1px solid var(--border-color);
     }
     .feature-item:last-child { border-bottom: none; }
+    .feature-icon { color: var(--text-muted); font-size: 0.8rem; }
+    .feature-title { font-size: 0.85rem; font-weight: 500; color: var(--text-primary); margin-bottom: 4px; }
+    .feature-desc { font-size: 0.75rem; color: var(--text-muted); }
 
-    .feature-icon {
-      color: var(--text-muted);
-      font-size: 0.8rem;
-    }
-
-    .feature-content {
-      flex: 1;
-    }
-
-    .feature-title {
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: var(--text-primary);
-      margin-bottom: 4px;
-    }
-
-    .feature-desc {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    /* Chart Section */
-    .chart-section {
-      margin-top: 32px;
-    }
-
+    /* ── Chart ──────────────────────────────────── */
+    .chart-section { margin-top: 32px; }
     .chart-container {
-      position: relative;
-      height: 200px;
+      position: relative; height: 200px;
       background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      padding: 16px;
+      border: 1px solid var(--border-color); padding: 16px;
     }
 
-    /* Protocol Allocation */
-    .allocation-section {
-      margin-top: 32px;
-    }
-
+    /* ── Allocation ─────────────────────────────── */
+    .allocation-section { margin-top: 32px; }
     .allocation-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1px;
-      background: var(--border-color);
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 1px; background: var(--border-color);
     }
-
-    .allocation-card {
-      background: var(--bg-primary);
-      padding: 16px;
-    }
-
-    .allocation-name {
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: var(--text-primary);
-      margin-bottom: 4px;
-    }
-
-    .allocation-value {
-      font-size: 0.75rem;
+    .allocation-card { background: var(--bg-primary); padding: 16px; }
+    .alloc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .allocation-name { font-size: 0.8rem; font-weight: 500; color: var(--text-primary); }
+    .allocation-weight {
+      font-size: 0.65rem; color: var(--text-muted);
       font-family: var(--font-mono);
-      color: var(--text-muted);
     }
-
-    /* Deposit Panel */
-    .deposit-panel {
-      background: var(--bg-primary);
-      padding: 32px;
+    .allocation-apy {
+      font-size: 1.1rem; font-weight: 600; color: var(--safe-green);
+      font-family: var(--font-mono);
     }
+    .allocation-apy.loading { color: var(--text-muted); }
+    .allocation-tvl { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; }
 
+    /* ── Deposit Panel ──────────────────────────── */
+    .deposit-panel { background: var(--bg-primary); padding: 32px; }
     .panel-header {
-      margin-bottom: 24px;
-      padding-bottom: 16px;
+      margin-bottom: 24px; padding-bottom: 16px;
       border-bottom: 1px solid var(--border-color);
     }
-
     .panel-title {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      font-size: 0.75rem; font-weight: 600; color: var(--text-primary);
+      text-transform: uppercase; letter-spacing: 0.5px;
     }
-
     .deposit-tabs {
-      display: flex;
-      gap: 0;
-      margin-bottom: 24px;
+      display: flex; gap: 0; margin-bottom: 24px;
       background: var(--border-color);
     }
-
     .deposit-tab {
-      flex: 1;
-      padding: 10px;
-      background: var(--bg-primary);
-      border: none;
-      color: var(--text-muted);
-      font-size: 0.75rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
+      flex: 1; padding: 10px; background: var(--bg-primary);
+      border: none; color: var(--text-muted); font-size: 0.75rem;
+      font-weight: 500; cursor: pointer; transition: all 0.15s;
       font-family: var(--font-body);
     }
     .deposit-tab:hover { color: var(--text-secondary); }
-    .deposit-tab.active {
-      color: var(--text-primary);
-      background: rgba(255,255,255,0.03);
-    }
+    .deposit-tab.active { color: var(--text-primary); background: rgba(255,255,255,0.03); }
 
-    .input-group {
-      margin-bottom: 20px;
-    }
-
+    .input-group { margin-bottom: 20px; }
     .input-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      display: flex; justify-content: space-between;
+      font-size: 0.7rem; color: var(--text-muted); margin-bottom: 8px;
+      text-transform: uppercase; letter-spacing: 0.5px;
     }
-
-    .input-balance {
-      color: var(--text-secondary);
-      cursor: pointer;
-    }
-
+    .input-balance { color: var(--text-secondary); cursor: pointer; }
+    .input-balance:hover { color: var(--text-primary); }
     .input-wrapper {
-      display: flex;
-      background: var(--bg-secondary);
+      display: flex; background: var(--bg-secondary);
       border: 1px solid var(--border-color);
     }
-
     .input-field {
-      flex: 1;
-      padding: 14px;
-      background: transparent;
-      border: none;
-      color: var(--text-primary);
-      font-size: 1rem;
-      font-family: var(--font-mono);
+      flex: 1; padding: 14px; background: transparent;
+      border: none; color: var(--text-primary);
+      font-size: 1rem; font-family: var(--font-mono);
     }
     .input-field:focus { outline: none; }
     .input-field::placeholder { color: var(--text-muted); }
-
     .input-asset {
-      padding: 14px 16px;
-      background: rgba(255,255,255,0.02);
+      padding: 14px 16px; background: rgba(255,255,255,0.02);
       border-left: 1px solid var(--border-color);
-      color: var(--text-primary);
-      font-size: 0.85rem;
-      font-weight: 500;
+      color: var(--text-primary); font-size: 0.85rem; font-weight: 500;
     }
 
     .deposit-summary {
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
-      padding: 16px;
-      margin-bottom: 20px;
+      padding: 16px; margin-bottom: 20px;
     }
-
     .summary-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
-      font-size: 0.8rem;
+      display: flex; justify-content: space-between;
+      margin-bottom: 10px; font-size: 0.8rem;
     }
     .summary-row:last-child { margin-bottom: 0; }
-
     .summary-label { color: var(--text-muted); }
-    .summary-value {
-      color: var(--text-primary);
-      font-family: var(--font-mono);
-    }
+    .summary-value { color: var(--text-primary); font-family: var(--font-mono); }
 
     .deposit-btn {
-      width: 100%;
-      padding: 14px;
-      background: var(--text-primary);
-      color: var(--bg-primary);
-      border: none;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
+      width: 100%; padding: 14px;
+      background: var(--text-primary); color: var(--bg-primary);
+      border: none; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
     }
-    .deposit-btn:hover { background: rgba(255,255,255,0.9); }
-
+    .deposit-btn:hover { opacity: 0.9; }
+    .deposit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .deposit-note {
-      margin-top: 16px;
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      text-align: center;
+      margin-top: 16px; font-size: 0.7rem;
+      color: var(--text-muted); text-align: center;
     }
 
-    /* Your Position */
+    /* ── Position ───────────────────────────────── */
     .position-section {
-      margin-top: 32px;
-      padding-top: 24px;
+      margin-top: 32px; padding-top: 24px;
       border-top: 1px solid var(--border-color);
     }
-
     .position-empty {
-      text-align: center;
-      padding: 32px 16px;
-      color: var(--text-muted);
-      font-size: 0.85rem;
+      text-align: center; padding: 32px 16px;
+      color: var(--text-muted); font-size: 0.85rem;
     }
+    .position-data { display: none; }
+    .position-data.visible { display: block; }
+    .position-row {
+      display: flex; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+    }
+    .position-row:last-child { border-bottom: none; }
+    .position-label { color: var(--text-muted); }
+    .position-value { color: var(--text-primary); font-family: var(--font-mono); }
+    .position-value.positive { color: var(--positive); }
 
-    /* Risk Info */
+    /* ── Risk Info ──────────────────────────────── */
     .risk-section {
-      margin-top: 32px;
-      padding: 20px;
+      margin-top: 32px; padding: 20px;
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
     }
-
     .risk-title {
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
+      font-size: 0.7rem; font-weight: 600; color: var(--text-primary);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+    }
+    .risk-items { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .risk-item { font-size: 0.75rem; }
+    .risk-label { color: var(--text-muted); margin-bottom: 2px; }
+    .risk-value { color: var(--text-primary); font-family: var(--font-mono); }
+
+    /* ── Toast ──────────────────────────────────── */
+    .toast-container {
+      position: fixed; top: 80px; right: 24px; z-index: 1000;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .toast {
+      padding: 12px 20px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-color);
+      font-size: 0.8rem; color: var(--text-primary);
+      animation: slideIn 0.3s ease;
+      max-width: 360px;
+    }
+    .toast.success { border-left: 3px solid var(--safe-green); }
+    .toast.error   { border-left: 3px solid var(--negative); }
+    .toast.info    { border-left: 3px solid var(--accent-blue); }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* ── Wallet Modal ──────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6); z-index: 200;
+      justify-content: center; align-items: center;
+    }
+    .modal-overlay.visible { display: flex; }
+    .modal {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      width: 380px; max-width: 90vw; padding: 32px;
+    }
+    .modal-title {
+      font-size: 0.85rem; font-weight: 600; color: var(--text-primary);
+      margin-bottom: 24px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .wallet-option {
+      width: 100%; padding: 14px 20px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary); font-size: 0.85rem;
+      font-weight: 500; cursor: pointer; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 12px;
+      transition: all 0.15s; font-family: var(--font-body);
+    }
+    .wallet-option:hover { border-color: var(--text-muted); }
+    .wallet-option-icon { font-size: 1.2rem; }
+    .modal-close {
+      width: 100%; padding: 10px; margin-top: 8px;
+      background: transparent; border: 1px solid var(--border-color);
+      color: var(--text-muted); font-size: 0.75rem; cursor: pointer;
+      font-family: var(--font-body);
     }
 
-    .risk-items {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .risk-item {
+    /* ── TX History ─────────────────────────────── */
+    .history-section { margin-top: 24px; }
+    .history-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid var(--border-color);
       font-size: 0.75rem;
     }
-
-    .risk-label {
-      color: var(--text-muted);
-      margin-bottom: 2px;
+    .history-type { text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; }
+    .history-type.deposit { color: var(--safe-green); }
+    .history-type.withdraw { color: var(--negative); }
+    .history-amount { color: var(--text-primary); font-family: var(--font-mono); }
+    .history-link {
+      color: var(--text-muted); text-decoration: none; font-size: 0.65rem;
     }
-
-    .risk-value {
-      color: var(--text-primary);
-      font-family: var(--font-mono);
-    }
+    .history-link:hover { color: var(--text-primary); }
   </style>
 </head>
 <body>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Wallet Modal -->
+  <div class="modal-overlay" id="walletModal">
+    <div class="modal">
+      <div class="modal-title">Connect Wallet</div>
+      <button class="wallet-option" id="btnMetaMask">
+        <span class="wallet-option-icon">🦊</span> MetaMask
+      </button>
+      <button class="wallet-option" id="btnWalletConnect">
+        <span class="wallet-option-icon">🔗</span> WalletConnect
+      </button>
+      <button class="modal-close" id="btnCloseModal">Cancel</button>
+    </div>
+  </div>
+
   <!-- Header -->
   <header class="header">
     <div class="header-left">
@@ -468,81 +399,91 @@
       </a>
       <div class="header-title">Safe Yield</div>
       <span class="header-badge">Low Risk</span>
+      <div style="display:flex;align-items:center;gap:8px;margin-left:16px;">
+        <a href="perps.html" style="font-size:12px;color:var(--text-muted);text-decoration:none;padding:4px 8px;transition:color 0.2s;">Perps</a>
+        <a href="mcp-server.html" style="font-size:12px;color:var(--text-muted);text-decoration:none;padding:4px 8px;transition:color 0.2s;">MCP Server</a>
+      </div>
     </div>
-    <button class="connect-btn" id="connectWallet">Connect Wallet</button>
+    <div class="header-right">
+      <span class="network-badge" id="networkBadge"></span>
+      <button class="connect-btn" id="connectWallet">Connect Wallet</button>
+    </div>
   </header>
 
   <!-- Stats Bar -->
   <div class="stats-bar">
     <div class="stat-card">
-      <div class="stat-label">Total TVL</div>
-      <div class="stat-value">$0.00</div>
-      <div class="stat-sub">0 depositors</div>
+      <div class="stat-label">Protocol TVL</div>
+      <div class="stat-value loading" id="statTvl">—</div>
+      <div class="stat-sub" id="statTvlSub">Loading...</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Current APY</div>
-      <div class="stat-value">6.2%</div>
-      <div class="stat-sub">7-day average</div>
+      <div class="stat-label">Blended APY</div>
+      <div class="stat-value loading" id="statApy">—</div>
+      <div class="stat-sub">Weighted average</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Historical APY</div>
-      <div class="stat-value">5.8%</div>
-      <div class="stat-sub">30-day average</div>
+      <div class="stat-value loading" id="statHistApy">—</div>
+      <div class="stat-sub">30-day estimate</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Max Drawdown</div>
-      <div class="stat-value">-2.1%</div>
-      <div class="stat-sub">All-time</div>
+      <div class="stat-value" id="statDrawdown">-2.5%</div>
+      <div class="stat-sub">Target limit</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Sharpe Ratio</div>
-      <div class="stat-value">2.4</div>
+      <div class="stat-value loading" id="statSharpe">—</div>
       <div class="stat-sub">Risk-adjusted</div>
     </div>
   </div>
 
   <!-- Main Content -->
   <div class="main-grid">
-    <!-- Info Panel -->
+
+    <!-- ── Info Panel ──────────────────────────── -->
     <div class="info-panel">
       <div class="section-header">
         <span class="section-title">Strategy Overview</span>
         <span class="section-badge">Capital Preservation</span>
+        <span class="live-dot" id="liveDot" style="display:none"></span>
       </div>
 
       <p class="strategy-desc">
-        The Safe Yield vault is designed for capital preservation with consistent, low-volatility returns. 
-        It allocates to blue-chip lending protocols and over-collateralized positions, prioritizing 
-        security over maximum yield. Ideal for DAOs, treasuries, and long-term allocators.
+        The Safe Yield vault is designed for capital preservation with consistent, low-volatility returns.
+        It allocates across blue-chip lending protocols (Aave V3, Compound V3), the MakerDAO Savings Rate,
+        and Ethereum staking via Lido — prioritizing security over maximum yield.
+        Ideal for DAOs, treasuries, and long-term allocators.
       </p>
 
       <div class="features-list">
         <div class="feature-item">
           <span class="feature-icon">→</span>
-          <div class="feature-content">
+          <div>
             <div class="feature-title">Zero Leverage</div>
-            <div class="feature-desc">No borrowed funds, no liquidation risk</div>
+            <div class="feature-desc">No borrowed funds, no liquidation risk, no margin calls</div>
           </div>
         </div>
         <div class="feature-item">
           <span class="feature-icon">→</span>
-          <div class="feature-content">
-            <div class="feature-title">Conservative Rebalancing</div>
-            <div class="feature-desc">Weekly allocation adjustments to minimize gas</div>
-          </div>
-        </div>
-        <div class="feature-item">
-          <span class="feature-icon">→</span>
-          <div class="feature-content">
+          <div>
             <div class="feature-title">Blue-Chip Only</div>
-            <div class="feature-desc">Aave, Compound, MakerDAO - battle-tested protocols</div>
+            <div class="feature-desc">Aave V3, Compound V3, MakerDAO sDAI, Lido stETH — battle-tested protocols</div>
           </div>
         </div>
         <div class="feature-item">
           <span class="feature-icon">→</span>
-          <div class="feature-content">
-            <div class="feature-title">Audited Contracts</div>
-            <div class="feature-desc">Multiple security audits, formal verification</div>
+          <div>
+            <div class="feature-title">Live APY Data</div>
+            <div class="feature-desc">Real-time yields fetched from DeFi Llama — no fabricated numbers</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">→</span>
+          <div>
+            <div class="feature-title">ERC-4626 Vault</div>
+            <div class="feature-desc">Standard vault interface — deposit USDC, receive syUSDC shares</div>
           </div>
         </div>
       </div>
@@ -550,7 +491,8 @@
       <!-- Chart -->
       <div class="chart-section">
         <div class="section-header">
-          <span class="section-title">Historical Performance</span>
+          <span class="section-title">Yield Projection</span>
+          <span class="section-badge" id="chartApyLabel">—</span>
         </div>
         <div class="chart-container">
           <canvas id="performanceChart"></canvas>
@@ -561,75 +503,120 @@
       <div class="allocation-section">
         <div class="section-header">
           <span class="section-title">Current Allocation</span>
+          <span class="live-dot" id="allocLiveDot" style="display:none"></span>
         </div>
-        <div class="allocation-grid">
-          <div class="allocation-card">
-            <div class="allocation-name">Aave v3</div>
-            <div class="allocation-value">45%</div>
+        <div class="allocation-grid" id="allocationGrid">
+          <div class="allocation-card" data-strategy="aave-v3">
+            <div class="alloc-header">
+              <span class="allocation-name">🏦 Aave V3</span>
+              <span class="allocation-weight">40%</span>
+            </div>
+            <div class="allocation-apy loading" data-apy="aave-v3">—</div>
+            <div class="allocation-tvl" data-tvl="aave-v3">Loading TVL...</div>
           </div>
-          <div class="allocation-card">
-            <div class="allocation-name">Compound</div>
-            <div class="allocation-value">30%</div>
+          <div class="allocation-card" data-strategy="compound-v3">
+            <div class="alloc-header">
+              <span class="allocation-name">🔷 Compound V3</span>
+              <span class="allocation-weight">25%</span>
+            </div>
+            <div class="allocation-apy loading" data-apy="compound-v3">—</div>
+            <div class="allocation-tvl" data-tvl="compound-v3">Loading TVL...</div>
           </div>
-          <div class="allocation-card">
-            <div class="allocation-name">MakerDAO DSR</div>
-            <div class="allocation-value">15%</div>
+          <div class="allocation-card" data-strategy="maker-sdai">
+            <div class="alloc-header">
+              <span class="allocation-name">💎 MakerDAO DSR</span>
+              <span class="allocation-weight">25%</span>
+            </div>
+            <div class="allocation-apy loading" data-apy="maker-sdai">—</div>
+            <div class="allocation-tvl" data-tvl="maker-sdai">Loading TVL...</div>
           </div>
-          <div class="allocation-card">
-            <div class="allocation-name">Reserve</div>
-            <div class="allocation-value">10%</div>
+          <div class="allocation-card" data-strategy="lido">
+            <div class="alloc-header">
+              <span class="allocation-name">🔴 Lido stETH</span>
+              <span class="allocation-weight">10%</span>
+            </div>
+            <div class="allocation-apy loading" data-apy="lido">—</div>
+            <div class="allocation-tvl" data-tvl="lido">Loading TVL...</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Deposit Panel -->
+    <!-- ── Deposit Panel ───────────────────────── -->
     <div class="deposit-panel">
       <div class="panel-header">
-        <span class="panel-title">Deposit</span>
+        <span class="panel-title">Vault</span>
       </div>
 
       <div class="deposit-tabs">
-        <button class="deposit-tab active">Deposit</button>
-        <button class="deposit-tab">Withdraw</button>
+        <button class="deposit-tab active" data-tab="deposit">Deposit</button>
+        <button class="deposit-tab" data-tab="withdraw">Withdraw</button>
       </div>
 
       <div class="input-group">
         <div class="input-label">
-          <span>Amount</span>
-          <span class="input-balance">Balance: 0.00</span>
+          <span id="inputLabel">Amount</span>
+          <span class="input-balance" id="inputBalance" title="Click to fill max">Balance: —</span>
         </div>
         <div class="input-wrapper">
-          <input type="text" class="input-field" placeholder="0.00">
-          <span class="input-asset">USDC</span>
+          <input type="text" class="input-field" id="amountInput" placeholder="0.00" inputmode="decimal">
+          <span class="input-asset" id="inputAsset">USDC</span>
         </div>
       </div>
 
-      <div class="deposit-summary">
+      <div class="deposit-summary" id="depositSummary">
         <div class="summary-row">
-          <span class="summary-label">You will receive</span>
-          <span class="summary-value">0.00 syUSDC</span>
+          <span class="summary-label" id="receiveLabel">You will receive</span>
+          <span class="summary-value" id="receiveValue">0.00 syUSDC</span>
         </div>
         <div class="summary-row">
           <span class="summary-label">Exchange rate</span>
-          <span class="summary-value">1 USDC = 1.00 syUSDC</span>
+          <span class="summary-value" id="exchangeRate">1 USDC = 1.00 syUSDC</span>
         </div>
         <div class="summary-row">
           <span class="summary-label">Expected APY</span>
-          <span class="summary-value">~6.2%</span>
+          <span class="summary-value" id="expectedApyValue">—</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Management fee</span>
+          <span class="summary-value">0.5%</span>
         </div>
       </div>
 
-      <button class="deposit-btn">Connect Wallet to Deposit</button>
-      <p class="deposit-note">Withdrawals available anytime with no lock-up period</p>
+      <button class="deposit-btn" id="actionBtn" disabled>Connect Wallet to Deposit</button>
+      <p class="deposit-note">No lock-up period · Withdraw anytime · ERC-4626 standard</p>
 
-      <!-- Your Position -->
+      <!-- Position -->
       <div class="position-section">
         <div class="section-header">
           <span class="section-title">Your Position</span>
         </div>
-        <div class="position-empty">
-          Connect wallet to view your position
+        <div class="position-empty" id="positionEmpty">Connect wallet to view your position</div>
+        <div class="position-data" id="positionData">
+          <div class="position-row">
+            <span class="position-label">Vault Shares</span>
+            <span class="position-value" id="posShares">0.00 syUSDC</span>
+          </div>
+          <div class="position-row">
+            <span class="position-label">Current Value</span>
+            <span class="position-value" id="posValue">$0.00</span>
+          </div>
+          <div class="position-row">
+            <span class="position-label">Net Deposited</span>
+            <span class="position-value" id="posDeposited">$0.00</span>
+          </div>
+          <div class="position-row">
+            <span class="position-label">Unrealized P&L</span>
+            <span class="position-value positive" id="posPnl">$0.00</span>
+          </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="history-section" id="historySection" style="display:none">
+          <div class="section-header" style="margin-top:16px">
+            <span class="section-title">Recent Transactions</span>
+          </div>
+          <div id="historyList"></div>
         </div>
       </div>
 
@@ -639,7 +626,7 @@
         <div class="risk-items">
           <div class="risk-item">
             <div class="risk-label">Risk Level</div>
-            <div class="risk-value">Low</div>
+            <div class="risk-value" id="riskLevel">Low</div>
           </div>
           <div class="risk-item">
             <div class="risk-label">Leverage</div>
@@ -647,7 +634,7 @@
           </div>
           <div class="risk-item">
             <div class="risk-label">Volatility Target</div>
-            <div class="risk-value">&lt;5%</div>
+            <div class="risk-value">&lt;2%</div>
           </div>
           <div class="risk-item">
             <div class="risk-label">Drawdown Limit</div>
@@ -658,29 +645,244 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!--                        JAVASCRIPT                             -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
   <script>
-    // Performance Chart
-    const ctx = document.getElementById('performanceChart');
-    if (ctx) {
-      new Chart(ctx.getContext('2d'), {
+    // ================================================================
+    // CONFIGURATION
+    // ================================================================
+    const NETWORK_CONFIG = {
+      1: {
+        name: 'Ethereum',
+        vault: null,
+        usdc: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+        usdcDecimals: 6,
+        explorer: 'https://etherscan.io'
+      },
+      11155111: {
+        name: 'Sepolia',
+        vault: '0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0',
+        usdc: '0x8A791620dd6260079BF849Dc5567aDC3F2FdC318',
+        usdcDecimals: 6,
+        explorer: 'https://sepolia.etherscan.io'
+      },
+      42161: {
+        name: 'Arbitrum',
+        vault: null,
+        usdc: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+        usdcDecimals: 6,
+        explorer: 'https://arbiscan.io'
+      }
+    };
+
+    const VAULT_ABI = [
+      'function deposit(uint256 assets, address receiver) returns (uint256)',
+      'function withdraw(uint256 assets, address receiver, address owner) returns (uint256)',
+      'function redeem(uint256 shares, address receiver, address owner) returns (uint256)',
+      'function totalAssets() view returns (uint256)',
+      'function totalSupply() view returns (uint256)',
+      'function convertToShares(uint256 assets) view returns (uint256)',
+      'function convertToAssets(uint256 shares) view returns (uint256)',
+      'function balanceOf(address) view returns (uint256)',
+      'function maxDeposit(address) view returns (uint256)',
+      'function asset() view returns (address)',
+      'function name() view returns (string)',
+      'function symbol() view returns (string)',
+      'function decimals() view returns (uint8)',
+      'function vaultRiskScore() view returns (uint256)'
+    ];
+
+    const ERC20_ABI = [
+      'function balanceOf(address) view returns (uint256)',
+      'function approve(address spender, uint256 amount) returns (bool)',
+      'function allowance(address owner, address spender) view returns (uint256)',
+      'function decimals() view returns (uint8)',
+      'function symbol() view returns (string)'
+    ];
+
+    // ================================================================
+    // STATE
+    // ================================================================
+    const state = {
+      wallet: {
+        address: null,
+        chainId: null,
+        provider: null,
+        signer: null,
+        connected: false
+      },
+      vault: {
+        apy: null,
+        historicalApy: null,
+        sharpeRatio: null,
+        strategies: {},
+        protocols: {},
+        protocolTvl: 0,
+        sharePrice: 1.0
+      },
+      user: {
+        usdcBalance: 0,
+        vaultShares: 0,
+        vaultValue: 0,
+        netDeposited: 0
+      },
+      ui: {
+        activeTab: 'deposit',
+        loading: true,
+        txPending: false
+      }
+    };
+
+    // ================================================================
+    // DOM REFS
+    // ================================================================
+    const $ = id => document.getElementById(id);
+
+    // ================================================================
+    // TOAST NOTIFICATIONS
+    // ================================================================
+    function toast(message, type = 'info') {
+      const container = $('toastContainer');
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 5000);
+    }
+
+    // ================================================================
+    // API — FETCH LIVE DATA
+    // ================================================================
+    async function fetchVaultStatus() {
+      try {
+        const res = await fetch('/api/safe-yield/status');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        state.vault.apy           = data.metrics?.currentApy;
+        state.vault.historicalApy = data.metrics?.historicalApy;
+        state.vault.sharpeRatio   = data.metrics?.sharpeRatio;
+        state.vault.protocolTvl   = data.metrics?.protocolTvl || 0;
+        state.vault.sharePrice    = data.metrics?.sharePrice || 1.0;
+        state.vault.protocols     = data.allocations?.protocols || {};
+        state.vault.strategies    = data.metrics?.strategyApys || {};
+
+        updateStatsUI();
+        updateAllocationUI();
+        updateChart();
+
+        // Show live dot
+        $('liveDot').style.display = 'inline-block';
+        $('allocLiveDot').style.display = 'inline-block';
+
+        return data;
+      } catch (err) {
+        console.error('Failed to fetch vault status:', err);
+        toast('Failed to load yield data', 'error');
+      }
+    }
+
+    // ================================================================
+    // UI UPDATES
+    // ================================================================
+    function updateStatsUI() {
+      const v = state.vault;
+
+      // Protocol TVL
+      const tvlEl = $('statTvl');
+      tvlEl.textContent = v.protocolTvl ? fmtUsd(v.protocolTvl) : '$—';
+      tvlEl.classList.remove('loading');
+      $('statTvlSub').textContent = `${Object.keys(v.protocols).length} protocols`;
+
+      // Blended APY
+      const apyEl = $('statApy');
+      apyEl.textContent = v.apy !== null ? `${v.apy}%` : '—';
+      apyEl.classList.remove('loading');
+
+      // Historical APY
+      const histEl = $('statHistApy');
+      histEl.textContent = v.historicalApy !== null ? `${v.historicalApy}%` : '—';
+      histEl.classList.remove('loading');
+
+      // Sharpe
+      const sharpeEl = $('statSharpe');
+      sharpeEl.textContent = v.sharpeRatio !== null ? v.sharpeRatio.toFixed(1) : '—';
+      sharpeEl.classList.remove('loading');
+
+      // Expected APY in deposit panel
+      $('expectedApyValue').textContent = v.apy !== null ? `~${v.apy}%` : '—';
+      $('chartApyLabel').textContent = v.apy !== null ? `${v.apy}% blended` : '—';
+    }
+
+    function updateAllocationUI() {
+      const p = state.vault.protocols;
+      for (const [key, data] of Object.entries(p)) {
+        const apyEl = document.querySelector(`[data-apy="${key}"]`);
+        const tvlEl = document.querySelector(`[data-tvl="${key}"]`);
+        if (apyEl) {
+          apyEl.textContent = `${data.apy}%`;
+          apyEl.classList.remove('loading');
+        }
+        if (tvlEl) {
+          tvlEl.textContent = `TVL: ${data.tvlFormatted}`;
+        }
+      }
+    }
+
+    // ================================================================
+    // CHART
+    // ================================================================
+    let chartInstance = null;
+
+    function updateChart() {
+      const apy = state.vault.apy || 4.5;
+      const months = 12;
+      const labels = [];
+      const values = [];
+      let current = 10000;
+      const monthlyRate = apy / 100 / 12;
+
+      for (let m = 0; m <= months; m++) {
+        const d = new Date();
+        d.setMonth(d.getMonth() + m);
+        labels.push(d.toLocaleString('default', { month: 'short' }));
+        values.push(parseFloat(current.toFixed(2)));
+        current *= (1 + monthlyRate);
+      }
+
+      const ctx = $('performanceChart');
+      if (!ctx) return;
+
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx.getContext('2d'), {
         type: 'line',
         data: {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          labels,
           datasets: [{
-            label: 'Vault Performance',
-            data: [100, 100.5, 101.2, 101.8, 102.5, 103.1],
-            borderColor: 'rgba(255,255,255,0.6)',
-            backgroundColor: 'rgba(255,255,255,0.05)',
+            label: '$10k Projection',
+            data: values,
+            borderColor: 'rgba(61, 139, 110, 0.8)',
+            backgroundColor: 'rgba(61, 139, 110, 0.08)',
             tension: 0.4,
             fill: true,
-            borderWidth: 1.5,
-            pointRadius: 0
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 4
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => `$${ctx.raw.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+              }
+            }
+          },
           scales: {
             x: {
               grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
@@ -688,39 +890,502 @@
             },
             y: {
               grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
-              ticks: { 
-                color: 'rgba(255,255,255,0.4)', 
+              ticks: {
+                color: 'rgba(255,255,255,0.4)',
                 font: { size: 10 },
-                callback: function(value) { return value + '%'; }
-              },
-              min: 99,
-              max: 104
+                callback: v => `$${(v / 1000).toFixed(1)}k`
+              }
             }
           }
         }
       });
     }
 
-    // Tab switching
+    // ================================================================
+    // WALLET CONNECTION
+    // ================================================================
+    async function connectMetaMask() {
+      if (!window.ethereum) {
+        toast('MetaMask not found. Please install MetaMask.', 'error');
+        return;
+      }
+
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        state.wallet.provider = new ethers.BrowserProvider(window.ethereum);
+        state.wallet.signer   = await state.wallet.provider.getSigner();
+        state.wallet.address  = accounts[0];
+        state.wallet.chainId  = Number((await state.wallet.provider.getNetwork()).chainId);
+        state.wallet.connected = true;
+
+        closeModal();
+        updateWalletUI();
+        await refreshOnChainData();
+
+        toast(`Connected: ${shortAddr(accounts[0])}`, 'success');
+
+        // Listen for account & chain changes
+        window.ethereum.on('accountsChanged', async (accs) => {
+          if (accs.length === 0) { disconnectWallet(); return; }
+          state.wallet.address = accs[0];
+          updateWalletUI();
+          await refreshOnChainData();
+        });
+        window.ethereum.on('chainChanged', () => window.location.reload());
+
+      } catch (err) {
+        console.error('Connect error:', err);
+        toast('Failed to connect wallet', 'error');
+      }
+    }
+
+    function disconnectWallet() {
+      state.wallet = { address: null, chainId: null, provider: null, signer: null, connected: false };
+      state.user = { usdcBalance: 0, vaultShares: 0, vaultValue: 0, netDeposited: 0 };
+      updateWalletUI();
+      updatePositionUI();
+      toast('Wallet disconnected', 'info');
+    }
+
+    function updateWalletUI() {
+      const btn = $('connectWallet');
+      const badge = $('networkBadge');
+
+      if (state.wallet.connected) {
+        btn.textContent = shortAddr(state.wallet.address);
+        btn.classList.add('connected');
+
+        const net = NETWORK_CONFIG[state.wallet.chainId];
+        if (net) {
+          badge.textContent = net.name;
+          badge.classList.add('visible');
+        } else {
+          badge.textContent = `Chain ${state.wallet.chainId}`;
+          badge.classList.add('visible');
+        }
+
+        $('inputBalance').textContent = `Balance: ${fmtAmount(state.user.usdcBalance)} USDC`;
+        updateActionBtn();
+      } else {
+        btn.textContent = 'Connect Wallet';
+        btn.classList.remove('connected');
+        badge.classList.remove('visible');
+        $('inputBalance').textContent = 'Balance: —';
+        $('actionBtn').textContent = 'Connect Wallet to Deposit';
+        $('actionBtn').disabled = false;
+      }
+    }
+
+    // ================================================================
+    // ON-CHAIN READS
+    // ================================================================
+    async function refreshOnChainData() {
+      if (!state.wallet.connected) return;
+
+      const net = NETWORK_CONFIG[state.wallet.chainId];
+      if (!net) {
+        toast('Unsupported network. Please switch to Ethereum or Sepolia.', 'error');
+        return;
+      }
+
+      try {
+        // Read USDC balance
+        const usdc = new ethers.Contract(net.usdc, ERC20_ABI, state.wallet.provider);
+        const rawBal = await usdc.balanceOf(state.wallet.address);
+        state.user.usdcBalance = parseFloat(ethers.formatUnits(rawBal, net.usdcDecimals));
+
+        // Read vault position if vault is deployed
+        if (net.vault) {
+          const vault = new ethers.Contract(net.vault, VAULT_ABI, state.wallet.provider);
+          const rawShares = await vault.balanceOf(state.wallet.address);
+          const decimals = await vault.decimals();
+          state.user.vaultShares = parseFloat(ethers.formatUnits(rawShares, decimals));
+
+          if (rawShares > 0n) {
+            const rawValue = await vault.convertToAssets(rawShares);
+            state.user.vaultValue = parseFloat(ethers.formatUnits(rawValue, net.usdcDecimals));
+          } else {
+            state.user.vaultValue = 0;
+          }
+        }
+
+        updateWalletUI();
+        updatePositionUI();
+        fetchTransactionHistory();
+
+      } catch (err) {
+        console.error('On-chain read error:', err);
+        // Still update UI with whatever we have
+        updateWalletUI();
+        updatePositionUI();
+      }
+    }
+
+    function updatePositionUI() {
+      const hasPosition = state.wallet.connected;
+      $('positionEmpty').style.display  = hasPosition ? 'none' : 'block';
+      $('positionData').classList.toggle('visible', hasPosition);
+
+      if (hasPosition) {
+        $('posShares').textContent    = `${fmtAmount(state.user.vaultShares)} syUSDC`;
+        $('posValue').textContent     = `$${fmtAmount(state.user.vaultValue)}`;
+        $('posDeposited').textContent = `$${fmtAmount(state.user.netDeposited)}`;
+
+        const pnl = state.user.vaultValue - state.user.netDeposited;
+        const pnlEl = $('posPnl');
+        pnlEl.textContent = `${pnl >= 0 ? '+' : ''}$${fmtAmount(pnl)}`;
+        pnlEl.className = `position-value ${pnl >= 0 ? 'positive' : ''}`;
+      }
+    }
+
+    async function fetchTransactionHistory() {
+      if (!state.wallet.address) return;
+      try {
+        const res = await fetch(`/api/safe-yield/deposit?address=${state.wallet.address}`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        state.user.netDeposited = data.summary?.netDeposited || 0;
+        updatePositionUI();
+
+        // Render history
+        const list = $('historyList');
+        const section = $('historySection');
+        if (data.transactions && data.transactions.length > 0) {
+          section.style.display = 'block';
+          list.innerHTML = data.transactions.slice(0, 10).map(tx => `
+            <div class="history-item">
+              <span class="history-type ${tx.tx_type}">${tx.tx_type}</span>
+              <span class="history-amount">$${fmtAmount(tx.amount_usdc)}</span>
+              <a class="history-link" href="${explorerTxUrl(tx.tx_hash)}" target="_blank">
+                ${tx.tx_hash.slice(0, 8)}…
+              </a>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('History fetch error:', err);
+      }
+    }
+
+    // ================================================================
+    // DEPOSIT / WITHDRAW
+    // ================================================================
+    async function handleDeposit() {
+      const net = NETWORK_CONFIG[state.wallet.chainId];
+      if (!net?.vault) {
+        toast('Vault not deployed on this network yet', 'error');
+        return;
+      }
+
+      const amount = parseFloat($('amountInput').value);
+      if (!amount || amount <= 0) { toast('Enter a valid amount', 'error'); return; }
+      if (amount > state.user.usdcBalance) { toast('Insufficient USDC balance', 'error'); return; }
+
+      state.ui.txPending = true;
+      updateActionBtn();
+
+      try {
+        const usdc  = new ethers.Contract(net.usdc,  ERC20_ABI, state.wallet.signer);
+        const vault = new ethers.Contract(net.vault, VAULT_ABI, state.wallet.signer);
+        const rawAmount = ethers.parseUnits(amount.toString(), net.usdcDecimals);
+
+        // Step 1: Check & approve allowance
+        const allowance = await usdc.allowance(state.wallet.address, net.vault);
+        if (allowance < rawAmount) {
+          toast('Approving USDC spend…', 'info');
+          const approveTx = await usdc.approve(net.vault, rawAmount);
+          await approveTx.wait();
+          toast('USDC approved ✓', 'success');
+        }
+
+        // Step 2: Deposit
+        toast('Depositing into vault…', 'info');
+        const depositTx = await vault.deposit(rawAmount, state.wallet.address);
+        const receipt = await depositTx.wait();
+
+        toast(`Deposited ${fmtAmount(amount)} USDC ✓`, 'success');
+
+        // Step 3: Log to backend
+        logTransaction('deposit', amount, receipt.hash, receipt.blockNumber);
+
+        // Step 4: Refresh
+        $('amountInput').value = '';
+        await refreshOnChainData();
+
+      } catch (err) {
+        console.error('Deposit error:', err);
+        if (err.code === 'ACTION_REJECTED') {
+          toast('Transaction rejected by user', 'info');
+        } else {
+          toast(`Deposit failed: ${err.shortMessage || err.message}`, 'error');
+        }
+      } finally {
+        state.ui.txPending = false;
+        updateActionBtn();
+      }
+    }
+
+    async function handleWithdraw() {
+      const net = NETWORK_CONFIG[state.wallet.chainId];
+      if (!net?.vault) {
+        toast('Vault not deployed on this network yet', 'error');
+        return;
+      }
+
+      const amount = parseFloat($('amountInput').value);
+      if (!amount || amount <= 0) { toast('Enter a valid amount', 'error'); return; }
+      if (amount > state.user.vaultValue) { toast('Insufficient vault balance', 'error'); return; }
+
+      state.ui.txPending = true;
+      updateActionBtn();
+
+      try {
+        const vault = new ethers.Contract(net.vault, VAULT_ABI, state.wallet.signer);
+        const rawAmount = ethers.parseUnits(amount.toString(), net.usdcDecimals);
+
+        toast('Withdrawing from vault…', 'info');
+        const withdrawTx = await vault.withdraw(rawAmount, state.wallet.address, state.wallet.address);
+        const receipt = await withdrawTx.wait();
+
+        toast(`Withdrew ${fmtAmount(amount)} USDC ✓`, 'success');
+
+        logTransaction('withdraw', amount, receipt.hash, receipt.blockNumber);
+
+        $('amountInput').value = '';
+        await refreshOnChainData();
+
+      } catch (err) {
+        console.error('Withdraw error:', err);
+        if (err.code === 'ACTION_REJECTED') {
+          toast('Transaction rejected by user', 'info');
+        } else {
+          toast(`Withdraw failed: ${err.shortMessage || err.message}`, 'error');
+        }
+      } finally {
+        state.ui.txPending = false;
+        updateActionBtn();
+      }
+    }
+
+    async function logTransaction(txType, amount, txHash, blockNumber) {
+      try {
+        const net = NETWORK_CONFIG[state.wallet.chainId];
+        await fetch('/api/safe-yield/deposit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userAddress: state.wallet.address,
+            txHash,
+            txType,
+            amountUsdc: amount,
+            network: net?.name?.toLowerCase() || 'ethereum',
+            blockNumber
+          })
+        });
+      } catch (err) {
+        console.error('Log tx error:', err);
+      }
+    }
+
+    // ================================================================
+    // UI INTERACTION HANDLERS
+    // ================================================================
+    function updateActionBtn() {
+      const btn = $('actionBtn');
+
+      if (!state.wallet.connected) {
+        btn.textContent = 'Connect Wallet to Deposit';
+        btn.disabled = false;
+        return;
+      }
+
+      const net = NETWORK_CONFIG[state.wallet.chainId];
+      if (!net?.vault) {
+        btn.textContent = `Vault not deployed on ${net?.name || 'this network'}`;
+        btn.disabled = true;
+        return;
+      }
+
+      if (state.ui.txPending) {
+        btn.textContent = 'Processing…';
+        btn.disabled = true;
+        return;
+      }
+
+      if (state.ui.activeTab === 'deposit') {
+        btn.textContent = 'Deposit USDC';
+        btn.disabled = false;
+      } else {
+        btn.textContent = 'Withdraw USDC';
+        btn.disabled = false;
+      }
+    }
+
+    function updateDepositSummary() {
+      const amount = parseFloat($('amountInput').value) || 0;
+      const apy = state.vault.apy || 0;
+      const price = state.vault.sharePrice || 1.0;
+
+      if (state.ui.activeTab === 'deposit') {
+        const shares = amount / price;
+        $('receiveLabel').textContent = 'You will receive';
+        $('receiveValue').textContent = `${fmtAmount(shares)} syUSDC`;
+        $('exchangeRate').textContent = `1 USDC = ${fmtAmount(1 / price)} syUSDC`;
+        $('inputAsset').textContent = 'USDC';
+        $('inputLabel').textContent = 'Amount';
+      } else {
+        const usdc = amount * price;
+        $('receiveLabel').textContent = 'You will receive';
+        $('receiveValue').textContent = `${fmtAmount(amount)} USDC`;
+        $('exchangeRate').textContent = `1 syUSDC = ${fmtAmount(price)} USDC`;
+        $('inputAsset').textContent = 'USDC';
+        $('inputLabel').textContent = 'Amount';
+      }
+    }
+
+    // ================================================================
+    // TAB SWITCHING
+    // ================================================================
     document.querySelectorAll('.deposit-tab').forEach(tab => {
-      tab.addEventListener('click', function() {
+      tab.addEventListener('click', function () {
         document.querySelectorAll('.deposit-tab').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
+        state.ui.activeTab = this.dataset.tab;
+
+        $('amountInput').value = '';
+
+        if (state.ui.activeTab === 'deposit') {
+          $('inputBalance').textContent = state.wallet.connected
+            ? `Balance: ${fmtAmount(state.user.usdcBalance)} USDC`
+            : 'Balance: —';
+        } else {
+          $('inputBalance').textContent = state.wallet.connected
+            ? `Balance: ${fmtAmount(state.user.vaultValue)} USDC`
+            : 'Balance: —';
+        }
+
+        updateActionBtn();
+        updateDepositSummary();
       });
     });
+
+    // ================================================================
+    // INPUT HANDLING
+    // ================================================================
+    $('amountInput').addEventListener('input', updateDepositSummary);
+
+    $('inputBalance').addEventListener('click', () => {
+      if (!state.wallet.connected) return;
+      const max = state.ui.activeTab === 'deposit' ? state.user.usdcBalance : state.user.vaultValue;
+      $('amountInput').value = max > 0 ? max.toFixed(2) : '';
+      updateDepositSummary();
+    });
+
+    // ================================================================
+    // ACTION BUTTON
+    // ================================================================
+    $('actionBtn').addEventListener('click', () => {
+      if (!state.wallet.connected) {
+        openModal();
+        return;
+      }
+      if (state.ui.activeTab === 'deposit') {
+        handleDeposit();
+      } else {
+        handleWithdraw();
+      }
+    });
+
+    // ================================================================
+    // WALLET MODAL
+    // ================================================================
+    $('connectWallet').addEventListener('click', () => {
+      if (state.wallet.connected) {
+        disconnectWallet();
+      } else {
+        openModal();
+      }
+    });
+
+    $('btnMetaMask').addEventListener('click', connectMetaMask);
+    $('btnWalletConnect').addEventListener('click', () => {
+      toast('WalletConnect integration coming soon', 'info');
+    });
+    $('btnCloseModal').addEventListener('click', closeModal);
+    $('walletModal').addEventListener('click', (e) => {
+      if (e.target === $('walletModal')) closeModal();
+    });
+
+    function openModal()  { $('walletModal').classList.add('visible'); }
+    function closeModal() { $('walletModal').classList.remove('visible'); }
+
+    // ================================================================
+    // HELPERS
+    // ================================================================
+    function shortAddr(addr) {
+      if (!addr) return '';
+      return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+    }
+
+    function fmtAmount(val) {
+      if (val === null || val === undefined || isNaN(val)) return '0.00';
+      return parseFloat(val).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function fmtUsd(val) {
+      if (!val && val !== 0) return '$—';
+      if (val >= 1e9) return `$${(val / 1e9).toFixed(2)}B`;
+      if (val >= 1e6) return `$${(val / 1e6).toFixed(2)}M`;
+      if (val >= 1e3) return `$${(val / 1e3).toFixed(1)}K`;
+      return `$${val.toFixed(2)}`;
+    }
+
+    function explorerTxUrl(hash) {
+      const net = NETWORK_CONFIG[state.wallet.chainId];
+      return net ? `${net.explorer}/tx/${hash}` : `https://etherscan.io/tx/${hash}`;
+    }
+
+    // ================================================================
+    // INITIALIZATION
+    // ================================================================
+    async function init() {
+      // Fetch live vault data on page load
+      await fetchVaultStatus();
+
+      // Auto-refresh every 5 minutes
+      setInterval(fetchVaultStatus, 5 * 60 * 1000);
+
+      // Auto-connect if wallet was previously connected
+      if (window.ethereum?.selectedAddress) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            await connectMetaMask();
+          }
+        } catch {}
+      }
+    }
+
+    init();
   </script>
-<script>
-  document.querySelectorAll('a[href$=".html"]').forEach(link => {
-    const href = link.getAttribute('href');
-    if (!href) return;
-    const [path, hash] = href.split('#');
-    const cleaned = path.replace(/\.html$/, '');
-    link.setAttribute('href', hash ? `${cleaned}#${hash}` : cleaned);
-  });
-  if (window.location.pathname.endsWith('.html')) {
-    const cleanPath = window.location.pathname.replace(/\.html$/, '');
-    window.history.replaceState({}, '', cleanPath + window.location.search + window.location.hash);
-  }
-</script>
+
+  <!-- Clean URLs -->
+  <script>
+    document.querySelectorAll('a[href$=".html"]').forEach(link => {
+      const href = link.getAttribute('href');
+      if (!href) return;
+      const [path, hash] = href.split('#');
+      const cleaned = path.replace(/\.html$/, '');
+      link.setAttribute('href', hash ? `${cleaned}#${hash}` : cleaned);
+    });
+    if (window.location.pathname.endsWith('.html')) {
+      const cleanPath = window.location.pathname.replace(/\.html$/, '');
+      window.history.replaceState({}, '', cleanPath + window.location.search + window.location.hash);
+    }
+  </script>
 </body>
 </html>

@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexxore — On-Chain Risk Infrastructure for Crypto Capital</title>
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6QGB2RQVP0"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-6QGB2RQVP0');</script>
+
+  <meta name="description" content="Nexxore is the on-chain risk desk for serious crypto capital. Regime detection, structured exposure construction, and capital-efficient execution across chains.">
+  <meta name="keywords" content="DeFi, risk infrastructure, regime detection, delta-neutral, perpetuals, vaults, cross-chain execution, exposure modeling, crypto risk desk">
+  <meta name="author" content="Nexxore">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://nexxore.xyz/">
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='fg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%234a6fa5'/><stop offset='100%25' stop-color='%233d8b6e'/></linearGradient></defs><rect width='32' height='32' rx='4' fill='%230a0a0b'/><g transform='translate(4,4) scale(0.75)'><circle cx='12' cy='10' r='7' stroke='url(%23fg)' stroke-width='2' fill='none'/><circle cx='20' cy='10' r='7' stroke='url(%23fg)' stroke-width='2' fill='none' opacity='.85'/><circle cx='16' cy='17' r='7' stroke='url(%23fg)' stroke-width='2' fill='none' opacity='.85'/></g></svg>" type="image/svg+xml">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nexxore.xyz/">
+  <meta property="og:title" content="Nexxore — On-Chain Risk Infrastructure for Crypto Capital">
+  <meta property="og:description" content="Regime detection, structured exposure construction, and capital-efficient execution. The on-chain risk desk.">
+  <meta property="og:site_name" content="Nexxore">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Nexxore — On-Chain Risk Infrastructure">
+  <meta name="twitter:description" content="Regime detection, structured exposure construction, and capital-efficient execution across chains.">
+  <meta name="twitter:site" content="@nexxore">
+
+  <meta name="theme-color" content="#0a0a0b">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Nexxore","url":"https://nexxore.xyz","description":"On-chain risk infrastructure for crypto capital.","applicationCategory":"FinanceApplication","operatingSystem":"Web Browser","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+
+  <style>
+    /* ══════════════════════════════════════════════════════
+       NEXXORE — INSTITUTIONAL DESIGN SYSTEM
+       Bloomberg Terminal × Modern Web3
+       ══════════════════════════════════════════════════════ */
+
+    :root {
+      --bg-primary: #0a0a0b;
+      --bg-secondary: #0f1012;
+      --bg-tertiary: #141517;
+      --bg-card: #18191c;
+      --bg-card-hover: #1c1d21;
+
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(74,111,165,0.25);
+      --border-active: rgba(61,139,110,0.3);
+
+      --text-primary: #d4d4d8;
+      --text-secondary: #71717a;
+      --text-muted: #3f3f46;
+      --text-heading: #e4e4e7;
+
+      --accent: #4a6fa5;
+      --accent-dim: rgba(74,111,165,0.12);
+      --emerald: #3d8b6e;
+      --emerald-dim: rgba(61,139,110,0.12);
+      --red-dim: rgba(185,68,68,0.5);
+
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 40px;
+      --space-2xl: 64px;
+      --space-3xl: 100px;
+
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 6px;
+
+      --transition: 200ms ease;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    ::selection { background: var(--accent-dim); color: var(--text-heading); }
+
+    /* ═══════════ UTILITIES ═══════════ */
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 var(--space-lg); }
+    .mono { font-family: var(--font-mono); }
+    .muted { color: var(--text-muted); }
+    .secondary { color: var(--text-secondary); }
+
+    /* ═══════════ SECTION DIVIDERS ═══════════ */
+    .section-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 0; border: none; }
+
+    /* ═══════════ NAVBAR ═══════════ */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(10,10,11,0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0;
+    }
+    .nav-inner {
+      display: flex; justify-content: space-between; align-items: center;
+      height: 52px;
+    }
+    .nav-brand {
+      font-size: 16px; font-weight: 700; letter-spacing: -0.5px;
+      color: var(--text-heading); text-decoration: none;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .nav-brand-mark {
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-brand-mark svg { height: 22px; width: auto; }
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-link {
+      font-size: 13px; color: var(--text-secondary); text-decoration: none;
+      padding: 6px 12px; border-radius: var(--radius-md);
+      transition: color var(--transition), background var(--transition);
+      letter-spacing: -0.2px;
+    }
+    .nav-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+    .nav-sep { width: 1px; height: 16px; background: var(--border); margin: 0 4px; }
+    .nav-cta {
+      font-size: 12px; font-weight: 500; color: var(--text-primary);
+      text-decoration: none; padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      transition: all var(--transition);
+      letter-spacing: 0.2px;
+    }
+    .nav-cta:hover { border-color: var(--accent); color: var(--accent); }
+    .nav-cta-mcp {
+      font-size: 11px; font-weight: 600; color: var(--emerald);
+      text-decoration: none; padding: 5px 12px;
+      border: 1px solid rgba(61,139,110,0.3);
+      background: rgba(61,139,110,0.06);
+      border-radius: var(--radius-md);
+      transition: all var(--transition);
+      letter-spacing: 0.3px; text-transform: uppercase;
+    }
+    .nav-cta-mcp:hover { background: rgba(61,139,110,0.12); border-color: rgba(61,139,110,0.5); color: #5eead4; }
+
+    /* ═══════════ HERO ═══════════ */
+    .hero {
+      min-height: 100vh; display: flex; align-items: center;
+      padding: 140px 0 100px; position: relative; overflow: hidden;
+    }
+    .hero-grid-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent);
+      -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent);
+    }
+    .hero-wave {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 200px; z-index: 0;
+      opacity: 0.08;
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 680px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.8px;
+      text-transform: uppercase; color: var(--text-secondary);
+      font-family: var(--font-mono);
+      margin-bottom: var(--space-xl);
+    }
+    .hero-badge-dot {
+      width: 5px; height: 5px; background: var(--emerald);
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(61,139,110,0.4);
+    }
+    .hero h1 {
+      font-size: clamp(36px, 5.5vw, 56px);
+      font-weight: 700; line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: var(--text-heading);
+      margin-bottom: var(--space-lg);
+    }
+    .hero h1 .line-2 { color: var(--text-secondary); }
+    .hero-sub {
+      font-size: 16px; line-height: 1.7;
+      color: var(--text-secondary);
+      max-width: 540px;
+      margin-bottom: var(--space-xl);
+    }
+    .hero-actions { display: flex; gap: 12px; align-items: center; }
+    .btn-solid {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 24px; font-size: 13px; font-weight: 500;
+      background: var(--accent); color: #fff; border: none;
+      border-radius: var(--radius-md); cursor: pointer;
+      text-decoration: none; transition: all var(--transition);
+      letter-spacing: 0.1px;
+    }
+    .btn-solid:hover { background: #3d5f8f; box-shadow: 0 2px 12px rgba(74,111,165,0.2); }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 24px; font-size: 13px; font-weight: 500;
+      background: transparent; color: var(--text-secondary);
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      cursor: pointer; text-decoration: none;
+      transition: all var(--transition);
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.15); color: var(--text-primary); }
+
+    /* ═══════════ SECTIONS (shared) ═══════════ */
+    section { padding: var(--space-3xl) 0; }
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: var(--space-md);
+    }
+    .section-title {
+      font-size: clamp(24px, 3vw, 32px);
+      font-weight: 700; letter-spacing: -0.03em;
+      color: var(--text-heading); line-height: 1.2;
+      margin-bottom: var(--space-sm);
+    }
+    .section-title .dim { color: var(--text-secondary); font-weight: 400; }
+    .section-desc {
+      font-size: 15px; color: var(--text-secondary);
+      line-height: 1.65; max-width: 520px;
+    }
+
+    /* ═══════════ PROBLEM ═══════════ */
+    .problem { background: var(--bg-secondary); }
+    .problem-grid {
+      display: grid; grid-template-columns: 1fr 1.2fr;
+      gap: var(--space-2xl); align-items: start;
+      margin-top: var(--space-xl);
+    }
+    .problem-text h2 {
+      font-size: clamp(22px, 2.5vw, 28px);
+      font-weight: 700; letter-spacing: -0.02em;
+      color: var(--text-heading); line-height: 1.3;
+      margin-bottom: var(--space-md);
+    }
+    .problem-text h2 .dim { color: var(--text-secondary); font-weight: 400; display: block; }
+    .problem-text p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+    .problem-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .problem-card {
+      padding: 20px; background: var(--bg-tertiary);
+      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      transition: border-color var(--transition);
+    }
+    .problem-card:hover { border-color: var(--border-hover); }
+    .problem-card-label {
+      font-family: var(--font-mono); font-size: 10px;
+      font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 8px;
+    }
+    .problem-card p {
+      font-size: 13px; color: var(--text-secondary); line-height: 1.55;
+    }
+
+    /* ═══════════ RISK STACK ═══════════ */
+    .stack {
+      position: relative;
+      background:
+        linear-gradient(rgba(255,255,255,0.008) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.008) 1px, transparent 1px);
+      background-size: 40px 40px;
+      background-color: var(--bg-primary);
+    }
+    .stack-layers { margin-top: var(--space-2xl); position: relative; padding-left: 48px; }
+    .stack-line {
+      position: absolute; left: 11px; top: 0; bottom: 0;
+      width: 1px; background: linear-gradient(180deg, var(--border), var(--border), transparent);
+    }
+    .stack-layer {
+      position: relative; padding-bottom: var(--space-2xl);
+    }
+    .stack-layer:last-child { padding-bottom: 0; }
+    .stack-layer-dot {
+      position: absolute; left: -48px; top: 4px;
+      width: 23px; height: 23px;
+      border: 1.5px solid var(--border);
+      border-radius: 50%; background: var(--bg-primary);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+      color: var(--text-muted);
+      transition: border-color var(--transition), color var(--transition);
+    }
+    .stack-layer:hover .stack-layer-dot { border-color: var(--accent); color: var(--accent); }
+    .stack-layer h3 {
+      font-size: 18px; font-weight: 600; letter-spacing: -0.02em;
+      color: var(--text-heading); margin-bottom: 8px;
+    }
+    .stack-layer-desc {
+      font-size: 14px; color: var(--text-secondary); line-height: 1.6;
+      margin-bottom: var(--space-md); max-width: 520px;
+    }
+    .stack-layer-list {
+      list-style: none; display: flex; flex-direction: column; gap: 4px;
+    }
+    .stack-layer-list li {
+      font-size: 13px; color: var(--text-muted);
+      font-family: var(--font-mono);
+      padding-left: 16px; position: relative;
+    }
+    .stack-layer-list li::before {
+      content: '\2192'; position: absolute; left: 0;
+      color: var(--text-muted); opacity: 0.5;
+    }
+    .stack-layer-output {
+      margin-top: var(--space-md);
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border-left: 2px solid var(--border);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      font-size: 13px; color: var(--text-secondary); line-height: 1.55;
+    }
+    .stack-layer-output strong { color: var(--text-primary); font-weight: 500; }
+
+    /* ═══════════ RISK DESK ═══════════ */
+    .desk { background: var(--bg-secondary); }
+    .desk-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      margin-top: var(--space-2xl);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .desk-col {
+      padding: var(--space-lg);
+      transition: background var(--transition);
+    }
+    .desk-col:hover { background: var(--bg-tertiary); }
+    .desk-col:not(:last-child) { border-right: 1px solid var(--border); }
+    .desk-col h3 {
+      font-size: 13px; font-weight: 600;
+      letter-spacing: -0.01em; color: var(--text-heading);
+      margin-bottom: var(--space-lg);
+      padding-bottom: var(--space-sm);
+      border-bottom: 1px solid var(--border);
+    }
+    .desk-item {
+      display: block; text-decoration: none; color: inherit;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      transition: all var(--transition);
+    }
+    .desk-item:last-child { border-bottom: none; }
+    .desk-item:hover .desk-item-title { color: var(--accent); }
+    .desk-item-title {
+      font-size: 14px; font-weight: 500;
+      color: var(--text-primary); margin-bottom: 2px;
+      transition: color var(--transition);
+    }
+    .desk-item-desc {
+      font-size: 12px; color: var(--text-muted); line-height: 1.45;
+    }
+
+    /* ═══════════ AUDIENCE ═══════════ */
+    .audience-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 16px; margin-top: var(--space-2xl);
+    }
+    .audience-card {
+      padding: var(--space-lg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: border-color var(--transition);
+    }
+    .audience-card:hover { border-color: var(--border-hover); }
+    .audience-card h4 {
+      font-size: 15px; font-weight: 600;
+      color: var(--text-heading); margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    .audience-card p {
+      font-size: 13px; color: var(--text-secondary); line-height: 1.55;
+    }
+    .audience-note {
+      margin-top: var(--space-lg);
+      font-size: 13px; color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* ═══════════ ADVANTAGE ═══════════ */
+    .advantage { background: var(--bg-secondary); }
+    .advantage-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 1px; margin-top: var(--space-2xl);
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .advantage-cell {
+      padding: var(--space-lg) var(--space-lg);
+      background: var(--bg-secondary);
+      position: relative;
+      transition: background var(--transition);
+    }
+    .advantage-cell:hover { background: var(--bg-tertiary); }
+    .advantage-num {
+      font-family: var(--font-mono);
+      font-size: 48px; font-weight: 700;
+      color: rgba(255,255,255,0.025);
+      position: absolute; top: 12px; right: 20px;
+      line-height: 1;
+      user-select: none;
+    }
+    .advantage-cell h3 {
+      font-size: 15px; font-weight: 600;
+      color: var(--text-heading); margin-bottom: 8px;
+      letter-spacing: -0.01em;
+      position: relative;
+    }
+    .advantage-cell p {
+      font-size: 13px; color: var(--text-secondary);
+      line-height: 1.55; position: relative;
+      max-width: 360px;
+    }
+
+    /* ═══════════ ROADMAP ═══════════ */
+    .roadmap-track {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 0; margin-top: var(--space-2xl);
+      position: relative;
+    }
+    .roadmap-track::before {
+      content: ''; position: absolute;
+      top: 11px; left: 0; right: 0;
+      height: 1px; background: var(--border);
+    }
+    .roadmap-phase { position: relative; padding-right: var(--space-lg); }
+    .roadmap-dot {
+      width: 9px; height: 9px;
+      border: 1.5px solid var(--border);
+      border-radius: 50%;
+      background: var(--bg-primary);
+      margin-bottom: var(--space-md);
+      position: relative; z-index: 1;
+    }
+    .roadmap-phase.active .roadmap-dot {
+      border-color: var(--emerald);
+      background: var(--emerald);
+      box-shadow: 0 0 8px rgba(61,139,110,0.3);
+    }
+    .roadmap-phase-label {
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.8px; text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .roadmap-phase.active .roadmap-phase-label { color: var(--emerald); }
+    .roadmap-phase:not(.active) .roadmap-phase-label { color: var(--text-muted); }
+    .roadmap-phase h4 {
+      font-size: 14px; font-weight: 600;
+      color: var(--text-heading); margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+    .roadmap-phase p {
+      font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+    }
+
+    /* ═══════════ PERPS TERMINAL ═══════════ */
+    .terminal-section { background: var(--bg-secondary); }
+    .terminal-box {
+      margin-top: var(--space-xl);
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .terminal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px var(--space-lg);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-tertiary);
+    }
+    .terminal-header-left {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .terminal-pair {
+      font-family: var(--font-mono); font-size: 13px;
+      font-weight: 600; color: var(--text-heading);
+    }
+    .terminal-status {
+      font-size: 10px; font-weight: 500;
+      letter-spacing: 0.5px; text-transform: uppercase;
+      color: var(--emerald); font-family: var(--font-mono);
+    }
+    .terminal-price {
+      font-family: var(--font-mono); font-size: 15px;
+      font-weight: 600; color: var(--text-heading);
+    }
+    .terminal-body {
+      display: grid; grid-template-columns: 1fr 2fr;
+      min-height: 200px;
+    }
+    .terminal-stats {
+      padding: var(--space-lg);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .terminal-stat-label {
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.5px; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 2px;
+    }
+    .terminal-stat-value {
+      font-family: var(--font-mono); font-size: 14px;
+      font-weight: 600; color: var(--text-primary);
+    }
+    .terminal-chart {
+      padding: var(--space-lg);
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .terminal-chart-svg { width: 100%; height: 120px; display: block; }
+    .terminal-actions {
+      display: flex; gap: 8px; margin-top: var(--space-md);
+    }
+
+    /* ═══════════ AGENTS ═══════════ */
+    .agents-list {
+      margin-top: var(--space-2xl);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .agent-row {
+      display: grid; grid-template-columns: 180px 1fr;
+      padding: 16px var(--space-lg);
+      border-bottom: 1px solid var(--border);
+      text-decoration: none; color: inherit;
+      transition: background var(--transition);
+    }
+    .agent-row:last-child { border-bottom: none; }
+    .agent-row:hover { background: var(--bg-tertiary); }
+    .agent-name {
+      font-size: 14px; font-weight: 500;
+      color: var(--text-heading);
+      letter-spacing: -0.01em;
+    }
+    .agent-mandate {
+      font-size: 13px; color: var(--text-secondary);
+    }
+
+    /* ═══════════ WAITLIST ═══════════ */
+    .waitlist { background: var(--bg-secondary); }
+    .waitlist-box {
+      max-width: 480px; margin: 0 auto;
+      padding: var(--space-xl);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      text-align: center;
+    }
+    .waitlist-box h2 {
+      font-size: 20px; font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-heading);
+      margin-bottom: 8px;
+    }
+    .waitlist-box .waitlist-sub {
+      font-size: 13px; color: var(--text-secondary);
+      line-height: 1.6; margin-bottom: var(--space-lg);
+    }
+    .waitlist-criteria {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      justify-content: center; margin-bottom: var(--space-lg);
+    }
+    .waitlist-criteria span {
+      font-size: 11px; font-family: var(--font-mono);
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      letter-spacing: 0.2px;
+    }
+    .waitlist-form {
+      display: flex; gap: 8px;
+    }
+    .waitlist-form input {
+      flex: 1; padding: 10px 14px;
+      background: transparent;
+      border: none; border-bottom: 1px solid var(--border);
+      color: var(--text-primary); font-size: 14px;
+      font-family: var(--font-sans);
+      border-radius: 0;
+      transition: border-color var(--transition);
+      outline: none;
+    }
+    .waitlist-form input:focus { border-color: var(--accent); }
+    .waitlist-form input::placeholder { color: var(--text-muted); }
+    .waitlist-form button {
+      padding: 10px 20px; font-size: 13px; font-weight: 500;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: all var(--transition);
+    }
+    .waitlist-form button:hover { border-color: var(--accent); color: var(--accent); }
+    .waitlist-note {
+      font-size: 11px; color: var(--text-muted);
+      margin-top: var(--space-md);
+    }
+
+    /* ═══════════ FOOTER ═══════════ */
+    footer {
+      padding: var(--space-2xl) 0 var(--space-xl);
+      border-top: 1px solid var(--border);
+    }
+    .footer-inner {
+      display: flex; justify-content: space-between;
+      align-items: flex-start;
+    }
+    .footer-brand { max-width: 260px; }
+    .footer-brand-logo {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .footer-brand-logo svg { height: 20px; width: auto; }
+    .footer-brand-logo span {
+      font-size: 15px; font-weight: 700; color: var(--text-heading);
+      letter-spacing: -0.5px;
+    }
+    .footer-brand-desc {
+      font-size: 12px; color: var(--text-muted); line-height: 1.5;
+    }
+    .footer-cols { display: flex; gap: var(--space-2xl); }
+    .footer-col h4 {
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: var(--space-md);
+    }
+    .footer-col a {
+      display: block; font-size: 13px;
+      color: var(--text-secondary); text-decoration: none;
+      margin-bottom: 8px;
+      transition: color var(--transition);
+    }
+    .footer-col a:hover { color: var(--text-primary); }
+    .footer-bottom {
+      margin-top: var(--space-xl);
+      padding-top: var(--space-lg);
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer-bottom p { font-size: 12px; color: var(--text-muted); }
+    .footer-tagline {
+      font-size: 12px; color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* ═══════════ RESPONSIVE ═══════════ */
+    @media (max-width: 900px) {
+      .problem-grid { grid-template-columns: 1fr; }
+      .stack-grid { grid-template-columns: 1fr; }
+      .desk-grid { grid-template-columns: 1fr; }
+      .desk-col:not(:last-child) { border-right: none; border-bottom: 1px solid var(--border); }
+      .audience-grid { grid-template-columns: 1fr; }
+      .advantage-grid { grid-template-columns: 1fr; }
+      .roadmap-track { grid-template-columns: repeat(2, 1fr); gap: var(--space-lg); }
+      .roadmap-track::before { display: none; }
+      .terminal-body { grid-template-columns: 1fr; }
+      .terminal-stats { border-right: none; border-bottom: 1px solid var(--border); flex-direction: row; flex-wrap: wrap; }
+      .agents-list .agent-row { grid-template-columns: 1fr; gap: 4px; }
+      .footer-inner { flex-direction: column; gap: var(--space-xl); }
+      .footer-cols { gap: var(--space-xl); }
+    }
+    @media (max-width: 640px) {
+      .problem-cards { grid-template-columns: 1fr; }
+      .roadmap-track { grid-template-columns: 1fr; }
+      .hero-actions { flex-direction: column; align-items: flex-start; }
+      .waitlist-form { flex-direction: column; }
+      .footer-cols { flex-direction: column; gap: var(--space-lg); }
+      .footer-bottom { flex-direction: column; gap: 8px; }
+      .nav-link { display: none; }
+      .nav-sep { display: none; }
+      .nav-cta-mcp { font-size: 10px; padding: 4px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ NAVBAR ═══════════ -->
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="/" class="nav-brand">
+        <span class="nav-brand-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 90"><defs><linearGradient id="nlg" x1="0" x2="1"><stop offset="0" stop-color="#4a6fa5"/><stop offset="1" stop-color="#3d8b6e"/></linearGradient></defs><circle cx="38" cy="30" r="22" stroke="url(#nlg)" stroke-width="4" fill="none" opacity="0.95"/><circle cx="62" cy="30" r="22" stroke="url(#nlg)" stroke-width="4" fill="none" opacity="0.85"/><circle cx="50" cy="52" r="22" stroke="url(#nlg)" stroke-width="4" fill="none" opacity="0.85"/></svg></span>
+        nexxore
+      </a>
+      <div class="nav-links">
+        <a href="#stack" class="nav-link">Risk Stack</a>
+        <a href="#desk" class="nav-link">Risk Desk</a>
+        <a href="docs.html" class="nav-link">Docs</a>
+        <a href="#roadmap" class="nav-link">Roadmap</a>
+        <span class="nav-sep"></span>
+        <a href="mcp-server.html" class="nav-cta-mcp">⚡ MCP Server</a>
+        <a href="https://x.com/nexxore" target="_blank" class="nav-link" style="padding:6px 8px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a href="#waitlist" class="nav-cta">Request Access</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <section class="hero">
+    <div class="hero-grid-bg"></div>
+    <svg class="hero-wave" viewBox="0 0 1200 200" preserveAspectRatio="none">
+      <path d="M0,120 C200,80 400,160 600,100 C800,40 1000,130 1200,90 L1200,200 L0,200 Z" fill="rgba(74,111,165,0.04)"/>
+      <path d="M0,140 C300,100 500,180 700,120 C900,60 1100,150 1200,110 L1200,200 L0,200 Z" fill="rgba(61,139,110,0.02)"/>
+    </svg>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          Risk Infrastructure — Live
+        </div>
+        <h1>
+          Crypto Returns Are Abundant.<br>
+          <span class="line-2">Survivability Is Rare.</span>
+        </h1>
+        <p class="hero-sub">
+          Nexxore is the on-chain risk desk for serious crypto capital — modeling regime shifts, convexity exposure, and capital survivability in real time.
+        </p>
+        <div class="hero-actions">
+          <a href="#stack" class="btn-solid">Explore Risk Framework</a>
+          <a href="perps.html" class="btn-ghost">Launch App</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ THE PROBLEM ═══════════ -->
+  <section class="problem">
+    <div class="container">
+      <div class="section-label">The Core Problem</div>
+      <div class="problem-grid">
+        <div class="problem-text">
+          <h2>
+            Most Capital Doesn't Fail From Bad Trades.
+            <span class="dim">It Fails From Mispriced Risk.</span>
+          </h2>
+          <p>In crypto, losses compound structurally. Most platforms display price. Very few model the risk that destroys capital before price even moves.</p>
+        </div>
+        <div class="problem-cards">
+          <div class="problem-card">
+            <div class="problem-card-label">Funding Stress</div>
+            <p>Funding flips during volatility spikes. Positions liquidate before anyone reacts.</p>
+          </div>
+          <div class="problem-card">
+            <div class="problem-card-label">Liquidity Collapse</div>
+            <p>Liquidity vanishes at the worst moment. Exit slippage compounds losses exponentially.</p>
+          </div>
+          <div class="problem-card">
+            <div class="problem-card-label">Hidden Tail Risk</div>
+            <p>High Sharpe ratios mask tail exposure. The drawdown arrives without warning.</p>
+          </div>
+          <div class="problem-card">
+            <div class="problem-card-label">Regime Amplification</div>
+            <p>Leverage magnifies regime shifts. Most tools don't model regime at all.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ RISK INTELLIGENCE STACK ═══════════ -->
+  <section class="stack" id="stack">
+    <div class="container">
+      <div class="section-label">Architecture</div>
+      <div class="section-title">The Risk Intelligence Stack</div>
+      <p class="section-desc">From regime detection to structured exposure. Three layers of risk infrastructure.</p>
+
+      <div class="stack-layers">
+        <div class="stack-line"></div>
+
+        <div class="stack-layer">
+          <div class="stack-layer-dot">01</div>
+          <h3>Regime Detection Engine</h3>
+          <p class="stack-layer-desc">Agents ingest multi-source data to model probabilistic regime states — not price targets.</p>
+          <ul class="stack-layer-list">
+            <li>On-chain capital flows</li>
+            <li>Funding rate stress</li>
+            <li>Order book depth shifts</li>
+            <li>Sentiment dispersion</li>
+            <li>Volatility clustering</li>
+          </ul>
+          <div class="stack-layer-output">
+            <strong>Output:</strong> Risk-adjusted regime probability. Transition risk is measured before exposure is deployed.
+          </div>
+        </div>
+
+        <div class="stack-layer">
+          <div class="stack-layer-dot">02</div>
+          <h3>Capital Allocation Engine</h3>
+          <p class="stack-layer-desc">Regime probabilities are transformed into structured exposures, evaluated through drawdown modeling and expected shortfall.</p>
+          <ul class="stack-layer-list">
+            <li>Delta-neutral carry</li>
+            <li>Hedged perpetual structures</li>
+            <li>Stablecoin defense frameworks</li>
+            <li>Volatility capture strategies</li>
+          </ul>
+          <div class="stack-layer-output">
+            <strong>Evaluated through:</strong> Drawdown modeling, CVaR (Expected Shortfall), liquidity stress testing.
+          </div>
+        </div>
+
+        <div class="stack-layer">
+          <div class="stack-layer-dot">03</div>
+          <h3>Execution & Liquidity Routing</h3>
+          <p class="stack-layer-desc">Exposure is deployed across chains with capital efficiency as the primary constraint.</p>
+          <ul class="stack-layer-list">
+            <li>Slippage-aware routing</li>
+            <li>Liquidity fragmentation optimization</li>
+            <li>Cross-chain hedge coordination</li>
+          </ul>
+          <div class="stack-layer-output">
+            <strong>Principle:</strong> Intent is abstracted. Execution is capital-efficient.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ ON-CHAIN RISK DESK ═══════════ -->
+  <section class="desk" id="desk">
+    <div class="container">
+      <div class="section-label">Infrastructure</div>
+      <div class="section-title">The On-Chain Risk Desk</div>
+      <p class="section-desc">Monitoring, structuring, and deployment — unified under a single objective.</p>
+
+      <div class="desk-grid">
+        <div class="desk-col">
+          <h3>Capital Monitoring</h3>
+          <a href="research-agent.html" class="desk-item">
+            <div class="desk-item-title">On-Chain Flow Intelligence</div>
+            <div class="desk-item-desc">Capital flow analysis and liquidity depth monitoring</div>
+          </a>
+          <a href="analytics.html" class="desk-item">
+            <div class="desk-item-title">Portfolio Risk Metrics</div>
+            <div class="desk-item-desc">Exposure mapping, drawdown analysis, P&L attribution</div>
+          </a>
+          <a href="analytics.html" class="desk-item">
+            <div class="desk-item-title">Performance Attribution</div>
+            <div class="desk-item-desc">Strategy-level return and risk decomposition</div>
+          </a>
+        </div>
+
+        <div class="desk-col">
+          <h3>Capital Structuring</h3>
+          <a href="strategy-builder.html" class="desk-item">
+            <div class="desk-item-title">Strategy Builder</div>
+            <div class="desk-item-desc">Regime-aware allocation logic with backtesting</div>
+          </a>
+          <a href="delta-neutral.html" class="desk-item">
+            <div class="desk-item-title">Delta-Neutral Construction</div>
+            <div class="desk-item-desc">Automated hedging across spot and perpetuals</div>
+          </a>
+          <a href="stablecoin-hub.html" class="desk-item">
+            <div class="desk-item-title">Stablecoin Risk Hub</div>
+            <div class="desk-item-desc">Peg monitoring, depeg defense, stablecoin risk</div>
+          </a>
+        </div>
+
+        <div class="desk-col">
+          <h3>Capital Deployment</h3>
+          <a href="perps.html" class="desk-item">
+            <div class="desk-item-title">Perpetual Execution</div>
+            <div class="desk-item-desc">Decentralized perps with structured hedge capability</div>
+          </a>
+          <a href="vaults.html" class="desk-item">
+            <div class="desk-item-title">Vault Infrastructure</div>
+            <div class="desk-item-desc">Risk-ranked strategies from conservative to active</div>
+          </a>
+          <a href="agents.html" class="desk-item">
+            <div class="desk-item-title">Agent API</div>
+            <div class="desk-item-desc">Programmable risk agents for funds and protocols</div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ AUDIENCE ═══════════ -->
+  <section class="audience-section" id="audience">
+    <div class="container">
+      <div class="section-label">Audience</div>
+      <div class="section-title">Built for Capital That Thinks in Drawdowns</div>
+
+      <div class="audience-grid">
+        <div class="audience-card">
+          <h4>Strategy Quants</h4>
+          <p>Design regime-aware allocation logic. Model regime transitions and convexity exposure with programmable risk parameters.</p>
+        </div>
+        <div class="audience-card">
+          <h4>Structured Product Builders</h4>
+          <p>Deploy risk-calibrated vaults and delta-neutral frameworks. Evaluate allocation through drawdown modeling and CVaR.</p>
+        </div>
+        <div class="audience-card">
+          <h4>Crypto-Native Funds</h4>
+          <p>Monitor funding stress, liquidity contraction, and tail exposure in real time. Infrastructure for operators managing size.</p>
+        </div>
+      </div>
+
+      <p class="audience-note">Not designed for speculative short-term trading without risk modeling.</p>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ ADVANTAGE ═══════════ -->
+  <section class="advantage" id="advantage">
+    <div class="container">
+      <div class="section-label">Structural Edge</div>
+      <div class="section-title">Why Nexxore Wins</div>
+
+      <div class="advantage-grid">
+        <div class="advantage-cell">
+          <div class="advantage-num">01</div>
+          <h3>Risk-First Architecture</h3>
+          <p>Built around exposure modeling, not prediction marketing. Every decision flows through a risk framework before execution.</p>
+        </div>
+        <div class="advantage-cell">
+          <div class="advantage-num">02</div>
+          <h3>Regime Awareness</h3>
+          <p>Funding stress and liquidity contraction integrated into allocation logic. Not afterthoughts — structural inputs.</p>
+        </div>
+        <div class="advantage-cell">
+          <div class="advantage-num">03</div>
+          <h3>Cross-Chain Capital Efficiency</h3>
+          <p>Intent-based routing across ecosystems. Capital finds the best execution path regardless of chain fragmentation.</p>
+        </div>
+        <div class="advantage-cell">
+          <div class="advantage-num">04</div>
+          <h3>Programmable Risk Infrastructure</h3>
+          <p>Agents recalibrate exposure as volatility regimes evolve. Continuous monitoring, continuous adjustment.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ ROADMAP ═══════════ -->
+  <section id="roadmap">
+    <div class="container">
+      <div class="section-label">Roadmap</div>
+      <div class="section-title">Infrastructure to Institutional Capital</div>
+
+      <div class="roadmap-track">
+        <div class="roadmap-phase active">
+          <div class="roadmap-dot"></div>
+          <div class="roadmap-phase-label">Phase 1 — Foundation</div>
+          <h4>Core Infrastructure</h4>
+          <p>Core agents live. Strategy builder operational. Security hardening.</p>
+        </div>
+        <div class="roadmap-phase">
+          <div class="roadmap-dot"></div>
+          <div class="roadmap-phase-label">Phase 2 — Alpha</div>
+          <h4>Controlled Deployment</h4>
+          <p>Invite-only capital deployment. Strategy creators onboarded.</p>
+        </div>
+        <div class="roadmap-phase">
+          <div class="roadmap-dot"></div>
+          <div class="roadmap-phase-label">Phase 3 — Public</div>
+          <h4>Autonomous Vaults</h4>
+          <p>Simplified allocation frameworks. Risk-ranked leaderboard.</p>
+        </div>
+        <div class="roadmap-phase">
+          <div class="roadmap-dot"></div>
+          <div class="roadmap-phase-label">Phase 4 — Scale</div>
+          <h4>Institutional APIs</h4>
+          <p>Programmable risk infrastructure for funds and protocols.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ LIVE PRODUCT TERMINAL ═══════════ -->
+  <section class="terminal-section">
+    <div class="container">
+      <div class="section-label">Live Product</div>
+      <div class="section-title">NX-Perps</div>
+      <p class="section-desc">Decentralized perpetual execution with structured hedge capability.</p>
+
+      <div class="terminal-box">
+        <div class="terminal-header">
+          <div class="terminal-header-left">
+            <span class="terminal-pair">ETH-PERP</span>
+            <span class="terminal-status">LIVE</span>
+          </div>
+          <span class="terminal-price" id="ethPrice">$--</span>
+        </div>
+        <div class="terminal-body">
+          <div class="terminal-stats">
+            <div>
+              <div class="terminal-stat-label">Mark Price</div>
+              <div class="terminal-stat-value" id="markPrice">--</div>
+            </div>
+            <div>
+              <div class="terminal-stat-label">24h Change</div>
+              <div class="terminal-stat-value" id="ethChange">--</div>
+            </div>
+            <div>
+              <div class="terminal-stat-label">Funding</div>
+              <div class="terminal-stat-value">0.0100%</div>
+            </div>
+          </div>
+          <div class="terminal-chart">
+            <svg class="terminal-chart-svg" viewBox="0 0 500 120" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="tcg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(61,139,110,0.15)"/>
+                  <stop offset="100%" stop-color="rgba(61,139,110,0)"/>
+                </linearGradient>
+              </defs>
+              <path fill="url(#tcg)" d="M0,90 C30,85 60,70 90,75 C120,80 150,60 180,55 C210,50 240,62 270,58 C300,52 330,40 360,44 C390,48 420,35 450,30 C480,22 500,26 500,26 L500,120 L0,120 Z"/>
+              <path fill="none" stroke="rgba(61,139,110,0.6)" stroke-width="1.5" d="M0,90 C30,85 60,70 90,75 C120,80 150,60 180,55 C210,50 240,62 270,58 C300,52 330,40 360,44 C390,48 420,35 450,30 C480,22 500,26 500,26"/>
+              <circle cx="500" cy="26" r="2.5" fill="var(--emerald)" opacity="0.8"/>
+            </svg>
+            <div class="terminal-actions">
+              <a href="perps.html" class="btn-solid" style="padding:8px 18px;font-size:12px;">Start Trading</a>
+              <a href="perps.html#lp" class="btn-ghost" style="padding:8px 18px;font-size:12px;">Provide Liquidity</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ AGENTS ═══════════ -->
+  <section id="agents">
+    <div class="container">
+      <div class="section-label">Agent Infrastructure</div>
+      <div class="section-title">Hedge Fund OS</div>
+      <p class="section-desc">Specialized agents with defined mandates. Clear roles. Continuous recalibration.</p>
+
+      <div class="agents-list">
+        <a href="research-agent.html" class="agent-row">
+          <span class="agent-name">Regime Analyst</span>
+          <span class="agent-mandate">Regime modeling, on-chain flow analysis, volatility clustering detection</span>
+        </a>
+        <a href="agents.html" class="agent-row">
+          <span class="agent-name">Portfolio Optimizer</span>
+          <span class="agent-mandate">Exposure allocation, rebalancing logic, drawdown-constrained optimization</span>
+        </a>
+        <a href="agents.html" class="agent-row">
+          <span class="agent-name">Execution Router</span>
+          <span class="agent-mandate">Cross-chain liquidity routing, slippage minimization, intent abstraction</span>
+        </a>
+        <a href="agents.html" class="agent-row">
+          <span class="agent-name">Performance Auditor</span>
+          <span class="agent-mandate">Attribution analysis, risk reporting, strategy performance decomposition</span>
+        </a>
+        <a href="predictions.html" class="agent-row">
+          <span class="agent-name">Prediction Monitor</span>
+          <span class="agent-mandate">Prediction markets intelligence, edge detection, automated position sizing</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- ═══════════ WAITLIST ═══════════ -->
+  <section class="waitlist" id="waitlist">
+    <div class="container">
+      <div class="waitlist-box">
+        <h2>Early Access — By Allocation Only</h2>
+        <p class="waitlist-sub">Access is limited during alpha. We prioritize operators deploying disciplined capital.</p>
+
+        <div class="waitlist-criteria">
+          <span>Professional Traders</span>
+          <span>Strategy Architects</span>
+          <span>Crypto-Native Funds</span>
+          <span>Structured Yield Builders</span>
+        </div>
+
+        <form class="waitlist-form" id="waitlistForm">
+          <input type="email" id="email" placeholder="Email address" required autocomplete="email">
+          <button type="submit">Request Access</button>
+        </form>
+        <p class="waitlist-note">If you allocate based on drawdown probability, funding stress, and liquidity depth — this is for you.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <div class="footer-brand-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 90"><defs><linearGradient id="flg" x1="0" x2="1"><stop offset="0" stop-color="#4a6fa5"/><stop offset="1" stop-color="#3d8b6e"/></linearGradient></defs><circle cx="38" cy="30" r="22" stroke="url(#flg)" stroke-width="4" fill="none" opacity="0.95"/><circle cx="62" cy="30" r="22" stroke="url(#flg)" stroke-width="4" fill="none" opacity="0.85"/><circle cx="50" cy="52" r="22" stroke="url(#flg)" stroke-width="4" fill="none" opacity="0.85"/></svg>
+            <span>nexxore</span>
+          </div>
+          <div class="footer-brand-desc">On-chain risk infrastructure for crypto capital.</div>
+        </div>
+        <div class="footer-cols">
+          <div class="footer-col">
+            <h4>Product</h4>
+            <a href="perps.html">Perpetuals</a>
+            <a href="vaults.html">Vaults</a>
+            <a href="mcp-server.html">MCP Server</a>
+            <a href="stablecoin-hub.html">Stablecoin Hub</a>
+            <a href="strategy-builder.html">Strategy Builder</a>
+            <a href="delta-neutral.html">Delta-Neutral</a>
+          </div>
+          <div class="footer-col">
+            <h4>Infrastructure</h4>
+            <a href="research-agent.html">Flow Intelligence</a>
+            <a href="agents.html">Agent API</a>
+            <a href="analytics.html">Risk Metrics</a>
+            <a href="predictions.html">Prediction Monitor</a>
+          </div>
+          <div class="footer-col">
+            <h4>Resources</h4>
+            <a href="docs.html">Documentation</a>
+            <a href="#">Discord</a>
+            <a href="https://x.com/nexxore" target="_blank">X / Twitter</a>
+            <a href="#">Telegram</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Nexxore. All rights reserved.</p>
+        <span class="footer-tagline">Volatility is inevitable. Mispriced risk is optional.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════ SCRIPTS ═══════════ -->
+  <script>
+    // ETH price — terminal display
+    async function fetchEthPrice() {
+      try {
+        const r = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT');
+        const d = await r.json();
+        const price = parseFloat(d.lastPrice);
+        const change = parseFloat(d.priceChangePercent);
+        const fmt = '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('ethPrice').textContent = fmt;
+        document.getElementById('markPrice').textContent = fmt;
+        const ce = document.getElementById('ethChange');
+        ce.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+        ce.style.color = change >= 0 ? 'var(--emerald)' : 'var(--red-dim)';
+      } catch(e) {}
+    }
+    fetchEthPrice();
+    setInterval(fetchEthPrice, 15000);
+  </script>
+
+  <script>
+    // Clean .html extensions
+    document.querySelectorAll('a[href$=".html"]').forEach(link => {
+      const href = link.getAttribute('href');
+      if (!href) return;
+      const [path, hash] = href.split('#');
+      const cleaned = path.replace(/\.html$/, '');
+      link.setAttribute('href', hash ? cleaned + '#' + hash : cleaned);
+    });
+    if (window.location.pathname.endsWith('.html')) {
+      window.history.replaceState({}, '', window.location.pathname.replace(/\.html$/, '') + window.location.search + window.location.hash);
+    }
+  </script>
+
+  <script>
+    // Waitlist form
+    (function() {
+      const form = document.getElementById('waitlistForm');
+      if (!form) return;
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const input = document.getElementById('email');
+        const email = input.value.trim();
+        const btn = form.querySelector('button');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { notify('Please enter a valid email.', 'error'); return; }
+        const orig = btn.textContent;
+        btn.textContent = 'Submitting...';
+        btn.disabled = true;
+        try {
+          await fetch('https://script.google.com/macros/s/AKfycbzfgnxfO9tUHiE5w642YB5V7B7uA82m58DYF6dF_vRbQ2n2mdkqmzUmnPwwJxhAYdSq/exec', {
+            method: 'POST', body: JSON.stringify({ email }), mode: 'no-cors'
+          });
+          form.reset();
+          notify('Access request received.', 'success');
+        } catch(err) {
+          notify('Submission failed. Please try again.', 'error');
+        } finally { btn.textContent = orig; btn.disabled = false; }
+      });
+      function notify(msg, type) {
+        const old = document.querySelector('.n-notif');
+        if (old) old.remove();
+        const el = document.createElement('div');
+        el.className = 'n-notif';
+        el.textContent = msg;
+        Object.assign(el.style, {
+          position: 'fixed', bottom: '20px', right: '20px',
+          padding: '12px 20px', fontSize: '13px', fontWeight: '500',
+          background: type === 'success' ? 'var(--bg-card)' : 'var(--bg-card)',
+          border: '1px solid ' + (type === 'success' ? 'var(--border-active)' : 'rgba(185,68,68,0.3)'),
+          color: type === 'success' ? 'var(--emerald)' : '#b94444',
+          borderRadius: 'var(--radius-md)',
+          zIndex: '9999',
+          fontFamily: 'var(--font-sans)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.4)'
+        });
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 4000);
+      }
+    })();
+  </script>
+
+  <script>
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const t = document.querySelector(a.getAttribute('href'));
+        if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      });
+    });
+  </script>
+
+</body>
+</html>
