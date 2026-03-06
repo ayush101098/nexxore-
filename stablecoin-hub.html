@@ -1473,29 +1473,111 @@
     });
 
     // ═══════════════════════════════════════════════════════════════════════════════
-    // LIVE DATA SIMULATION (for demo purposes)
+    // REAL DATA FROM API — Replaces hardcoded/fake data
     // ═══════════════════════════════════════════════════════════════════════════════
-    function updateYieldData() {
-      const apyCells = document.querySelectorAll('.apy-cell');
-      apyCells.forEach((cell) => {
-        const currentValue = parseFloat(cell.textContent.replace('%', '').replace('~', ''));
-        if (!isNaN(currentValue) && Math.random() > 0.8) {
-          const variation = (Math.random() - 0.5) * 0.2;
-          const newValue = Math.max(0.1, currentValue + variation);
-          cell.textContent = newValue.toFixed(1) + '%';
-          
-          // Flash effect
-          cell.style.transition = 'background 0.3s';
-          cell.style.background = 'rgba(74,111,165,0.2)';
-          setTimeout(() => {
-            cell.style.background = 'transparent';
-          }, 500);
-        }
-      });
+    
+    function formatUSD(val) {
+      if (!val || isNaN(val)) return '$0';
+      if (val >= 1e12) return '$' + (val/1e12).toFixed(2) + 'T';
+      if (val >= 1e9) return '$' + (val/1e9).toFixed(2) + 'B';
+      if (val >= 1e6) return '$' + (val/1e6).toFixed(1) + 'M';
+      if (val >= 1e3) return '$' + (val/1e3).toFixed(1) + 'K';
+      return '$' + val.toFixed(2);
     }
 
-    // Update yields every 30 seconds (demo)
-    setInterval(updateYieldData, 30000);
+    async function loadRealStablecoinData() {
+      try {
+        // Fetch overview + yields + pegs in parallel
+        const [overview, yields, pegs] = await Promise.all([
+          fetch('/api/stablecoin?action=overview').then(r => r.json()).catch(() => null),
+          fetch('/api/stablecoin?action=yields').then(r => r.json()).catch(() => null),
+          fetch('/api/stablecoin?action=pegs').then(r => r.json()).catch(() => null)
+        ]);
+
+        // Update hero stats
+        const stats = document.querySelectorAll('.hero .stat .stat-value');
+        if (overview && stats.length >= 8) {
+          stats[0].textContent = formatUSD(overview.totalMarketCap);
+          stats[1].textContent = yields ? yields.avgApy.toFixed(1) + '%' : stats[1].textContent;
+          stats[2].textContent = overview.marketHealth ? overview.marketHealth.warningCount + ' Active' : '0 Active';
+          stats[3].textContent = overview.chainDistribution ? overview.chainDistribution.length + '' : stats[3].textContent;
+          stats[4].textContent = yields ? yields.totalPools + '' : stats[4].textContent;
+          stats[5].textContent = overview.totalStablecoins ? overview.totalStablecoins + '' : stats[5].textContent;
+          if (yields && yields.pools.length > 0) {
+            const bestApy = Math.max(...yields.pools.map(p => p.apy));
+            stats[6].textContent = bestApy.toFixed(1) + '%';
+          }
+          stats[7].textContent = overview.marketHealth ? (overview.marketHealth.healthScore > 80 ? 'A' : overview.marketHealth.healthScore > 60 ? 'B+' : 'B') : stats[7].textContent;
+        }
+
+        // Update yield table with real data
+        if (yields && yields.pools.length > 0) {
+          const yieldTable = document.querySelector('#yieldTable tbody');
+          if (yieldTable) {
+            const iconMap = { 'USDC': 'usdc', 'USDT': 'usdt', 'DAI': 'dai', 'FRAX': 'frax', 'USDD': 'usdd', 'GHO': 'gho', 'crvUSD': 'crvusd', 'PYUSD': 'pyusd', 'LUSD': 'lusd' };
+            
+            yieldTable.innerHTML = yields.pools.slice(0, 40).map(pool => {
+              const sym = pool.symbol.split('-')[0].split('/')[0].replace(/[^A-Za-z]/g, '').toUpperCase();
+              const iconClass = iconMap[sym] || '';
+              const riskBadge = pool.riskLevel === 'low' ? 'green' : pool.riskLevel === 'medium' ? 'yellow' : 'red';
+              
+              return `<tr data-asset="${sym.toLowerCase()}" data-risk="${pool.riskLevel}">
+                <td><div class="asset-cell"><div class="asset-icon ${iconClass}">${sym.slice(0,2)}</div><div><div style="font-weight:600;color:#d4d4d8">${pool.symbol}</div><div style="font-size:0.65rem;color:#71717a">${pool.chain}</div></div></div></td>
+                <td>${pool.project}</td>
+                <td>${pool.chain}</td>
+                <td style="font-family:'JetBrains Mono';color:var(--muted)">${formatUSD(pool.tvl)}</td>
+                <td class="apy-cell" style="font-family:'JetBrains Mono';color:var(--green)">${pool.apyBase.toFixed(1)}%</td>
+                <td class="apy-cell" style="font-family:'JetBrains Mono';font-weight:700;color:#d4d4d8">${pool.apy.toFixed(1)}%</td>
+                <td><span class="badge ${riskBadge}">${pool.riskLevel}</span></td>
+              </tr>`;
+            }).join('');
+          }
+        }
+
+        // Update allocation chart with real data
+        if (overview && overview.topStablecoins) {
+          const chartCtx = document.getElementById('allocationChart');
+          if (chartCtx && chartCtx.getContext) {
+            const top6 = overview.topStablecoins.slice(0, 6);
+            const chartData = top6.map(s => s.dominance);
+            const chartLabels = top6.map(s => s.symbol);
+            const colors = ['#3d8b6e', '#4a6fa5', '#b08d45', '#6b7db3', '#b94444', 'rgba(255,255,255,0.15)'];
+            
+            // Destroy existing chart if any
+            const existingChart = Chart.getChart(chartCtx);
+            if (existingChart) existingChart.destroy();
+            
+            new Chart(chartCtx.getContext('2d'), {
+              type: 'doughnut',
+              data: { labels: chartLabels, datasets: [{ data: chartData, backgroundColor: colors.slice(0, top6.length), borderWidth: 0 }] },
+              options: { plugins: { legend: { position: 'right', labels: { color: 'rgba(255,255,255,0.6)', font: { size: 10 } } } }, cutout: '60%' }
+            });
+          }
+        }
+
+        // Update peg tracking section
+        if (pegs && pegs.stablecoins) {
+          const healthDashboard = document.getElementById('health');
+          if (healthDashboard) {
+            const pegList = pegs.stablecoins.slice(0, 8).map(s => {
+              const icon = s.status === 'perfect' || s.status === 'stable' ? '✅' : s.status === 'minor_deviation' ? '⚠️' : '🔴';
+              return `<div>${icon} ${s.symbol}: $${s.price.toFixed(4)} (${s.absDeviation.toFixed(3)}% dev)</div>`;
+            }).join('');
+            healthDashboard.querySelector('.list').innerHTML = pegList;
+          }
+        }
+
+        console.log('✅ Stablecoin Hub loaded with real data');
+      } catch (err) {
+        console.error('Failed to load stablecoin data:', err);
+      }
+    }
+
+    // Load real data on page load
+    loadRealStablecoinData();
+    
+    // Refresh every 3 minutes
+    setInterval(loadRealStablecoinData, 3 * 60 * 1000);
   </script>
 </body>
 </html>

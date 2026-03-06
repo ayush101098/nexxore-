@@ -528,9 +528,23 @@
   <!-- Vault Integration -->
   <script src="frontend/js/vaultIntegration.js"></script>
   <script>
-    // Connect wallet - DISABLED (Coming Soon)
-    document.getElementById('connectWalletBtn').addEventListener('click', () => {
-      document.getElementById('comingSoonModal').style.display = 'flex';
+    // Connect wallet - Now functional
+    document.getElementById('connectWalletBtn').addEventListener('click', async () => {
+      if (typeof window.ethereum !== 'undefined') {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          if (accounts.length > 0) {
+            const addr = accounts[0];
+            document.getElementById('connectWalletBtn').textContent = addr.slice(0, 6) + '...' + addr.slice(-4);
+            document.getElementById('connectWalletBtn').style.background = 'var(--safe-green)';
+          }
+        } catch (e) {
+          console.error('Wallet connection failed:', e);
+          document.getElementById('comingSoonModal').style.display = 'flex';
+        }
+      } else {
+        document.getElementById('comingSoonModal').style.display = 'flex';
+      }
     });
     document.getElementById('closeComingSoon').addEventListener('click', () => {
       document.getElementById('comingSoonModal').style.display = 'none';
@@ -540,6 +554,66 @@
         document.getElementById('comingSoonModal').style.display = 'none';
       }
     });
+
+    // Load real vault data from API
+    function formatUSD(val) {
+      if (!val || isNaN(val)) return '$0';
+      if (val >= 1e12) return '$' + (val/1e12).toFixed(2) + 'T';
+      if (val >= 1e9) return '$' + (val/1e9).toFixed(2) + 'B';
+      if (val >= 1e6) return '$' + (val/1e6).toFixed(1) + 'M';
+      if (val >= 1e3) return '$' + (val/1e3).toFixed(1) + 'K';
+      return '$' + val.toFixed(2);
+    }
+
+    async function loadVaultData() {
+      try {
+        const data = await fetch('/api/vaults-data?action=compare').then(r => r.json());
+        if (!data || data.error) return;
+
+        // Update Safe Yield card
+        const safeCard = document.querySelector('.vault-card.safe-yield');
+        if (safeCard && data.safeYield) {
+          const safeStats = safeCard.querySelectorAll('.stat-value');
+          if (safeStats.length >= 2) {
+            const avgApy = data.safeYield.avgApy;
+            const maxApy = data.safeYield.maxApy;
+            safeStats[0].textContent = Math.round(avgApy) + '-' + Math.round(Math.min(maxApy, avgApy * 2)) + '%';
+            safeStats[1].textContent = '~' + data.safeYield.maxDrawdown;
+          }
+          // Update description
+          const desc = safeCard.querySelector('.vault-desc');
+          if (desc) desc.textContent = `${data.safeYield.poolCount} pools across blue-chip protocols. Avg APY: ${avgApy?.toFixed(1) || '--'}%. TVL: ${formatUSD(data.safeYield.totalTvl)}.`;
+        }
+
+        // Update Advanced Realloc card
+        const advCard = document.querySelector('.vault-card.advanced');
+        if (advCard && data.advancedRealloc) {
+          const advStats = advCard.querySelectorAll('.stat-value');
+          if (advStats.length >= 2) {
+            const avgApy = data.advancedRealloc.avgApy;
+            const maxApy = data.advancedRealloc.maxApy;
+            advStats[0].textContent = Math.round(avgApy) + '-' + Math.round(Math.min(maxApy, avgApy * 1.5)) + '%';
+            advStats[1].textContent = '~' + data.advancedRealloc.maxDrawdown;
+          }
+          const desc = advCard.querySelector('.vault-desc');
+          if (desc) desc.textContent = `${data.advancedRealloc.poolCount} pools with dynamic optimization. Avg APY: ${data.advancedRealloc.avgApy?.toFixed(1) || '--'}%. TVL: ${formatUSD(data.advancedRealloc.totalTvl)}.`;
+        }
+
+        // Update comparison table
+        const compCells = document.querySelectorAll('.comparison-cell.value');
+        if (compCells.length >= 8 && data.safeYield && data.advancedRealloc) {
+          // Target APY row (indices 2, 3)
+          compCells[2].textContent = Math.round(data.safeYield.avgApy) + '-' + Math.round(data.safeYield.maxApy) + '%';
+          compCells[3].textContent = Math.round(data.advancedRealloc.avgApy) + '-' + Math.round(data.advancedRealloc.maxApy) + '%';
+        }
+
+        console.log('✅ Vault data loaded from API');
+      } catch (err) {
+        console.error('Failed to load vault data:', err);
+      }
+    }
+
+    loadVaultData();
 
     const chainSelect = document.getElementById('chainSelect');
     if (chainSelect) {

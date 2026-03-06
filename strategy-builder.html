@@ -2201,6 +2201,10 @@
       } catch(e) {
         console.log('Basic preset skipped - using Pro Strategies mode');
       }
+
+      // Load real data from API
+      loadMarketRegime();
+      loadRealStrategies();
     });
 
     // Pro Strategies from AlphaInsider
@@ -2592,27 +2596,152 @@
     }
     
     function generateSignals(strategy) {
-      const now = new Date();
-      const signals = [];
-      const types = ['buy', 'sell'];
-      const reasons = {
-        buy: ['EMA crossover detected', 'RSI oversold bounce', 'Support level test', 'Bullish divergence', 'Volume breakout'],
-        sell: ['Resistance rejection', 'RSI overbought', 'Bearish divergence', 'Stop loss triggered', 'Take profit hit']
-      };
-      
-      // Generate 3-5 recent signals
-      const count = 3 + Math.floor(Math.random() * 3);
-      for (let i = 0; i < count; i++) {
-        const type = types[Math.floor(Math.random() * (strategy.risk === 'low' ? 1.5 : 2))]; // Low risk = more buys
-        const hours = Math.floor(Math.random() * 48) + 1;
-        signals.push({
-          type,
-          asset: strategy.asset === 'Multi' ? ['BTC', 'ETH', 'SOL'][Math.floor(Math.random() * 3)] : strategy.asset,
-          reason: reasons[type][Math.floor(Math.random() * reasons[type].length)],
-          time: hours < 24 ? `${hours}h ago` : `${Math.floor(hours/24)}d ago`
+      // Fetch real signals from API
+      return fetch('/api/strategy-builder?action=signals')
+        .then(r => r.json())
+        .then(data => {
+          if (data.signals) {
+            return data.signals.slice(0, 5).map(s => ({
+              type: s.type || 'buy',
+              asset: strategy.asset === 'Multi' ? s.asset || 'BTC' : strategy.asset,
+              reason: s.reason || s.message || 'Signal detected',
+              time: s.time || 'now'
+            }));
+          }
+          return [];
+        })
+        .catch(() => {
+          // Fallback to basic signals
+          return [{ type: 'buy', asset: strategy.asset || 'BTC', reason: 'Loading...', time: 'now' }];
         });
+    }
+
+    // Load real market regime data
+    async function loadMarketRegime() {
+      try {
+        const data = await fetch('/api/strategy-builder?action=regime').then(r => r.json());
+        if (data.regime) {
+          const regimeEl = document.getElementById('sandboxSubtitle');
+          if (regimeEl) {
+            regimeEl.textContent = `Market: ${data.regime} (${data.riskLevel}) — Confidence: ${(data.confidence * 100).toFixed(0)}%`;
+          }
+        }
+        return data;
+      } catch(e) { console.log('Regime fetch failed:', e); return null; }
+    }
+
+    // Load real strategy templates from API
+    async function loadRealStrategies() {
+      try {
+        const data = await fetch('/api/strategy-builder?action=strategies').then(r => r.json());
+        if (data.strategies) {
+          // Update basic strategy APY ranges with live data
+          data.strategies.forEach(s => {
+            const preset = strategyPresets[s.name];
+            if (preset) {
+              preset.apy.min = Math.round(s.liveApyRange?.min || preset.apy.min);
+              preset.apy.max = Math.round(s.liveApyRange?.max || preset.apy.max);
+            }
+          });
+          // Re-apply current preset to show live APYs
+          try { applyPreset(currentStrategy); } catch(e) {}
+        }
+      } catch(e) { console.log('Strategy templates fetch failed:', e); }
+    }
+
+    // Enhanced applyProStrategy with real backtest
+    const _origApplyProStrategy = applyProStrategy;
+    applyProStrategy = async function(strategy) {
+      // Apply the visual update immediately with existing data
+      _origApplyProStrategy(strategy);
+
+      // Then fetch real backtest data in background
+      try {
+        const backtestKey = strategy.risk === 'low' ? 'conservative' : strategy.risk === 'high' ? 'aggressive' : 'balanced';
+        const data = await fetch(`/api/strategy-builder?action=backtest&strategy=${backtestKey}&period=365`).then(r => r.json());
+        if (data && !data.error) {
+          // Update metrics with real backtest results
+          const metricReturn = document.getElementById('metricReturn');
+          const metricDrawdown = document.getElementById('metricDrawdown');
+          const metricSharpe = document.getElementById('metricSharpe');
+          const metricWinRate = document.getElementById('metricWinRate');
+
+          if (metricReturn) {
+            metricReturn.textContent = (data.annualizedReturn || 0).toFixed(1) + '%';
+            metricReturn.className = 'metric-value' + ((data.annualizedReturn || 0) >= 0 ? '' : ' negative');
+          }
+          if (metricDrawdown) {
+            metricDrawdown.textContent = (data.maxDrawdown || 0).toFixed(1) + '%';
+            metricDrawdown.className = 'metric-value negative';
+          }
+          if (metricSharpe) metricSharpe.textContent = (data.sharpeRatio || 0).toFixed(2);
+          if (metricWinRate) metricWinRate.textContent = (data.winRate || 0).toFixed(0) + '%';
+
+          // Update sidebar stats too
+          const apyEl = document.querySelector('.summary-stat:nth-child(1) .summary-stat-value');
+          const ddEl = document.querySelector('.summary-stat:nth-child(2) .summary-stat-value');
+          const sharpeEl = document.querySelector('.summary-stat:nth-child(3) .summary-stat-value');
+          if (apyEl) apyEl.textContent = (data.annualizedReturn || 0).toFixed(1) + '%';
+          if (ddEl) ddEl.textContent = (data.maxDrawdown || 0).toFixed(1) + '%';
+          if (sharpeEl) sharpeEl.textContent = (data.sharpeRatio || 0).toFixed(2);
+
+          // Render real equity curve if available
+          if (data.equityCurve && data.equityCurve.length > 0) {
+            renderRealChart(data.equityCurve, data.annualizedReturn);
+          }
+        }
+      } catch(e) { console.log('Backtest fetch failed:', e); }
+
+      // Fetch real signals
+      try {
+        const sData = await fetch('/api/strategy-builder?action=signals').then(r => r.json());
+        if (sData.signals && sData.signals.length > 0) {
+          const signalsList = document.getElementById('signalsList');
+          const displaySignals = sData.signals.slice(0, 5);
+          document.getElementById('signalsCount').textContent = displaySignals.length + ' signals';
+          signalsList.innerHTML = displaySignals.map(s => `
+            <div class="signal-item ${s.type}">
+              <span class="signal-type ${s.type}">${s.type}</span>
+              <div class="signal-details">
+                <div class="signal-asset">${s.asset || 'DeFi'}</div>
+                <div class="signal-reason">${s.reason || s.message}</div>
+              </div>
+              <span class="signal-time">${s.confidence ? (s.confidence * 100).toFixed(0) + '%' : ''}</span>
+            </div>
+          `).join('');
+        }
+      } catch(e) {}
+    };
+
+    function renderRealChart(equityCurve, totalReturn) {
+      const chart = document.getElementById('performanceChart');
+      const maxVal = Math.max(...equityCurve.map(e => e.value));
+      const minVal = Math.min(...equityCurve.map(e => e.value));
+      const range = maxVal - minVal || 1;
+
+      const step = Math.max(1, Math.floor(equityCurve.length / 24));
+      const sampled = equityCurve.filter((_, i) => i % step === 0);
+
+      const bars = sampled.map((point, i) => {
+        const height = Math.min(Math.max(10 + ((point.value - minVal) / range) * 80, 10), 95);
+        const color = point.value >= equityCurve[0].value ? 'var(--safe-green)' : 'var(--degen-red)';
+        return `<div class="chart-bar" style="height:${height}%;background:${color};opacity:${0.4+(i/sampled.length)*0.6};" title="${point.date}: ${point.value.toFixed(0)}"></div>`;
+      });
+
+      chart.innerHTML = `
+        <div class="chart-bars">${bars.join('')}</div>
+        <div class="chart-value">
+          <span class="chart-return-label">Backtested Return</span>
+          <span class="chart-return-value" style="color:${totalReturn >= 0 ? 'var(--safe-green)' : 'var(--degen-red)'}">${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(1)}%</span>
+        </div>
+      `;
+
+      if (!document.getElementById('chartStyles')) {
+        const style = document.createElement('style');
+        style.id = 'chartStyles';
+        style.textContent = `.chart-bars{display:flex;align-items:flex-end;justify-content:space-between;height:100%;padding:10px;gap:2px}.chart-bar{flex:1;border-radius:2px 2px 0 0;transition:height 0.5s ease}.chart-value{position:absolute;top:10px;right:15px;text-align:right}.chart-return-label{display:block;font-size:0.6rem;color:var(--text-muted);text-transform:uppercase}.chart-return-value{font-size:1.5rem;font-weight:700;font-family:var(--font-mono)}`;
+        document.head.appendChild(style);
       }
-      return signals.sort((a, b) => parseInt(a.time) - parseInt(b.time));
     }
     
     function renderStrategyChart(strategy) {

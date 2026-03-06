@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexxore — On-Chain Risk Infrastructure for Crypto Capital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&family=Syne+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #05050D;
+    --bg2: #080814;
+    --surface: #0D0D1A;
+    --surface2: #111122;
+    --border: #1A1A30;
+    --border2: #222240;
+    --cyan: #00C8FF;
+    --cyan-dim: rgba(0,200,255,0.12);
+    --cyan-glow: rgba(0,200,255,0.25);
+    --green: #00E87A;
+    --green-dim: rgba(0,232,122,0.1);
+    --violet: #6B4FE8;
+    --gold: #E8A020;
+    --red: #FF4060;
+    --text: #E8E8F0;
+    --text2: #9090B0;
+    --text3: #5A5A80;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--cyan);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s, width 0.2s, height 0.2s, opacity 0.2s;
+    box-shadow: 0 0 12px var(--cyan), 0 0 24px var(--cyan-glow);
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 28px; height: 28px;
+    border: 1px solid rgba(0,200,255,0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.18s ease, width 0.25s, height 0.25s;
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.025;
+    pointer-events: none;
+    z-index: 9997;
+  }
+
+  /* Scroll progress */
+  .scroll-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--cyan), var(--violet));
+    z-index: 9996;
+    width: 0%;
+    transition: width 0.1s;
+    box-shadow: 0 0 8px var(--cyan);
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 0 clamp(1.5rem, 5vw, 4rem);
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.4s, border-color 0.4s;
+    border-bottom: 1px solid transparent;
+  }
+  nav.scrolled {
+    background: rgba(5,5,13,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom-color: var(--border);
+  }
+
+  .nav-logo {
+    font-family: var(--mono);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-logo-dot {
+    width: 7px; height: 7px;
+    background: var(--cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--cyan);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%,100% { opacity: 1; box-shadow: 0 0 8px var(--cyan); }
+    50% { opacity: 0.5; box-shadow: 0 0 16px var(--cyan); }
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2rem);
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text2);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--cyan); }
+
+  .nav-cta {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 20px;
+    background: transparent;
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    border-radius: 2px;
+    cursor: none;
+    text-decoration: none;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+  .nav-cta:hover {
+    background: var(--cyan-dim);
+    box-shadow: 0 0 20px var(--cyan-glow);
+  }
+
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: none;
+    padding: 4px;
+  }
+  .hamburger span {
+    width: 22px; height: 1.5px;
+    background: var(--text);
+    display: block;
+    transition: transform 0.3s, opacity 0.3s;
+  }
+
+  /* ── TICKER ── */
+  .ticker-wrap {
+    margin-top: 64px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+    height: 36px;
+    display: flex;
+    align-items: center;
+  }
+  .ticker-track {
+    display: flex;
+    animation: ticker 30s linear infinite;
+    white-space: nowrap;
+  }
+  .ticker-track:hover { animation-play-state: paused; }
+  .ticker-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 2.5rem;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    border-right: 1px solid var(--border);
+    color: var(--text2);
+  }
+  .ticker-label { color: var(--text3); text-transform: uppercase; }
+  .ticker-val { color: var(--text); }
+  .ticker-val.up { color: var(--green); }
+  .ticker-val.down { color: var(--red); }
+  .ticker-val.live {
+    color: var(--cyan);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .live-dot {
+    width: 5px; height: 5px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse-dot 1.5s infinite;
+  }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(6rem, 10vw, 10rem) clamp(1.5rem, 5vw, 4rem) clamp(4rem, 8vw, 8rem);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Animated grid background */
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,200,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
+  }
+
+  /* Radial glow */
+  .hero-glow {
+    position: absolute;
+    width: 800px; height: 500px;
+    background: radial-gradient(ellipse, rgba(0,200,255,0.06) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: glow-pulse 6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes glow-pulse {
+    0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.6; }
+    50% { transform: translate(-50%,-50%) scale(1.15); opacity: 1; }
+  }
+
+  /* Floating chart lines */
+  .hero-chart {
+    position: absolute;
+    right: clamp(-2rem, 5vw, 4rem);
+    bottom: clamp(2rem, 10vw, 8rem);
+    width: clamp(280px, 42vw, 580px);
+    opacity: 0.15;
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--green);
+    border: 1px solid rgba(0,232,122,0.25);
+    background: rgba(0,232,122,0.05);
+    padding: 6px 14px;
+    border-radius: 2px;
+    margin-bottom: 2.5rem;
+    width: fit-content;
+    animation: fadeUp 0.8s 0.1s both;
+  }
+
+  .hero-title {
+    font-size: clamp(2.4rem, 6.5vw, 6rem);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    max-width: 900px;
+    animation: fadeUp 0.8s 0.25s both;
+  }
+  .hero-title .accent { color: var(--cyan); }
+
+  .hero-sub {
+    margin-top: 1.8rem;
+    font-family: var(--mono);
+    font-size: clamp(0.8rem, 1.5vw, 1rem);
+    color: var(--text2);
+    max-width: 540px;
+    line-height: 1.7;
+    animation: fadeUp 0.8s 0.4s both;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2.8rem;
+    flex-wrap: wrap;
+    animation: fadeUp 0.8s 0.55s both;
+  }
+
+  .btn-primary {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 13px 28px;
+    background: var(--cyan);
+    color: var(--bg);
+    border: none;
+    border-radius: 2px;
+    cursor: none;
+    text-decoration: none;
+    font-weight: 500;
+    transition: box-shadow 0.25s, transform 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary:hover {
+    box-shadow: 0 0 30px var(--cyan-glow), 0 0 60px rgba(0,200,255,0.1);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 13px 28px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    cursor: none;
+    text-decoration: none;
+    transition: border-color 0.2s, color 0.2s, transform 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-secondary:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    transform: translateY(-1px);
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+    margin-top: clamp(3rem, 6vw, 5rem);
+    flex-wrap: wrap;
+    animation: fadeUp 0.8s 0.7s both;
+  }
+  .hero-stat-item { border-left: 1px solid var(--border2); padding-left: 1.2rem; }
+  .hero-stat-val {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .hero-stat-val span { color: var(--cyan); }
+  .hero-stat-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 6px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── SECTIONS ── */
+  section { padding: clamp(4rem, 8vw, 8rem) clamp(1.5rem, 5vw, 4rem); position: relative; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::before {
+    content: '';
+    width: 24px; height: 1px;
+    background: var(--cyan);
+    display: block;
+  }
+
+  .section-title {
+    font-size: clamp(1.8rem, 4vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    max-width: 700px;
+  }
+
+  .section-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border2), transparent);
+    margin: 0;
+  }
+
+  /* ── PROBLEM CARDS ── */
+  .problem-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 3rem;
+  }
+  .problem-card {
+    background: var(--bg2);
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    position: relative;
+    overflow: hidden;
+    transition: background 0.25s;
+  }
+  .problem-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .problem-card:hover { background: var(--surface2); }
+  .problem-card:hover::before { opacity: 1; }
+
+  .problem-icon {
+    width: 36px; height: 36px;
+    margin-bottom: 1.2rem;
+    opacity: 0.7;
+  }
+  .problem-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.7rem;
+  }
+  .problem-desc {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+
+  /* ── ARCHITECTURE STACK ── */
+  .stack-container {
+    margin-top: 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .stack-row {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    align-items: start;
+    gap: 0;
+    background: var(--bg2);
+    position: relative;
+    cursor: default;
+    transition: background 0.2s;
+  }
+  .stack-row:hover { background: var(--surface); }
+  .stack-num {
+    font-family: var(--mono);
+    font-size: 2.5rem;
+    font-weight: 300;
+    color: var(--border2);
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    line-height: 1;
+    transition: color 0.3s;
+  }
+  .stack-row:hover .stack-num { color: var(--cyan); }
+  .stack-body {
+    padding: clamp(1.5rem, 3vw, 2.5rem) 0;
+    border-left: 1px solid var(--border);
+    padding-left: clamp(1.5rem, 3vw, 2.5rem);
+  }
+  .stack-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.8rem;
+  }
+  .stack-desc {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text2);
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+  .stack-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .stack-tag {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    color: var(--text3);
+  }
+  .stack-output {
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    min-width: 160px;
+  }
+  .stack-output-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+  .stack-output-val {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--cyan);
+    text-align: right;
+    line-height: 1.5;
+  }
+
+  /* ── DESK GRID ── */
+  .desk-group-title {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem;
+    margin-top: 2.5rem;
+  }
+  .desk-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .desk-card {
+    background: var(--bg2);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+  }
+  .desk-card::after {
+    content: '→';
+    position: absolute;
+    right: 1.2rem;
+    bottom: 1.2rem;
+    font-size: 0.8rem;
+    color: var(--text3);
+    transition: color 0.2s, transform 0.2s;
+  }
+  .desk-card:hover { background: var(--surface2); }
+  .desk-card:hover::after { color: var(--cyan); transform: translate(3px, -3px); }
+  .desk-card-status {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 1px;
+    width: fit-content;
+  }
+  .status-live { background: rgba(0,232,122,0.1); color: var(--green); border: 1px solid rgba(0,232,122,0.25); }
+  .status-alpha { background: rgba(0,200,255,0.08); color: var(--cyan); border: 1px solid rgba(0,200,255,0.2); }
+  .status-soon { background: rgba(90,90,128,0.2); color: var(--text3); border: 1px solid var(--border2); }
+  .desk-card-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .desk-card-desc {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  /* ── AUDIENCE ── */
+  .audience-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+  .audience-card {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    background: var(--bg2);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .audience-card:hover {
+    border-color: var(--border2);
+    transform: translateY(-4px);
+  }
+  .audience-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, var(--cyan), var(--violet));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .audience-card:hover::before { opacity: 1; }
+  .audience-number {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+  .audience-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+    letter-spacing: -0.01em;
+  }
+  .audience-desc {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+
+  /* ── ROADMAP ── */
+  .roadmap-track {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 3rem;
+  }
+  .roadmap-phase {
+    background: var(--bg2);
+    padding: clamp(1.5rem, 2.5vw, 2rem);
+    position: relative;
+    transition: background 0.2s;
+  }
+  .roadmap-phase:hover { background: var(--surface); }
+  .roadmap-phase.active {
+    background: var(--surface2);
+  }
+  .roadmap-phase.active::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--cyan), var(--violet));
+  }
+  .phase-num {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 0.8rem;
+  }
+  .phase-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    padding: 3px 8px;
+    border-radius: 1px;
+  }
+  .phase-done { color: var(--green); background: rgba(0,232,122,0.08); border: 1px solid rgba(0,232,122,0.2); }
+  .phase-active { color: var(--cyan); background: rgba(0,200,255,0.08); border: 1px solid rgba(0,200,255,0.25); }
+  .phase-pending { color: var(--text3); background: var(--surface); border: 1px solid var(--border); }
+
+  .phase-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+    letter-spacing: -0.01em;
+  }
+  .phase-desc {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text2);
+    line-height: 1.65;
+  }
+
+  /* ── NX-PERPS ── */
+  .perps-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 3rem;
+    align-items: start;
+  }
+  .perps-terminal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .terminal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+  .terminal-title {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .terminal-dots {
+    display: flex;
+    gap: 6px;
+  }
+  .terminal-dots span {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+  .dot-r { background: #FF5F57; }
+  .dot-y { background: #FFBD2E; }
+  .dot-g { background: #27C93F; }
+
+  .perps-body {
+    padding: 1.5rem;
+  }
+  .perps-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .perps-price {
+    font-family: var(--mono);
+    font-size: 2.2rem;
+    font-weight: 500;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .perps-change {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+  .perps-change.up { background: var(--green-dim); color: var(--green); }
+  .perps-change.down { background: rgba(255,64,96,0.1); color: var(--red); }
+
+  .perps-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .perps-metric { }
+  .perps-metric-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 4px;
+  }
+  .perps-metric-val {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sparkline-wrap {
+    width: 100%;
+    height: 60px;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .sparkline-wrap svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .perps-actions { display: flex; gap: 0.75rem; }
+  .perps-btn {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 11px;
+    border-radius: 2px;
+    border: none;
+    cursor: none;
+    text-decoration: none;
+    text-align: center;
+    transition: opacity 0.2s;
+  }
+  .perps-btn:hover { opacity: 0.85; }
+  .perps-btn-long { background: var(--green); color: var(--bg); }
+  .perps-btn-short { background: var(--red); color: white; }
+
+  .perps-info { display: flex; flex-direction: column; gap: 1rem; }
+  .perps-info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+  }
+  .perps-info-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+  }
+  .perps-info-desc {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text2);
+    line-height: 1.65;
+  }
+
+  /* ── AGENTS ── */
+  .agents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 3rem;
+  }
+  .agent-card {
+    background: var(--bg2);
+    padding: 1.5rem;
+    text-decoration: none;
+    position: relative;
+    display: block;
+    transition: background 0.2s;
+    overflow: hidden;
+  }
+  .agent-card:hover { background: var(--surface2); }
+  .agent-indicator {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+    margin-bottom: 1rem;
+    animation: pulse-dot 2s infinite;
+  }
+  .agent-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+  }
+  .agent-role {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 0.7rem;
+  }
+  .agent-desc {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text2);
+    line-height: 1.65;
+  }
+
+  /* ── WAITLIST ── */
+  .waitlist-section {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: clamp(4rem, 8vw, 8rem) clamp(1.5rem, 5vw, 4rem);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .waitlist-glow {
+    position: absolute;
+    width: 600px; height: 300px;
+    background: radial-gradient(ellipse, rgba(107,79,232,0.1), transparent 70%);
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .waitlist-title {
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    margin-bottom: 1rem;
+    position: relative;
+  }
+  .waitlist-sub {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--text2);
+    margin-bottom: 2.5rem;
+    line-height: 1.7;
+    position: relative;
+  }
+  .waitlist-pills {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2.5rem;
+    position: relative;
+  }
+  .waitlist-pill {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    color: var(--text2);
+    background: var(--bg2);
+  }
+  .waitlist-form {
+    display: flex;
+    gap: 0.75rem;
+    max-width: 440px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .waitlist-input {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    padding: 13px 16px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 0;
+  }
+  .waitlist-input::placeholder { color: var(--text3); }
+  .waitlist-input:focus { border-color: var(--cyan); }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 5vw, 4rem);
+    border-top: 1px solid var(--border);
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1.5fr repeat(3, 1fr);
+    gap: 3rem;
+  }
+  .footer-brand-name {
+    font-family: var(--mono);
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .footer-brand-desc {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text2);
+    line-height: 1.7;
+    max-width: 240px;
+  }
+  .footer-tagline {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--text3);
+    margin-top: 1.5rem;
+    letter-spacing: 0.04em;
+  }
+  .footer-col-title {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 1rem;
+  }
+  .footer-links { display: flex; flex-direction: column; gap: 0.65rem; }
+  .footer-links a {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text2);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--cyan); }
+  .footer-bottom {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .footer-copy {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--text3);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── SCROLL ANIMATIONS ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .stack-row { grid-template-columns: 60px 1fr; }
+    .stack-output { display: none; }
+    .roadmap-track { grid-template-columns: repeat(2, 1fr); }
+    .perps-container { grid-template-columns: 1fr; }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    .nav-cta { display: none; }
+    .hamburger { display: flex; }
+    nav.menu-open .nav-links {
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      inset: 64px 0 0 0;
+      background: rgba(5,5,13,0.97);
+      backdrop-filter: blur(20px);
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      z-index: 90;
+    }
+    nav.menu-open .nav-links a { font-size: 1rem; }
+    .roadmap-track { grid-template-columns: 1fr; }
+    .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .waitlist-form { flex-direction: column; }
+    .hero-stats { gap: 1.2rem; }
+    .perps-metrics { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 480px) {
+    .stack-row { grid-template-columns: 50px 1fr; }
+    .stack-num { font-size: 1.8rem; padding: 1.2rem; }
+    .audience-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="scroll-bar" id="scrollBar"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-dot"></div>
+    nexxore
+  </a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#stack">Risk Stack</a></li>
+    <li><a href="#desk">Risk Desk</a></li>
+    <li><a href="docs.html">Docs</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+  </ul>
+  <a href="#waitlist" class="nav-cta">Request Access</a>
+  <div class="hamburger" id="hamburger">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-track" id="ticker">
+    <div class="ticker-item"><span class="ticker-label">ETH Funding</span><span class="ticker-val up">+0.0082%</span></div>
+    <div class="ticker-item"><span class="ticker-label">BTC Regime</span><span class="ticker-val">Trending</span></div>
+    <div class="ticker-item"><span class="ticker-label">Capital Monitored</span><span class="ticker-val">$142.3M</span></div>
+    <div class="ticker-item"><span class="ticker-label">Active Strategies</span><span class="ticker-val">24</span></div>
+    <div class="ticker-item"><span class="ticker-label">SOL Funding</span><span class="ticker-val down">-0.0031%</span></div>
+    <div class="ticker-item"><span class="ticker-label">Risk Status</span><span class="ticker-val live"><span class="live-dot"></span>Nominal</span></div>
+    <div class="ticker-item"><span class="ticker-label">Vol Regime</span><span class="ticker-val">Low-Med</span></div>
+    <div class="ticker-item"><span class="ticker-label">CVaR 95%</span><span class="ticker-val">4.2%</span></div>
+    <!-- duplicate for seamless loop -->
+    <div class="ticker-item"><span class="ticker-label">ETH Funding</span><span class="ticker-val up">+0.0082%</span></div>
+    <div class="ticker-item"><span class="ticker-label">BTC Regime</span><span class="ticker-val">Trending</span></div>
+    <div class="ticker-item"><span class="ticker-label">Capital Monitored</span><span class="ticker-val">$142.3M</span></div>
+    <div class="ticker-item"><span class="ticker-label">Active Strategies</span><span class="ticker-val">24</span></div>
+    <div class="ticker-item"><span class="ticker-label">SOL Funding</span><span class="ticker-val down">-0.0031%</span></div>
+    <div class="ticker-item"><span class="ticker-label">Risk Status</span><span class="ticker-val live"><span class="live-dot"></span>Nominal</span></div>
+    <div class="ticker-item"><span class="ticker-label">Vol Regime</span><span class="ticker-val">Low-Med</span></div>
+    <div class="ticker-item"><span class="ticker-label">CVaR 95%</span><span class="ticker-val">4.2%</span></div>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+
+  <!-- Animated chart SVG -->
+  <svg class="hero-chart" viewBox="0 0 560 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#00C8FF" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="#00C8FF" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path id="chartPath" d="M0 180 L40 160 L80 170 L120 140 L160 120 L200 130 L240 80 L280 100 L320 60 L360 80 L400 40 L440 55 L480 30 L520 45 L560 20" stroke="#00C8FF" stroke-width="1.5" fill="none" stroke-dasharray="1000" stroke-dashoffset="1000">
+      <animate attributeName="stroke-dashoffset" from="1000" to="0" dur="3s" begin="0.5s" fill="freeze"/>
+    </path>
+    <path d="M0 180 L40 160 L80 170 L120 140 L160 120 L200 130 L240 80 L280 100 L320 60 L360 80 L400 40 L440 55 L480 30 L520 45 L560 20 L560 220 L0 220Z" fill="url(#chartGrad)" opacity="0">
+      <animate attributeName="opacity" from="0" to="1" dur="1s" begin="3s" fill="freeze"/>
+    </path>
+    <!-- Grid lines -->
+    <line x1="0" y1="55" x2="560" y2="55" stroke="#1A1A30" stroke-width="1"/>
+    <line x1="0" y1="110" x2="560" y2="110" stroke="#1A1A30" stroke-width="1"/>
+    <line x1="0" y1="165" x2="560" y2="165" stroke="#1A1A30" stroke-width="1"/>
+  </svg>
+
+  <div class="hero-badge">
+    <span class="live-dot"></span>
+    Risk Infrastructure — Live
+  </div>
+
+  <h1 class="hero-title">
+    Crypto Returns<br>Are Abundant.<br><span class="accent">Survivability Is Rare.</span>
+  </h1>
+
+  <p class="hero-sub">
+    Nexxore is the on-chain risk desk for serious crypto capital — modeling regime shifts, convexity exposure, and capital survivability in real time.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#stack" class="btn-primary">Explore Risk Framework →</a>
+    <a href="perps.html" class="btn-secondary">Launch App ↗</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hero-stat-item">
+      <div class="hero-stat-val">$142<span>M</span></div>
+      <div class="hero-stat-label">Capital Monitored</div>
+    </div>
+    <div class="hero-stat-item">
+      <div class="hero-stat-val">24</div>
+      <div class="hero-stat-label">Active Strategies</div>
+    </div>
+    <div class="hero-stat-item">
+      <div class="hero-stat-val">99<span>%</span></div>
+      <div class="hero-stat-label">Uptime</div>
+    </div>
+    <div class="hero-stat-item">
+      <div class="hero-stat-val">4</div>
+      <div class="hero-stat-label">Chain Coverage</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="section-label reveal">The Core Problem</div>
+  <h2 class="section-title reveal reveal-delay-1">Most Capital Doesn't Fail From Bad Trades.<br>It Fails From Mispriced Risk.</h2>
+  <div class="problem-grid reveal reveal-delay-2">
+    <div class="problem-card">
+      <svg class="problem-icon" viewBox="0 0 36 36" fill="none">
+        <rect x="4" y="18" width="4" height="14" rx="1" fill="#00C8FF" opacity="0.4"/>
+        <rect x="11" y="12" width="4" height="20" rx="1" fill="#00C8FF" opacity="0.6"/>
+        <rect x="18" y="6" width="4" height="26" rx="1" fill="#00C8FF" opacity="0.8"/>
+        <rect x="25" y="14" width="4" height="18" rx="1" fill="#FF4060" opacity="0.9"/>
+        <line x1="4" y1="4" x2="4" y2="32" stroke="#1A1A30" stroke-width="1"/>
+        <line x1="4" y1="32" x2="32" y2="32" stroke="#1A1A30" stroke-width="1"/>
+      </svg>
+      <div class="problem-title">Funding Stress</div>
+      <div class="problem-desc">Funding flips during volatility spikes. Positions liquidate before anyone reacts.</div>
+    </div>
+    <div class="problem-card">
+      <svg class="problem-icon" viewBox="0 0 36 36" fill="none">
+        <circle cx="18" cy="18" r="12" stroke="#00C8FF" stroke-width="1" opacity="0.3"/>
+        <circle cx="18" cy="18" r="7" stroke="#00C8FF" stroke-width="1" opacity="0.5"/>
+        <circle cx="18" cy="18" r="3" fill="#00C8FF" opacity="0.8"/>
+        <line x1="18" y1="4" x2="18" y2="8" stroke="#00C8FF" stroke-width="1.5" opacity="0.4"/>
+        <line x1="18" y1="28" x2="18" y2="32" stroke="#00C8FF" stroke-width="1.5" opacity="0.4"/>
+        <line x1="4" y1="18" x2="8" y2="18" stroke="#00C8FF" stroke-width="1.5" opacity="0.4"/>
+        <line x1="28" y1="18" x2="32" y2="18" stroke="#00C8FF" stroke-width="1.5" opacity="0.4"/>
+      </svg>
+      <div class="problem-title">Liquidity Collapse</div>
+      <div class="problem-desc">Liquidity vanishes at the worst moment. Exit slippage compounds losses exponentially.</div>
+    </div>
+    <div class="problem-card">
+      <svg class="problem-icon" viewBox="0 0 36 36" fill="none">
+        <path d="M4 28 L12 16 L20 20 L28 8" stroke="#00C8FF" stroke-width="1.5" fill="none" opacity="0.6"/>
+        <circle cx="28" cy="8" r="3" fill="#FF4060"/>
+        <path d="M26 26 L30 22 M30 26 L26 22" stroke="#FF4060" stroke-width="1.5"/>
+      </svg>
+      <div class="problem-title">Hidden Tail Risk</div>
+      <div class="problem-desc">High Sharpe ratios mask tail exposure. The drawdown arrives without warning.</div>
+    </div>
+    <div class="problem-card">
+      <svg class="problem-icon" viewBox="0 0 36 36" fill="none">
+        <path d="M4 28 C10 28 10 8 18 8 C26 8 26 28 32 28" stroke="#00C8FF" stroke-width="1.5" fill="none" opacity="0.5"/>
+        <path d="M4 28 C10 28 10 14 18 14 C26 14 26 28 32 28" stroke="#E8A020" stroke-width="1.5" fill="none" opacity="0.7"/>
+      </svg>
+      <div class="problem-title">Regime Amplification</div>
+      <div class="problem-desc">Leverage magnifies regime shifts. Most tools don't model regime at all.</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- STACK -->
+<section id="stack">
+  <div class="section-label reveal">Architecture</div>
+  <h2 class="section-title reveal reveal-delay-1">The Risk Intelligence Stack</h2>
+  <p style="font-family:var(--mono);font-size:0.78rem;color:var(--text2);margin-top:0.8rem;line-height:1.7;" class="reveal reveal-delay-2">From regime detection to structured exposure. Three layers of risk infrastructure.</p>
+
+  <div class="stack-container reveal reveal-delay-2">
+    <div class="stack-row">
+      <div class="stack-num">01</div>
+      <div class="stack-body">
+        <div class="stack-title">Regime Detection Engine</div>
+        <div class="stack-desc">Agents ingest multi-source data to model probabilistic regime states — not price targets. Transition risk is measured before exposure is deployed.</div>
+        <div class="stack-tags">
+          <span class="stack-tag">On-chain capital flows</span>
+          <span class="stack-tag">Funding rate stress</span>
+          <span class="stack-tag">Order book depth</span>
+          <span class="stack-tag">Sentiment dispersion</span>
+          <span class="stack-tag">Volatility clustering</span>
+        </div>
+      </div>
+      <div class="stack-output">
+        <div class="stack-output-label">Output</div>
+        <div class="stack-output-val">Risk-adjusted<br>regime probability</div>
+      </div>
+    </div>
+    <div class="stack-row">
+      <div class="stack-num">02</div>
+      <div class="stack-body">
+        <div class="stack-title">Capital Allocation Engine</div>
+        <div class="stack-desc">Regime probabilities transformed into structured exposures, evaluated through drawdown modeling and expected shortfall (CVaR).</div>
+        <div class="stack-tags">
+          <span class="stack-tag">Delta-neutral carry</span>
+          <span class="stack-tag">Hedged perp structures</span>
+          <span class="stack-tag">Stablecoin defense</span>
+          <span class="stack-tag">Volatility capture</span>
+        </div>
+      </div>
+      <div class="stack-output">
+        <div class="stack-output-label">Evaluated Through</div>
+        <div class="stack-output-val">Drawdown modeling<br>CVaR · Liquidity stress</div>
+      </div>
+    </div>
+    <div class="stack-row">
+      <div class="stack-num">03</div>
+      <div class="stack-body">
+        <div class="stack-title">Execution & Liquidity Routing</div>
+        <div class="stack-desc">Exposure deployed across chains with capital efficiency as the primary constraint. Intent is abstracted. Execution is capital-efficient.</div>
+        <div class="stack-tags">
+          <span class="stack-tag">Slippage-aware routing</span>
+          <span class="stack-tag">Liquidity optimization</span>
+          <span class="stack-tag">Cross-chain hedging</span>
+        </div>
+      </div>
+      <div class="stack-output">
+        <div class="stack-output-label">Principle</div>
+        <div class="stack-output-val">Intent abstracted<br>Execution efficient</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- DESK -->
+<section id="desk">
+  <div class="section-label reveal">Infrastructure</div>
+  <h2 class="section-title reveal reveal-delay-1">The On-Chain Risk Desk</h2>
+  <p style="font-family:var(--mono);font-size:0.78rem;color:var(--text2);margin-top:0.8rem;line-height:1.7;" class="reveal reveal-delay-2">Monitoring, structuring, and deployment — unified under a single objective.</p>
+
+  <div class="reveal reveal-delay-2">
+    <div class="desk-group-title">Capital Monitoring</div>
+    <div class="desk-cards">
+      <a href="research-agent.html" class="desk-card">
+        <span class="desk-card-status status-live">Live</span>
+        <div class="desk-card-title">On-Chain Flow Intelligence</div>
+        <div class="desk-card-desc">Capital flow analysis and liquidity depth monitoring across chains.</div>
+      </a>
+      <a href="analytics.html" class="desk-card">
+        <span class="desk-card-status status-live">Live</span>
+        <div class="desk-card-title">Portfolio Risk Metrics</div>
+        <div class="desk-card-desc">Exposure mapping, drawdown analysis, P&L attribution.</div>
+      </a>
+      <a href="analytics.html" class="desk-card">
+        <span class="desk-card-status status-alpha">Alpha</span>
+        <div class="desk-card-title">Performance Attribution</div>
+        <div class="desk-card-desc">Strategy-level return and risk decomposition.</div>
+      </a>
+    </div>
+
+    <div class="desk-group-title">Capital Structuring</div>
+    <div class="desk-cards">
+      <a href="strategy-builder.html" class="desk-card">
+        <span class="desk-card-status status-alpha">Alpha</span>
+        <div class="desk-card-title">Strategy Builder</div>
+        <div class="desk-card-desc">Regime-aware allocation logic with backtesting.</div>
+      </a>
+      <a href="delta-neutral.html" class="desk-card">
+        <span class="desk-card-status status-alpha">Alpha</span>
+        <div class="desk-card-title">Delta-Neutral Construction</div>
+        <div class="desk-card-desc">Automated hedging across spot and perpetuals.</div>
+      </a>
+      <a href="stablecoin-hub.html" class="desk-card">
+        <span class="desk-card-status status-soon">Soon</span>
+        <div class="desk-card-title">Stablecoin Risk Hub</div>
+        <div class="desk-card-desc">Peg monitoring, depeg defense, stablecoin risk.</div>
+      </a>
+    </div>
+
+    <div class="desk-group-title">Capital Deployment</div>
+    <div class="desk-cards">
+      <a href="perps.html" class="desk-card">
+        <span class="desk-card-status status-live">Live</span>
+        <div class="desk-card-title">Perpetual Execution</div>
+        <div class="desk-card-desc">Decentralized perps with structured hedge capability.</div>
+      </a>
+      <a href="vaults.html" class="desk-card">
+        <span class="desk-card-status status-alpha">Alpha</span>
+        <div class="desk-card-title">Vault Infrastructure</div>
+        <div class="desk-card-desc">Risk-ranked strategies from conservative to active.</div>
+      </a>
+      <a href="agents.html" class="desk-card">
+        <span class="desk-card-status status-alpha">Alpha</span>
+        <div class="desk-card-title">Agent API</div>
+        <div class="desk-card-desc">Programmable risk agents for funds and protocols.</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- AUDIENCE -->
+<section id="audience">
+  <div class="section-label reveal">Audience</div>
+  <h2 class="section-title reveal reveal-delay-1">Built for Capital That Thinks in Drawdowns</h2>
+  <div class="audience-grid">
+    <div class="audience-card reveal reveal-delay-1">
+      <div class="audience-number">01 / QUANTS</div>
+      <div class="audience-title">Strategy Quants</div>
+      <div class="audience-desc">Design regime-aware allocation logic. Model regime transitions and convexity exposure with programmable risk parameters.</div>
+    </div>
+    <div class="audience-card reveal reveal-delay-2">
+      <div class="audience-number">02 / BUILDERS</div>
+      <div class="audience-title">Structured Product Builders</div>
+      <div class="audience-desc">Deploy risk-calibrated vaults and delta-neutral frameworks. Evaluate allocation through drawdown modeling and CVaR.</div>
+    </div>
+    <div class="audience-card reveal reveal-delay-3">
+      <div class="audience-number">03 / FUNDS</div>
+      <div class="audience-title">Crypto-Native Funds</div>
+      <div class="audience-desc">Monitor funding stress, liquidity contraction, and tail exposure in real time. Infrastructure for operators managing size.</div>
+    </div>
+  </div>
+  <p style="font-family:var(--mono);font-size:0.7rem;color:var(--text3);margin-top:2rem;letter-spacing:0.04em;" class="reveal">
+    Not designed for speculative short-term trading without risk modeling.
+  </p>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- NX-PERPS -->
+<section id="perps">
+  <div class="section-label reveal">Live Product</div>
+  <h2 class="section-title reveal reveal-delay-1">NX-Perps</h2>
+  <p style="font-family:var(--mono);font-size:0.78rem;color:var(--text2);margin-top:0.8rem;line-height:1.7;" class="reveal reveal-delay-2">Decentralized perpetual execution with structured hedge capability.</p>
+
+  <div class="perps-container reveal reveal-delay-2">
+    <div class="perps-terminal">
+      <div class="terminal-header">
+        <div class="terminal-dots">
+          <span class="dot-r"></span>
+          <span class="dot-y"></span>
+          <span class="dot-g"></span>
+        </div>
+        <div class="terminal-title">
+          ETH-PERP &nbsp;
+          <span class="desk-card-status status-live" style="font-size:0.58rem;">LIVE</span>
+        </div>
+        <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text3)">nexxore.xyz</div>
+      </div>
+      <div class="perps-body">
+        <div class="perps-price-row">
+          <div class="perps-price" id="perpPrice">$3,247.80</div>
+          <div class="perps-change up" id="perpChange">+2.14%</div>
+        </div>
+        <div class="sparkline-wrap">
+          <svg viewBox="0 0 300 60" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="spark" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#00E87A" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#00E87A" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path id="sparkPath" d="" stroke="#00E87A" stroke-width="1.5" fill="none"/>
+            <path id="sparkFill" d="" fill="url(#spark)"/>
+          </svg>
+        </div>
+        <div class="perps-metrics">
+          <div class="perps-metric">
+            <div class="perps-metric-label">Mark Price</div>
+            <div class="perps-metric-val" id="markPrice">$3,247.80</div>
+          </div>
+          <div class="perps-metric">
+            <div class="perps-metric-label">24h Volume</div>
+            <div class="perps-metric-val">$8.4M</div>
+          </div>
+          <div class="perps-metric">
+            <div class="perps-metric-label">Funding</div>
+            <div class="perps-metric-val" style="color:var(--green)">+0.0082%</div>
+          </div>
+          <div class="perps-metric">
+            <div class="perps-metric-label">Open Interest</div>
+            <div class="perps-metric-val">$12.1M</div>
+          </div>
+          <div class="perps-metric">
+            <div class="perps-metric-label">24h Change</div>
+            <div class="perps-metric-val" style="color:var(--green)" id="perpChange2">+2.14%</div>
+          </div>
+          <div class="perps-metric">
+            <div class="perps-metric-label">Regime</div>
+            <div class="perps-metric-val" style="color:var(--cyan)">Trending</div>
+          </div>
+        </div>
+        <div class="perps-actions">
+          <a href="perps.html" class="perps-btn perps-btn-long">Long ↑</a>
+          <a href="perps.html" class="perps-btn perps-btn-short">Short ↓</a>
+        </div>
+      </div>
+    </div>
+    <div class="perps-info">
+      <div class="perps-info-card">
+        <div class="perps-info-title">Structured Hedge Capability</div>
+        <div class="perps-info-desc">Every execution is evaluated against the regime state. Funding stress and liquidity depth are structural inputs — not afterthoughts.</div>
+      </div>
+      <div class="perps-info-card">
+        <div class="perps-info-title">Cross-Chain Liquidity Routing</div>
+        <div class="perps-info-desc">Slippage-aware routing across fragmented liquidity. Capital finds the best execution path regardless of chain.</div>
+      </div>
+      <div class="perps-info-card">
+        <div class="perps-info-title">Provide Liquidity</div>
+        <div class="perps-info-desc">Earn structured yield from delta-neutral LP positions. Risk-ranked by volatility regime and funding exposure.</div>
+        <div style="margin-top:1rem;">
+          <a href="perps.html#lp" class="btn-secondary" style="font-size:0.68rem;padding:9px 18px;">Provide Liquidity →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- AGENTS -->
+<section id="agents">
+  <div class="section-label reveal">Agent Infrastructure</div>
+  <h2 class="section-title reveal reveal-delay-1">Hedge Fund OS</h2>
+  <p style="font-family:var(--mono);font-size:0.78rem;color:var(--text2);margin-top:0.8rem;line-height:1.7;" class="reveal reveal-delay-2">Specialized agents with defined mandates. Clear roles. Continuous recalibration.</p>
+  <div class="agents-grid reveal reveal-delay-2">
+    <a href="research-agent.html" class="agent-card">
+      <div class="agent-indicator"></div>
+      <div class="agent-role">Regime Analysis</div>
+      <div class="agent-name">Regime Analyst</div>
+      <div class="agent-desc">Regime modeling, on-chain flow analysis, volatility clustering detection.</div>
+    </a>
+    <a href="agents.html" class="agent-card">
+      <div class="agent-indicator" style="background:var(--violet);box-shadow:0 0 8px var(--violet)"></div>
+      <div class="agent-role">Portfolio Management</div>
+      <div class="agent-name">Portfolio Optimizer</div>
+      <div class="agent-desc">Exposure allocation, rebalancing logic, drawdown-constrained optimization.</div>
+    </a>
+    <a href="agents.html" class="agent-card">
+      <div class="agent-indicator" style="background:var(--green);box-shadow:0 0 8px var(--green)"></div>
+      <div class="agent-role">Execution</div>
+      <div class="agent-name">Execution Router</div>
+      <div class="agent-desc">Cross-chain liquidity routing, slippage minimization, intent abstraction.</div>
+    </a>
+    <a href="agents.html" class="agent-card">
+      <div class="agent-indicator" style="background:var(--gold);box-shadow:0 0 8px var(--gold)"></div>
+      <div class="agent-role">Reporting</div>
+      <div class="agent-name">Performance Auditor</div>
+      <div class="agent-desc">Attribution analysis, risk reporting, strategy performance decomposition.</div>
+    </a>
+    <a href="predictions.html" class="agent-card">
+      <div class="agent-indicator" style="background:var(--red);box-shadow:0 0 8px var(--red)"></div>
+      <div class="agent-role">Intelligence</div>
+      <div class="agent-name">Prediction Monitor</div>
+      <div class="agent-desc">Prediction markets intelligence, edge detection, automated position sizing.</div>
+    </a>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="section-label reveal">Roadmap</div>
+  <h2 class="section-title reveal reveal-delay-1">Infrastructure to Institutional Capital</h2>
+  <div class="roadmap-track reveal reveal-delay-2">
+    <div class="roadmap-phase">
+      <div class="phase-num">Phase 1</div>
+      <div class="phase-status phase-done">✓ Deployed</div>
+      <div class="phase-title">Foundation</div>
+      <div class="phase-desc">Core agents live. Strategy builder operational. Security hardening complete.</div>
+    </div>
+    <div class="roadmap-phase active">
+      <div class="phase-num">Phase 2</div>
+      <div class="phase-status phase-active"><span class="live-dot"></span> Active</div>
+      <div class="phase-title">Alpha</div>
+      <div class="phase-desc">Invite-only capital deployment. Strategy creators onboarded.</div>
+    </div>
+    <div class="roadmap-phase">
+      <div class="phase-num">Phase 3</div>
+      <div class="phase-status phase-pending">Upcoming</div>
+      <div class="phase-title">Public</div>
+      <div class="phase-desc">Autonomous vaults. Simplified allocation frameworks. Risk-ranked leaderboard.</div>
+    </div>
+    <div class="roadmap-phase">
+      <div class="phase-num">Phase 4</div>
+      <div class="phase-status phase-pending">Upcoming</div>
+      <div class="phase-title">Scale</div>
+      <div class="phase-desc">Institutional APIs. Programmable risk infrastructure for funds and protocols.</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- WAITLIST -->
+<section class="waitlist-section" id="waitlist">
+  <div class="waitlist-glow"></div>
+  <div class="section-label reveal" style="justify-content:center">Early Access</div>
+  <h2 class="waitlist-title reveal reveal-delay-1">Allocated Access.<br>Not Open Registration.</h2>
+  <p class="waitlist-sub reveal reveal-delay-2">
+    Access is limited during alpha. We prioritize operators deploying disciplined capital.<br>
+    If you allocate based on drawdown probability, funding stress, and liquidity depth — this is for you.
+  </p>
+  <div class="waitlist-pills reveal reveal-delay-2">
+    <span class="waitlist-pill">Professional Traders</span>
+    <span class="waitlist-pill">Strategy Architects</span>
+    <span class="waitlist-pill">Crypto-Native Funds</span>
+    <span class="waitlist-pill">Structured Yield Builders</span>
+  </div>
+  <div class="waitlist-form reveal reveal-delay-3">
+    <input type="email" class="waitlist-input" placeholder="your@fund.xyz" id="emailInput">
+    <button class="btn-primary" onclick="handleWaitlist()" style="white-space:nowrap">Request Access →</button>
+  </div>
+  <div id="waitlist-success" style="display:none;font-family:var(--mono);font-size:0.75rem;color:var(--green);margin-top:1rem;letter-spacing:0.04em;">
+    ✓ Request received. You will be reviewed.
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <div class="footer-brand-name">
+        <div class="nav-logo-dot"></div>
+        nexxore
+      </div>
+      <div class="footer-brand-desc">On-chain risk infrastructure for serious crypto capital.</div>
+      <div class="footer-tagline">Volatility is inevitable. Mispriced risk is optional.</div>
+    </div>
+    <div>
+      <div class="footer-col-title">Product</div>
+      <div class="footer-links">
+        <a href="perps.html">Perpetuals</a>
+        <a href="vaults.html">Vaults</a>
+        <a href="stablecoin-hub.html">Stablecoin Hub</a>
+        <a href="strategy-builder.html">Strategy Builder</a>
+        <a href="delta-neutral.html">Delta-Neutral</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-title">Infrastructure</div>
+      <div class="footer-links">
+        <a href="research-agent.html">Flow Intelligence</a>
+        <a href="agents.html">Agent API</a>
+        <a href="analytics.html">Risk Metrics</a>
+        <a href="predictions.html">Prediction Monitor</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-title">Resources</div>
+      <div class="footer-links">
+        <a href="docs.html">Documentation</a>
+        <a href="#">Discord</a>
+        <a href="https://x.com/nexxore">X / Twitter</a>
+        <a href="#">Telegram</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Nexxore. All rights reserved.</div>
+    <div class="footer-copy">Risk infrastructure · On-chain · Real time</div>
+  </div>
+</footer>
+
+<script>
+// Cursor
+const cursor = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top = my + 'px';
+});
+function animateCursorRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  cursorRing.style.left = rx + 'px';
+  cursorRing.style.top = ry + 'px';
+  requestAnimationFrame(animateCursorRing);
+}
+animateCursorRing();
+
+document.querySelectorAll('a, button, input').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.width = '14px';
+    cursor.style.height = '14px';
+    cursorRing.style.width = '40px';
+    cursorRing.style.height = '40px';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.width = '8px';
+    cursor.style.height = '8px';
+    cursorRing.style.width = '28px';
+    cursorRing.style.height = '28px';
+  });
+});
+
+// Scroll bar
+const scrollBar = document.getElementById('scrollBar');
+window.addEventListener('scroll', () => {
+  const p = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+  scrollBar.style.width = (p * 100) + '%';
+});
+
+// Nav scroll
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// Hamburger
+const hamburger = document.getElementById('hamburger');
+hamburger.addEventListener('click', () => {
+  nav.classList.toggle('menu-open');
+});
+
+// Reveal on scroll
+const reveals = document.querySelectorAll('.reveal');
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+reveals.forEach(r => obs.observe(r));
+
+// Sparkline
+function genSparkline() {
+  const pts = [];
+  let v = 40;
+  for (let i = 0; i <= 30; i++) {
+    v = Math.max(5, Math.min(55, v + (Math.random() - 0.45) * 8));
+    pts.push({ x: (i / 30) * 300, y: 60 - v });
+  }
+  const line = pts.map((p, i) => (i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`)).join(' ');
+  const fill = line + ` L300,60 L0,60 Z`;
+  document.getElementById('sparkPath').setAttribute('d', line);
+  document.getElementById('sparkFill').setAttribute('d', fill);
+}
+genSparkline();
+
+// Live price simulation
+let basePrice = 3247.80;
+function updatePrice() {
+  const change = (Math.random() - 0.49) * 4;
+  basePrice = Math.max(3100, Math.min(3400, basePrice + change));
+  const pct = ((basePrice - 3179.04) / 3179.04 * 100);
+  const isUp = pct >= 0;
+  const priceStr = '$' + basePrice.toFixed(2);
+  const pctStr = (isUp ? '+' : '') + pct.toFixed(2) + '%';
+  document.getElementById('perpPrice').textContent = priceStr;
+  document.getElementById('markPrice').textContent = priceStr;
+  const changeEl = document.getElementById('perpChange');
+  const changeEl2 = document.getElementById('perpChange2');
+  changeEl.textContent = pctStr;
+  changeEl2.textContent = pctStr;
+  changeEl.className = 'perps-change ' + (isUp ? 'up' : 'down');
+  changeEl2.style.color = isUp ? 'var(--green)' : 'var(--red)';
+  genSparkline();
+}
+setInterval(updatePrice, 2800);
+
+// Waitlist
+function handleWaitlist() {
+  const email = document.getElementById('emailInput').value;
+  if (email && email.includes('@')) {
+    document.querySelector('.waitlist-form').style.display = 'none';
+    document.getElementById('waitlist-success').style.display = 'block';
+  } else {
+    document.getElementById('emailInput').style.borderColor = 'var(--red)';
+    setTimeout(() => { document.getElementById('emailInput').style.borderColor = ''; }, 1500);
+  }
+}
+</script>
+</body>
+</html>
