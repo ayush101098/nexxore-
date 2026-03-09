@@ -25,6 +25,8 @@ Nexxore operates a coordinated swarm of specialized agents, each with distinct r
 |-------|------|------------------|
 | **On-Chain Analyst** | The Analyst | Market intelligence, technicals, fundamentals for 20 perp markets |
 | **Prediction Markets Agent** | The Oracle | AI signals for Polymarket & Kalshi, arbitrage detection |
+| **Market Data Agent** | The Collector | Dexscreener integration, top movers, new pairs, liquidity monitoring |
+| **Signal Engine** | The Scorer | 4-signal alpha detection, composite scoring (0–100), WebSocket feed |
 | **Alpha Agent** | The Strategist | Trading signal generation, entry/exit recommendations |
 | **Web3 Intelligence Agent** | The Auditor | Contract analysis, security scoring, rug pull detection |
 | **Execution Agent** | The Trader | Order routing, slippage minimization, venue selection |
@@ -105,7 +107,39 @@ Comprehensive market intelligence for perpetual trading.
 
 ---
 
-### Prediction Markets Agent
+### Market Data Agent
+
+Dexscreener data integration and real-time DEX pair monitoring.
+
+**Provides:**
+- Async Dexscreener API client with rate limiting (60/300 rpm)
+- Top movers discovery across 5 chains (Solana, Ethereum, Base, BSC, Arbitrum)
+- New pair detection (age <24h, liquidity >$100K)
+- Liquidity change monitoring (>20% in 10 min)
+- Token search across all Dexscreener pairs
+- Time-series SQLite storage with 7-day retention
+- Redis + in-memory LRU caching (10s–300s TTLs)
+- REST API on port 3860
+
+[Learn more →](./market-data.md)
+
+---
+
+### Signal Engine (Market Intelligence Agent)
+
+Composite alpha signal scoring system with 4 independent detectors.
+
+**Provides:**
+- Momentum spike detection (price_5m >5%, vol >2× avg, liq >$500K → 0-40 pts)
+- Volume breakout detection (vol_1h >3× 24h avg → 0-30 pts)
+- Liquidity inflow detection (>20% increase in 10 min → 0-20 pts)
+- New pair scoring (age <24h, liq >$100K → 0-10 pts)
+- Composite scoring (0–100) with classification: >70 strong trade, 50-70 watchlist
+- Rolling window data pipeline (5m/15m/1h/24h)
+- WebSocket live feed (/ws/signals/live)
+- REST API on port 3861
+
+[Learn more →](./signal-engine.md)
 
 AI-powered intelligence for prediction market traders.
 
@@ -179,6 +213,8 @@ Agents are continuously monitored for performance:
 ## Next Steps
 
 - [On-Chain Analyst →](./research-agent.md)
+- [Market Data Agent →](./market-data.md)
+- [Signal Engine →](./signal-engine.md)
 - [Prediction Markets Agent →](./prediction-markets.md)
 - [Alpha Agent →](./alpha-agent.md)
 - [Web3 Intelligence →](./web3-intelligence.md)

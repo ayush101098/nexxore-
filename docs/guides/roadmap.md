@@ -50,6 +50,8 @@ Advanced AI capabilities, new agents, and cross-protocol optimization.
 | Polymarket & Kalshi integration | ✓ Complete |
 | Cross-platform arbitrage scanner | ✓ Complete |
 | AI signal generation for predictions | ✓ Complete |
+| **Market Data Agent (Dexscreener)** | ✓ Complete |
+| **Signal Engine (4-signal scoring)** | ✓ Complete |
 | Cross-vault correlation analysis | ◐ In Progress |
 | Advanced risk modeling | ◐ In Progress |
 | Public API for agent signals | ◐ In Progress |
@@ -72,6 +74,8 @@ Advanced AI capabilities, new agents, and cross-protocol optimization.
 | Web3 Intelligence | Q1 2025 ✓ |
 | Perpetuals Trading | Q4 2025 ✓ |
 | Prediction Markets Agent | Q1 2026 ✓ |
+| Market Data Agent | Q1 2026 ✓ |
+| Signal Engine | Q1 2026 ✓ |
 | Cross-vault optimization | Q2 2026 |
 | Public API v1 | Q2 2026 |
 | Auto-trade bots | Q3 2026 |

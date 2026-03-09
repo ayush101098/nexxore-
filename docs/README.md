@@ -41,6 +41,8 @@ Our mission extends beyond creating a protocol—it's about fostering a system t
 ### Nexxore Agents
 - [Agent Overview](./agents/overview.md) — The autonomous agent swarm
 - [On-Chain Analyst](./agents/research-agent.md) — Market intelligence and analysis
+- [Market Data Agent](./agents/market-data.md) — Dexscreener integration and DEX pair monitoring
+- [Signal Engine](./agents/signal-engine.md) — 4-signal alpha scoring with composite 0–100 scores
 - [Prediction Markets Agent](./agents/prediction-markets.md) — Polymarket & Kalshi signals
 - [Alpha Agent](./agents/alpha-agent.md) — Trading signal generation
 - [Web3 Intelligence](./agents/web3-intelligence.md) — Security scanning and auditing

@@ -1342,6 +1342,8 @@
       <button class="atab" data-section="fundamental">📈 Fundamental</button>
       <button class="atab" data-section="derivatives">💰 Derivatives</button>
       <button class="atab" data-section="onchain">🔗 On-Chain</button>
+      <button class="atab" data-section="dexscreener">🔍 Dexscreener</button>
+      <button class="atab" data-section="signals">⚡ Signals</button>
       <button class="atab" data-section="tokenomics">🪙 Tokenomics</button>
       <button class="atab" data-section="news">📰 News</button>
     </div>
@@ -1502,6 +1504,127 @@
             <div class="metric-row"><span class="row-label">SOPR</span><span class="row-value">--</span></div>
             <div class="metric-row"><span class="row-label">NUPL</span><span class="row-value">--</span></div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dexscreener Section -->
+    <div class="analysis-section" id="section-dexscreener">
+      <div class="section-grid-2">
+        <div class="analysis-card">
+          <div class="analysis-card-header">
+            <span class="analysis-card-title">🔍 Dexscreener Top Movers</span>
+            <span class="data-source-badge" style="background:rgba(0,200,255,0.12);color:#00c8ff;">Dexscreener</span>
+          </div>
+          <div id="dexTopMovers">
+            <div class="loading"><div class="loading-spinner"></div>Fetching top movers...</div>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <div class="analysis-card-header">
+            <span class="analysis-card-title">🆕 New Pairs</span>
+            <span class="data-source-badge" style="background:rgba(0,232,122,0.12);color:#00e87a;">Dexscreener</span>
+          </div>
+          <div id="dexNewPairs">
+            <div class="loading"><div class="loading-spinner"></div>Scanning new pairs...</div>
+          </div>
+        </div>
+      </div>
+      <div class="section-grid-2" style="margin-top:16px;">
+        <div class="analysis-card">
+          <div class="analysis-card-header">
+            <span class="analysis-card-title">💧 Liquidity Changes</span>
+            <span class="data-source-badge" style="background:rgba(107,79,232,0.12);color:#6b4fe8;">Market Data</span>
+          </div>
+          <div id="dexLiquidityChanges">
+            <div class="loading"><div class="loading-spinner"></div>Loading liquidity data...</div>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <div class="analysis-card-header">
+            <span class="analysis-card-title">🔎 Token Search</span>
+            <span class="data-source-badge" style="background:rgba(0,200,255,0.12);color:#00c8ff;">Dexscreener</span>
+          </div>
+          <div style="margin-bottom:12px;">
+            <input type="text" id="dexSearchInput" placeholder="Search token (e.g. PEPE, WIF)..." style="width:100%;padding:8px 12px;background:var(--bg-elevated);border:1px solid var(--border-color);border-radius:6px;color:var(--text-primary);font-size:0.82rem;font-family:var(--font-mono);outline:none;" />
+          </div>
+          <div id="dexSearchResults" style="max-height:200px;overflow-y:auto;"></div>
+        </div>
+      </div>
+      <div class="analysis-card" style="margin-top:16px;">
+        <div class="analysis-card-header">
+          <span class="analysis-card-title">📊 Market Data Service</span>
+          <span class="data-source-badge" style="background:rgba(232,160,32,0.12);color:#e8a020;">Status</span>
+        </div>
+        <div id="marketDataStatus">
+          <div class="metric-row"><span class="row-label">Service</span><span class="row-value">market-data (port 3860)</span></div>
+          <div class="metric-row"><span class="row-label">Data Source</span><span class="row-value">Dexscreener API</span></div>
+          <div class="metric-row"><span class="row-label">Rate Limits</span><span class="row-value">60 rpm (slow) / 300 rpm (fast)</span></div>
+          <div class="metric-row"><span class="row-label">Cache</span><span class="row-value">Redis + In-Memory LRU</span></div>
+          <div class="metric-row"><span class="row-label">Storage</span><span class="row-value">SQLite (7-day retention)</span></div>
+          <div class="metric-row"><span class="row-label">Polling</span><span class="row-value">10s interval, 5 chains</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signals Section -->
+    <div class="analysis-section" id="section-signals">
+      <div class="section-grid-2">
+        <div class="analysis-card">
+          <div class="analysis-card-header">
+            <span class="analysis-card-title">⚡ Strong Trades (Score &gt; 70)</span>
+            <span class="data-source-badge" style="background:rgba(0,232,122,0.12);color:#00e87a;">Signal Engine</span>
+          </div>
+          <div id="signalStrongTrades">
+            <div class="loading"><div class="loading-spinner"></div>Analyzing signals...</div>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <div class="analysis-card-header">
+            <span class="analysis-card-title">👁️ Watchlist (Score 50–70)</span>
+            <span class="data-source-badge" style="background:rgba(232,160,32,0.12);color:#e8a020;">Signal Engine</span>
+          </div>
+          <div id="signalWatchlist">
+            <div class="loading"><div class="loading-spinner"></div>Scanning watchlist...</div>
+          </div>
+        </div>
+      </div>
+      <div class="section-grid-2" style="margin-top:16px;">
+        <div class="analysis-card">
+          <div class="analysis-card-header">
+            <span class="analysis-card-title">🚀 Signal Breakdown</span>
+            <span class="data-source-badge">Composite</span>
+          </div>
+          <div id="signalBreakdown">
+            <div class="metric-row"><span class="row-label">🔥 Momentum Spike</span><span class="row-value">Price 5m &gt;5%, Vol &gt;2x → 0-40 pts</span></div>
+            <div class="metric-row"><span class="row-label">📈 Volume Breakout</span><span class="row-value">Vol 1h &gt;3x 24h avg → 0-30 pts</span></div>
+            <div class="metric-row"><span class="row-label">💧 Liquidity Inflow</span><span class="row-value">Liq +20% in 10min → 0-20 pts</span></div>
+            <div class="metric-row"><span class="row-label">🆕 New Pair</span><span class="row-value">Age &lt;24h, Liq &gt;$100k → 0-10 pts</span></div>
+            <div class="metric-row" style="border-top:1px solid var(--border-color);padding-top:8px;margin-top:8px;"><span class="row-label" style="font-weight:600;color:var(--text-primary);">Total Score Range</span><span class="row-value" style="color:var(--accent-purple);font-weight:600;">0–100 pts</span></div>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <div class="analysis-card-header">
+            <span class="analysis-card-title">📡 Signal Engine Status</span>
+            <span class="data-source-badge" style="background:rgba(107,79,232,0.12);color:#6b4fe8;">Engine</span>
+          </div>
+          <div id="signalEngineStatus">
+            <div class="metric-row"><span class="row-label">Service</span><span class="row-value">signal-engine (port 3861)</span></div>
+            <div class="metric-row"><span class="row-label">Pipeline</span><span class="row-value">Rolling Windows (5m/15m/1h/24h)</span></div>
+            <div class="metric-row"><span class="row-label">Detectors</span><span class="row-value">4 (momentum, volume, liquidity, new_pair)</span></div>
+            <div class="metric-row"><span class="row-label">Scoring</span><span class="row-value">&gt;70 Strong Trade, 50-70 Watchlist</span></div>
+            <div class="metric-row"><span class="row-label">WebSocket</span><span class="row-value">ws://localhost:3861/ws/signals/live</span></div>
+            <div class="metric-row"><span class="row-label">Broadcast</span><span class="row-value">Every 5s (top signals summary)</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="analysis-card" style="margin-top:16px;">
+        <div class="analysis-card-header">
+          <span class="analysis-card-title">🏆 Top Signals (All Chains)</span>
+          <span class="data-source-badge" style="background:rgba(0,200,255,0.12);color:#00c8ff;">Live</span>
+        </div>
+        <div id="signalTopAll">
+          <div class="loading"><div class="loading-spinner"></div>Loading top signals...</div>
         </div>
       </div>
     </div>
@@ -2660,6 +2783,159 @@
       });
     }
 
+    // ─── Dexscreener + Signal Engine Integration ──────────────────
+    const MARKET_DATA_URL = 'http://localhost:3860';
+    const SIGNAL_ENGINE_URL = 'http://localhost:3861';
+
+    function renderDexPair(pair) {
+      const change = pair.price_change_5m || pair.price_change_1h || 0;
+      const cls = change >= 0 ? 'positive' : 'negative';
+      const vol = pair.volume_24h ? '$' + (pair.volume_24h / 1e6).toFixed(1) + 'M' : '--';
+      const liq = pair.liquidity_usd ? '$' + (pair.liquidity_usd / 1e6).toFixed(1) + 'M' : '--';
+      const price = pair.price_usd ? (pair.price_usd < 0.01 ? '$' + pair.price_usd.toFixed(6) : '$' + pair.price_usd.toFixed(4)) : '--';
+      return `<div class="metric-row">
+        <span class="row-label" style="display:flex;align-items:center;gap:6px;">
+          <span style="font-weight:600;color:var(--text-primary);">${pair.base_token_symbol || pair.token_symbol || '??'}</span>
+          <span style="font-size:0.7rem;color:var(--text-muted);">${pair.chain_id || ''}</span>
+        </span>
+        <span class="row-value" style="display:flex;gap:8px;align-items:center;">
+          <span>${price}</span>
+          <span class="${cls}" style="font-size:0.75rem;">${change >= 0 ? '+' : ''}${change.toFixed(1)}%</span>
+          <span style="font-size:0.7rem;color:var(--text-muted);">V:${vol}</span>
+          <span style="font-size:0.7rem;color:var(--text-muted);">L:${liq}</span>
+        </span>
+      </div>`;
+    }
+
+    function renderSignalToken(token) {
+      const score = token.total_score || 0;
+      const cls = score >= 70 ? 'positive' : score >= 50 ? '' : 'negative';
+      const badge = score >= 70 ? '🟢' : score >= 50 ? '🟡' : '🔴';
+      const signals = (token.signals || []).map(s => s.signal_type.replace('_', ' ')).join(', ') || '--';
+      return `<div class="metric-row">
+        <span class="row-label" style="display:flex;align-items:center;gap:6px;">
+          <span>${badge}</span>
+          <span style="font-weight:600;color:var(--text-primary);">${token.token_symbol || '??'}</span>
+          <span style="font-size:0.7rem;color:var(--text-muted);">${token.chain_id || ''}</span>
+        </span>
+        <span class="row-value" style="display:flex;gap:8px;align-items:center;">
+          <span class="${cls}" style="font-weight:700;">${score.toFixed(0)}</span>
+          <span style="font-size:0.7rem;color:var(--text-muted);">${signals}</span>
+        </span>
+      </div>`;
+    }
+
+    async function fetchDexscreenerData() {
+      try {
+        // Fetch top movers
+        const moversRes = await fetch(`${MARKET_DATA_URL}/api/v1/pairs/top-movers`).catch(() => null);
+        if (moversRes && moversRes.ok) {
+          const movers = await moversRes.json();
+          const items = (movers.top_movers || movers.data || movers || []).slice(0, 8);
+          document.getElementById('dexTopMovers').innerHTML = items.length 
+            ? items.map(renderDexPair).join('') 
+            : '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No top movers data yet<br><span style="font-size:0.72rem;">Start market-data service on port 3860</span></div>';
+        } else {
+          document.getElementById('dexTopMovers').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">Market Data Service offline<br><span style="font-size:0.72rem;">Run: python -m services.market-data.main</span></div>';
+        }
+
+        // Fetch new pairs
+        const newRes = await fetch(`${MARKET_DATA_URL}/api/v1/pairs/new`).catch(() => null);
+        if (newRes && newRes.ok) {
+          const newPairs = await newRes.json();
+          const items = (newPairs.pairs || newPairs.data || newPairs || []).slice(0, 6);
+          document.getElementById('dexNewPairs').innerHTML = items.length 
+            ? items.map(renderDexPair).join('') 
+            : '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No new pairs yet</div>';
+        } else {
+          document.getElementById('dexNewPairs').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">Waiting for service...</div>';
+        }
+
+        // Fetch liquidity changes
+        const liqRes = await fetch(`${MARKET_DATA_URL}/api/v1/pairs/liquidity-changes`).catch(() => null);
+        if (liqRes && liqRes.ok) {
+          const liqData = await liqRes.json();
+          const items = (liqData.changes || liqData.data || liqData || []).slice(0, 6);
+          document.getElementById('dexLiquidityChanges').innerHTML = items.length 
+            ? items.map(renderDexPair).join('') 
+            : '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No significant changes yet</div>';
+        } else {
+          document.getElementById('dexLiquidityChanges').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">Waiting for service...</div>';
+        }
+      } catch (err) {
+        console.warn('Dexscreener data fetch failed:', err);
+      }
+    }
+
+    async function fetchSignalData() {
+      try {
+        // Strong trades
+        const strongRes = await fetch(`${SIGNAL_ENGINE_URL}/api/v1/signals/strong-trades`).catch(() => null);
+        if (strongRes && strongRes.ok) {
+          const data = await strongRes.json();
+          const items = (data.tokens || data.data || data || []).slice(0, 8);
+          document.getElementById('signalStrongTrades').innerHTML = items.length 
+            ? items.map(renderSignalToken).join('') 
+            : '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No strong trades detected yet<br><span style="font-size:0.72rem;">Signals build over time as data accumulates</span></div>';
+        } else {
+          document.getElementById('signalStrongTrades').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">Signal Engine offline<br><span style="font-size:0.72rem;">Run: python -m services.signal-engine.main</span></div>';
+        }
+
+        // Watchlist
+        const watchRes = await fetch(`${SIGNAL_ENGINE_URL}/api/v1/signals/watchlist`).catch(() => null);
+        if (watchRes && watchRes.ok) {
+          const data = await watchRes.json();
+          const items = (data.tokens || data.data || data || []).slice(0, 8);
+          document.getElementById('signalWatchlist').innerHTML = items.length 
+            ? items.map(renderSignalToken).join('') 
+            : '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No watchlist tokens yet</div>';
+        } else {
+          document.getElementById('signalWatchlist').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">Waiting for service...</div>';
+        }
+
+        // Top signals
+        const topRes = await fetch(`${SIGNAL_ENGINE_URL}/api/v1/signals/top`).catch(() => null);
+        if (topRes && topRes.ok) {
+          const data = await topRes.json();
+          const items = (data.tokens || data.data || data || []).slice(0, 10);
+          document.getElementById('signalTopAll').innerHTML = items.length 
+            ? items.map(renderSignalToken).join('') 
+            : '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No signals yet — pipeline warming up</div>';
+        } else {
+          document.getElementById('signalTopAll').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">Waiting for service...</div>';
+        }
+      } catch (err) {
+        console.warn('Signal engine fetch failed:', err);
+      }
+    }
+
+    // Dexscreener search
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchInput = document.getElementById('dexSearchInput');
+      if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', () => {
+          clearTimeout(searchTimeout);
+          searchTimeout = setTimeout(async () => {
+            const q = searchInput.value.trim();
+            if (q.length < 2) { document.getElementById('dexSearchResults').innerHTML = ''; return; }
+            try {
+              const res = await fetch(`${MARKET_DATA_URL}/api/v1/search?q=${encodeURIComponent(q)}`);
+              if (res.ok) {
+                const data = await res.json();
+                const pairs = (data.pairs || data.data || data || []).slice(0, 8);
+                document.getElementById('dexSearchResults').innerHTML = pairs.length 
+                  ? pairs.map(renderDexPair).join('') 
+                  : '<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No results</div>';
+              }
+            } catch (err) {
+              document.getElementById('dexSearchResults').innerHTML = '<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:0.82rem;">Search unavailable</div>';
+            }
+          }, 400);
+        });
+      }
+    });
+
     async function init() {
       const startTime = performance.now();
       console.log('🚀 Initializing On-Chain Analyst Agent v3.2 (optimized)...');
@@ -2721,12 +2997,18 @@
       // Update UI sections (sync parts first, async parts non-blocking)
       updateAllSections();
       
+      // Fetch Dexscreener & Signal Engine data (non-blocking)
+      fetchDexscreenerData();
+      fetchSignalData();
+      
       // Background refresh every 30 seconds
       setInterval(async () => {
         const now = Date.now();
         if (now - lastFetchTime < 25000) return; // Debounce
         await Promise.allSettled([fetchAllPrices(), fetchBinanceFunding()]);
         updateAllSections();
+        fetchDexscreenerData();
+        fetchSignalData();
       }, 30000);
       
       console.log(`✅ Agent initialized in ${(performance.now() - startTime).toFixed(0)}ms`);

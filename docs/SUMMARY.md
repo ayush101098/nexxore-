@@ -18,6 +18,8 @@
 
 * [Agent Overview](agents/overview.md)
 * [On-Chain Analyst](agents/research-agent.md)
+* [Market Data Agent](agents/market-data.md)
+* [Signal Engine](agents/signal-engine.md)
 * [Prediction Markets Agent](agents/prediction-markets.md)
 * [Alpha Agent](agents/alpha-agent.md)
 * [Web3 Intelligence](agents/web3-intelligence.md)

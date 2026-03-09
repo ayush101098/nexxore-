@@ -127,6 +127,8 @@
           <a href="#perps" class="sidebar-link">NX-Perps</a>
           <a href="#vaults" class="sidebar-link">Vaults</a>
           <a href="#pred-agent" class="sidebar-link">PRED Agent</a>
+          <a href="#market-data" class="sidebar-link">Market Data Agent</a>
+          <a href="#signal-engine" class="sidebar-link">Signal Engine</a>
           <a href="#stablecoin-hub" class="sidebar-link">Stablecoin Hub</a>
           <a href="#strategy-builder" class="sidebar-link">Strategy Builder</a>
         </div>
@@ -238,6 +240,8 @@
         <tbody>
           <tr><td><strong>On-Chain Analyst</strong></td><td>Surfaces alpha, trade ideas, flow analysis</td><td style="color:#3d8b6e">Live</td></tr>
           <tr><td><strong>PRED Agent</strong></td><td>6-agent Polymarket prediction system</td><td style="color:#3d8b6e">Live</td></tr>
+          <tr><td><strong>Market Data Agent</strong></td><td>Dexscreener integration, top movers, new pairs</td><td style="color:#3d8b6e">Live</td></tr>
+          <tr><td><strong>Signal Engine</strong></td><td>4-signal alpha scoring: momentum, volume, liquidity, new pairs</td><td style="color:#3d8b6e">Live</td></tr>
           <tr><td><strong>Portfolio Optimiser</strong></td><td>Capital allocation, rebalancing, risk</td><td style="color:var(--text-muted)">In progress</td></tr>
           <tr><td><strong>Execution Agent</strong></td><td>Order routing, fill optimization</td><td style="color:var(--text-muted)">In progress</td></tr>
           <tr><td><strong>Performance Agent</strong></td><td>P&L tracking, attribution, reporting</td><td style="color:var(--text-muted)">In progress</td></tr>
@@ -319,6 +323,96 @@
       <h2 id="strategy-builder">Strategy Builder</h2>
       <p>A visual workspace for building trading strategies. Drag conditions, connect triggers, set risk parameters, and backtest — all without writing code. When you're happy with it, deploy it and the execution engine takes over.</p>
 
+      <!-- ═══════ MARKET DATA AGENT ═══════ -->
+      <h2 id="market-data">Market Data Agent</h2>
+      <p>The Market Data Agent is a dedicated Dexscreener integration service that provides real-time DEX pair data, volume tracking, and liquidity monitoring across 5 chains. It acts as the data backbone for the Signal Engine and On-Chain Analyst.</p>
+
+      <h3>Capabilities</h3>
+      <ul>
+        <li><strong>Dexscreener API Client</strong> — Async HTTP client with sliding-window rate limiting (60 rpm slow / 300 rpm fast bucket)</li>
+        <li><strong>Top Movers Discovery</strong> — Boosted + trending tokens aggregated from token profiles, boosts, and pair data</li>
+        <li><strong>New Pair Detection</strong> — Surfaces newly created pairs with >$100K liquidity within 24h</li>
+        <li><strong>Liquidity Monitoring</strong> — Tracks significant liquidity changes (>20% in 10 min) across all monitored pairs</li>
+        <li><strong>Token Search</strong> — Full-text search across Dexscreener's pair database</li>
+        <li><strong>Time-Series Storage</strong> — SQLite snapshots with 7-day retention and materialized latest view</li>
+        <li><strong>Caching Layer</strong> — Redis with in-memory LRU fallback, per-category TTLs (10s–300s)</li>
+      </ul>
+
+      <h3>Architecture</h3>
+      <div class="arch-diagram">
+        <div class="arch-flow">
+          <div class="arch-box brain">Dexscreener API<br><small style="opacity:0.7">5 chains, 10s poll</small></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box logic">Poller + Cache<br><small style="opacity:0.7">Redis/LRU, SQLite</small></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box muscle">REST API :3860<br><small style="opacity:0.7">top movers, search, pairs</small></div>
+        </div>
+      </div>
+
+      <h3>Key endpoints</h3>
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET</code></td><td><code>/api/v1/pairs/top-movers</code></td><td>Top movers across all chains</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/pairs/new</code></td><td>Newly created pairs (&lt;24h)</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/search?q=</code></td><td>Search Dexscreener pairs</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/pairs/liquidity-changes</code></td><td>Significant liquidity shifts</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/pairs/{chain}/{token}</code></td><td>Token pair data by chain</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <p><strong>Run it:</strong> <code>python -m services.market-data.main</code> — starts on port 3860. No API key required (Dexscreener is free).</p>
+      </div>
+
+      <!-- ═══════ SIGNAL ENGINE ═══════ -->
+      <h2 id="signal-engine">Signal Engine</h2>
+      <p>The Signal Engine is a Market Intelligence Agent that consumes data from the Market Data Agent and produces composite alpha signals. It runs 4 independent detectors and combines them into a 0–100 scoring system.</p>
+
+      <h3>Signal detectors</h3>
+      <table>
+        <thead><tr><th>Signal</th><th>Trigger Condition</th><th>Weight</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Momentum Spike</strong></td><td>price_5m >5%, volume >2× avg, liquidity >$500K</td><td>0–40 pts</td></tr>
+          <tr><td><strong>Volume Breakout</strong></td><td>vol_1h >3× 24h avg, >20 transactions</td><td>0–30 pts</td></tr>
+          <tr><td><strong>Liquidity Inflow</strong></td><td>liquidity increase >20% in 10 min window</td><td>0–20 pts</td></tr>
+          <tr><td><strong>New Pair</strong></td><td>pair age <24h, liquidity >$100K, vol_1h >$5K</td><td>0–10 pts</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Scoring classification</h3>
+      <ul>
+        <li><strong>Score >70</strong> → <strong style="color:#3d8b6e;">Strong Trade</strong> — high-confidence alpha opportunity</li>
+        <li><strong>Score 50–70</strong> → <strong style="color:#f59e0b;">Watchlist</strong> — monitor for breakout confirmation</li>
+        <li><strong>Score <50</strong> → Ignore</li>
+      </ul>
+
+      <h3>Architecture</h3>
+      <div class="arch-diagram">
+        <div class="arch-flow">
+          <div class="arch-box brain">Market Data :3860<br><small style="opacity:0.7">rolling windows</small></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box logic">4 Signal Detectors<br><small style="opacity:0.7">momentum, vol, liq, new</small></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box muscle">Scorer + WS :3861<br><small style="opacity:0.7">0–100 composite</small></div>
+        </div>
+      </div>
+
+      <h3>Key endpoints</h3>
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET</code></td><td><code>/api/v1/signals/top</code></td><td>Top scored tokens</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/signals/strong-trades</code></td><td>Score >70 strong trades</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/signals/watchlist</code></td><td>Score 50–70 watchlist</td></tr>
+          <tr><td><code>WS</code></td><td><code>/ws/signals/live</code></td><td>Live signal feed (WebSocket)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <p><strong>Run it:</strong> <code>python -m services.signal-engine.main</code> — starts on port 3861. Requires Market Data Agent running on 3860.</p>
+      </div>
+
       <!-- ═══════ API ═══════ -->
       <h2 id="api-overview">API Overview</h2>
       <p>The Nexxore API lets you access signals, manage strategies, and trigger execution programmatically. All endpoints return JSON.</p>
@@ -340,6 +434,16 @@
           <tr><td><code>POST</code></td><td><code>/api/telegram</code></td><td>Send trade alerts to Telegram</td></tr>
           <tr><td><code>GET</code></td><td><code>/api/trending</code></td><td>Trending tokens and narratives</td></tr>
           <tr><td><code>GET</code></td><td><code>/api/news</code></td><td>Aggregated crypto news feed</td></tr>
+          <tr><td colspan="3" style="padding-top:16px;font-weight:600;color:var(--text-primary);border-bottom:none;">Market Data Agent (:3860)</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/pairs/top-movers</code></td><td>Top movers across all chains</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/pairs/new</code></td><td>New pairs (&lt;24h, &gt;$100K liq)</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/search?q=</code></td><td>Search Dexscreener pairs</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/pairs/liquidity-changes</code></td><td>Significant liquidity shifts</td></tr>
+          <tr><td colspan="3" style="padding-top:16px;font-weight:600;color:var(--text-primary);border-bottom:none;">Signal Engine (:3861)</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/signals/top</code></td><td>Top scored tokens</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/signals/strong-trades</code></td><td>Score &gt;70 strong trades</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/signals/watchlist</code></td><td>Score 50-70 watchlist</td></tr>
+          <tr><td><code>WS</code></td><td><code>/ws/signals/live</code></td><td>WebSocket live signal feed</td></tr>
         </tbody>
       </table>
 

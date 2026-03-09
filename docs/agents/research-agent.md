@@ -265,8 +265,42 @@ Version 3.2 includes significant performance improvements:
 
 ---
 
+## Dexscreener Integration
+
+The On-Chain Analyst now includes a **Dexscreener** tab and a **Signals** tab, powered by two new backend services:
+
+### Dexscreener Tab
+
+Pulls live data from the Market Data Agent (port 3860):
+
+| Panel | Data |
+|-------|------|
+| Top Movers | Highest-volume tokens across 5 chains |
+| New Pairs | Pairs created <24h with >$100K liquidity |
+| Liquidity Changes | Significant pool changes (>20% in 10 min) |
+| Token Search | Full-text search across Dexscreener |
+| Service Status | Market Data Agent health and config |
+
+### Signals Tab
+
+Pulls live data from the Signal Engine (port 3861):
+
+| Panel | Data |
+|-------|------|
+| Strong Trades | Tokens scoring >70/100 |
+| Watchlist | Tokens scoring 50–70/100 |
+| Signal Breakdown | How each signal type contributes to score |
+| Engine Status | Signal Engine health and config |
+| Top Signals | All-chain ranked signals list |
+
+Both tabs auto-refresh every 30 seconds alongside existing market data.
+
+---
+
 ## Next Steps
 
+- [Market Data Agent →](./market-data.md)
+- [Signal Engine →](./signal-engine.md)
 - [Prediction Markets Agent →](./prediction-markets.md)
 - [Alpha Agent →](./alpha-agent.md)
 - [Web3 Intelligence →](./web3-intelligence.md)
