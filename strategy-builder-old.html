@@ -1,0 +1,2830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strategy Builder — Nexxore</title>
+  <meta name="description" content="Build and deploy custom DeFi strategies with on-chain transparency">
+  <meta name="theme-color" content="#0a0a0b">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='fg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%234a6fa5'/><stop offset='100%25' stop-color='%233d8b6e'/></linearGradient></defs><rect width='32' height='32' rx='4' fill='%230a0a0b'/><g transform='translate(4,4) scale(0.75)'><circle cx='12' cy='10' r='7' stroke='url(%23fg)' stroke-width='2' fill='none'/><circle cx='20' cy='10' r='7' stroke='url(%23fg)' stroke-width='2' fill='none' opacity='.85'/><circle cx='16' cy='17' r='7' stroke='url(%23fg)' stroke-width='2' fill='none' opacity='.85'/></g></svg>" type="image/svg+xml">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Unified Design System -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  
+  <style>
+    :root {
+      /* Map legacy tokens to unified system */
+      --font-body: var(--font-family-sans);
+      --font-mono: var(--font-family-mono);
+      --bg-primary: var(--bg-base);
+      --bg-secondary: var(--bg-elevated);
+      --bg-card: var(--bg-card);
+      --border-color: var(--border-subtle);
+      --border-hover: var(--border-hover);
+      /* Strategy Colors - mapped to semantic */
+      --safe-green: #3d8b6e;
+      --safe-green-bg: rgba(61, 139, 110, 0.08);
+      --balanced-blue: #4a6fa5;
+      --balanced-blue-bg: rgba(74, 111, 165, 0.08);
+      --aggressive-purple: #4a6fa5;
+      --aggressive-purple-bg: rgba(74, 111, 165, 0.08);
+      --degen-red: var(--semantic-error);
+      --degen-red-bg: rgba(239, 68, 68, 0.08);
+      --accent-gold: var(--semantic-warning);
+      --accent-gold-bg: rgba(245, 158, 11, 0.08);
+      --accent-cyan: #4a6fa5;
+      --accent-cyan-bg: rgba(74, 111, 165, 0.08);
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: var(--font-family-sans);
+      background: var(--bg-base);
+      color: var(--text-secondary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(20px);
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .back-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.75rem;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--text-primary); }
+
+    .header-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .connect-btn {
+      padding: 8px 20px;
+      background: var(--text-primary);
+      color: var(--bg-primary);
+      border: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .connect-btn:hover { background: rgba(255,255,255,0.9); }
+
+    /* Main Layout */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr 380px;
+      gap: 1px;
+      background: var(--border-color);
+      min-height: calc(100vh - 60px);
+    }
+
+    @media (max-width: 1200px) {
+      .main-layout { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--bg-primary);
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .panel-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Strategy Templates */
+    .template-card {
+      padding: 20px;
+      margin-bottom: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .template-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--border-color);
+      transition: background 0.2s;
+    }
+    .template-card:hover {
+      border-color: var(--border-hover);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .template-card.selected {
+      border-color: var(--balanced-blue);
+    }
+    .template-card.selected::before {
+      background: var(--balanced-blue);
+    }
+
+    .template-card.safe::before { background: var(--safe-green); }
+    .template-card.balanced::before { background: var(--balanced-blue); }
+    .template-card.aggressive::before { background: var(--aggressive-purple); }
+    .template-card.degen::before { background: var(--degen-red); }
+
+    .template-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .template-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .template-risk {
+      font-size: 0.6rem;
+      padding: 3px 8px;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+    .template-risk.low {
+      background: var(--safe-green-bg);
+      color: var(--safe-green);
+    }
+    .template-risk.medium {
+      background: var(--balanced-blue-bg);
+      color: var(--balanced-blue);
+    }
+    .template-risk.high {
+      background: var(--aggressive-purple-bg);
+      color: var(--aggressive-purple);
+    }
+    .template-risk.extreme {
+      background: var(--degen-red-bg);
+      color: var(--degen-red);
+    }
+
+    .template-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .template-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 0.75rem;
+    }
+
+    .template-stat {
+      font-family: var(--font-mono);
+    }
+    .template-stat .label {
+      color: var(--text-muted);
+      margin-right: 4px;
+    }
+    .template-stat .value {
+      color: var(--text-primary);
+    }
+
+    /* Builder Canvas - Strategy Sandbox */
+    .builder-canvas {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      background: linear-gradient(180deg, var(--bg-primary), rgba(245, 158, 11, 0.02));
+    }
+
+    .canvas-header {
+      text-align: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .canvas-header-top {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .sandbox-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .live-badge {
+      font-size: 0.55rem;
+      padding: 3px 8px;
+      background: var(--safe-green);
+      color: #000;
+      font-weight: 700;
+      border-radius: 3px;
+      animation: pulse-live 2s infinite;
+    }
+    
+    @keyframes pulse-live {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .canvas-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .canvas-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    
+    /* Strategy Chart Container */
+    .strategy-chart-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .chart-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .chart-timeframes {
+      display: flex;
+      gap: 4px;
+    }
+    
+    .tf-btn {
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .tf-btn:hover {
+      border-color: var(--text-secondary);
+      color: var(--text-secondary);
+    }
+    
+    .tf-btn.active {
+      background: var(--accent-gold);
+      border-color: var(--accent-gold);
+      color: #000;
+    }
+    
+    .chart-area {
+      height: 200px;
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.05), transparent);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .chart-placeholder {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: var(--text-muted);
+    }
+    
+    .chart-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+    
+    .chart-placeholder p {
+      font-size: 0.8rem;
+    }
+    
+    .chart-legend {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+    
+    .legend-dot.strategy { background: var(--safe-green); }
+    .legend-dot.benchmark { background: var(--accent-gold); opacity: 0.5; }
+    
+    /* Strategy Metrics */
+    .strategy-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    
+    .metric-card:hover {
+      border-color: var(--accent-gold);
+      transform: translateY(-2px);
+    }
+    
+    .metric-icon {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+    
+    .metric-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--safe-green);
+      margin-bottom: 4px;
+    }
+    
+    .metric-value.negative { color: var(--degen-red); }
+    .metric-value.neutral { color: var(--text-secondary); }
+    
+    .metric-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Strategy Indicators Section */
+    .strategy-indicators-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .indicators-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    
+    .indicator-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+    }
+    
+    .indicator-name {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--balanced-blue);
+      margin-bottom: 4px;
+    }
+    
+    .indicator-value {
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+    }
+    
+    .indicator-placeholder {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+    
+    /* Strategy Signals */
+    .strategy-signals {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .signals-count {
+      font-size: 0.65rem;
+      padding: 3px 8px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      color: var(--text-muted);
+    }
+    
+    .signals-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .signal-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      border-left: 3px solid var(--safe-green);
+    }
+    
+    .signal-item.sell {
+      border-left-color: var(--degen-red);
+    }
+    
+    .signal-type {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+    
+    .signal-type.buy {
+      background: var(--safe-green-bg);
+      color: var(--safe-green);
+    }
+    
+    .signal-type.sell {
+      background: var(--degen-red-bg);
+      color: var(--degen-red);
+    }
+    
+    .signal-details {
+      flex: 1;
+    }
+    
+    .signal-asset {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .signal-reason {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    
+    .signal-time {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+    
+    .signal-placeholder {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+    
+    /* Deploy Section */
+    .sandbox-deploy {
+      text-align: center;
+      padding: 24px;
+      background: linear-gradient(135deg, var(--accent-gold-bg), var(--safe-green-bg));
+      border: 1px solid var(--accent-gold);
+      border-radius: 12px;
+    }
+    
+    .deploy-strategy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 32px;
+      background: linear-gradient(135deg, var(--accent-gold), #d97706);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+    }
+    
+    .deploy-strategy-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px rgba(245, 158, 11, 0.5);
+    }
+    
+    .deploy-icon {
+      font-size: 1.2rem;
+    }
+    
+    .deploy-info {
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Strategy Flow - keeping for basic strategies */
+    .strategy-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .flow-step {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 24px;
+      position: relative;
+    }
+
+    .flow-step::after {
+      content: '↓';
+      position: absolute;
+      bottom: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+    .flow-step:last-child::after { display: none; }
+
+    .step-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .step-number {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .step-type {
+      font-size: 0.65rem;
+      padding: 4px 10px;
+      background: var(--balanced-blue-bg);
+      color: var(--balanced-blue);
+      font-weight: 500;
+    }
+
+    .step-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .step-config {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .config-item {
+      padding: 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .config-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .config-value {
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+    }
+
+    .config-select {
+      width: 100%;
+      padding: 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      font-family: var(--font-body);
+      cursor: pointer;
+    }
+    .config-select:focus {
+      outline: none;
+      border-color: var(--balanced-blue);
+    }
+
+    /* Add Step Button */
+    .add-step-btn {
+      width: 100%;
+      padding: 16px;
+      background: transparent;
+      border: 2px dashed var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 16px;
+    }
+    .add-step-btn:hover {
+      border-color: var(--balanced-blue);
+      color: var(--balanced-blue);
+    }
+
+    /* Configuration Panel */
+    .config-panel {
+      border-left: 1px solid var(--border-color);
+    }
+
+    .config-section {
+      margin-bottom: 24px;
+    }
+
+    .config-section-title {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      font-family: var(--font-mono);
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: var(--balanced-blue);
+    }
+
+    .slider-group {
+      margin-bottom: 20px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .slider-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .slider-value {
+      font-size: 0.85rem;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+    }
+
+    .slider {
+      width: 100%;
+      height: 4px;
+      background: var(--border-color);
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--text-primary);
+      cursor: pointer;
+    }
+
+    /* Risk Meter */
+    .risk-meter {
+      margin: 24px 0;
+      padding: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+    }
+
+    .risk-meter-title {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .risk-bar {
+      height: 8px;
+      background: linear-gradient(90deg, var(--safe-green), var(--accent-gold), var(--degen-red));
+      border-radius: 4px;
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .risk-indicator {
+      position: absolute;
+      top: -4px;
+      width: 16px;
+      height: 16px;
+      background: var(--text-primary);
+      border-radius: 50%;
+      transform: translateX(-50%);
+      transition: left 0.3s;
+      box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+
+    .risk-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    /* Summary Stats */
+    .summary-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border-color);
+      margin: 24px 0;
+    }
+
+    .summary-stat {
+      background: var(--bg-primary);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .summary-stat-label {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .summary-stat-value {
+      font-size: 1.25rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+    }
+
+    .summary-stat-value.green { color: var(--safe-green); }
+    .summary-stat-value.blue { color: var(--balanced-blue); }
+    .summary-stat-value.purple { color: var(--aggressive-purple); }
+
+    /* Deploy Button */
+    .deploy-section {
+      margin-top: auto;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .deploy-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--balanced-blue);
+      color: #000;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .deploy-btn:hover {
+      background: #2563eb;
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+    }
+
+    .deploy-note {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 12px;
+    }
+
+    /* Scrollbar */
+    .panel::-webkit-scrollbar { width: 4px; }
+    .panel::-webkit-scrollbar-track { background: transparent; }
+    .panel::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+    /* nUSD Minting Info */
+    .minting-info-box {
+      margin-top: 20px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(34, 197, 94, 0.05));
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 4px;
+    }
+    
+    .minting-param {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .minting-param:last-of-type {
+      border-bottom: none;
+    }
+    
+    .minting-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    .minting-value {
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--balanced-blue);
+    }
+    
+    .minting-explanation {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* What is nUSD Tooltip/Section */
+    .nusd-explainer, .strategy-info-box {
+      margin-top: 24px;
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+    }
+    
+    .nusd-title, .info-box-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    
+    .nusd-badge, .info-badge {
+      font-size: 0.6rem;
+      padding: 2px 8px;
+      background: var(--accent-gold-bg);
+      color: var(--accent-gold);
+      font-weight: 500;
+    }
+    
+    .nusd-text, .info-box-text {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    
+    /* Pro Strategies Tabs */
+    .strategy-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 20px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 4px;
+    }
+    
+    .strategy-tab {
+      flex: 1;
+      padding: 12px 16px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+    }
+    
+    .strategy-tab:hover {
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.03);
+    }
+    
+    .strategy-tab.active {
+      background: var(--accent-gold);
+      color: #000;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+    
+    .strategy-tab[data-tab="pro"]::after {
+      content: 'NEW';
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      font-size: 0.5rem;
+      padding: 2px 4px;
+      background: var(--safe-green);
+      color: #000;
+      font-weight: 700;
+      border-radius: 2px;
+    }
+    
+    /* Pro Strategy Cards */
+    .pro-strategy-card {
+      padding: 18px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .pro-strategy-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--accent-gold);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    
+    .pro-strategy-card:hover {
+      border-color: var(--accent-gold);
+      background: linear-gradient(135deg, var(--bg-card), rgba(245, 158, 11, 0.05));
+      transform: translateX(4px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .pro-strategy-card:hover::before {
+      opacity: 1;
+    }
+    
+    .pro-strategy-card.selected {
+      border-color: var(--accent-gold);
+      background: linear-gradient(135deg, var(--accent-gold-bg), rgba(245, 158, 11, 0.1));
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+    }
+    
+    .pro-strategy-card.selected::before {
+      opacity: 1;
+      background: var(--accent-gold);
+    }
+    
+    .pro-strategy-header {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 10px;
+    }
+    
+    .pro-strategy-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+    
+    .pro-strategy-badge {
+      font-size: 0.55rem;
+      padding: 2px 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: var(--accent-gold-bg);
+      color: var(--accent-gold);
+    }
+    
+    .pro-strategy-author {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    
+    .pro-strategy-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-top: 12px;
+    }
+    
+    .pro-stat {
+      text-align: center;
+      padding: 10px 6px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+    }
+    
+    .pro-stat-label {
+      display: block;
+      font-size: 0.55rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    
+    .pro-stat-value {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+    
+    .pro-stat-value.positive { color: var(--safe-green); text-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
+    .pro-stat-value.negative { color: var(--degen-red); text-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+    .pro-stat-value.neutral { color: var(--text-secondary); }
+    
+    .pro-strategy-indicators {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 10px 0;
+    }
+    
+    .indicator-tag {
+      font-size: 0.6rem;
+      padding: 4px 8px;
+      background: linear-gradient(135deg, var(--balanced-blue-bg), rgba(59, 130, 246, 0.15));
+      color: var(--balanced-blue);
+      font-weight: 600;
+      border-radius: 4px;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    
+    .strategy-scroll {
+      max-height: 600px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    
+    .strategy-scroll::-webkit-scrollbar { width: 6px; }
+    .strategy-scroll::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
+    .strategy-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+    
+    /* Search Box */
+    .strategy-search {
+      margin-bottom: 16px;
+      position: relative;
+    }
+    
+    .strategy-search::before {
+      content: '🔍';
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.8rem;
+      opacity: 0.5;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 12px 12px 12px 36px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      font-family: var(--font-body);
+      transition: all 0.2s;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-gold);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+    
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+    
+    /* Strategy Info Banner */
+    .strategy-info-banner {
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(59, 130, 246, 0.08));
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .strategy-info-banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-gold), var(--balanced-blue), var(--safe-green));
+    }
+    
+    .info-banner-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .info-banner-text {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    
+    /* Strategy Detail Preview */
+    .strategy-preview {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+    }
+    
+    .preview-title {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    
+    .preview-chart {
+      height: 80px;
+      background: linear-gradient(180deg, var(--safe-green-bg), transparent);
+      position: relative;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: flex-end;
+    }
+    
+    .preview-bar {
+      flex: 1;
+      background: var(--safe-green);
+      opacity: 0.6;
+      margin: 0 1px;
+      transition: height 0.3s;
+    }
+    
+    /* Pro Strategy Footer */
+    .pro-strategy-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .pro-strategy-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .asset-badge, .timeframe-badge, .risk-badge {
+      font-size: 0.6rem;
+      padding: 4px 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    
+    .asset-badge {
+      background: linear-gradient(135deg, var(--balanced-blue-bg), rgba(59, 130, 246, 0.2));
+      color: var(--balanced-blue);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .timeframe-badge {
+      background: linear-gradient(135deg, var(--aggressive-purple-bg), rgba(74, 111, 165, 0.2));
+      color: var(--aggressive-purple);
+      border: 1px solid rgba(74, 111, 165, 0.3);
+    }
+    
+    .risk-badge {
+      background: var(--text-muted);
+      color: var(--bg-primary);
+    }
+    
+    .risk-badge.low {
+      background: linear-gradient(135deg, var(--safe-green-bg), rgba(34, 197, 94, 0.2));
+      color: var(--safe-green);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    
+    .risk-badge.medium {
+      background: linear-gradient(135deg, var(--accent-gold-bg), rgba(245, 158, 11, 0.2));
+      color: var(--accent-gold);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .risk-badge.high {
+      background: linear-gradient(135deg, var(--degen-red-bg), rgba(239, 68, 68, 0.2));
+      color: var(--degen-red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .subscribers {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 4px;
+    }
+    
+    /* Pro Strategy Description */
+    .pro-strategy-desc {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    /* Pro Strategy Author */
+    .pro-strategy-author {
+      font-size: 0.65rem;
+      color: var(--accent-gold);
+      opacity: 0.8;
+    }
+    
+    /* Year Return Highlight */
+    .pro-stat:nth-child(3) {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.2);
+    }
+    
+    .pro-stat:nth-child(3) .pro-stat-label {
+      color: var(--accent-gold);
+    }
+    
+    /* Selected State */
+    .pro-strategy-card.selected {
+      border-color: var(--accent-gold);
+      background: linear-gradient(135deg, var(--accent-gold-bg), var(--bg-card));
+    }
+    
+    .pro-strategy-card.selected .pro-strategy-name {
+      color: var(--accent-gold);
+    }
+    
+    /* Strategy Sandbox Section */
+    .strategy-sandbox {
+      margin-top: 40px;
+      padding: 24px 0;
+      border-top: 2px solid var(--accent-gold);
+      position: relative;
+    }
+    
+    .strategy-sandbox::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: 0;
+      width: 100px;
+      height: 2px;
+      background: var(--safe-green);
+    }
+    
+    .sandbox-cta {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(59, 130, 246, 0.08), rgba(34, 197, 94, 0.05));
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 12px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .sandbox-cta::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent-gold), var(--balanced-blue), var(--safe-green), var(--aggressive-purple));
+    }
+    
+    .sandbox-cta::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.1), transparent 70%);
+      pointer-events: none;
+    }
+    
+    .sandbox-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    
+    .sandbox-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .sandbox-title-icon {
+      font-size: 1.5rem;
+    }
+    
+    .sandbox-badge {
+      font-size: 0.6rem;
+      padding: 4px 8px;
+      background: var(--accent-gold);
+      color: #000;
+      font-weight: 700;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      animation: pulse-badge 2s infinite;
+    }
+    
+    @keyframes pulse-badge {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+    }
+    
+    .sandbox-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 20px;
+      max-width: 500px;
+    }
+    
+    .sandbox-stats {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .sandbox-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .sandbox-stat-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--safe-green);
+    }
+    
+    .sandbox-stat-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .sandbox-strategies {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    
+    .sandbox-strategy-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .sandbox-strategy-chip:hover {
+      border-color: var(--accent-gold);
+      background: var(--accent-gold-bg);
+      color: var(--text-primary);
+    }
+    
+    .sandbox-strategy-chip .chip-return {
+      font-weight: 700;
+      color: var(--safe-green);
+      font-family: var(--font-mono);
+    }
+    
+    .sandbox-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      background: linear-gradient(135deg, var(--accent-gold), #d97706);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+    
+    .sandbox-cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(245, 158, 11, 0.5);
+    }
+    
+    .sandbox-cta-btn .btn-arrow {
+      transition: transform 0.2s;
+    }
+    
+    .sandbox-cta-btn:hover .btn-arrow {
+      transform: translateX(4px);
+    }
+    
+    .sandbox-secondary-link {
+      display: inline-block;
+      margin-left: 16px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-decoration: underline;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    
+    .sandbox-secondary-link:hover {
+      color: var(--text-primary);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <a href="index.html" class="back-link" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 90" style="height:22px;width:auto;"><defs><linearGradient id="slg" x1="0" x2="1"><stop offset="0" stop-color="#4a6fa5"/><stop offset="1" stop-color="#3d8b6e"/></linearGradient></defs><circle cx="38" cy="30" r="22" stroke="url(#slg)" stroke-width="4" fill="none" opacity="0.95"/><circle cx="62" cy="30" r="22" stroke="url(#slg)" stroke-width="4" fill="none" opacity="0.85"/><circle cx="50" cy="52" r="22" stroke="url(#slg)" stroke-width="4" fill="none" opacity="0.85"/></svg>
+        <span style="font-weight:700;font-size:14px;letter-spacing:-0.5px;">nexxore</span>
+      </a>
+      <div class="header-title">Strategy Builder</div>
+    </div>
+    <button class="connect-btn">Connect Wallet</button>
+  </header>
+
+  <!-- Main Layout -->
+  <main class="main-layout">
+    <!-- Strategy Templates -->
+    <div class="panel">
+      <div class="panel-title">Strategy Templates</div>
+      
+      <!-- Tabs -->
+      <div class="strategy-tabs">
+        <button class="strategy-tab" data-tab="basic">Basic</button>
+        <button class="strategy-tab active" data-tab="pro">Pro Strategies</button>
+      </div>
+      
+      <!-- Basic Strategies -->
+      <div id="basicStrategies" style="display: none;">
+      <div class="template-card safe selected">
+        <div class="template-header">
+          <span class="template-name">Safe Yield</span>
+          <span class="template-risk low">Low Risk</span>
+        </div>
+        <div class="template-desc">Capital preservation with blue-chip lending protocols</div>
+        <div class="template-stats">
+          <div class="template-stat">
+            <span class="label">APY:</span>
+            <span class="value">5-8%</span>
+          </div>
+          <div class="template-stat">
+            <span class="label">DD:</span>
+            <span class="value">~5%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="template-card balanced">
+        <div class="template-header">
+          <span class="template-name">Balanced Realloc</span>
+          <span class="template-risk medium">Medium</span>
+        </div>
+        <div class="template-desc">Risk-adjusted yield optimization across protocols</div>
+        <div class="template-stats">
+          <div class="template-stat">
+            <span class="label">APY:</span>
+            <span class="value">12-18%</span>
+          </div>
+          <div class="template-stat">
+            <span class="label">DD:</span>
+            <span class="value">~15%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="template-card aggressive">
+        <div class="template-header">
+          <span class="template-name">Opportunistic Alpha</span>
+          <span class="template-risk high">High</span>
+        </div>
+        <div class="template-desc">Event-driven alpha capture with leverage</div>
+        <div class="template-stats">
+          <div class="template-stat">
+            <span class="label">APY:</span>
+            <span class="value">25-40%</span>
+          </div>
+          <div class="template-stat">
+            <span class="label">DD:</span>
+            <span class="value">~30%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="template-card degen">
+        <div class="template-header">
+          <span class="template-name">Tactical Degen</span>
+          <span class="template-risk extreme">Extreme</span>
+        </div>
+        <div class="template-desc">High-conviction, high-variance plays</div>
+        <div class="template-stats">
+          <div class="template-stat">
+            <span class="label">APY:</span>
+            <span class="value">50%+</span>
+          </div>
+          <div class="template-stat">
+            <span class="label">DD:</span>
+            <span class="value">~50%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="template-card">
+        <div class="template-header">
+          <span class="template-name">Custom Strategy</span>
+          <span class="template-risk" style="background: rgba(255,255,255,0.05); color: var(--text-muted);">Custom</span>
+        </div>
+        <div class="template-desc">Build from scratch with full control</div>
+        <div class="template-stats">
+          <div class="template-stat">
+            <span class="label">APY:</span>
+            <span class="value">Variable</span>
+          </div>
+        </div>
+      </div>
+      </div>
+      
+      <!-- Pro Strategies (AlphaInsider) -->
+      <div id="proStrategies">
+        <div class="strategy-info-banner">
+          <div class="info-banner-title">
+            ⚡ Pro Algo Strategies
+            <span style="font-size: 0.55rem; padding: 2px 6px; background: var(--safe-green); color: #000; border-radius: 3px; font-weight: 700;">12 STRATEGIES</span>
+          </div>
+          <div class="info-banner-text">
+            Professional cryptocurrency trading strategies from top algorithmic traders. All strategies are backtested with verified performance metrics.
+          </div>
+        </div>
+        
+        <div class="strategy-search">
+          <input type="text" class="search-input" id="proStrategySearch" placeholder="Search by name, indicator, or asset...">
+        </div>
+        
+        <div class="strategy-scroll" id="proStrategyList"></div>
+      </div>
+    </div>
+
+    <!-- Builder Canvas - Strategy Sandbox -->
+    <div class="panel builder-canvas">
+      <div class="canvas-header">
+        <div class="canvas-header-top">
+          <span class="sandbox-label">🧪 Strategy Sandbox</span>
+          <span class="live-badge">LIVE PREVIEW</span>
+        </div>
+        <h1 class="canvas-title" id="sandboxTitle">Select a Strategy</h1>
+        <p class="canvas-subtitle" id="sandboxSubtitle">Choose a strategy from the left panel to visualize its performance</p>
+      </div>
+
+      <!-- Strategy Performance Chart -->
+      <div class="strategy-chart-container" id="strategyChartContainer">
+        <div class="chart-header">
+          <span class="chart-label">Performance Chart</span>
+          <div class="chart-timeframes">
+            <button class="tf-btn active" data-tf="1M">1M</button>
+            <button class="tf-btn" data-tf="3M">3M</button>
+            <button class="tf-btn" data-tf="1Y">1Y</button>
+            <button class="tf-btn" data-tf="ALL">ALL</button>
+          </div>
+        </div>
+        <div class="chart-area" id="performanceChart">
+          <div class="chart-placeholder">
+            <div class="chart-icon">📈</div>
+            <p>Select a strategy to view performance</p>
+          </div>
+        </div>
+        <div class="chart-legend" id="chartLegend" style="display: none;">
+          <span class="legend-item"><span class="legend-dot strategy"></span> Strategy</span>
+          <span class="legend-item"><span class="legend-dot benchmark"></span> BTC Benchmark</span>
+        </div>
+      </div>
+
+      <!-- Strategy Key Metrics -->
+      <div class="strategy-metrics" id="strategyMetrics">
+        <div class="metric-card">
+          <div class="metric-icon">📊</div>
+          <div class="metric-value" id="metricReturn">--</div>
+          <div class="metric-label">Yearly Return</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">📉</div>
+          <div class="metric-value" id="metricDrawdown">--</div>
+          <div class="metric-label">Max Drawdown</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">⚡</div>
+          <div class="metric-value" id="metricSharpe">--</div>
+          <div class="metric-label">Sharpe Ratio</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">🎯</div>
+          <div class="metric-value" id="metricWinRate">--</div>
+          <div class="metric-label">Win Rate</div>
+        </div>
+      </div>
+
+      <!-- Strategy Indicators -->
+      <div class="strategy-indicators-section" id="indicatorsSection">
+        <div class="section-header">
+          <span class="section-title">📐 Technical Indicators</span>
+        </div>
+        <div class="indicators-grid" id="indicatorsGrid">
+          <div class="indicator-placeholder">Select a strategy to view indicators</div>
+        </div>
+      </div>
+
+      <!-- Strategy Signals -->
+      <div class="strategy-signals" id="signalsSection">
+        <div class="section-header">
+          <span class="section-title">🔔 Recent Signals</span>
+          <span class="signals-count" id="signalsCount">0 signals</span>
+        </div>
+        <div class="signals-list" id="signalsList">
+          <div class="signal-placeholder">No signals yet</div>
+        </div>
+      </div>
+
+      <!-- Deploy CTA -->
+      <div class="sandbox-deploy" id="sandboxDeploy" style="display: none;">
+        <button class="deploy-strategy-btn" id="deployBtn">
+          <span class="deploy-icon">🚀</span>
+          Deploy This Strategy
+        </button>
+        <p class="deploy-info">Connect wallet to deploy with real funds</p>
+      </div>
+    </div>
+
+    <!-- Configuration Panel -->
+    <div class="panel config-panel">
+      <div class="panel-title">Configuration</div>
+
+      <div class="config-section">
+        <div class="config-section-title">Position Size</div>
+        <div class="input-group">
+          <label class="input-label">Deposit Amount</label>
+          <input type="text" class="input-field" placeholder="0.00" value="10,000">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Currency</label>
+          <select class="config-select">
+            <option>USDC</option>
+            <option>USDT</option>
+            <option>DAI</option>
+            <option>ETH</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <div class="config-section-title">Risk Parameters</div>
+        <div class="slider-group">
+          <div class="slider-header">
+            <span class="slider-label">Max Leverage</span>
+            <span class="slider-value">1.0x</span>
+          </div>
+          <input type="range" class="slider" min="1" max="5" value="1" step="0.5">
+        </div>
+        <div class="slider-group">
+          <div class="slider-header">
+            <span class="slider-label">Stop Loss</span>
+            <span class="slider-value">-5%</span>
+          </div>
+          <input type="range" class="slider" min="2" max="20" value="5">
+        </div>
+        <div class="slider-group">
+          <div class="slider-header">
+            <span class="slider-label">Take Profit</span>
+            <span class="slider-value">+15%</span>
+          </div>
+          <input type="range" class="slider" min="5" max="50" value="15">
+        </div>
+      </div>
+
+      <div class="risk-meter">
+        <div class="risk-meter-title">Overall Risk Level</div>
+        <div class="risk-bar">
+          <div class="risk-indicator" style="left: 15%;"></div>
+        </div>
+        <div class="risk-labels">
+          <span>Conservative</span>
+          <span>Moderate</span>
+          <span>Aggressive</span>
+        </div>
+      </div>
+
+      <div class="summary-stats">
+        <div class="summary-stat">
+          <div class="summary-stat-label">Est. APY</div>
+          <div class="summary-stat-value green">6.8%</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-label">Max DD</div>
+          <div class="summary-stat-value">-5.2%</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-label">Sharpe</div>
+          <div class="summary-stat-value blue">1.84</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-label">Risk Score</div>
+          <div class="summary-stat-value green">Low</div>
+        </div>
+      </div>
+
+      <div class="deploy-section">
+        <button class="deploy-btn">Deploy Strategy</button>
+        <p class="deploy-note">All strategies execute on-chain with deterministic logic</p>
+      </div>
+
+      <!-- Strategy Info -->
+      <div class="strategy-info-box">
+        <div class="info-box-title">
+          📊 Strategy Sandbox
+          <span class="info-badge">Pro</span>
+        </div>
+        <div class="info-box-text">
+          Test algorithmic trading strategies in a risk-free environment before deploying with real funds.<br><br>
+          <strong>Features:</strong><br>
+          • <strong>Live Performance Charts</strong> — Visualize historical returns<br>
+          • <strong>Technical Indicators</strong> — Real-time indicator values<br>
+          • <strong>Signal History</strong> — Track buy/sell signals<br>
+          • <strong>Risk Metrics</strong> — Sharpe, drawdown, win rate<br><br>
+          Select a Pro Strategy from the left panel to explore →
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Strategy Presets - parameters change based on risk profile
+    const strategyPresets = {
+      'Safe Yield': {
+        color: 'safe-green',
+        leverage: { min: 1, max: 1.5, default: 1 },
+        stopLoss: { min: 2, max: 8, default: 5 },
+        takeProfit: { min: 5, max: 20, default: 15 },
+        protocols: [
+          { name: 'Aave v3', pct: 40 },
+          { name: 'Compound', pct: 30 },
+          { name: 'MakerDAO', pct: 20 },
+          { name: 'Reserve', pct: 10 }
+        ],
+        rebalance: 'Weekly',
+        slippage: 0.5,
+        apy: { min: 5, max: 8 },
+        maxDD: 5,
+        sharpe: 1.84,
+        riskPosition: 15,
+        description: 'Configure your capital preservation strategy',
+        collateralOptions: ['USDC', 'USDT', 'DAI'],
+        minting: {
+          collateralRatio: '150%',
+          liquidationThreshold: '130%',
+          stabilityFee: '0.5%',
+          explanation: 'Mint nUSD by depositing blue-chip stablecoins. Lower risk of liquidation due to stable collateral. Your collateral earns yield in top-tier protocols while backing nUSD.'
+        }
+      },
+      'Balanced Realloc': {
+        color: 'balanced-blue',
+        leverage: { min: 1, max: 2.5, default: 1.5 },
+        stopLoss: { min: 5, max: 15, default: 10 },
+        takeProfit: { min: 15, max: 35, default: 25 },
+        protocols: [
+          { name: 'Aave v3', pct: 30 },
+          { name: 'Yearn', pct: 25 },
+          { name: 'Convex', pct: 25 },
+          { name: 'Reserve', pct: 20 }
+        ],
+        rebalance: 'Daily',
+        slippage: 1.0,
+        apy: { min: 12, max: 18 },
+        maxDD: 15,
+        sharpe: 1.42,
+        riskPosition: 40,
+        description: 'Risk-adjusted yield optimization across protocols',
+        collateralOptions: ['ETH', 'WBTC', 'USDC', 'DAI'],
+        minting: {
+          collateralRatio: '175%',
+          liquidationThreshold: '150%',
+          stabilityFee: '1.0%',
+          explanation: 'Mint nUSD using ETH or BTC as collateral. Your assets are deployed across yield-generating protocols. Auto-rebalancing maintains optimal position while generating sustainable yields.'
+        }
+      },
+      'Opportunistic Alpha': {
+        color: 'aggressive-purple',
+        leverage: { min: 1.5, max: 4, default: 2.5 },
+        stopLoss: { min: 10, max: 25, default: 15 },
+        takeProfit: { min: 30, max: 60, default: 40 },
+        protocols: [
+          { name: 'GMX', pct: 30 },
+          { name: 'Pendle', pct: 25 },
+          { name: 'Eigen Layer', pct: 25 },
+          { name: 'Reserve', pct: 20 }
+        ],
+        rebalance: 'On Drift > 5%',
+        slippage: 2.0,
+        apy: { min: 25, max: 40 },
+        maxDD: 30,
+        sharpe: 1.12,
+        riskPosition: 65,
+        description: 'Event-driven alpha capture with leverage',
+        collateralOptions: ['ETH', 'WBTC', 'stETH', 'rETH'],
+        minting: {
+          collateralRatio: '200%',
+          liquidationThreshold: '175%',
+          stabilityFee: '2.0%',
+          explanation: 'Leverage your yield-bearing assets (stETH, rETH) to mint nUSD. The strategy deploys capital into high-alpha opportunities while maintaining hedged positions.'
+        }
+      },
+      'Tactical Degen': {
+        color: 'degen-red',
+        leverage: { min: 2, max: 5, default: 3.5 },
+        stopLoss: { min: 15, max: 40, default: 25 },
+        takeProfit: { min: 50, max: 100, default: 75 },
+        protocols: [
+          { name: 'New LP Farms', pct: 35 },
+          { name: 'Perp DEXs', pct: 30 },
+          { name: 'Options Vaults', pct: 25 },
+          { name: 'Reserve', pct: 10 }
+        ],
+        rebalance: 'On Drift > 3%',
+        slippage: 3.0,
+        apy: { min: 50, max: 150 },
+        maxDD: 50,
+        sharpe: 0.85,
+        riskPosition: 90,
+        description: 'High-conviction, high-variance plays',
+        collateralOptions: ['ETH', 'WBTC', 'SOL', 'ARB'],
+        minting: {
+          collateralRatio: '250%',
+          liquidationThreshold: '200%',
+          stabilityFee: '3.5%',
+          explanation: 'Maximum capital efficiency with higher liquidation risk. nUSD is deployed into emerging opportunities, new protocol launches, and leveraged positions. Active monitoring required.'
+        }
+      },
+      'Custom Strategy': {
+        color: 'text-muted',
+        leverage: { min: 1, max: 5, default: 1 },
+        stopLoss: { min: 2, max: 50, default: 10 },
+        takeProfit: { min: 5, max: 100, default: 30 },
+        protocols: [
+          { name: 'Custom', pct: 100 }
+        ],
+        rebalance: 'Manual',
+        slippage: 1.0,
+        apy: { min: 0, max: 200 },
+        maxDD: '?',
+        sharpe: '?',
+        riskPosition: 50,
+        description: 'Build from scratch with full control',
+        collateralOptions: ['ETH', 'WBTC', 'USDC', 'USDT', 'DAI', 'stETH', 'rETH'],
+        minting: {
+          collateralRatio: 'Custom',
+          liquidationThreshold: 'Custom',
+          stabilityFee: 'Custom',
+          explanation: 'Full control over collateral ratios, liquidation thresholds, and protocol allocations. Define your own risk parameters and deployment strategy.'
+        }
+      }
+    };
+
+    let currentStrategy = 'Safe Yield';
+
+    // Apply strategy preset
+    function applyPreset(strategyName) {
+      const preset = strategyPresets[strategyName];
+      if (!preset) return;
+      
+      currentStrategy = strategyName;
+      
+      // Update canvas title & subtitle (safely)
+      const canvasTitle = document.querySelector('.canvas-title');
+      const canvasSubtitle = document.querySelector('.canvas-subtitle');
+      if (canvasTitle) canvasTitle.textContent = strategyName + ' Strategy';
+      if (canvasSubtitle) canvasSubtitle.textContent = preset.description;
+      
+      // Update sliders if they exist
+      const sliders = document.querySelectorAll('.slider');
+      if (sliders.length >= 3) {
+        // Update leverage slider
+        const leverageSlider = sliders[0];
+        leverageSlider.min = preset.leverage.min;
+        leverageSlider.max = preset.leverage.max;
+        leverageSlider.value = preset.leverage.default;
+        
+        // Update stop loss slider
+        const stopSlider = sliders[1];
+        stopSlider.min = preset.stopLoss.min;
+        stopSlider.max = preset.stopLoss.max;
+        stopSlider.value = preset.stopLoss.default;
+        
+        // Update take profit slider  
+        const profitSlider = sliders[2];
+        profitSlider.min = preset.takeProfit.min;
+        profitSlider.max = preset.takeProfit.max;
+        profitSlider.value = preset.takeProfit.default;
+        
+        // Update all slider displays
+        document.querySelectorAll('.slider-group').forEach(group => {
+          const slider = group.querySelector('.slider');
+          const valueDisplay = group.querySelector('.slider-value');
+          const labelEl = group.querySelector('.slider-label');
+          if (!slider || !valueDisplay || !labelEl) return;
+          const label = labelEl.textContent;
+          
+          if (label.includes('Leverage')) {
+            valueDisplay.textContent = slider.value + 'x';
+          } else if (label.includes('Stop')) {
+            valueDisplay.textContent = '-' + slider.value + '%';
+          } else if (label.includes('Profit')) {
+            valueDisplay.textContent = '+' + slider.value + '%';
+          }
+        });
+      }
+      
+      // Update summary stats
+      const apyEl = document.querySelector('.summary-stat:nth-child(1) .summary-stat-value');
+      const ddEl = document.querySelector('.summary-stat:nth-child(2) .summary-stat-value');
+      const sharpeEl = document.querySelector('.summary-stat:nth-child(3) .summary-stat-value');
+      const riskEl = document.querySelector('.summary-stat:nth-child(4) .summary-stat-value');
+      
+      if (apyEl) {
+        apyEl.textContent = preset.apy.min + '-' + preset.apy.max + '%';
+        apyEl.className = 'summary-stat-value ' + (preset.apy.max <= 15 ? 'green' : preset.apy.max <= 30 ? 'blue' : 'purple');
+      }
+      if (ddEl) ddEl.textContent = '-' + preset.maxDD + '%';
+      if (sharpeEl) {
+        sharpeEl.textContent = typeof preset.sharpe === 'number' ? preset.sharpe.toFixed(2) : preset.sharpe;
+        sharpeEl.className = 'summary-stat-value ' + (preset.sharpe >= 1.5 ? 'green' : preset.sharpe >= 1.0 ? 'blue' : '');
+      }
+      if (riskEl) {
+        const riskLevel = preset.riskPosition < 30 ? 'Low' : preset.riskPosition < 50 ? 'Medium' : preset.riskPosition < 75 ? 'High' : 'Extreme';
+        riskEl.textContent = riskLevel;
+        riskEl.className = 'summary-stat-value ' + (riskLevel === 'Low' ? 'green' : riskLevel === 'Medium' ? 'blue' : 'purple');
+      }
+      
+      // Update risk meter if exists
+      const riskIndicator = document.querySelector('.risk-indicator');
+      if (riskIndicator) {
+        riskIndicator.style.left = preset.riskPosition + '%';
+      }
+      
+      // Update deploy button color
+      const deployBtn = document.querySelector('.deploy-btn');
+      if (deployBtn) {
+        deployBtn.style.background = `var(--${preset.color})`;
+      }
+    }
+
+    // Template selection
+    document.querySelectorAll('.template-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        
+        const name = card.querySelector('.template-name').textContent;
+        applyPreset(name);
+      });
+    });
+
+    // Slider value updates
+    document.querySelectorAll('.slider-group').forEach(group => {
+      const slider = group.querySelector('.slider');
+      const valueDisplay = group.querySelector('.slider-value');
+      const label = group.querySelector('.slider-label').textContent;
+      
+      slider.addEventListener('input', () => {
+        if (label.includes('Leverage')) {
+          valueDisplay.textContent = slider.value + 'x';
+        } else if (label.includes('Stop')) {
+          valueDisplay.textContent = '-' + slider.value + '%';
+        } else if (label.includes('Profit')) {
+          valueDisplay.textContent = '+' + slider.value + '%';
+        }
+        
+        updateRiskMeter();
+      });
+    });
+
+    function updateRiskMeter() {
+      const preset = strategyPresets[currentStrategy];
+      if (!preset) return;
+      
+      const sliders = document.querySelectorAll('.slider');
+      const riskIndicator = document.querySelector('.risk-indicator');
+      if (sliders.length < 2 || !riskIndicator) return;
+      
+      const leverage = parseFloat(sliders[0].value);
+      const stopLoss = parseFloat(sliders[1].value);
+      
+      // Risk calculation based on strategy + user adjustments
+      const leverageRisk = ((leverage - preset.leverage.min) / (preset.leverage.max - preset.leverage.min)) * 40;
+      const stopRisk = ((preset.stopLoss.max - stopLoss) / (preset.stopLoss.max - preset.stopLoss.min)) * 30;
+      const baseRisk = preset.riskPosition * 0.3;
+      
+      const risk = Math.min(Math.max(baseRisk + leverageRisk + stopRisk, 5), 95);
+      riskIndicator.style.left = risk + '%';
+    }
+
+    // Initialize with Safe Yield
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Pro Strategies first (always works)
+      initProStrategies();
+      
+      // Try to apply preset (may fail if elements don't exist)
+      try {
+        applyPreset('Safe Yield');
+      } catch(e) {
+        console.log('Basic preset skipped - using Pro Strategies mode');
+      }
+
+      // Load real data from API
+      loadMarketRegime();
+      loadRealStrategies();
+    });
+
+    // Pro Strategies from AlphaInsider
+    const proStrategies = [
+      {
+        id: 'ichimoku-eth',
+        name: 'Ichimoku Kinko Hyo: ETH 3h',
+        author: 'TradingView Community',
+        description: 'Japanese cloud indicator system applied to ETH on 3-hour timeframe. Combines multiple moving averages for trend identification.',
+        indicators: ['Ichimoku Cloud', 'Tenkan-sen', 'Kijun-sen', 'Senkou Span'],
+        returns: { day: '+0.8%', week: '+12.3%', month: '+28.5%', year: '+151%', fiveYear: '+410%' },
+        risk: 'medium',
+        subscribers: '2.4k',
+        asset: 'ETH',
+        timeframe: '3h'
+      },
+      {
+        id: 'saylor-schiff',
+        name: 'ETH - Saylor to Schiff Ratio',
+        author: 'CryptoQuant',
+        description: 'Sentiment-based strategy comparing bullish vs bearish market indicators. Captures macro trends through on-chain metrics.',
+        indicators: ['On-Chain Metrics', 'Sentiment Analysis', 'MVRV Ratio'],
+        returns: { day: '+1.2%', week: '+15.4%', month: '+32.1%', year: '+151%', fiveYear: '+380%' },
+        risk: 'medium',
+        subscribers: '1.8k',
+        asset: 'ETH',
+        timeframe: '1d'
+      },
+      {
+        id: 'trendma-noro',
+        name: "Noro's TrendMA Strategy",
+        author: 'Noro',
+        description: 'Trend-following system using multiple moving average crossovers with volatility filters for entry/exit signals.',
+        indicators: ['EMA', 'SMA', 'Volatility Filter', 'Trend Strength'],
+        returns: { day: '+2.1%', week: '+35.76%', month: '+48.2%', year: '+141%', fiveYear: '+520%' },
+        risk: 'high',
+        subscribers: '3.1k',
+        asset: 'Multi',
+        timeframe: '4h'
+      },
+      {
+        id: 'ema-crossover',
+        name: 'EMA(10,10) EMA(21,21) Crossover',
+        author: 'Technical Traders',
+        description: 'Classic dual exponential moving average crossover strategy optimized for crypto volatility.',
+        indicators: ['EMA 10', 'EMA 21', 'Crossover Signals'],
+        returns: { day: '+3.2%', week: '+43.54%', month: '+52.8%', year: '+144%', fiveYear: '+480%' },
+        risk: 'high',
+        subscribers: '4.2k',
+        asset: 'BTC/ETH',
+        timeframe: '1h'
+      },
+      {
+        id: 'trend-deviation',
+        name: 'Trend Deviation Strategy [IkkeOmar]',
+        author: 'IkkeOmar',
+        description: 'Mean reversion combined with trend following. Identifies overextended price movements for reversal entries.',
+        indicators: ['Standard Deviation', 'Bollinger Bands', 'RSI', 'Trend Filter'],
+        returns: { day: '+1.5%', week: '+22.3%', month: '+38.6%', year: '+141%', fiveYear: '+395%' },
+        risk: 'medium',
+        subscribers: '2.7k',
+        asset: 'Multi',
+        timeframe: '4h'
+      },
+      {
+        id: 'psar-adx-cmf',
+        name: 'Full Strategy: PSAR + ADX + CMF + RSI',
+        author: 'QuantTraders',
+        description: 'Multi-indicator confirmation strategy combining parabolic SAR, trend strength, money flow, and momentum.',
+        indicators: ['Parabolic SAR', 'ADX', 'CMF', 'RSI'],
+        returns: { day: '+0.9%', week: '+18.4%', month: '+29.7%', year: '+105%', fiveYear: '+340%' },
+        risk: 'medium',
+        subscribers: '5.8k',
+        asset: 'BTC',
+        timeframe: '4h'
+      },
+      {
+        id: 'volume-advanced',
+        name: 'Volume Advanced by TradingAmmo',
+        author: 'TradingAmmo',
+        description: 'Volume-based analysis detecting accumulation and distribution phases for optimal entry timing.',
+        indicators: ['Volume Profile', 'OBV', 'Volume MA', 'Accumulation/Distribution'],
+        returns: { day: '+0.6%', week: '+14.2%', month: '+26.8%', year: '+98.09%', fiveYear: '+290%' },
+        risk: 'low',
+        subscribers: '6.2k',
+        asset: 'BTC/ETH',
+        timeframe: '1d'
+      },
+      {
+        id: 'lunaowl-channel',
+        name: '[LunaOwl] LOHAS Investor PriceChannel',
+        author: 'LunaOwl',
+        description: 'Long-term price channel strategy designed for patient investors. Captures major trend moves with minimal trading.',
+        indicators: ['Donchian Channel', 'Price Channel', 'ATR Stops'],
+        returns: { day: '+0.4%', week: '+8.6%', month: '+18.2%', year: '+84.5%', fiveYear: '+386%' },
+        risk: 'low',
+        subscribers: '3.9k',
+        asset: 'BTC',
+        timeframe: '1d'
+      },
+      {
+        id: 'williams-fractals',
+        name: 'WMX Williams Fractals Strategy V4',
+        author: 'WMX',
+        description: 'Bill Williams fractal patterns combined with momentum indicators for breakout detection.',
+        indicators: ['Williams Fractals', 'Alligator', 'AO', 'AC'],
+        returns: { day: '+2.8%', week: '+45.2%', month: '+58.4%', year: '+128%', fiveYear: '+420%' },
+        risk: 'high',
+        subscribers: '2.1k',
+        asset: 'Multi',
+        timeframe: '2h'
+      },
+      {
+        id: 'btc-bear-season',
+        name: 'Bitcoin Bear Season',
+        author: 'CycleTrades',
+        description: 'Counter-trend strategy optimized for bear market conditions. Captures bounces and manages downside risk.',
+        indicators: ['RSI Divergence', 'Support/Resistance', 'MA Cross', 'Volume Climax'],
+        returns: { day: '+0.3%', week: '+6.8%', month: '+12.4%', year: '+48.05%', fiveYear: '+322%' },
+        risk: 'low',
+        subscribers: '7.4k',
+        asset: 'BTC',
+        timeframe: '1d'
+      },
+      {
+        id: 'ema-spot-only',
+        name: 'EMA12/26 Buy Spot Only',
+        author: 'SpotTraders',
+        description: 'Conservative spot-only strategy using classic EMA crossover. No leverage, long-only positions.',
+        indicators: ['EMA 12', 'EMA 26', 'Signal Line'],
+        returns: { day: '+0.2%', week: '+5.8%', month: '+11.2%', year: '+50.4%', fiveYear: '+280%' },
+        risk: 'low',
+        subscribers: '8.9k',
+        asset: 'BTC/ETH',
+        timeframe: '1d'
+      },
+      {
+        id: 'alligator-noro',
+        name: "Noro's Alligator Strategy",
+        author: 'Noro',
+        description: "Bill Williams' Alligator indicator implementation with custom filters for crypto markets.",
+        indicators: ['Alligator Jaw', 'Teeth', 'Lips', 'Fractals'],
+        returns: { day: '+0.5%', week: '+11.4%', month: '+22.6%', year: '+80.32%', fiveYear: '+340%' },
+        risk: 'medium',
+        subscribers: '4.6k',
+        asset: 'Multi',
+        timeframe: '4h'
+      }
+    ];
+
+    function initProStrategies() {
+      renderProStrategies(proStrategies);
+      
+      // Tab switching
+      document.querySelectorAll('.strategy-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.strategy-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          const tabType = tab.dataset.tab;
+          document.getElementById('basicStrategies').style.display = tabType === 'basic' ? 'block' : 'none';
+          document.getElementById('proStrategies').style.display = tabType === 'pro' ? 'block' : 'none';
+        });
+      });
+      
+      // Search functionality
+      document.getElementById('proStrategySearch').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        const filtered = proStrategies.filter(s => 
+          s.name.toLowerCase().includes(query) ||
+          s.author.toLowerCase().includes(query) ||
+          s.indicators.some(i => i.toLowerCase().includes(query)) ||
+          s.asset.toLowerCase().includes(query)
+        );
+        renderProStrategies(filtered);
+      });
+    }
+    
+    // Open Pro Strategies tab and optionally select a strategy
+    function openProStrategies(strategyId) {
+      // Switch to Pro tab
+      document.querySelectorAll('.strategy-tab').forEach(t => t.classList.remove('active'));
+      document.querySelector('.strategy-tab[data-tab="pro"]').classList.add('active');
+      
+      document.getElementById('basicStrategies').style.display = 'none';
+      document.getElementById('proStrategies').style.display = 'block';
+      
+      // Scroll the templates panel into view
+      document.querySelector('.panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      
+      // If a specific strategy was requested, select it
+      if (strategyId) {
+        setTimeout(() => {
+          const card = document.querySelector(`.pro-strategy-card[data-strategy-id="${strategyId}"]`);
+          if (card) {
+            card.click();
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    }
+
+    function renderProStrategies(strategies) {
+      const container = document.getElementById('proStrategyList');
+      container.innerHTML = strategies.map(s => `
+        <div class="pro-strategy-card" data-strategy-id="${s.id}">
+          <div class="pro-strategy-header">
+            <div class="pro-strategy-name">${s.name}</div>
+            <div class="pro-strategy-author">by ${s.author}</div>
+          </div>
+          <div class="pro-strategy-desc">${s.description}</div>
+          <div class="pro-strategy-indicators">
+            ${s.indicators.slice(0, 4).map(i => `<span class="indicator-tag">${i}</span>`).join('')}
+          </div>
+          <div class="pro-strategy-stats">
+            <div class="pro-stat">
+              <span class="pro-stat-label">Week</span>
+              <span class="pro-stat-value ${parseFloat(s.returns.week) >= 0 ? 'positive' : 'negative'}">${s.returns.week}</span>
+            </div>
+            <div class="pro-stat">
+              <span class="pro-stat-label">Month</span>
+              <span class="pro-stat-value ${parseFloat(s.returns.month) >= 0 ? 'positive' : 'negative'}">${s.returns.month}</span>
+            </div>
+            <div class="pro-stat">
+              <span class="pro-stat-label">Year</span>
+              <span class="pro-stat-value ${parseFloat(s.returns.year) >= 0 ? 'positive' : 'negative'}">${s.returns.year}</span>
+            </div>
+            <div class="pro-stat">
+              <span class="pro-stat-label">5 Year</span>
+              <span class="pro-stat-value ${parseFloat(s.returns.fiveYear) >= 0 ? 'positive' : 'negative'}">${s.returns.fiveYear}</span>
+            </div>
+          </div>
+          <div class="pro-strategy-footer">
+            <span class="pro-strategy-meta">
+              <span class="asset-badge">${s.asset}</span>
+              <span class="timeframe-badge">${s.timeframe}</span>
+              <span class="risk-badge ${s.risk}">${s.risk}</span>
+            </span>
+            <span class="subscribers">👥 ${s.subscribers}</span>
+          </div>
+        </div>
+      `).join('');
+      
+      // Add click handlers
+      container.querySelectorAll('.pro-strategy-card').forEach(card => {
+        card.addEventListener('click', () => {
+          container.querySelectorAll('.pro-strategy-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          
+          const strategyId = card.dataset.strategyId;
+          const strategy = proStrategies.find(s => s.id === strategyId);
+          if (strategy) {
+            applyProStrategy(strategy);
+          }
+        });
+      });
+    }
+
+    function applyProStrategy(strategy) {
+      // Update canvas title & subtitle
+      document.getElementById('sandboxTitle').textContent = strategy.name;
+      document.getElementById('sandboxSubtitle').textContent = strategy.description;
+      
+      // Update metrics
+      document.getElementById('metricReturn').textContent = strategy.returns.year;
+      document.getElementById('metricReturn').className = 'metric-value';
+      
+      // Calculate drawdown based on risk
+      const drawdowns = { low: '-8%', medium: '-15%', high: '-25%' };
+      document.getElementById('metricDrawdown').textContent = drawdowns[strategy.risk] || '-15%';
+      document.getElementById('metricDrawdown').className = 'metric-value negative';
+      
+      // Calculate Sharpe ratio
+      const sharpe = (parseFloat(strategy.returns.year) / 50).toFixed(2);
+      document.getElementById('metricSharpe').textContent = sharpe;
+      
+      // Win rate based on risk
+      const winRates = { low: '68%', medium: '62%', high: '55%' };
+      document.getElementById('metricWinRate').textContent = winRates[strategy.risk] || '62%';
+      
+      // Update indicators grid
+      const indicatorsGrid = document.getElementById('indicatorsGrid');
+      indicatorsGrid.innerHTML = strategy.indicators.map(ind => `
+        <div class="indicator-item">
+          <div class="indicator-name">${ind}</div>
+          <div class="indicator-value">${getIndicatorValue(ind)}</div>
+        </div>
+      `).join('');
+      
+      // Update signals
+      const signalsList = document.getElementById('signalsList');
+      const signals = generateSignals(strategy);
+      document.getElementById('signalsCount').textContent = signals.length + ' signals';
+      signalsList.innerHTML = signals.map(s => `
+        <div class="signal-item ${s.type}">
+          <span class="signal-type ${s.type}">${s.type}</span>
+          <div class="signal-details">
+            <div class="signal-asset">${s.asset}</div>
+            <div class="signal-reason">${s.reason}</div>
+          </div>
+          <span class="signal-time">${s.time}</span>
+        </div>
+      `).join('');
+      
+      // Update chart
+      renderStrategyChart(strategy);
+      
+      // Show deploy button and chart legend
+      document.getElementById('sandboxDeploy').style.display = 'block';
+      document.getElementById('chartLegend').style.display = 'flex';
+      
+      // Update sidebar stats
+      const apyEl = document.querySelector('.summary-stat:nth-child(1) .summary-stat-value');
+      const ddEl = document.querySelector('.summary-stat:nth-child(2) .summary-stat-value');
+      const sharpeEl = document.querySelector('.summary-stat:nth-child(3) .summary-stat-value');
+      const riskEl = document.querySelector('.summary-stat:nth-child(4) .summary-stat-value');
+      
+      if (apyEl) {
+        apyEl.textContent = strategy.returns.year;
+        apyEl.className = 'summary-stat-value green';
+      }
+      if (ddEl) ddEl.textContent = drawdowns[strategy.risk] || '-15%';
+      if (sharpeEl) {
+        sharpeEl.textContent = sharpe;
+        sharpeEl.className = 'summary-stat-value blue';
+      }
+      if (riskEl) {
+        const riskLabel = strategy.risk.charAt(0).toUpperCase() + strategy.risk.slice(1);
+        riskEl.textContent = riskLabel;
+        riskEl.className = 'summary-stat-value ' + (strategy.risk === 'low' ? 'green' : strategy.risk === 'medium' ? 'blue' : 'purple');
+      }
+      
+      // Update risk meter
+      const riskPosition = strategy.risk === 'low' ? 20 : strategy.risk === 'medium' ? 50 : 75;
+      const riskIndicator = document.querySelector('.risk-indicator');
+      if (riskIndicator) riskIndicator.style.left = riskPosition + '%';
+      
+      // Deselect basic templates
+      document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+    }
+    
+    function getIndicatorValue(indicator) {
+      const values = {
+        'Ichimoku Cloud': 'Bullish',
+        'Tenkan-sen': '42,150',
+        'Kijun-sen': '41,800',
+        'Senkou Span': '+2.4%',
+        'On-Chain Metrics': 'Strong',
+        'Sentiment Analysis': '72%',
+        'MVRV Ratio': '2.1',
+        'EMA': 'Cross Up',
+        'SMA': '41,500',
+        'Volatility Filter': 'Low',
+        'Trend Strength': '78%',
+        'EMA 10': '42,100',
+        'EMA 21': '41,900',
+        'Crossover Signals': 'Buy',
+        'Standard Deviation': '1.2σ',
+        'Bollinger Bands': 'Upper',
+        'RSI': '58',
+        'Trend Filter': 'Up',
+        'Parabolic SAR': 'Long',
+        'ADX': '32',
+        'CMF': '+0.15',
+        'Volume Profile': 'High',
+        'OBV': '↑ 2.3M',
+        'Volume MA': '1.8M',
+        'Accumulation/Distribution': 'Acc',
+        'Donchian Channel': 'Break',
+        'Price Channel': 'Upper',
+        'ATR Stops': '$850',
+        'Williams Fractals': 'Up',
+        'Alligator': 'Open',
+        'AO': '+240',
+        'AC': '+18',
+        'RSI Divergence': 'None',
+        'Support/Resistance': 'S: 40.2K',
+        'MA Cross': 'Golden',
+        'Volume Climax': 'No',
+        'EMA 12': '42,050',
+        'EMA 26': '41,750',
+        'Signal Line': 'Above',
+        'Alligator Jaw': '41,200',
+        'Teeth': '41,500',
+        'Lips': '41,900',
+        'Fractals': '↑ 42.5K'
+      };
+      return values[indicator] || 'Active';
+    }
+    
+    function generateSignals(strategy) {
+      // Fetch real signals from API
+      return fetch('/api/strategy-builder?action=signals')
+        .then(r => r.json())
+        .then(data => {
+          if (data.signals) {
+            return data.signals.slice(0, 5).map(s => ({
+              type: s.type || 'buy',
+              asset: strategy.asset === 'Multi' ? s.asset || 'BTC' : strategy.asset,
+              reason: s.reason || s.message || 'Signal detected',
+              time: s.time || 'now'
+            }));
+          }
+          return [];
+        })
+        .catch(() => {
+          // Fallback to basic signals
+          return [{ type: 'buy', asset: strategy.asset || 'BTC', reason: 'Loading...', time: 'now' }];
+        });
+    }
+
+    // Load real market regime data
+    async function loadMarketRegime() {
+      try {
+        const data = await fetch('/api/strategy-builder?action=regime').then(r => r.json());
+        if (data.regime) {
+          const regimeEl = document.getElementById('sandboxSubtitle');
+          if (regimeEl) {
+            regimeEl.textContent = `Market: ${data.regime} (${data.riskLevel}) — Confidence: ${(data.confidence * 100).toFixed(0)}%`;
+          }
+        }
+        return data;
+      } catch(e) { console.log('Regime fetch failed:', e); return null; }
+    }
+
+    // Load real strategy templates from API
+    async function loadRealStrategies() {
+      try {
+        const data = await fetch('/api/strategy-builder?action=strategies').then(r => r.json());
+        if (data.strategies) {
+          // Update basic strategy APY ranges with live data
+          data.strategies.forEach(s => {
+            const preset = strategyPresets[s.name];
+            if (preset) {
+              preset.apy.min = Math.round(s.liveApyRange?.min || preset.apy.min);
+              preset.apy.max = Math.round(s.liveApyRange?.max || preset.apy.max);
+            }
+          });
+          // Re-apply current preset to show live APYs
+          try { applyPreset(currentStrategy); } catch(e) {}
+        }
+      } catch(e) { console.log('Strategy templates fetch failed:', e); }
+    }
+
+    // Enhanced applyProStrategy with real backtest
+    const _origApplyProStrategy = applyProStrategy;
+    applyProStrategy = async function(strategy) {
+      // Apply the visual update immediately with existing data
+      _origApplyProStrategy(strategy);
+
+      // Then fetch real backtest data in background
+      try {
+        const backtestKey = strategy.risk === 'low' ? 'conservative' : strategy.risk === 'high' ? 'aggressive' : 'balanced';
+        const data = await fetch(`/api/strategy-builder?action=backtest&strategy=${backtestKey}&period=365`).then(r => r.json());
+        if (data && !data.error) {
+          // Update metrics with real backtest results
+          const metricReturn = document.getElementById('metricReturn');
+          const metricDrawdown = document.getElementById('metricDrawdown');
+          const metricSharpe = document.getElementById('metricSharpe');
+          const metricWinRate = document.getElementById('metricWinRate');
+
+          if (metricReturn) {
+            metricReturn.textContent = (data.annualizedReturn || 0).toFixed(1) + '%';
+            metricReturn.className = 'metric-value' + ((data.annualizedReturn || 0) >= 0 ? '' : ' negative');
+          }
+          if (metricDrawdown) {
+            metricDrawdown.textContent = (data.maxDrawdown || 0).toFixed(1) + '%';
+            metricDrawdown.className = 'metric-value negative';
+          }
+          if (metricSharpe) metricSharpe.textContent = (data.sharpeRatio || 0).toFixed(2);
+          if (metricWinRate) metricWinRate.textContent = (data.winRate || 0).toFixed(0) + '%';
+
+          // Update sidebar stats too
+          const apyEl = document.querySelector('.summary-stat:nth-child(1) .summary-stat-value');
+          const ddEl = document.querySelector('.summary-stat:nth-child(2) .summary-stat-value');
+          const sharpeEl = document.querySelector('.summary-stat:nth-child(3) .summary-stat-value');
+          if (apyEl) apyEl.textContent = (data.annualizedReturn || 0).toFixed(1) + '%';
+          if (ddEl) ddEl.textContent = (data.maxDrawdown || 0).toFixed(1) + '%';
+          if (sharpeEl) sharpeEl.textContent = (data.sharpeRatio || 0).toFixed(2);
+
+          // Render real equity curve if available
+          if (data.equityCurve && data.equityCurve.length > 0) {
+            renderRealChart(data.equityCurve, data.annualizedReturn);
+          }
+        }
+      } catch(e) { console.log('Backtest fetch failed:', e); }
+
+      // Fetch real signals
+      try {
+        const sData = await fetch('/api/strategy-builder?action=signals').then(r => r.json());
+        if (sData.signals && sData.signals.length > 0) {
+          const signalsList = document.getElementById('signalsList');
+          const displaySignals = sData.signals.slice(0, 5);
+          document.getElementById('signalsCount').textContent = displaySignals.length + ' signals';
+          signalsList.innerHTML = displaySignals.map(s => `
+            <div class="signal-item ${s.type}">
+              <span class="signal-type ${s.type}">${s.type}</span>
+              <div class="signal-details">
+                <div class="signal-asset">${s.asset || 'DeFi'}</div>
+                <div class="signal-reason">${s.reason || s.message}</div>
+              </div>
+              <span class="signal-time">${s.confidence ? (s.confidence * 100).toFixed(0) + '%' : ''}</span>
+            </div>
+          `).join('');
+        }
+      } catch(e) {}
+    };
+
+    function renderRealChart(equityCurve, totalReturn) {
+      const chart = document.getElementById('performanceChart');
+      const maxVal = Math.max(...equityCurve.map(e => e.value));
+      const minVal = Math.min(...equityCurve.map(e => e.value));
+      const range = maxVal - minVal || 1;
+
+      const step = Math.max(1, Math.floor(equityCurve.length / 24));
+      const sampled = equityCurve.filter((_, i) => i % step === 0);
+
+      const bars = sampled.map((point, i) => {
+        const height = Math.min(Math.max(10 + ((point.value - minVal) / range) * 80, 10), 95);
+        const color = point.value >= equityCurve[0].value ? 'var(--safe-green)' : 'var(--degen-red)';
+        return `<div class="chart-bar" style="height:${height}%;background:${color};opacity:${0.4+(i/sampled.length)*0.6};" title="${point.date}: ${point.value.toFixed(0)}"></div>`;
+      });
+
+      chart.innerHTML = `
+        <div class="chart-bars">${bars.join('')}</div>
+        <div class="chart-value">
+          <span class="chart-return-label">Backtested Return</span>
+          <span class="chart-return-value" style="color:${totalReturn >= 0 ? 'var(--safe-green)' : 'var(--degen-red)'}">${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(1)}%</span>
+        </div>
+      `;
+
+      if (!document.getElementById('chartStyles')) {
+        const style = document.createElement('style');
+        style.id = 'chartStyles';
+        style.textContent = `.chart-bars{display:flex;align-items:flex-end;justify-content:space-between;height:100%;padding:10px;gap:2px}.chart-bar{flex:1;border-radius:2px 2px 0 0;transition:height 0.5s ease}.chart-value{position:absolute;top:10px;right:15px;text-align:right}.chart-return-label{display:block;font-size:0.6rem;color:var(--text-muted);text-transform:uppercase}.chart-return-value{font-size:1.5rem;font-weight:700;font-family:var(--font-mono)}`;
+        document.head.appendChild(style);
+      }
+    }
+    
+    function renderStrategyChart(strategy) {
+      const chart = document.getElementById('performanceChart');
+      const yearReturn = parseFloat(strategy.returns.year);
+      
+      // Generate chart bars
+      const bars = [];
+      let cumulative = 0;
+      const monthlyReturn = yearReturn / 12;
+      
+      for (let i = 0; i < 12; i++) {
+        const variance = (Math.random() - 0.3) * monthlyReturn * 2;
+        cumulative += monthlyReturn + variance;
+        const height = Math.min(Math.max(20 + (cumulative / yearReturn) * 60, 10), 95);
+        const color = cumulative > 0 ? 'var(--safe-green)' : 'var(--degen-red)';
+        bars.push(`<div class="chart-bar" style="height: ${height}%; background: ${color}; opacity: ${0.4 + (i/12) * 0.6};"></div>`);
+      }
+      
+      chart.innerHTML = `
+        <div class="chart-bars">
+          ${bars.join('')}
+        </div>
+        <div class="chart-line"></div>
+        <div class="chart-value">
+          <span class="chart-return-label">Total Return</span>
+          <span class="chart-return-value">${strategy.returns.year}</span>
+        </div>
+      `;
+      
+      // Add chart styles if not present
+      if (!document.getElementById('chartStyles')) {
+        const style = document.createElement('style');
+        style.id = 'chartStyles';
+        style.textContent = `
+          .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 100%;
+            padding: 10px;
+            gap: 4px;
+          }
+          .chart-bar {
+            flex: 1;
+            border-radius: 2px 2px 0 0;
+            transition: height 0.5s ease;
+          }
+          .chart-value {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            text-align: right;
+          }
+          .chart-return-label {
+            display: block;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+          }
+          .chart-return-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--safe-green);
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    }
+  </script>
+<script>
+  document.querySelectorAll('a[href$=".html"]').forEach(link => {
+    const href = link.getAttribute('href');
+    if (!href) return;
+    const [path, hash] = href.split('#');
+    const cleaned = path.replace(/\.html$/, '');
+    link.setAttribute('href', hash ? `${cleaned}#${hash}` : cleaned);
+  });
+  if (window.location.pathname.endsWith('.html')) {
+    const cleanPath = window.location.pathname.replace(/\.html$/, '');
+    window.history.replaceState({}, '', cleanPath + window.location.search + window.location.hash);
+  }
+</script>
+</body>
+</html>
