@@ -533,7 +533,7 @@
 
     /* Analysis Card */
     .analysis-card {
-      background: var(--bg-card);
+      background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--border-color);
       border-radius: 14px;
       padding: 18px;
@@ -550,11 +550,11 @@
       align-items: center;
       margin-bottom: 14px;
       padding-bottom: 10px;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .analysis-card-title {
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       font-weight: 600;
       color: var(--text-primary);
       display: flex;
@@ -563,12 +563,12 @@
     }
 
     .data-source-badge {
-      font-size: 0.55rem;
-      padding: 3px 8px;
-      background: var(--accent-purple-dim);
-      border: 1px solid rgba(74, 111, 165, 0.25);
-      border-radius: 4px;
-      color: var(--accent-purple);
+      font-size: 0.6rem;
+      padding: 4px 8px;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      border-radius: 6px;
+      color: #a78bfa;
       font-weight: 600;
       text-transform: uppercase;
     }
@@ -582,8 +582,8 @@
     }
 
     .metric-row:last-child { border-bottom: none; }
-    .row-label { font-size: 0.75rem; color: var(--text-muted); }
-    .row-value { font-size: 0.8rem; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); }
+    .row-label { font-size: 0.8rem; color: var(--text-secondary); }
+    .row-value { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); }
     .row-value.positive { color: var(--accent-green); }
     .row-value.negative { color: var(--accent-red); }
 
@@ -983,56 +983,6 @@
     @media (max-width: 1200px) { .analysis-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 768px) { .analysis-grid { grid-template-columns: 1fr; } }
 
-    .analysis-card {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-color);
-      border-radius: 14px;
-      padding: 18px;
-    }
-
-    .analysis-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .analysis-card-title {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .data-source-badge {
-      font-size: 0.6rem;
-      padding: 4px 8px;
-      background: rgba(139, 92, 246, 0.15);
-      border: 1px solid rgba(139, 92, 246, 0.25);
-      border-radius: 6px;
-      color: #a78bfa;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    .metric-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    }
-
-    .metric-row:last-child { border-bottom: none; }
-    .row-label { font-size: 0.8rem; color: var(--text-secondary); }
-    .row-value { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); }
-    .row-value.positive { color: var(--accent-green); }
-    .row-value.negative { color: var(--accent-red); }
-
     .sr-container {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -1233,6 +1183,169 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* Tab Transitions */
+    .analysis-section {
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .analysis-section.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Dexscreener & Signals Sections ── */
+    .dex-badge-cyan { background: rgba(0, 200, 255, 0.12); color: #00c8ff; }
+    .dex-badge-green { background: rgba(0, 232, 122, 0.12); color: #00e87a; }
+    .dex-badge-violet { background: rgba(107, 79, 232, 0.12); color: #6b4fe8; }
+    .dex-badge-gold { background: rgba(232, 160, 32, 0.12); color: #e8a020; }
+
+    .dex-pair-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      transition: background 0.15s;
+      border-radius: 6px;
+    }
+    .dex-pair-row:hover { background: rgba(255, 255, 255, 0.03); }
+    .dex-pair-row:last-child { border-bottom: none; }
+
+    .dex-pair-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dex-pair-symbol {
+      font-weight: 700;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      font-family: var(--font-mono);
+    }
+    .dex-pair-chain {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      padding: 2px 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 4px;
+    }
+    .dex-pair-metrics {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+    }
+    .dex-pair-price {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .dex-pair-change {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .dex-pair-change.positive { background: rgba(0, 232, 122, 0.12); color: #00e87a; }
+    .dex-pair-change.negative { background: rgba(239, 68, 68, 0.12); color: var(--accent-red); }
+    .dex-pair-vol, .dex-pair-liq {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .signal-token-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      transition: background 0.15s;
+      border-radius: 6px;
+    }
+    .signal-token-row:hover { background: rgba(255, 255, 255, 0.03); }
+    .signal-token-row:last-child { border-bottom: none; }
+
+    .signal-token-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .signal-badge { font-size: 1rem; }
+    .signal-token-symbol {
+      font-weight: 700;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      font-family: var(--font-mono);
+    }
+    .signal-token-chain {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      padding: 2px 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 4px;
+    }
+    .signal-token-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .signal-score {
+      font-size: 0.9rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      min-width: 28px;
+      text-align: center;
+    }
+    .signal-score.high { color: #00e87a; }
+    .signal-score.medium { color: #e8a020; }
+    .signal-score.low { color: var(--accent-red); }
+    .signal-score-bar {
+      width: 60px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .signal-score-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.5s ease;
+    }
+    .signal-types {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      max-width: 140px;
+      text-align: right;
+    }
+
+    .dex-search-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.82rem;
+      font-family: var(--font-mono);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .dex-search-input:focus {
+      border-color: #00c8ff;
+      box-shadow: 0 0 0 2px rgba(0, 200, 255, 0.1);
+    }
+    .dex-search-input::placeholder { color: var(--text-muted); }
+
+    .empty-state {
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .empty-state-icon { font-size: 1.8rem; margin-bottom: 8px; opacity: 0.5; }
+    .empty-state-text { font-size: 0.82rem; line-height: 1.5; }
+    .empty-state-hint { font-size: 0.72rem; margin-top: 4px; opacity: 0.7; }
+
     @media (max-width: 768px) {
       .header { padding: 12px 16px; }
       .main-tabs { padding: 0 16px; }
@@ -1242,6 +1355,10 @@
       .sr-container { grid-template-columns: 1fr; }
       .opportunities-grid { grid-template-columns: 1fr; }
       .news-grid { grid-template-columns: 1fr; }
+      .dex-pair-metrics { gap: 6px; }
+      .dex-pair-vol, .dex-pair-liq { display: none; }
+      .signal-score-bar { display: none; }
+      .signal-types { max-width: 100px; }
     }
   </style>
 </head>
@@ -1312,8 +1429,9 @@
         <span class="session-badge" id="session-us">🌎 US</span>
       </div>
       <div class="global-metrics">
-        <span class="gm-item"><span class="gm-label">F&G:</span> <span id="fearGreed">--</span></span>
+        <span class="gm-item"><span class="gm-label">F&G:</span> <span id="fearGreed">--</span> <span id="fearGreedLabel" class="stat-change" style="font-size:0.7rem;"></span></span>
         <span class="gm-item"><span class="gm-label">BTC Dom:</span> <span id="btcDominance">--%</span></span>
+        <span class="gm-item"><span class="gm-label">OI:</span> <span id="totalOI">--</span></span>
         <span class="gm-item" id="domLabel"></span>
       </div>
     </div>
@@ -1513,8 +1631,8 @@
       <div class="section-grid-2">
         <div class="analysis-card">
           <div class="analysis-card-header">
-            <span class="analysis-card-title">🔍 Dexscreener Top Movers</span>
-            <span class="data-source-badge" style="background:rgba(0,200,255,0.12);color:#00c8ff;">Dexscreener</span>
+            <span class="analysis-card-title">� Top Movers</span>
+            <span class="data-source-badge dex-badge-cyan">Dexscreener</span>
           </div>
           <div id="dexTopMovers">
             <div class="loading"><div class="loading-spinner"></div>Fetching top movers...</div>
@@ -1523,7 +1641,7 @@
         <div class="analysis-card">
           <div class="analysis-card-header">
             <span class="analysis-card-title">🆕 New Pairs</span>
-            <span class="data-source-badge" style="background:rgba(0,232,122,0.12);color:#00e87a;">Dexscreener</span>
+            <span class="data-source-badge dex-badge-green">Dexscreener</span>
           </div>
           <div id="dexNewPairs">
             <div class="loading"><div class="loading-spinner"></div>Scanning new pairs...</div>
@@ -1533,8 +1651,8 @@
       <div class="section-grid-2" style="margin-top:16px;">
         <div class="analysis-card">
           <div class="analysis-card-header">
-            <span class="analysis-card-title">💧 Liquidity Changes</span>
-            <span class="data-source-badge" style="background:rgba(107,79,232,0.12);color:#6b4fe8;">Market Data</span>
+            <span class="analysis-card-title">💧 Liquidity Shifts</span>
+            <span class="data-source-badge dex-badge-violet">Market Data</span>
           </div>
           <div id="dexLiquidityChanges">
             <div class="loading"><div class="loading-spinner"></div>Loading liquidity data...</div>
@@ -1543,24 +1661,24 @@
         <div class="analysis-card">
           <div class="analysis-card-header">
             <span class="analysis-card-title">🔎 Token Search</span>
-            <span class="data-source-badge" style="background:rgba(0,200,255,0.12);color:#00c8ff;">Dexscreener</span>
+            <span class="data-source-badge dex-badge-cyan">Dexscreener</span>
           </div>
           <div style="margin-bottom:12px;">
-            <input type="text" id="dexSearchInput" placeholder="Search token (e.g. PEPE, WIF)..." style="width:100%;padding:8px 12px;background:var(--bg-elevated);border:1px solid var(--border-color);border-radius:6px;color:var(--text-primary);font-size:0.82rem;font-family:var(--font-mono);outline:none;" />
+            <input type="text" id="dexSearchInput" class="dex-search-input" placeholder="Search any token (e.g. PEPE, WIF, BONK)..." />
           </div>
-          <div id="dexSearchResults" style="max-height:200px;overflow-y:auto;"></div>
+          <div id="dexSearchResults" style="max-height:220px;overflow-y:auto;"></div>
         </div>
       </div>
       <div class="analysis-card" style="margin-top:16px;">
         <div class="analysis-card-header">
-          <span class="analysis-card-title">📊 Market Data Service</span>
-          <span class="data-source-badge" style="background:rgba(232,160,32,0.12);color:#e8a020;">Status</span>
+          <span class="analysis-card-title">📡 Market Data Service</span>
+          <span class="data-source-badge dex-badge-gold">Status</span>
         </div>
         <div id="marketDataStatus">
           <div class="metric-row"><span class="row-label">Service</span><span class="row-value">market-data (port 3860)</span></div>
           <div class="metric-row"><span class="row-label">Data Source</span><span class="row-value">Dexscreener API</span></div>
-          <div class="metric-row"><span class="row-label">Rate Limits</span><span class="row-value">60 rpm (slow) / 300 rpm (fast)</span></div>
-          <div class="metric-row"><span class="row-label">Cache</span><span class="row-value">Redis + In-Memory LRU</span></div>
+          <div class="metric-row"><span class="row-label">Rate Limits</span><span class="row-value">60 rpm / 300 rpm</span></div>
+          <div class="metric-row"><span class="row-label">Cache</span><span class="row-value">Redis + LRU</span></div>
           <div class="metric-row"><span class="row-label">Storage</span><span class="row-value">SQLite (7-day retention)</span></div>
           <div class="metric-row"><span class="row-label">Polling</span><span class="row-value">10s interval, 5 chains</span></div>
         </div>
@@ -1573,7 +1691,7 @@
         <div class="analysis-card">
           <div class="analysis-card-header">
             <span class="analysis-card-title">⚡ Strong Trades (Score &gt; 70)</span>
-            <span class="data-source-badge" style="background:rgba(0,232,122,0.12);color:#00e87a;">Signal Engine</span>
+            <span class="data-source-badge dex-badge-green">Signal Engine</span>
           </div>
           <div id="signalStrongTrades">
             <div class="loading"><div class="loading-spinner"></div>Analyzing signals...</div>
@@ -1582,7 +1700,7 @@
         <div class="analysis-card">
           <div class="analysis-card-header">
             <span class="analysis-card-title">👁️ Watchlist (Score 50–70)</span>
-            <span class="data-source-badge" style="background:rgba(232,160,32,0.12);color:#e8a020;">Signal Engine</span>
+            <span class="data-source-badge dex-badge-gold">Signal Engine</span>
           </div>
           <div id="signalWatchlist">
             <div class="loading"><div class="loading-spinner"></div>Scanning watchlist...</div>
@@ -1592,7 +1710,7 @@
       <div class="section-grid-2" style="margin-top:16px;">
         <div class="analysis-card">
           <div class="analysis-card-header">
-            <span class="analysis-card-title">🚀 Signal Breakdown</span>
+            <span class="analysis-card-title">🧮 Scoring Model</span>
             <span class="data-source-badge">Composite</span>
           </div>
           <div id="signalBreakdown">
@@ -1600,28 +1718,28 @@
             <div class="metric-row"><span class="row-label">📈 Volume Breakout</span><span class="row-value">Vol 1h &gt;3x 24h avg → 0-30 pts</span></div>
             <div class="metric-row"><span class="row-label">💧 Liquidity Inflow</span><span class="row-value">Liq +20% in 10min → 0-20 pts</span></div>
             <div class="metric-row"><span class="row-label">🆕 New Pair</span><span class="row-value">Age &lt;24h, Liq &gt;$100k → 0-10 pts</span></div>
-            <div class="metric-row" style="border-top:1px solid var(--border-color);padding-top:8px;margin-top:8px;"><span class="row-label" style="font-weight:600;color:var(--text-primary);">Total Score Range</span><span class="row-value" style="color:var(--accent-purple);font-weight:600;">0–100 pts</span></div>
+            <div class="metric-row" style="border-top:1px solid var(--border-color);padding-top:8px;margin-top:8px;"><span class="row-label" style="font-weight:600;color:var(--text-primary);">Total Score Range</span><span class="row-value" style="color:#6b4fe8;font-weight:700;">0–100 pts</span></div>
           </div>
         </div>
         <div class="analysis-card">
           <div class="analysis-card-header">
-            <span class="analysis-card-title">📡 Signal Engine Status</span>
-            <span class="data-source-badge" style="background:rgba(107,79,232,0.12);color:#6b4fe8;">Engine</span>
+            <span class="analysis-card-title">📡 Signal Engine</span>
+            <span class="data-source-badge dex-badge-violet">Engine</span>
           </div>
           <div id="signalEngineStatus">
             <div class="metric-row"><span class="row-label">Service</span><span class="row-value">signal-engine (port 3861)</span></div>
-            <div class="metric-row"><span class="row-label">Pipeline</span><span class="row-value">Rolling Windows (5m/15m/1h/24h)</span></div>
-            <div class="metric-row"><span class="row-label">Detectors</span><span class="row-value">4 (momentum, volume, liquidity, new_pair)</span></div>
-            <div class="metric-row"><span class="row-label">Scoring</span><span class="row-value">&gt;70 Strong Trade, 50-70 Watchlist</span></div>
-            <div class="metric-row"><span class="row-label">WebSocket</span><span class="row-value">ws://localhost:3861/ws/signals/live</span></div>
-            <div class="metric-row"><span class="row-label">Broadcast</span><span class="row-value">Every 5s (top signals summary)</span></div>
+            <div class="metric-row"><span class="row-label">Pipeline</span><span class="row-value">Rolling 5m/15m/1h/24h</span></div>
+            <div class="metric-row"><span class="row-label">Detectors</span><span class="row-value">4 active</span></div>
+            <div class="metric-row"><span class="row-label">Thresholds</span><span class="row-value">&gt;70 Trade, 50-70 Watch</span></div>
+            <div class="metric-row"><span class="row-label">WebSocket</span><span class="row-value">ws://localhost:3861/ws</span></div>
+            <div class="metric-row"><span class="row-label">Broadcast</span><span class="row-value">Every 5s (top signals)</span></div>
           </div>
         </div>
       </div>
       <div class="analysis-card" style="margin-top:16px;">
         <div class="analysis-card-header">
           <span class="analysis-card-title">🏆 Top Signals (All Chains)</span>
-          <span class="data-source-badge" style="background:rgba(0,200,255,0.12);color:#00c8ff;">Live</span>
+          <span class="data-source-badge dex-badge-cyan">Live</span>
         </div>
         <div id="signalTopAll">
           <div class="loading"><div class="loading-spinner"></div>Loading top signals...</div>
@@ -1735,7 +1853,7 @@
 
       <div>
         <div class="analysis-card" style="margin-bottom: 16px;">
-          <div class="analysis-card-header"><span class="analysis-card-title">� Alpha Sources</span></div>
+          <div class="analysis-card-header"><span class="analysis-card-title">🎯 Alpha Sources</span></div>
           <div style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.7;">
             <p style="margin-bottom: 8px; color: var(--text-primary); font-weight: 600;">Substacks:</p>
             <div style="margin-bottom: 12px;">
@@ -1781,7 +1899,7 @@
   </div>
 
   <script>
-    console.log('🤖 On-Chain Analyst Agent v3.0 - Smart Trading System');
+    console.log('🤖 On-Chain Analyst Agent v3.3 - Smart Trading System');
 
     const MARKETS = [
       { symbol: 'BTC', name: 'Bitcoin', icon: '₿', geckoId: 'bitcoin', binanceSymbol: 'BTCUSDT' },
@@ -2790,77 +2908,79 @@
     function renderDexPair(pair) {
       const change = pair.price_change_5m || pair.price_change_1h || 0;
       const cls = change >= 0 ? 'positive' : 'negative';
-      const vol = pair.volume_24h ? '$' + (pair.volume_24h / 1e6).toFixed(1) + 'M' : '--';
-      const liq = pair.liquidity_usd ? '$' + (pair.liquidity_usd / 1e6).toFixed(1) + 'M' : '--';
-      const price = pair.price_usd ? (pair.price_usd < 0.01 ? '$' + pair.price_usd.toFixed(6) : '$' + pair.price_usd.toFixed(4)) : '--';
-      return `<div class="metric-row">
-        <span class="row-label" style="display:flex;align-items:center;gap:6px;">
-          <span style="font-weight:600;color:var(--text-primary);">${pair.base_token_symbol || pair.token_symbol || '??'}</span>
-          <span style="font-size:0.7rem;color:var(--text-muted);">${pair.chain_id || ''}</span>
-        </span>
-        <span class="row-value" style="display:flex;gap:8px;align-items:center;">
-          <span>${price}</span>
-          <span class="${cls}" style="font-size:0.75rem;">${change >= 0 ? '+' : ''}${change.toFixed(1)}%</span>
-          <span style="font-size:0.7rem;color:var(--text-muted);">V:${vol}</span>
-          <span style="font-size:0.7rem;color:var(--text-muted);">L:${liq}</span>
-        </span>
+      const vol = pair.volume_24h ? '$' + (pair.volume_24h >= 1e6 ? (pair.volume_24h / 1e6).toFixed(1) + 'M' : (pair.volume_24h / 1e3).toFixed(0) + 'K') : '--';
+      const liq = pair.liquidity_usd ? '$' + (pair.liquidity_usd >= 1e6 ? (pair.liquidity_usd / 1e6).toFixed(1) + 'M' : (pair.liquidity_usd / 1e3).toFixed(0) + 'K') : '--';
+      const price = pair.price_usd ? (pair.price_usd < 0.001 ? '$' + pair.price_usd.toFixed(8) : pair.price_usd < 0.01 ? '$' + pair.price_usd.toFixed(6) : pair.price_usd < 1 ? '$' + pair.price_usd.toFixed(4) : '$' + pair.price_usd.toFixed(2)) : '--';
+      return `<div class="dex-pair-row">
+        <div class="dex-pair-info">
+          <span class="dex-pair-symbol">${pair.base_token_symbol || pair.token_symbol || '??'}</span>
+          <span class="dex-pair-chain">${pair.chain_id || ''}</span>
+        </div>
+        <div class="dex-pair-metrics">
+          <span class="dex-pair-price">${price}</span>
+          <span class="dex-pair-change ${cls}">${change >= 0 ? '+' : ''}${change.toFixed(1)}%</span>
+          <span class="dex-pair-vol">${vol}</span>
+          <span class="dex-pair-liq">${liq}</span>
+        </div>
       </div>`;
     }
 
     function renderSignalToken(token) {
       const score = token.total_score || 0;
-      const cls = score >= 70 ? 'positive' : score >= 50 ? '' : 'negative';
+      const scoreCls = score >= 70 ? 'high' : score >= 50 ? 'medium' : 'low';
       const badge = score >= 70 ? '🟢' : score >= 50 ? '🟡' : '🔴';
+      const barColor = score >= 70 ? '#00e87a' : score >= 50 ? '#e8a020' : '#ef4444';
       const signals = (token.signals || []).map(s => s.signal_type.replace('_', ' ')).join(', ') || '--';
-      return `<div class="metric-row">
-        <span class="row-label" style="display:flex;align-items:center;gap:6px;">
-          <span>${badge}</span>
-          <span style="font-weight:600;color:var(--text-primary);">${token.token_symbol || '??'}</span>
-          <span style="font-size:0.7rem;color:var(--text-muted);">${token.chain_id || ''}</span>
-        </span>
-        <span class="row-value" style="display:flex;gap:8px;align-items:center;">
-          <span class="${cls}" style="font-weight:700;">${score.toFixed(0)}</span>
-          <span style="font-size:0.7rem;color:var(--text-muted);">${signals}</span>
-        </span>
+      return `<div class="signal-token-row">
+        <div class="signal-token-info">
+          <span class="signal-badge">${badge}</span>
+          <span class="signal-token-symbol">${token.token_symbol || '??'}</span>
+          <span class="signal-token-chain">${token.chain_id || ''}</span>
+        </div>
+        <div class="signal-token-right">
+          <span class="signal-score ${scoreCls}">${score.toFixed(0)}</span>
+          <div class="signal-score-bar"><div class="signal-score-fill" style="width:${score}%;background:${barColor};"></div></div>
+          <span class="signal-types">${signals}</span>
+        </div>
       </div>`;
     }
 
     async function fetchDexscreenerData() {
       try {
         // Fetch top movers
-        const moversRes = await fetch(`${MARKET_DATA_URL}/api/v1/pairs/top-movers`).catch(() => null);
+        const moversRes = await fetch(`${MARKET_DATA_URL}/api/v1/pairs/top-movers`, { signal: AbortSignal.timeout(5000) }).catch(() => null);
         if (moversRes && moversRes.ok) {
           const movers = await moversRes.json();
           const items = (movers.top_movers || movers.data || movers || []).slice(0, 8);
           document.getElementById('dexTopMovers').innerHTML = items.length 
             ? items.map(renderDexPair).join('') 
-            : '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No top movers data yet<br><span style="font-size:0.72rem;">Start market-data service on port 3860</span></div>';
+            : '<div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-text">No top movers data yet</div><div class="empty-state-hint">Data populates as the poller runs</div></div>';
         } else {
-          document.getElementById('dexTopMovers').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">Market Data Service offline<br><span style="font-size:0.72rem;">Run: python -m services.market-data.main</span></div>';
+          document.getElementById('dexTopMovers').innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔌</div><div class="empty-state-text">Market Data Service offline</div><div class="empty-state-hint">Run: python -m services.market_data.main</div></div>';
         }
 
         // Fetch new pairs
-        const newRes = await fetch(`${MARKET_DATA_URL}/api/v1/pairs/new`).catch(() => null);
+        const newRes = await fetch(`${MARKET_DATA_URL}/api/v1/pairs/new`, { signal: AbortSignal.timeout(5000) }).catch(() => null);
         if (newRes && newRes.ok) {
           const newPairs = await newRes.json();
           const items = (newPairs.pairs || newPairs.data || newPairs || []).slice(0, 6);
           document.getElementById('dexNewPairs').innerHTML = items.length 
             ? items.map(renderDexPair).join('') 
-            : '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No new pairs yet</div>';
+            : '<div class="empty-state"><div class="empty-state-icon">🆕</div><div class="empty-state-text">No new pairs detected</div><div class="empty-state-hint">Pairs appear within minutes of creation</div></div>';
         } else {
-          document.getElementById('dexNewPairs').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">Waiting for service...</div>';
+          document.getElementById('dexNewPairs').innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><div class="empty-state-text">Waiting for service...</div></div>';
         }
 
         // Fetch liquidity changes
-        const liqRes = await fetch(`${MARKET_DATA_URL}/api/v1/pairs/liquidity-changes`).catch(() => null);
+        const liqRes = await fetch(`${MARKET_DATA_URL}/api/v1/pairs/liquidity-changes`, { signal: AbortSignal.timeout(5000) }).catch(() => null);
         if (liqRes && liqRes.ok) {
           const liqData = await liqRes.json();
           const items = (liqData.changes || liqData.data || liqData || []).slice(0, 6);
           document.getElementById('dexLiquidityChanges').innerHTML = items.length 
             ? items.map(renderDexPair).join('') 
-            : '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No significant changes yet</div>';
+            : '<div class="empty-state"><div class="empty-state-icon">💧</div><div class="empty-state-text">No significant shifts</div><div class="empty-state-hint">Triggers on ±20% liquidity change</div></div>';
         } else {
-          document.getElementById('dexLiquidityChanges').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">Waiting for service...</div>';
+          document.getElementById('dexLiquidityChanges').innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><div class="empty-state-text">Waiting for service...</div></div>';
         }
       } catch (err) {
         console.warn('Dexscreener data fetch failed:', err);
@@ -2870,39 +2990,39 @@
     async function fetchSignalData() {
       try {
         // Strong trades
-        const strongRes = await fetch(`${SIGNAL_ENGINE_URL}/api/v1/signals/strong-trades`).catch(() => null);
+        const strongRes = await fetch(`${SIGNAL_ENGINE_URL}/api/v1/signals/strong-trades`, { signal: AbortSignal.timeout(5000) }).catch(() => null);
         if (strongRes && strongRes.ok) {
           const data = await strongRes.json();
           const items = (data.tokens || data.data || data || []).slice(0, 8);
           document.getElementById('signalStrongTrades').innerHTML = items.length 
             ? items.map(renderSignalToken).join('') 
-            : '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No strong trades detected yet<br><span style="font-size:0.72rem;">Signals build over time as data accumulates</span></div>';
+            : '<div class="empty-state"><div class="empty-state-icon">⚡</div><div class="empty-state-text">No strong trades detected</div><div class="empty-state-hint">Signals build as data accumulates</div></div>';
         } else {
-          document.getElementById('signalStrongTrades').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">Signal Engine offline<br><span style="font-size:0.72rem;">Run: python -m services.signal-engine.main</span></div>';
+          document.getElementById('signalStrongTrades').innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔌</div><div class="empty-state-text">Signal Engine offline</div><div class="empty-state-hint">Run: python -m services.signal_engine.main</div></div>';
         }
 
         // Watchlist
-        const watchRes = await fetch(`${SIGNAL_ENGINE_URL}/api/v1/signals/watchlist`).catch(() => null);
+        const watchRes = await fetch(`${SIGNAL_ENGINE_URL}/api/v1/signals/watchlist`, { signal: AbortSignal.timeout(5000) }).catch(() => null);
         if (watchRes && watchRes.ok) {
           const data = await watchRes.json();
           const items = (data.tokens || data.data || data || []).slice(0, 8);
           document.getElementById('signalWatchlist').innerHTML = items.length 
             ? items.map(renderSignalToken).join('') 
-            : '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No watchlist tokens yet</div>';
+            : '<div class="empty-state"><div class="empty-state-icon">👁️</div><div class="empty-state-text">No watchlist tokens</div><div class="empty-state-hint">Tokens scoring 50-70 appear here</div></div>';
         } else {
-          document.getElementById('signalWatchlist').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">Waiting for service...</div>';
+          document.getElementById('signalWatchlist').innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><div class="empty-state-text">Waiting for service...</div></div>';
         }
 
         // Top signals
-        const topRes = await fetch(`${SIGNAL_ENGINE_URL}/api/v1/signals/top`).catch(() => null);
+        const topRes = await fetch(`${SIGNAL_ENGINE_URL}/api/v1/signals/top`, { signal: AbortSignal.timeout(5000) }).catch(() => null);
         if (topRes && topRes.ok) {
           const data = await topRes.json();
           const items = (data.tokens || data.data || data || []).slice(0, 10);
           document.getElementById('signalTopAll').innerHTML = items.length 
             ? items.map(renderSignalToken).join('') 
-            : '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No signals yet — pipeline warming up</div>';
+            : '<div class="empty-state"><div class="empty-state-icon">🏆</div><div class="empty-state-text">No signals yet</div><div class="empty-state-hint">Pipeline warming up — data flows in ~60s</div></div>';
         } else {
-          document.getElementById('signalTopAll').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.82rem;">Waiting for service...</div>';
+          document.getElementById('signalTopAll').innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><div class="empty-state-text">Waiting for service...</div></div>';
         }
       } catch (err) {
         console.warn('Signal engine fetch failed:', err);
@@ -2916,20 +3036,22 @@
         let searchTimeout;
         searchInput.addEventListener('input', () => {
           clearTimeout(searchTimeout);
+          const resultsEl = document.getElementById('dexSearchResults');
           searchTimeout = setTimeout(async () => {
             const q = searchInput.value.trim();
-            if (q.length < 2) { document.getElementById('dexSearchResults').innerHTML = ''; return; }
+            if (q.length < 2) { resultsEl.innerHTML = ''; return; }
+            resultsEl.innerHTML = '<div class="loading" style="padding:12px;"><div class="loading-spinner" style="width:20px;height:20px;"></div></div>';
             try {
-              const res = await fetch(`${MARKET_DATA_URL}/api/v1/search?q=${encodeURIComponent(q)}`);
+              const res = await fetch(`${MARKET_DATA_URL}/api/v1/search?q=${encodeURIComponent(q)}`, { signal: AbortSignal.timeout(5000) });
               if (res.ok) {
                 const data = await res.json();
                 const pairs = (data.pairs || data.data || data || []).slice(0, 8);
-                document.getElementById('dexSearchResults').innerHTML = pairs.length 
+                resultsEl.innerHTML = pairs.length 
                   ? pairs.map(renderDexPair).join('') 
-                  : '<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No results</div>';
+                  : '<div class="empty-state" style="padding:12px;"><div class="empty-state-text">No results for "' + q + '"</div></div>';
               }
             } catch (err) {
-              document.getElementById('dexSearchResults').innerHTML = '<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:0.82rem;">Search unavailable</div>';
+              resultsEl.innerHTML = '<div class="empty-state" style="padding:12px;"><div class="empty-state-icon">🔍</div><div class="empty-state-text">Search unavailable</div></div>';
             }
           }, 400);
         });
@@ -2938,7 +3060,7 @@
 
     async function init() {
       const startTime = performance.now();
-      console.log('🚀 Initializing On-Chain Analyst Agent v3.2 (optimized)...');
+      console.log('🚀 Initializing On-Chain Analyst Agent v3.3 (refined)...');
       
       // Sync init - fast
       initTabs();
@@ -3018,13 +3140,16 @@
   </script>
   
   <script>
-    document.querySelectorAll('a[href$=".html"]').forEach(link => {
-      const href = link.getAttribute('href');
-      if (!href) return;
-      const [path, hash] = href.split('#');
-      const cleaned = path.replace(/\.html$/, '');
-      link.setAttribute('href', hash ? `${cleaned}#${hash}` : cleaned);
-    });
+    // Clean URLs for Vercel deployment (removes .html extension from internal links)
+    if (window.location.hostname !== 'localhost' && !window.location.hostname.startsWith('127.')) {
+      document.querySelectorAll('a[href$=".html"]').forEach(link => {
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('http')) return;
+        const [path, hash] = href.split('#');
+        const cleaned = path.replace(/\.html$/, '');
+        link.setAttribute('href', hash ? `${cleaned}#${hash}` : cleaned);
+      });
+    }
   </script>
 </body>
 </html>
