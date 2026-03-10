@@ -1,16 +1,20 @@
 /**
- * Options Chain API — Deribit Integration + Black-Scholes Greeks
+ * Options & Perps Trading API — Deribit + Hyperliquid Live Data
  * ═══════════════════════════════════════════════════════════════
  *
  * Endpoints:
- *   GET /api/options?action=expiries&asset=BTC              → Available expiry dates
- *   GET /api/options?action=chain&asset=BTC&expiry=2025-06-27  → Options chain with greeks
- *   GET /api/options?action=spot&asset=BTC                  → Current spot/index price
- *   GET /api/options?action=funding&asset=BTC               → Perp funding rate (Hyperliquid)
+ *   GET  /api/options-data?action=spot&asset=BTC                     → Live spot/index price
+ *   GET  /api/options-data?action=ticker&asset=BTC                   → Live ticker (spot + perp + funding + 24h)
+ *   GET  /api/options-data?action=expiries&asset=BTC                 → Available expiry dates
+ *   GET  /api/options-data?action=chain&asset=BTC&expiry=2025-06-27  → Options chain with greeks
+ *   GET  /api/options-data?action=funding&asset=BTC                  → Perp funding rate (Hyperliquid)
+ *   GET  /api/options-data?action=orderbook&asset=BTC                → Perp L2 orderbook (Hyperliquid)
+ *   GET  /api/options-data?action=market-info&asset=BTC              → Exchange config (leverage, fees, ticks)
+ *   POST /api/options-data?action=validate-trade                     → Server-side trade validation
  *
  * Data Sources:
  *   - Deribit Public API (options chain, IV, prices)  — no auth required
- *   - Hyperliquid API (perp funding rates)
+ *   - Hyperliquid API (perp funding, orderbook, market info)
  *   - Black-Scholes model (greeks calculated server-side from IV)
  *
  * Assets: BTC, ETH, SOL
@@ -23,11 +27,12 @@ const HYPERLIQUID = 'https://api.hyperliquid.xyz/info';
 //  CACHE
 // ═══════════════════════════════════════════
 const cache = new Map();
-const CACHE_TTL = 30_000; // 30s for fast-moving options data
+const CACHE_TTL = 15_000;      // 15s default
+const CACHE_TTL_FAST = 5_000;  // 5s for orderbook/ticker
 
-function getCached(key) {
+function getCached(key, ttl) {
   const c = cache.get(key);
-  if (c && Date.now() - c.ts < CACHE_TTL) return c.data;
+  if (c && Date.now() - c.ts < (ttl || CACHE_TTL)) return c.data;
   return null;
 }
 function setCache(key, data) {
@@ -36,7 +41,7 @@ function setCache(key, data) {
 
 async function fetchJSON(url, opts = {}) {
   const cacheKey = opts.cacheKey || url;
-  const cached = getCached(cacheKey);
+  const cached = getCached(cacheKey, opts.cacheTTL);
   if (cached) return cached;
 
   try {
@@ -47,7 +52,7 @@ async function fetchJSON(url, opts = {}) {
     if (opts.body) fetchOpts.body = JSON.stringify(opts.body);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    const timeout = setTimeout(() => controller.abort(), opts.timeout || 8000);
     fetchOpts.signal = controller.signal;
 
     const r = await fetch(url, fetchOpts);
@@ -139,7 +144,7 @@ function bsGreeks(S, K, T, r, iv, isCall) {
 const VALID_ASSETS = ['BTC', 'ETH', 'SOL'];
 
 function defaultSpot(c) {
-  return { BTC: 105000, ETH: 3800, SOL: 180 }[c] || 100;
+  return { BTC: 69000, ETH: 2000, SOL: 180 }[c] || 100;
 }
 
 async function deribitGet(endpoint, params) {
@@ -147,18 +152,55 @@ async function deribitGet(endpoint, params) {
   return fetchJSON(`${DERIBIT}/${endpoint}?${qs}`, { cacheKey: `deribit:${endpoint}:${qs}` });
 }
 
+async function hlPost(type, extraBody = {}) {
+  return fetchJSON(HYPERLIQUID, {
+    method: 'POST',
+    body: { type, ...extraBody },
+    cacheKey: `hl:${type}:${JSON.stringify(extraBody)}`,
+    cacheTTL: CACHE_TTL_FAST
+  });
+}
+
 // ═══════════════════════════════════════════
 //  ACTION HANDLERS
 // ═══════════════════════════════════════════
 
-/** GET /api/options?action=spot&asset=BTC */
+/** GET /api/options-data?action=spot&asset=BTC */
 async function handleSpot(asset) {
   const data = await deribitGet('get_index_price', { index_name: `${asset.toLowerCase()}_usd` });
   const spot = data?.index_price || defaultSpot(asset);
   return { spot, asset };
 }
 
-/** GET /api/options?action=expiries&asset=BTC */
+/** GET /api/options-data?action=ticker&asset=BTC — Full live ticker */
+async function handleTicker(asset) {
+  const [spotData, meta] = await Promise.all([
+    deribitGet('get_index_price', { index_name: `${asset.toLowerCase()}_usd` }),
+    hlPost('metaAndAssetCtxs')
+  ]);
+  const spot = spotData?.index_price || defaultSpot(asset);
+  const universe = meta?.[0]?.universe || [];
+  const ctxs = meta?.[1] || [];
+  const idx = universe.findIndex(u => u.name === asset);
+  const ctx = idx >= 0 ? ctxs[idx] : {};
+  const markPx = parseFloat(ctx.markPx || '0') || spot;
+  const funding = parseFloat(ctx.funding || '0');
+  const oi = parseFloat(ctx.openInterest || '0');
+  const vol24h = parseFloat(ctx.dayNtlVlm || '0');
+  const prevDay = parseFloat(ctx.prevDayPx || '0');
+  const change24h = prevDay > 0 ? ((markPx - prevDay) / prevDay * 100) : 0;
+  return {
+    asset, spot, markPrice: markPx,
+    fundingRate: +(funding * 100).toFixed(6),
+    fundingAnnualized: +(funding * 100 * 3 * 365).toFixed(2),
+    openInterest: oi, volume24h: vol24h,
+    change24h: +change24h.toFixed(2), prevDayPx: prevDay,
+    premium: +((markPx - spot) / spot * 100).toFixed(4),
+    timestamp: Date.now()
+  };
+}
+
+/** GET /api/options-data?action=expiries&asset=BTC */
 async function handleExpiries(asset) {
   const instruments = await deribitGet('get_instruments', { currency: asset, kind: 'option', expired: 'false' });
 
@@ -189,7 +231,7 @@ async function handleExpiries(asset) {
   };
 }
 
-/** GET /api/options?action=chain&asset=BTC&expiry=2025-06-27 */
+/** GET /api/options-data?action=chain&asset=BTC&expiry=2025-06-27 */
 async function handleChain(asset, expiry) {
   // Parallel fetch: instruments, book summaries, spot price
   const [instruments, summaries, spotData] = await Promise.all([
@@ -259,9 +301,9 @@ async function handleChain(asset, expiry) {
     chain.get(strike)[isCall ? 'call' : 'put'] = optData;
   }
 
-  // Filter to ±50% of spot, sort by strike
+  // Filter to ±25% of spot, sort by strike (tighter range for practical trading)
   const sorted = Array.from(chain.values())
-    .filter(row => row.strike >= spot * 0.5 && row.strike <= spot * 1.5)
+    .filter(row => row.strike >= spot * 0.75 && row.strike <= spot * 1.25)
     .sort((a, b) => a.strike - b.strike);
 
   // Get available expiries from this chain
@@ -270,7 +312,7 @@ async function handleChain(asset, expiry) {
   return { spot, chain: sorted, asset, expiry: expiry || expiries[0], expiries };
 }
 
-/** GET /api/options?action=funding&asset=BTC */
+/** GET /api/options-data?action=funding&asset=BTC */
 async function handleFunding(asset) {
   try {
     // Hyperliquid funding rates
@@ -306,6 +348,101 @@ async function handleFunding(asset) {
 }
 
 // ═══════════════════════════════════════════
+//  ORDERBOOK, MARKET-INFO, VALIDATE-TRADE
+// ═══════════════════════════════════════════
+
+/** GET /api/options-data?action=orderbook&asset=BTC — Perp L2 orderbook */
+async function handleOrderbook(asset) {
+  const data = await fetchJSON(HYPERLIQUID, {
+    method: 'POST',
+    body: { type: 'l2Book', coin: asset },
+    cacheKey: `hl:ob:${asset}`,
+    cacheTTL: CACHE_TTL_FAST,
+    timeout: 5000
+  });
+  if (!data || !data.levels) {
+    return { asset, bids: [], asks: [], spread: 0, midPrice: 0 };
+  }
+  const bids = (data.levels[0] || []).slice(0, 15).map(l => ({
+    price: parseFloat(l.px), size: parseFloat(l.sz), total: parseFloat(l.px) * parseFloat(l.sz)
+  }));
+  const asks = (data.levels[1] || []).slice(0, 15).map(l => ({
+    price: parseFloat(l.px), size: parseFloat(l.sz), total: parseFloat(l.px) * parseFloat(l.sz)
+  }));
+  const bestBid = bids[0]?.price || 0;
+  const bestAsk = asks[0]?.price || 0;
+  const mid = (bestBid + bestAsk) / 2;
+  const spread = bestAsk > 0 ? ((bestAsk - bestBid) / mid * 100) : 0;
+  let cumBid = 0, cumAsk = 0;
+  bids.forEach(b => { cumBid += b.size; b.cumSize = cumBid; });
+  asks.forEach(a => { cumAsk += a.size; a.cumSize = cumAsk; });
+  const maxCum = Math.max(cumBid, cumAsk);
+  bids.forEach(b => b.depth = b.cumSize / maxCum);
+  asks.forEach(a => a.depth = a.cumSize / maxCum);
+  return { asset, bids, asks, bestBid, bestAsk, midPrice: +mid.toFixed(2), spread: +spread.toFixed(4), timestamp: Date.now() };
+}
+
+/** GET /api/options-data?action=market-info&asset=BTC — Exchange config */
+async function handleMarketInfo(asset) {
+  const meta = await hlPost('meta');
+  if (!meta || !meta.universe) {
+    return {
+      asset,
+      maxLeverage: { BTC: 50, ETH: 50, SOL: 20 }[asset] || 20,
+      tickSize: { BTC: 0.1, ETH: 0.01, SOL: 0.001 }[asset] || 0.01,
+      minSize: { BTC: 0.001, ETH: 0.01, SOL: 0.1 }[asset] || 0.01,
+      stepSize: { BTC: 0.001, ETH: 0.01, SOL: 0.1 }[asset] || 0.01,
+      makerFee: 0.0002, takerFee: 0.0005
+    };
+  }
+  const assetInfo = meta.universe.find(u => u.name === asset);
+  if (!assetInfo) {
+    return { asset, maxLeverage: 20, tickSize: 0.01, minSize: 0.01, stepSize: 0.01, makerFee: 0.0002, takerFee: 0.0005 };
+  }
+  const szDec = assetInfo.szDecimals || 3;
+  return {
+    asset, maxLeverage: assetInfo.maxLeverage || 50,
+    tickSize: parseFloat(Math.pow(10, -szDec)),
+    minSize: parseFloat(Math.pow(10, -szDec)),
+    stepSize: parseFloat(Math.pow(10, -szDec)),
+    szDecimals: szDec,
+    makerFee: 0.0002, takerFee: 0.0005, exchange: 'Hyperliquid'
+  };
+}
+
+/** POST /api/options-data?action=validate-trade — Pre-execution trade validation */
+async function handleValidateTrade(body) {
+  const { asset, side, type, size, leverage, price, orderType } = body || {};
+  const errors = [];
+  const a = (asset || 'BTC').toUpperCase();
+  if (!VALID_ASSETS.includes(a)) errors.push('Invalid asset');
+  if (!side || !['buy', 'sell'].includes(side)) errors.push('Invalid side (buy/sell)');
+  if (!type || !['perp', 'call', 'put'].includes(type)) errors.push('Invalid type');
+  if (!size || size <= 0) errors.push('Size must be > 0');
+  if (type === 'perp' && leverage && (leverage < 1 || leverage > 50)) errors.push('Leverage must be 1-50');
+  if (errors.length > 0) return { valid: false, errors };
+  const spotData = await deribitGet('get_index_price', { index_name: `${a.toLowerCase()}_usd` });
+  const spot = spotData?.index_price || defaultSpot(a);
+  const notional = spot * size;
+  const margin = type === 'perp' ? notional / (leverage || 1) : 0;
+  const fee = notional * 0.0005;
+  const liqPrice = type === 'perp' && leverage > 1
+    ? (side === 'buy' ? spot * (1 - 0.9 / leverage) : spot * (1 + 0.9 / leverage))
+    : null;
+  return {
+    valid: true,
+    summary: {
+      asset: a, side, type, size, leverage: type === 'perp' ? (leverage || 1) : null,
+      entryPrice: price || spot, notionalValue: +notional.toFixed(2),
+      marginRequired: +margin.toFixed(2), estimatedFee: +fee.toFixed(2),
+      liquidationPrice: liqPrice ? +liqPrice.toFixed(2) : null,
+      exchange: type === 'perp' ? 'Hyperliquid' : 'Deribit',
+      orderType: orderType || 'market', spot, timestamp: Date.now()
+    }
+  };
+}
+
+// ═══════════════════════════════════════════
 //  SYNTHETIC DATA FALLBACK
 // ═══════════════════════════════════════════
 
@@ -332,10 +469,10 @@ function syntheticChain(asset, spot, expiry) {
   const r = 0.05;
   const baseIV = 0.55;
 
-  const intervals = { BTC: 5000, ETH: 100, SOL: 5 };
+  const intervals = { BTC: 1000, ETH: 50, SOL: 2 };
   const step = intervals[asset] || Math.round(spot / 20);
-  const lo = Math.round((spot * 0.7) / step) * step;
-  const hi = Math.round((spot * 1.3) / step) * step;
+  const lo = Math.round((spot * 0.8) / step) * step;
+  const hi = Math.round((spot * 1.2) / step) * step;
 
   for (let strike = lo; strike <= hi; strike += step) {
     const moneyness = Math.log(spot / strike);
@@ -385,37 +522,58 @@ function syntheticChain(asset, spot, expiry) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // Parse query
   const url = new URL(req.url, `http://${req.headers.host}`);
   const action = url.searchParams.get('action');
   const asset = (url.searchParams.get('asset') || 'BTC').toUpperCase();
   const expiry = url.searchParams.get('expiry');
 
-  if (!VALID_ASSETS.includes(asset)) {
+  if (!['validate-trade'].includes(action) && !VALID_ASSETS.includes(asset)) {
     return res.status(400).json({ error: `Invalid asset "${asset}". Use: ${VALID_ASSETS.join(', ')}` });
+  }
+
+  // Fast-moving data gets shorter cache
+  const fastActions = ['ticker', 'orderbook', 'spot'];
+  if (fastActions.includes(action)) {
+    res.setHeader('Cache-Control', 's-maxage=5, stale-while-revalidate=10');
+  } else {
+    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
   }
 
   try {
     switch (action) {
       case 'spot':
         return res.json(await handleSpot(asset));
+      case 'ticker':
+        return res.json(await handleTicker(asset));
       case 'expiries':
         return res.json(await handleExpiries(asset));
       case 'chain':
         return res.json(await handleChain(asset, expiry));
       case 'funding':
         return res.json(await handleFunding(asset));
+      case 'orderbook':
+        return res.json(await handleOrderbook(asset));
+      case 'market-info':
+        return res.json(await handleMarketInfo(asset));
+      case 'validate-trade': {
+        if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+        let body = '';
+        await new Promise((resolve) => {
+          req.on('data', chunk => body += chunk);
+          req.on('end', resolve);
+        });
+        return res.json(await handleValidateTrade(JSON.parse(body || '{}')));
+      }
       default:
         return res.status(400).json({
           error: 'Missing or invalid "action" parameter',
-          validActions: ['spot', 'expiries', 'chain', 'funding'],
-          example: '/api/options?action=chain&asset=BTC&expiry=2025-06-27'
+          validActions: ['spot', 'ticker', 'expiries', 'chain', 'funding', 'orderbook', 'market-info', 'validate-trade'],
+          example: '/api/options-data?action=ticker&asset=BTC'
         });
     }
   } catch (e) {
