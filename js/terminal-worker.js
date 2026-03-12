@@ -1,12 +1,14 @@
 /* ═══════════════════════════════════════════════════════════
-   NEXXORE TERMINAL v4 — WEB WORKER
+   NEXXORE TERMINAL v5 — WEB WORKER
    Off-main-thread: RSS parsing, sentiment, signals, correlation
+   Categories: MARKETS, CRYPTO, FED, GEOPOLITICS, SHIPPING,
+   SANCTIONS, DEFENSE, TRADE, ENERGY, SUPPLY_CHAIN, INDIA, COMMODITIES
    ═══════════════════════════════════════════════════════════ */
 
 // ── Regex patterns (compiled once) ──
-const HIGH_RE = /\b(war|crash|fed rate|rate hike|rate cut|sanctions?|default|collapse|surge|plunge|bankrupt|crisis|attack|missile|nuclear|recession|emergency|panic|houthi|blockade|embargo|invasion|coup|liquidat)\b/i;
-const MED_RE = /\b(earnings|inflation|GDP|trade deal|merger|acquisition|IPO|unemployment|tariff|stimulus|FOMC|treasury|bond|yield|CPI|shipping|freight|port|canal|pipeline|nifty|sensex|RBI|BOJ|ECB|etf|inflow|outflow)\b/i;
-const SHIP_RE = /\b(shipping|freight|vessel|tanker|port|canal|suez|panama|hormuz|malacca|strait|maritime|container|dry bulk|BDI|reroute|piracy|houthi)\b/i;
+const HIGH_RE = /\b(war|crash|fed rate|rate hike|rate cut|sanctions?|default|collapse|surge|plunge|bankrupt|crisis|attack|missile|nuclear|recession|emergency|panic|houthi|blockade|embargo|invasion|coup|liquidat|airstrike|drone strike|carrier strike|escalation|martial law|weapon|warhead)\b/i;
+const MED_RE = /\b(earnings|inflation|GDP|trade deal|merger|acquisition|IPO|unemployment|tariff|stimulus|FOMC|treasury|bond|yield|CPI|shipping|freight|port|canal|pipeline|nifty|sensex|RBI|BOJ|ECB|etf|inflow|outflow|semiconductor|chip ban|rare earth|lng|export ban|belt and road|nato|submarine cable|opec|grain|supply chain|sanctions|munitions|defense budget)\b/i;
+const SHIP_RE = /\b(shipping|freight|vessel|tanker|port|canal|suez|panama|hormuz|malacca|strait|maritime|container|dry bulk|BDI|reroute|piracy|houthi|bab el.mandeb|cape of good hope|red sea|arctic route|lng carrier|grain shipment)\b/i;
 const BULL_RE = /crypto.*bull|bitcoin.*surge|btc.*rally|rate cut|dovish|stimulus|adoption|etf.*approv|institutional|inflow|halving|upgrade|etf.*flow/i;
 const BEAR_RE = /crypto.*crash|bitcoin.*ban|btc.*plunge|rate hike|hawkish|sanctions.*crypto|regulation|hack|exploit|outflow|sell.off|liquidat/i;
 
@@ -16,9 +18,14 @@ function classifyCategory(text) {
   if (SHIP_RE.test(t)) return 'SHIPPING';
   if (/bitcoin|btc|ethereum|eth|crypto|defi|nft|token|solana|blockchain|binance|coinbase/.test(t)) return 'CRYPTO';
   if (/\bfed\b|fomc|powell|rate hike|rate cut|treasury|central bank|monetary|ecb|boj/.test(t)) return 'FED';
-  if (/war|conflict|sanctions|geopolit|military|nato|china.*taiwan|russia|iran|missile|attack|houthi/.test(t)) return 'GEOPOLITICS';
+  if (/sanction|embargo|ban|blacklist|ofac|swift disconnect|asset freeze|export control|chip ban/.test(t)) return 'SANCTIONS';
+  if (/\bdefense|\bmilitary|\bnavy|\barmy|missile|weapon|drone|nato|pentagon|carrier|warship|submarine|air force|deployment|munition|conscript/.test(t)) return 'DEFENSE';
+  if (/\btariff|trade war|\bimport duty|\bexport|\bcustoms|\bfta|\bbri|belt and road|rcep|usmca|cptpp|trade route|trade corridor|nearshoring|reshoring/.test(t)) return 'TRADE';
+  if (/\bpipeline|\blng|\bopec|refinery|drilling|nuclear energy|solar farm|wind farm|power grid|energy crisis|oil field|gas field|hydrogen|renewable/.test(t)) return 'ENERGY';
+  if (/supply chain|semiconductor|chip|rare earth|cobalt|lithium|factory|manufactur|chip shortage|fab|foundry|logistics disruption/.test(t)) return 'SUPPLY_CHAIN';
+  if (/war|conflict|geopolit|coup|invasion|insurgent|terror|houthi|china.*taiwan|russia|iran/.test(t)) return 'GEOPOLITICS';
   if (/nifty|sensex|bse|nse|rbi|india|rupee|adani|reliance|tata/.test(t)) return 'INDIA';
-  if (/oil|gold|silver|commodity|wheat|corn|natural gas|copper|crude/.test(t)) return 'COMMODITIES';
+  if (/oil|gold|silver|commodity|wheat|corn|natural gas|copper|crude|grain|nickel/.test(t)) return 'COMMODITIES';
   return 'MARKETS';
 }
 function cryptoImpact(text) {

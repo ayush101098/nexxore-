@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -165,6 +166,16 @@ body::after {
 .s-gecko { background:rgba(136,204,0,.1); color:#88cc00; }
 .s-et { background:rgba(255,100,50,.1); color:#ff6432; }
 .s-nikkei { background:rgba(200,50,50,.1); color:#c83232; }
+.s-alj { background:rgba(200,160,0,.1); color:#c8a000; }
+.s-scmp { background:rgba(0,130,170,.1); color:#0082aa; }
+.s-defnews { background:rgba(100,150,100,.1); color:#6e9e6e; }
+.s-maritime { background:rgba(0,100,180,.1); color:#0064b4; }
+.s-gcapt { background:rgba(0,120,150,.1); color:#007896; }
+.s-livemint { background:rgba(230,100,0,.1); color:#e66400; }
+.s-zerohedge { background:rgba(255,200,0,.1); color:#cca000; }
+.s-ft { background:rgba(255,180,160,.1); color:#f2a08c; }
+.map-ctrl-row { display:flex; flex-wrap:wrap; gap:2px; }
+.map-ctrl-divider { width:100%; height:1px; background:var(--border); margin:1px 0; opacity:.5; }
 .nc { flex:1; min-width:0; }
 .nh { font-size:9px; font-weight:500; color:var(--t1); line-height:1.3; margin-bottom:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 .ni:hover .nh { color:#fff; -webkit-line-clamp:unset; }
@@ -401,6 +412,11 @@ body::after {
       <button class="nf" data-cat="FED">FED</button>
       <button class="nf" data-cat="GEOPOLITICS">GEO</button>
       <button class="nf" data-cat="SHIPPING">SHIP</button>
+      <button class="nf" data-cat="TRADE">TRADE</button>
+      <button class="nf" data-cat="DEFENSE">DEF</button>
+      <button class="nf" data-cat="ENERGY">⚡NRG</button>
+      <button class="nf" data-cat="SUPPLY_CHAIN">SUPPLY</button>
+      <button class="nf" data-cat="SANCTIONS">SANCT</button>
       <button class="nf" data-cat="COMMODITIES">CMDTY</button>
       <button class="nf" data-cat="CRYPTO">CRYPTO</button>
       <button class="nf" data-cat="INDIA">INDIA</button>
@@ -425,20 +441,41 @@ body::after {
         <button class="map-ctrl active" data-layer="sanctions" onclick="togLayer('sanctions',this)">🚫 Sanctions</button>
         <button class="map-ctrl active" data-layer="energy" onclick="togLayer('energy',this)">⚡ Energy</button>
         <button class="map-ctrl" data-layer="oilFlows" onclick="togLayer('oilFlows',this)">🛢 Oil Flows</button>
+        <div class="map-ctrl-divider"></div>
+        <button class="map-ctrl" data-layer="military" onclick="togLayer('military',this)">★ Military</button>
+        <button class="map-ctrl" data-layer="navalFleets" onclick="togLayer('navalFleets',this)">⚓ Naval Fleets</button>
+        <button class="map-ctrl" data-layer="tradeCorridors" onclick="togLayer('tradeCorridors',this)">🛤 Trade Routes</button>
+        <button class="map-ctrl" data-layer="pipelines" onclick="togLayer('pipelines',this)">🔵 Pipelines</button>
+        <button class="map-ctrl" data-layer="submarineCables" onclick="togLayer('submarineCables',this)">🔌 Sub Cables</button>
+        <div class="map-ctrl-divider"></div>
+        <button class="map-ctrl" data-layer="semiconductors" onclick="togLayer('semiconductors',this)">🔬 Chips</button>
+        <button class="map-ctrl" data-layer="rareEarths" onclick="togLayer('rareEarths',this)">⛏ Rare Earth</button>
+        <button class="map-ctrl" data-layer="lngTerminals" onclick="togLayer('lngTerminals',this)">🔥 LNG</button>
+        <button class="map-ctrl" data-layer="grainRoutes" onclick="togLayer('grainRoutes',this)">🌾 Grain</button>
+        <button class="map-ctrl" data-layer="nuclearFacilities" onclick="togLayer('nuclearFacilities',this)">☢ Nuclear</button>
+        <button class="map-ctrl" data-layer="disputedZones" onclick="togLayer('disputedZones',this)">⚔ Disputes</button>
+        <button class="map-ctrl" data-layer="ftaZones" onclick="togLayer('ftaZones',this)">🤝 FTA Zones</button>
       </div>
       <div class="map-legend">
-        <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--red)"></span> Active Conflict</div>
-        <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--orange)"></span> Seismic / Disaster</div>
-        <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--cyan)"></span> Shipping Lane</div>
+        <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--red)"></span> Conflict</div>
+        <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--orange)"></span> Seismic</div>
+        <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--cyan)"></span> Shipping</div>
         <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--amber)"></span> Chokepoint</div>
-        <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--violet)"></span> Sanctions Zone</div>
-        <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--green)"></span> Energy Hub</div>
-        <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--orange)"></span> Oil Flow Route</div>
+        <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--violet)"></span> Sanctions</div>
+        <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--green)"></span> Energy</div>
+        <div class="map-legend-item"><span class="map-legend-dot" style="background:#3b82f6"></span> Military (US)</div>
+        <div class="map-legend-item"><span class="map-legend-dot" style="background:#ef4444"></span> Military (CN/RU)</div>
+        <div class="map-legend-item"><span class="map-legend-dot" style="background:#22c55e"></span> Military (IN)</div>
+        <div class="map-legend-item"><span class="map-legend-dot" style="background:var(--gold)"></span> Rare Earth</div>
+        <div class="map-legend-item"><span class="map-legend-dot" style="background:#FF3D5A"></span> Nuclear</div>
       </div>
       <div class="map-stats" id="mapStats">
         <div class="map-stat"><span class="map-stat-val" id="statConflicts">0</span><span class="map-stat-label">conflicts</span></div>
         <div class="map-stat"><span class="map-stat-val" id="statShipping">0</span><span class="map-stat-label">routes</span></div>
         <div class="map-stat"><span class="map-stat-val" id="statQuakes">0</span><span class="map-stat-label">quakes</span></div>
+        <div class="map-stat"><span class="map-stat-val" id="statMilitary">0</span><span class="map-stat-label">bases</span></div>
+        <div class="map-stat"><span class="map-stat-val" id="statNaval">0</span><span class="map-stat-label">fleets</span></div>
+        <div class="map-stat"><span class="map-stat-val" id="statLayers">20</span><span class="map-stat-label">layers</span></div>
       </div>
       <div class="map-esc-overlay" id="mapEscOverlay">
         <div class="map-esc-title">ESCALATION INDEX</div>
@@ -773,6 +810,14 @@ const RSS_FEEDS=[
   {name:'The Block',url:'https://www.theblock.co/rss.xml',cls:'s-block',region:['GLOBAL']},
   {name:'ET Markets',url:'https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms',cls:'s-et',region:['GLOBAL','INDIA','ASIA']},
   {name:'Nikkei Asia',url:'https://asia.nikkei.com/rss/feed/nar',cls:'s-nikkei',region:['GLOBAL','ASIA']},
+  {name:'Al Jazeera',url:'https://www.aljazeera.com/xml/rss/all.xml',cls:'s-alj',region:['GLOBAL','MENA','ASIA']},
+  {name:'SCMP',url:'https://www.scmp.com/rss/91/feed',cls:'s-scmp',region:['GLOBAL','ASIA']},
+  {name:'Defense News',url:'https://www.defensenews.com/arc/outboundfeeds/rss/',cls:'s-defnews',region:['GLOBAL','AMERICAS','EUROPE']},
+  {name:'Maritime Exec',url:'https://maritime-executive.com/rss',cls:'s-maritime',region:['GLOBAL']},
+  {name:'gCaptain',url:'https://gcaptain.com/feed/',cls:'s-gcapt',region:['GLOBAL']},
+  {name:'Livemint',url:'https://www.livemint.com/rss/markets',cls:'s-livemint',region:['GLOBAL','INDIA','ASIA']},
+  {name:'ZeroHedge',url:'https://feeds.feedburner.com/zerohedge/feed',cls:'s-zerohedge',region:['GLOBAL','AMERICAS']},
+  {name:'FT',url:'https://www.ft.com/rss/home/uk',cls:'s-ft',region:['GLOBAL','EUROPE']},
 ];
 
 async function fetchRSSviaWorker(feed) {
@@ -794,7 +839,7 @@ function parseRSSMainThread(feed, xmlStr) {
     const MED_RE=/\b(earnings|inflation|GDP|trade deal|merger|acquisition|IPO|unemployment|tariff|stimulus|FOMC|treasury|bond|yield|CPI|shipping|freight|port|canal|pipeline|nifty|sensex|RBI|BOJ|ECB)\b/i;
     const SHIP_RE=/\b(shipping|freight|vessel|tanker|port|canal|suez|panama|hormuz|malacca|strait|maritime|container|dry bulk|BDI|reroute|piracy|houthi)\b/i;
     function ci(t){if(HIGH_RE.test(t))return'HIGH';if(MED_RE.test(t))return'MED';return'LOW';}
-    function cc(t){const l=t.toLowerCase();if(SHIP_RE.test(l))return'SHIPPING';if(/bitcoin|btc|ethereum|eth|crypto|defi|nft|token|solana|blockchain/.test(l))return'CRYPTO';if(/\bfed\b|fomc|powell|rate/.test(l))return'FED';if(/war|conflict|sanctions|geopolit|military/.test(l))return'GEOPOLITICS';if(/nifty|sensex|rbi|india/.test(l))return'INDIA';if(/oil|gold|commodity/.test(l))return'COMMODITIES';return'MARKETS';}
+    function cc(t){const l=t.toLowerCase();if(SHIP_RE.test(l))return'SHIPPING';if(/bitcoin|btc|ethereum|eth|crypto|defi|nft|token|solana|blockchain/.test(l))return'CRYPTO';if(/\bfed\b|fomc|powell|rate/.test(l))return'FED';if(/sanction|embargo|ban|blacklist|ofac|swift disconnect/.test(l))return'SANCTIONS';if(/\bdefense|\bmilitary|\bnavy|\barmy|missile|weapon|drone|nato|pentagon|carrier|warship|submarine/.test(l))return'DEFENSE';if(/\btariff|\btrade war|\bimport|\bexport|\bcustoms|\bfta|\bbri|belt and road|rcep|usmca/.test(l))return'TRADE';if(/\bpipeline|\blng|\bopec|\brefinery|\bdrilling|\bnuclear energy|\bsolar|\bwind farm|\bgas|\bpower grid/.test(l))return'ENERGY';if(/supply chain|semiconductor|chip|rare earth|cobalt|lithium|factory|manufactur/.test(l))return'SUPPLY_CHAIN';if(/war|conflict|geopolit|coup|invasion|insurgent|terror/.test(l))return'GEOPOLITICS';if(/nifty|sensex|rbi|india/.test(l))return'INDIA';if(/oil|gold|commodity|copper|wheat|grain/.test(l))return'COMMODITIES';return'MARKETS';}
     function cri(t){const l=t.toLowerCase();if(/crypto.*bull|bitcoin.*surge|btc.*rally|rate cut|dovish/.test(l))return'bullish';if(/crypto.*crash|bitcoin.*ban|btc.*plunge|rate hike/.test(l))return'bearish';return'neutral';}
     xml.querySelectorAll('item').forEach((item,i)=>{
       if(i>=15)return;
@@ -1271,7 +1316,9 @@ function initMap(){
     document.getElementById('statConflicts').textContent = stats.conflicts;
     document.getElementById('statShipping').textContent = stats.shipping;
     document.getElementById('statQuakes').textContent = stats.quakes;
-    const total = stats.conflicts + stats.shipping + stats.quakes;
+    document.getElementById('statMilitary').textContent = stats.military;
+    document.getElementById('statNaval').textContent = stats.naval;
+    const total = stats.conflicts + stats.shipping + stats.quakes + stats.military + stats.naval;
     document.getElementById('mapEvents').textContent = total + ' events';
     document.getElementById('mapLanes').textContent = stats.shipping + ' routes';
     renderEscalationOverlay();
@@ -1292,6 +1339,10 @@ function renderEscalationOverlay() {
     { name: 'Taiwan Strait', esc: 72, color: '#f0b429' },
     { name: 'S. China Sea', esc: 68, color: '#f0b429' },
     { name: 'Sudan', esc: 65, color: '#f0b429' },
+    { name: 'Iraq Militia', esc: 60, color: '#f0b429' },
+    { name: 'Korea DMZ', esc: 55, color: '#8b5cf6' },
+    { name: 'Syria', esc: 52, color: '#8b5cf6' },
+    { name: 'Myanmar', esc: 45, color: '#64748b' },
   ];
   const el = document.getElementById('escItems');
   el.innerHTML = zones.map(z =>
