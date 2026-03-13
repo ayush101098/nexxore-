@@ -28,21 +28,19 @@ const MapEngine = {
   init(containerId) {
     this.map = L.map(containerId, {
       center: [20, 30], zoom: 2, zoomControl: false, scrollWheelZoom: true,
-      attributionControl: false, minZoom: 1, maxZoom: 8,
-      preferCanvas: true
+      attributionControl: false, minZoom: 1, maxZoom: 8
     });
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       updateWhenIdle: true, updateWhenZooming: false
     }).addTo(this.map);
+    // Load ALL default layers instantly — no lazy loading
     this.loadLayer('conflicts');
     this.loadLayer('chokepoints');
-    requestIdleCallback(() => {
-      this.loadLayer('shipping');
-      this.loadLayer('sanctions');
-      this.loadLayer('energy');
-      this.loadLayer('weather');
-      this.loadQuakes();
-    });
+    this.loadLayer('shipping');
+    this.loadLayer('sanctions');
+    this.loadLayer('energy');
+    this.loadLayer('weather');
+    this.loadQuakes();
     return this.map;
   },
 
@@ -95,20 +93,22 @@ const MapEngine = {
   },
 
   _route(pts, opts, popup, store) {
+    opts.className = (opts.className || '') + ' nx-route';
     const line = L.polyline(pts, opts).bindPopup(popup);
     line.addTo(this.map); store.push(line);
     if (pts.length > 2 && opts._emoji) {
       const mid = pts[Math.floor(pts.length / 2)];
-      const icon = L.divIcon({ className: '', html: '<div style="font-size:10px;filter:drop-shadow(0 0 4px '+opts.color+')">'+opts._emoji+'</div>', iconSize: [14,14], iconAnchor: [7,7] });
+      const icon = L.divIcon({ className: '', html: '<div style="font-size:13px;filter:drop-shadow(0 0 6px '+opts.color+'80);animation:floatEmoji 3s ease-in-out infinite">'+opts._emoji+'</div>', iconSize: [18,18], iconAnchor: [9,9] });
       const m = L.marker(mid, { icon }).bindPopup(popup);
       m.addTo(this.map); store.push(m);
     }
   },
 
   _dot(lat, lng, color, size, popup, store, glow) {
+    var s = size + 2;
     const icon = L.divIcon({
-      className: '', iconSize: [size, size], iconAnchor: [size/2, size/2],
-      html: '<div style="width:'+size+'px;height:'+size+'px;background:'+color+';border-radius:50%;box-shadow:0 0 '+(glow||6)+'px '+color+';opacity:.85"></div>'
+      className: '', iconSize: [s, s], iconAnchor: [s/2, s/2],
+      html: '<div style="width:'+s+'px;height:'+s+'px;background:radial-gradient(circle,'+color+' 35%,transparent 100%);border-radius:50%;box-shadow:0 0 '+(glow||10)+'px '+color+',0 0 '+((glow||10)*2)+'px '+color+'40"></div>'
     });
     const m = L.marker([lat, lng], { icon }).bindPopup(popup);
     m.addTo(this.map); store.push(m);
@@ -132,14 +132,14 @@ const MapEngine = {
     ];
     zones.forEach(function(z) {
       var circle = L.circle([z.lat, z.lng], {
-        radius: z.radius, color:'rgba(255,61,90,.6)', fillColor:'rgba(255,61,90,.15)',
-        fillOpacity:.3, weight:1, dashArray:'4 4'
+        radius: z.radius, color:'rgba(255,61,90,.7)', fillColor:'rgba(255,61,90,.12)',
+        fillOpacity:.35, weight:1.5, dashArray:'6 4', className:'nx-conflict-zone'
       });
       var escColor = z.esc > 75 ? '#FF3D5A' : z.esc > 50 ? '#f0b429' : '#64748b';
       var trendSym = z.trend==='up'?'↑':z.trend==='dn'?'↓':'→';
       var icon = L.divIcon({
-        className:'', iconSize:[8,8], iconAnchor:[4,4],
-        html:'<div style="width:8px;height:8px;background:var(--red);border-radius:50%;box-shadow:0 0 12px var(--red),0 0 24px rgba(255,61,90,.3);animation:pulse 2s infinite"></div>'
+        className:'', iconSize:[14,14], iconAnchor:[7,7],
+        html:'<div style="width:14px;height:14px;background:radial-gradient(circle,var(--red) 25%,rgba(255,61,90,.4) 55%,transparent 100%);border-radius:50%;box-shadow:0 0 16px var(--red),0 0 32px rgba(255,61,90,.35),0 0 48px rgba(255,61,90,.12);animation:conflictPulse 1.5s ease-in-out infinite"></div>'
       });
       var marker = L.marker([z.lat, z.lng], { icon: icon }).bindPopup(
         '<div style="max-width:220px"><span style="color:var(--red);font-weight:700">⚠ '+z.name+'</span><div style="display:flex;gap:4px;margin:3px 0;align-items:center"><span style="font-size:7px;color:var(--t4)">ESCALATION:</span><div style="flex:1;height:3px;background:#1a1a32;border-radius:2px;overflow:hidden"><div style="width:'+z.esc+'%;height:100%;background:'+escColor+';border-radius:2px"></div></div><span style="font-size:8px;font-weight:700;color:'+escColor+'">'+z.esc+'/100 '+trendSym+'</span></div><span style="font-size:8px;color:var(--t3)">'+z.detail+'</span><br><span style="font-size:7px;font-weight:700;color:'+(z.impact==='HIGH'?'var(--red)':'var(--amber)')+'">MARKET IMPACT: '+z.impact+'</span></div>'
@@ -198,8 +198,8 @@ const MapEngine = {
     var self = this;
     cps.forEach(function(cp) {
       var icon = L.divIcon({
-        className:'', iconSize:[14,14], iconAnchor:[7,7],
-        html:'<div style="width:14px;height:14px;border:2px solid '+cp.color+';border-radius:50%;background:rgba(6,6,16,.8);display:flex;align-items:center;justify-content:center;font-size:7px;box-shadow:0 0 8px '+cp.color+'">⚓</div>'
+        className:'', iconSize:[18,18], iconAnchor:[9,9],
+        html:'<div style="width:18px;height:18px;border:2px solid '+cp.color+';border-radius:50%;background:rgba(6,6,16,.85);display:flex;align-items:center;justify-content:center;font-size:9px;box-shadow:0 0 12px '+cp.color+',0 0 24px '+cp.color+'40;animation:chokeGlow 2.5s ease-in-out infinite">⚓</div>'
       });
       var m = L.marker([cp.lat, cp.lng], { icon: icon }).bindPopup(
         '<div style="max-width:200px"><span style="color:'+cp.color+';font-weight:700">⚓ '+cp.name+'</span><br><span style="font-size:8px;color:var(--t3)">'+cp.detail+'</span><br><span style="font-size:7px;font-weight:700;color:'+cp.color+'">'+cp.status+'</span></div>'
@@ -282,7 +282,7 @@ const MapEngine = {
     var self = this;
     flows.forEach(function(f) {
       var line = L.polyline([f.from, f.to], {
-        color:f.color, weight:3, opacity:0.6, dashArray:'8 6', smoothFactor:2
+        color:f.color, weight:3, opacity:0.7, dashArray:'8 6', smoothFactor:2, className:'nx-route nx-oil'
       }).bindPopup('<span style="color:'+f.color+';font-weight:700">🛢 '+f.name+'</span><br><span style="font-size:8px">'+f.vol+'</span>');
       line.addTo(self.map); self.markers.oilFlows.push(line);
     });
@@ -503,7 +503,7 @@ const MapEngine = {
     pipes.forEach(function(p) {
       var sc = p.status==='DESTROYED'?'var(--red)':p.status==='STALLED'?'var(--amber)':p.status==='OPERATIONAL'?'var(--green)':'var(--cyan)';
       var line = L.polyline(p.points, {
-        color:p.color, weight:p.weight, opacity:p.opacity, dashArray:p.dash||'', smoothFactor:2
+        color:p.color, weight:p.weight, opacity:p.opacity, dashArray:p.dash||'', smoothFactor:2, className:'nx-route'
       }).bindPopup(
         '<div style="max-width:210px"><span style="color:'+p.color+';font-weight:700">🔵 '+p.name+'</span><br><span style="font-size:7px;color:var(--cyan)">'+p.vol+'</span> · <span style="font-size:7px;color:'+sc+';font-weight:600">'+p.status+'</span><br><span style="font-size:8px;color:var(--t3)">'+p.detail+'</span></div>'
       );
@@ -538,7 +538,7 @@ const MapEngine = {
     var self = this;
     cables.forEach(function(c) {
       var line = L.polyline(c.points, {
-        color:c.color, weight:c.weight, opacity:c.opacity, dashArray:c.dash||'', smoothFactor:2
+        color:c.color, weight:c.weight, opacity:c.opacity, dashArray:c.dash||'', smoothFactor:2, className:'nx-route'
       }).bindPopup(
         '<div style="max-width:200px"><span style="color:'+c.color+';font-weight:700">🔌 '+c.name+'</span><br><span style="font-size:7px;color:var(--cyan)">'+c.cap+'</span><br><span style="font-size:8px;color:var(--t3)">'+c.detail+'</span></div>'
       );
