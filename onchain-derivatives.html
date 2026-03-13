@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>On-Chain Derivatives Analytics — Perps, Options & Futures Data | Nexxore</title>
+  <meta name="description" content="On-chain derivatives analytics covering perpetual futures, options, and structured products. Track open interest, volume, funding rates, implied volatility, and liquidations across DeFi and CeFi.">
+  <meta name="keywords" content="onchain derivatives analytics, crypto derivatives data, perpetual futures analytics, options analytics, implied volatility, open interest, defi derivatives, onchain trading analytics, crypto futures data">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <link rel="canonical" href="https://nexxore.xyz/onchain-derivatives">
+
+  <meta property="og:title" content="On-Chain Derivatives Analytics — Perps, Options & Futures | Nexxore">
+  <meta property="og:description" content="Comprehensive on-chain derivatives analytics — open interest, volume, funding, IV, and liquidations.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nexxore.xyz/onchain-derivatives">
+  <meta property="og:image" content="https://nexxore.xyz/assets/icons/og-image.png">
+  <meta property="og:site_name" content="Nexxore">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@nexxore">
+  <meta name="twitter:title" content="On-Chain Derivatives Analytics | Nexxore">
+  <meta name="twitter:image" content="https://nexxore.xyz/assets/icons/og-image.png">
+  <meta name="theme-color" content="#0a0a0b">
+
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":["SoftwareApplication","WebApplication"],"name":"Nexxore On-Chain Derivatives Analytics","url":"https://nexxore.xyz/onchain-derivatives","applicationCategory":"FinanceApplication","applicationSubCategory":"On-Chain Derivatives Analytics","operatingSystem":"Web Browser","description":"Comprehensive on-chain derivatives analytics covering perpetual futures, options, and structured products across DeFi and CeFi markets.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Perpetual Futures Analytics","Options IV & Greeks","Open Interest Heatmaps","Volume Profile Analysis","Liquidation Cascade Tracking","DeFi vs CeFi Comparison","Structured Product Analytics","Cross-Chain Derivatives Data"]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Nexxore","item":"https://nexxore.xyz/"},{"@type":"ListItem","position":2,"name":"On-Chain Derivatives","item":"https://nexxore.xyz/onchain-derivatives"}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What are on-chain derivatives?","acceptedAnswer":{"@type":"Answer","text":"On-chain derivatives are financial contracts (futures, options, swaps) that settle on a blockchain. Unlike centralized exchange derivatives, on-chain derivatives offer transparency, self-custody, and composability with other DeFi protocols. Major platforms include dYdX, GMX, Hyperliquid, and Aevo."}},{"@type":"Question","name":"What derivatives data does Nexxore track?","acceptedAnswer":{"@type":"Answer","text":"Nexxore tracks: open interest (by asset, exchange, and chain), trading volume, funding rates, implied volatility surfaces, options greeks, liquidation events, basis spreads, and term structure data across both DeFi and CeFi venues."}},{"@type":"Question","name":"How is implied volatility useful for crypto trading?","acceptedAnswer":{"@type":"Answer","text":"Implied volatility (IV) reflects the market's expectation of future price movement. High IV means options are expensive (market expects big moves). IV can be used for: timing entries (buy when IV is low), selling premium (sell options when IV is high), and gauging market sentiment."}},{"@type":"Question","name":"What is a liquidation cascade?","acceptedAnswer":{"@type":"Answer","text":"A liquidation cascade occurs when forced liquidations at one price level trigger further price movement, leading to more liquidations in a chain reaction. Nexxore tracks liquidation clusters and alerts traders to price levels where cascades are likely."}},{"@type":"Question","name":"Can I compare DeFi and CeFi derivatives markets?","acceptedAnswer":{"@type":"Answer","text":"Yes. Nexxore provides side-by-side comparison of derivatives data across DeFi (dYdX, GMX, Hyperliquid) and CeFi (Binance, Bybit, OKX). Compare open interest, volume, funding rates, and spread quality across both market types."}}]}</script>
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230a0a0b'/><text x='16' y='22' text-anchor='middle' font-size='18' font-weight='700' font-family='system-ui' fill='%234a6fa5'>NX</text></svg>" type="image/svg+xml">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    .lp-hero { padding: 80px 24px 60px; text-align: center; max-width: 800px; margin: 0 auto; }
+    .lp-hero h1 { font-size: 2.4rem; font-weight: 700; color: #fff; margin-bottom: 16px; line-height: 1.2; }
+    .lp-hero .subtitle { font-size: 1.1rem; color: var(--muted, #a1a1aa); line-height: 1.6; max-width: 640px; margin: 0 auto 32px; }
+    .lp-cta { display: inline-flex; gap: 12px; }
+    .lp-cta a { padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; text-decoration: none; transition: all 0.2s; }
+    .lp-cta .primary { background: linear-gradient(135deg, #4a6fa5, #3d8b6e); color: #fff; }
+    .lp-cta .primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(74,111,165,0.4); }
+    .lp-cta .secondary { border: 1px solid rgba(255,255,255,0.12); color: #d4d4d8; background: rgba(255,255,255,0.04); }
+    .lp-section { max-width: 800px; margin: 0 auto; padding: 48px 24px; }
+    .lp-section h2 { font-size: 1.6rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
+    .lp-section h3 { font-size: 1.15rem; font-weight: 600; color: #d4d4d8; margin: 24px 0 8px; }
+    .lp-section p, .lp-section li { color: var(--muted, #a1a1aa); line-height: 1.7; font-size: 0.95rem; }
+    .lp-section ul { padding-left: 20px; margin: 12px 0; }
+    .lp-section li { margin-bottom: 8px; }
+    .lp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+    .lp-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; }
+    .lp-card h4 { color: #fff; font-size: 0.95rem; margin-bottom: 8px; }
+    .lp-card p { font-size: 0.85rem; margin: 0; }
+    .faq-item { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 20px 0; }
+    .faq-item h3 { color: #fff; cursor: pointer; margin: 0 0 8px; font-size: 1rem; }
+    .faq-item p { margin: 0; }
+    .lp-links { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0; }
+    .lp-links a { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); color: #4a6fa5; text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; }
+    .lp-links a:hover { background: rgba(74,111,165,0.1); border-color: #4a6fa5; }
+    .lp-footer { text-align: center; padding: 40px 24px; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 40px; }
+    .lp-footer p { color: var(--dim, #71717a); font-size: 0.85rem; }
+    .lp-footer a { color: #4a6fa5; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="lp-hero">
+      <h1>On-Chain Derivatives Analytics</h1>
+      <p class="subtitle">Comprehensive derivatives intelligence across perpetual futures, options, and structured products. Track open interest, volume, funding rates, implied volatility, and liquidation cascades on-chain.</p>
+      <div class="lp-cta">
+        <a href="/perps" class="primary">Open Perps Terminal →</a>
+        <a href="/research" class="secondary">AI Trading Signals</a>
+      </div>
+    </section>
+
+    <section class="lp-section">
+      <h2>The Rise of On-Chain Derivatives</h2>
+      <p>On-chain derivatives markets have grown from $0 to over $150B in daily volume. For serious traders and funds, having comprehensive analytics across these venues is no longer optional — it's a competitive necessity.</p>
+      <ul>
+        <li><strong>Transparency</strong> — all positions, liquidations, and settlements visible on-chain</li>
+        <li><strong>Composability</strong> — derivatives positions can interact with lending, yield farming, and governance</li>
+        <li><strong>Cross-venue arbitrage</strong> — pricing inefficiencies between DeFi and CeFi create persistent alpha</li>
+        <li><strong>Self-custody</strong> — trade without counterparty risk from centralized exchanges</li>
+      </ul>
+    </section>
+
+    <section class="lp-section">
+      <h2>Analytics Coverage</h2>
+      <div class="lp-grid">
+        <div class="lp-card"><h4>📊 Perpetual Futures</h4><p>Funding rates, OI, volume, basis, and liquidations across dYdX, GMX, Hyperliquid, Binance, Bybit.</p></div>
+        <div class="lp-card"><h4>📈 Options Markets</h4><p>IV surfaces, skew, term structure, greeks, and volume across Deribit, Aevo, Lyra, and Premia.</p></div>
+        <div class="lp-card"><h4>💥 Liquidation Intelligence</h4><p>Real-time liquidation events, cascade risk levels, and historical heatmaps by price level.</p></div>
+        <div class="lp-card"><h4>🔄 Cross-Venue Spreads</h4><p>Basis spreads, funding differentials, and IV discrepancies between DeFi and CeFi platforms.</p></div>
+        <div class="lp-card"><h4>📉 Volume Profiles</h4><p>Volume-weighted average price, volume clusters, and time-of-day volume patterns by market.</p></div>
+        <div class="lp-card"><h4>🧠 Structured Products</h4><p>DOV (DeFi Options Vaults) performance, auto-rolling strategies, and yield enhancement analytics.</p></div>
+      </div>
+    </section>
+
+    <section class="lp-section">
+      <h2>Platforms Tracked</h2>
+      <h3>DeFi Derivatives (On-Chain)</h3>
+      <p><strong>Perpetuals:</strong> dYdX, GMX, Hyperliquid, Vertex, Drift, Jupiter Perps</p>
+      <p><strong>Options:</strong> Aevo, Lyra, Premia, Opyn, Hegic</p>
+      <p><strong>Structured:</strong> Ribbon Finance, Thetanuts, Cega</p>
+      <h3>CeFi Derivatives (Off-Chain)</h3>
+      <p><strong>Perpetuals:</strong> Binance, Bybit, OKX, Bitget</p>
+      <p><strong>Options:</strong> Deribit, OKX, Binance Options</p>
+    </section>
+
+    <section class="lp-section">
+      <h2>Use Cases for Derivatives Analytics</h2>
+      <h3>Portfolio Hedging</h3>
+      <p>Use options IV and skew data to identify cost-effective hedges for crypto portfolios. Monitor put/call ratios and term structure to time hedge execution.</p>
+      <h3>Funding Rate Arbitrage</h3>
+      <p>Cross-venue funding rate comparison identifies persistent arbitrage between DeFi and CeFi perpetuals. Capture 10–30% APY with minimal directional risk.</p>
+      <h3>Volatility Trading</h3>
+      <p>Trade implied vs realized volatility using options. Nexxore's IV analytics help identify when options are mispriced relative to actual price movement.</p>
+      <h3>Liquidation-Based Strategies</h3>
+      <p>Use liquidation cluster data to identify key support/resistance levels where forced buying or selling may amplify price moves.</p>
+    </section>
+
+    <section class="lp-section">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-item">
+        <h3>What are on-chain derivatives?</h3>
+        <p>On-chain derivatives are financial contracts (futures, options, swaps) that settle on a blockchain. Unlike centralized exchange derivatives, on-chain derivatives offer transparency, self-custody, and composability with other DeFi protocols. Major platforms include dYdX, GMX, Hyperliquid, and Aevo.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What derivatives data does Nexxore track?</h3>
+        <p>Nexxore tracks: open interest (by asset, exchange, and chain), trading volume, funding rates, implied volatility surfaces, options greeks, liquidation events, basis spreads, and term structure data across both DeFi and CeFi venues.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How is implied volatility useful for crypto trading?</h3>
+        <p>Implied volatility (IV) reflects the market's expectation of future price movement. High IV means options are expensive (market expects big moves). IV can be used for: timing entries (buy when IV is low), selling premium (sell options when IV is high), and gauging market sentiment.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What is a liquidation cascade?</h3>
+        <p>A liquidation cascade occurs when forced liquidations at one price level trigger further price movement, leading to more liquidations in a chain reaction. Nexxore tracks liquidation clusters and alerts traders to price levels where cascades are likely.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Can I compare DeFi and CeFi derivatives markets?</h3>
+        <p>Yes. Nexxore provides side-by-side comparison of derivatives data across DeFi (dYdX, GMX, Hyperliquid) and CeFi (Binance, Bybit, OKX). Compare open interest, volume, funding rates, and spread quality across both market types.</p>
+      </div>
+    </section>
+
+    <section class="lp-section">
+      <h2>Explore More Tools</h2>
+      <div class="lp-links">
+        <a href="/perps">Perps Trading</a>
+        <a href="/perpetual-funding-analytics">Funding Analytics</a>
+        <a href="/strategy-builder">Strategy Builder</a>
+        <a href="/delta-neutral">Delta-Neutral Builder</a>
+        <a href="/research">On-Chain Analyst</a>
+        <a href="/terminal">Real-Time Terminal</a>
+        <a href="/analytics">DeFi Analytics</a>
+      </div>
+    </section>
+
+    <section class="lp-hero" style="padding-top:40px">
+      <h2 style="font-size:1.8rem; color:#fff;">Access Derivatives Analytics</h2>
+      <p class="subtitle">Free access to comprehensive on-chain derivatives data. Perpetuals, options, and structured products — all in one platform.</p>
+      <div class="lp-cta">
+        <a href="/perps" class="primary">Launch Derivatives Terminal →</a>
+        <a href="/" class="secondary">Back to Nexxore</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lp-footer">
+    <p>© 2026 <a href="/">Nexxore</a> — DeFi Risk Analytics Platform. All rights reserved.</p>
+  </footer>
+</body>
+</html>

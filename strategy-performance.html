@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strategy Performance Tracking — DeFi Strategy Analytics & Backtesting | Nexxore</title>
+  <meta name="description" content="Track DeFi strategy performance with real-time P&L, Sharpe ratios, drawdown analysis, and backtesting. Compare perpetual, options, and yield strategies across chains.">
+  <meta name="keywords" content="defi strategy analytics, strategy performance tracking, crypto backtesting, Sharpe ratio, drawdown analysis, perps strategy, options strategy, yield performance, DeFi P&L tracking">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <link rel="canonical" href="https://nexxore.xyz/strategy-performance">
+
+  <meta property="og:title" content="Strategy Performance Tracking — DeFi Analytics | Nexxore">
+  <meta property="og:description" content="Real-time DeFi strategy performance tracking with P&L, Sharpe ratios, and drawdown analysis.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nexxore.xyz/strategy-performance">
+  <meta property="og:image" content="https://nexxore.xyz/assets/icons/og-image.png">
+  <meta property="og:site_name" content="Nexxore">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@nexxore">
+  <meta name="twitter:title" content="Strategy Performance Tracking | Nexxore">
+  <meta name="twitter:image" content="https://nexxore.xyz/assets/icons/og-image.png">
+  <meta name="theme-color" content="#0a0a0b">
+
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":["SoftwareApplication","WebApplication"],"name":"Nexxore Strategy Performance","url":"https://nexxore.xyz/strategy-performance","applicationCategory":"FinanceApplication","applicationSubCategory":"DeFi Strategy Analytics","operatingSystem":"Web Browser","description":"DeFi strategy performance tracking with real-time P&L, risk-adjusted returns, drawdown analysis, and historical backtesting across perpetual, options, and yield strategies.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Real-Time P&L Tracking","Sharpe Ratio Calculator","Maximum Drawdown Analysis","Strategy Backtesting","Multi-Strategy Comparison","Risk-Adjusted Return Metrics","Position Size Optimization","Historical Performance Charts"]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Nexxore","item":"https://nexxore.xyz/"},{"@type":"ListItem","position":2,"name":"Strategy Performance","item":"https://nexxore.xyz/strategy-performance"}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What metrics does Nexxore track for strategy performance?","acceptedAnswer":{"@type":"Answer","text":"Nexxore tracks P&L (realized and unrealized), Sharpe ratio, Sortino ratio, maximum drawdown, Calmar ratio, win rate, average win/loss, profit factor, and time-weighted returns. All metrics update in real-time for active strategies."}},{"@type":"Question","name":"Can I backtest DeFi strategies on Nexxore?","acceptedAnswer":{"@type":"Answer","text":"Yes. Nexxore provides historical data for backtesting perpetual, options, and yield strategies. Specify entry/exit rules, position sizing, and risk parameters to evaluate how your strategy would have performed over historical data."}},{"@type":"Question","name":"What types of strategies can I track?","acceptedAnswer":{"@type":"Answer","text":"Nexxore supports tracking for: perpetual futures (directional and basis trades), options strategies (straddles, strangles, spreads), yield farming (single-sided and LP), delta-neutral positions, and hybrid strategies combining multiple instruments."}},{"@type":"Question","name":"How is Sharpe ratio calculated?","acceptedAnswer":{"@type":"Answer","text":"The Sharpe ratio is calculated as (strategy return - risk-free rate) / standard deviation of returns. In crypto, we typically use stablecoin lending rates (3-5% APY) as the risk-free rate. A Sharpe ratio above 1.0 is considered good; above 2.0 is excellent."}},{"@type":"Question","name":"Does Nexxore support multi-chain strategy tracking?","acceptedAnswer":{"@type":"Answer","text":"Yes. Track strategies across Ethereum, Arbitrum, Optimism, Base, Solana, and Polygon. Cross-chain strategies are aggregated into a single P&L view with chain-specific breakdowns available."}}]}</script>
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230a0a0b'/><text x='16' y='22' text-anchor='middle' font-size='18' font-weight='700' font-family='system-ui' fill='%234a6fa5'>NX</text></svg>" type="image/svg+xml">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    .lp-hero { padding: 80px 24px 60px; text-align: center; max-width: 800px; margin: 0 auto; }
+    .lp-hero h1 { font-size: 2.4rem; font-weight: 700; color: #fff; margin-bottom: 16px; line-height: 1.2; }
+    .lp-hero .subtitle { font-size: 1.1rem; color: var(--muted, #a1a1aa); line-height: 1.6; max-width: 640px; margin: 0 auto 32px; }
+    .lp-cta { display: inline-flex; gap: 12px; }
+    .lp-cta a { padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; text-decoration: none; transition: all 0.2s; }
+    .lp-cta .primary { background: linear-gradient(135deg, #4a6fa5, #3d8b6e); color: #fff; }
+    .lp-cta .primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(74,111,165,0.4); }
+    .lp-cta .secondary { border: 1px solid rgba(255,255,255,0.12); color: #d4d4d8; background: rgba(255,255,255,0.04); }
+    .lp-section { max-width: 800px; margin: 0 auto; padding: 48px 24px; }
+    .lp-section h2 { font-size: 1.6rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
+    .lp-section h3 { font-size: 1.15rem; font-weight: 600; color: #d4d4d8; margin: 24px 0 8px; }
+    .lp-section p, .lp-section li { color: var(--muted, #a1a1aa); line-height: 1.7; font-size: 0.95rem; }
+    .lp-section ul { padding-left: 20px; margin: 12px 0; }
+    .lp-section li { margin-bottom: 8px; }
+    .lp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+    .lp-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; }
+    .lp-card h4 { color: #fff; font-size: 0.95rem; margin-bottom: 8px; }
+    .lp-card p { font-size: 0.85rem; margin: 0; }
+    .faq-item { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 20px 0; }
+    .faq-item h3 { color: #fff; cursor: pointer; margin: 0 0 8px; font-size: 1rem; }
+    .faq-item p { margin: 0; }
+    .lp-links { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0; }
+    .lp-links a { padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); color: #4a6fa5; text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; }
+    .lp-links a:hover { background: rgba(74,111,165,0.1); border-color: #4a6fa5; }
+    .lp-footer { text-align: center; padding: 40px 24px; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 40px; }
+    .lp-footer p { color: var(--dim, #71717a); font-size: 0.85rem; }
+    .lp-footer a { color: #4a6fa5; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="lp-hero">
+      <h1>Strategy Performance Tracking</h1>
+      <p class="subtitle">Institutional-grade DeFi strategy analytics. Track P&L, Sharpe ratios, drawdowns, and risk-adjusted returns across perpetual, options, and yield strategies in real-time.</p>
+      <div class="lp-cta">
+        <a href="/strategy-builder" class="primary">Open Strategy Builder →</a>
+        <a href="/analytics" class="secondary">View Analytics</a>
+      </div>
+    </section>
+
+    <section class="lp-section">
+      <h2>Why Track Strategy Performance?</h2>
+      <p>Profitable trading without rigorous performance tracking is luck, not skill. Nexxore gives traders and funds the analytics infrastructure to:</p>
+      <ul>
+        <li><strong>Measure risk-adjusted returns</strong> — Sharpe, Sortino, Calmar ratios in real-time</li>
+        <li><strong>Identify strategy decay</strong> — detect when alpha deteriorates before drawdowns hit</li>
+        <li><strong>Optimize position sizing</strong> — Kelly criterion and volatility-scaled allocation</li>
+        <li><strong>Compare strategies</strong> — benchmark against passive holding, staking, and market indices</li>
+      </ul>
+    </section>
+
+    <section class="lp-section">
+      <h2>Performance Metrics Dashboard</h2>
+      <div class="lp-grid">
+        <div class="lp-card"><h4>📊 Real-Time P&L</h4><p>Track realized and unrealized P&L across all open and closed positions with gas cost accounting.</p></div>
+        <div class="lp-card"><h4>📈 Sharpe & Sortino Ratios</h4><p>Rolling risk-adjusted return metrics with configurable lookback periods (7d, 30d, 90d).</p></div>
+        <div class="lp-card"><h4>📉 Drawdown Analysis</h4><p>Maximum drawdown, current drawdown, underwater duration, and recovery periods.</p></div>
+        <div class="lp-card"><h4>🔁 Backtesting Engine</h4><p>Test strategies against historical data with realistic slippage and fee modeling.</p></div>
+        <div class="lp-card"><h4>⚖️ Position Sizing</h4><p>Kelly criterion calculator, volatility-based sizing, and correlation-adjusted allocation.</p></div>
+        <div class="lp-card"><h4>📋 Strategy Comparison</h4><p>Side-by-side comparison of multiple strategies across all performance dimensions.</p></div>
+      </div>
+    </section>
+
+    <section class="lp-section">
+      <h2>Supported Strategy Types</h2>
+      <h3>Perpetual Futures Strategies</h3>
+      <p>Directional momentum, mean-reversion, funding rate arbitrage, and basis trades. Track leveraged P&L with funding cost integration and liquidation risk monitoring.</p>
+      <h3>Options Strategies</h3>
+      <p>Covered calls, protective puts, straddles, strangles, spreads, and custom multi-leg combinations. Full greeks tracking with real-time theta decay and IV changes.</p>
+      <h3>Yield Farming Strategies</h3>
+      <p>Single-sided lending, LP provision, auto-compounding vaults, and leveraged yield. Track net APY after impermanent loss, gas costs, and protocol fees.</p>
+      <h3>Delta-Neutral Positions</h3>
+      <p>Spot-perp basis, cash-and-carry, and multi-leg hedged positions. Track net delta, hedge effectiveness, and carry yield in real-time.</p>
+    </section>
+
+    <section class="lp-section">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-item">
+        <h3>What metrics does Nexxore track for strategy performance?</h3>
+        <p>Nexxore tracks P&L (realized and unrealized), Sharpe ratio, Sortino ratio, maximum drawdown, Calmar ratio, win rate, average win/loss, profit factor, and time-weighted returns. All metrics update in real-time for active strategies.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Can I backtest DeFi strategies on Nexxore?</h3>
+        <p>Yes. Nexxore provides historical data for backtesting perpetual, options, and yield strategies. Specify entry/exit rules, position sizing, and risk parameters to evaluate how your strategy would have performed over historical data.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What types of strategies can I track?</h3>
+        <p>Nexxore supports tracking for: perpetual futures (directional and basis trades), options strategies (straddles, strangles, spreads), yield farming (single-sided and LP), delta-neutral positions, and hybrid strategies combining multiple instruments.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How is Sharpe ratio calculated?</h3>
+        <p>The Sharpe ratio is calculated as (strategy return − risk-free rate) / standard deviation of returns. In crypto, we typically use stablecoin lending rates (3–5% APY) as the risk-free rate. A Sharpe ratio above 1.0 is considered good; above 2.0 is excellent.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Does Nexxore support multi-chain strategy tracking?</h3>
+        <p>Yes. Track strategies across Ethereum, Arbitrum, Optimism, Base, Solana, and Polygon. Cross-chain strategies are aggregated into a single P&L view with chain-specific breakdowns available.</p>
+      </div>
+    </section>
+
+    <section class="lp-section">
+      <h2>Explore More Tools</h2>
+      <div class="lp-links">
+        <a href="/strategy-builder">Strategy Builder</a>
+        <a href="/delta-neutral">Delta-Neutral Builder</a>
+        <a href="/perps">Perpetuals Trading</a>
+        <a href="/analytics">DeFi Analytics</a>
+        <a href="/research">On-Chain Analyst</a>
+        <a href="/vault-risk-analysis">Vault Risk Analysis</a>
+        <a href="/perpetual-funding-analytics">Funding Analytics</a>
+      </div>
+    </section>
+
+    <section class="lp-hero" style="padding-top:40px">
+      <h2 style="font-size:1.8rem; color:#fff;">Track Your Strategy Performance</h2>
+      <p class="subtitle">Free access to institutional-grade strategy analytics. Real-time P&L, risk metrics, and backtesting.</p>
+      <div class="lp-cta">
+        <a href="/strategy-builder" class="primary">Build a Strategy →</a>
+        <a href="/" class="secondary">Back to Nexxore</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lp-footer">
+    <p>© 2026 <a href="/">Nexxore</a> — DeFi Risk Analytics Platform. All rights reserved.</p>
+  </footer>
+</body>
+</html>
