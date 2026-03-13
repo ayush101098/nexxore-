@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{TOKEN_NAME}} ({{TOKEN_SYMBOL}}) Perpetual Risk Dashboard — Liquidations & OI | Nexxore</title>
+  <meta name="description" content="{{TOKEN_SYMBOL}} perpetual risk dashboard with live open interest, liquidation levels, long/short ratio, and volume data. Monitor {{TOKEN_NAME}} perp risk across {{EXCHANGE_COUNT}} venues.">
+  <meta name="keywords" content="{{TOKEN_SLUG}} perpetual risk, {{TOKEN_SYMBOL}} liquidation levels, {{TOKEN_SYMBOL}} open interest, {{TOKEN_NAME}} perp risk, {{TOKEN_SYMBOL}} long short ratio, crypto trading risk tools, {{TOKEN_SYMBOL}} perp analytics">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <link rel="canonical" href="https://nexxore.xyz/perp-risk/{{TOKEN_SLUG}}">
+
+  <meta property="og:title" content="{{TOKEN_SYMBOL}} Perpetual Risk Dashboard | Nexxore">
+  <meta property="og:description" content="Live {{TOKEN_SYMBOL}} perp risk metrics: OI ${{OI_FORMATTED}}, long/short {{LS_RATIO}}, {{LIQUIDATION_24H}} liquidations in 24h.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nexxore.xyz/perp-risk/{{TOKEN_SLUG}}">
+  <meta property="og:image" content="https://nexxore.xyz/assets/icons/og-image.png">
+  <meta property="og:site_name" content="Nexxore">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@nexxore">
+  <meta name="twitter:title" content="{{TOKEN_SYMBOL}} Perp Risk Dashboard | Nexxore">
+  <meta name="twitter:image" content="https://nexxore.xyz/assets/icons/og-image.png">
+  <meta name="theme-color" content="#0a0a0b">
+
+  <!-- SoftwareApplication schema -->
+  <script type="application/ld+json">{
+    "@context": "https://schema.org",
+    "@type": ["SoftwareApplication", "WebApplication"],
+    "name": "Nexxore {{TOKEN_SYMBOL}} Perp Risk Dashboard",
+    "url": "https://nexxore.xyz/perp-risk/{{TOKEN_SLUG}}",
+    "applicationCategory": "FinanceApplication",
+    "applicationSubCategory": "Crypto Trading Risk Tools",
+    "operatingSystem": "Web Browser",
+    "description": "Real-time {{TOKEN_NAME}} perpetual futures risk dashboard with open interest, liquidation levels, and positioning data.",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "featureList": [
+      "{{TOKEN_SYMBOL}} Open Interest Tracking",
+      "Liquidation Level Heatmap",
+      "Long/Short Ratio Monitor",
+      "24h Volume Analysis",
+      "Multi-Exchange Risk View",
+      "Position Concentration Alerts"
+    ]
+  }</script>
+
+  <!-- BreadcrumbList -->
+  <script type="application/ld+json">{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Nexxore", "item": "https://nexxore.xyz/" },
+      { "@type": "ListItem", "position": 2, "name": "Perp Risk", "item": "https://nexxore.xyz/onchain-derivatives" },
+      { "@type": "ListItem", "position": 3, "name": "{{TOKEN_SYMBOL}}", "item": "https://nexxore.xyz/perp-risk/{{TOKEN_SLUG}}" }
+    ]
+  }</script>
+
+  <!-- FAQPage schema -->
+  <script type="application/ld+json">{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is the current {{TOKEN_SYMBOL}} open interest?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Total {{TOKEN_SYMBOL}} perpetual open interest across tracked exchanges is ${{OI_FORMATTED}} (as of {{LAST_UPDATED}}). OI has {{OI_CHANGE_DIRECTION}} {{OI_CHANGE_24H}}% in the last 24 hours."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Where are the key {{TOKEN_SYMBOL}} liquidation levels?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Major {{TOKEN_SYMBOL}} long liquidation clusters sit at {{LONG_LIQ_LEVELS}}. Short liquidation clusters are concentrated at {{SHORT_LIQ_LEVELS}}. These levels act as magnets where forced buying or selling can amplify price moves."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What does the {{TOKEN_SYMBOL}} long/short ratio tell us?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The {{TOKEN_SYMBOL}} long/short ratio is currently {{LS_RATIO}}. A ratio above 1.0 means more accounts are long (crowded long). Ratios below 1.0 indicate more shorts. Extreme readings in either direction often precede squeezes."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How much {{TOKEN_SYMBOL}} was liquidated in the last 24 hours?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "${{LIQUIDATION_24H}} worth of {{TOKEN_SYMBOL}} positions were liquidated in the past 24 hours. {{LIQUIDATION_BREAKDOWN}}"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the {{TOKEN_SYMBOL}} perp risk score?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nexxore assigns {{TOKEN_SYMBOL}} a perp risk score of {{RISK_SCORE}}/10 based on open interest concentration, liquidation proximity, funding rate deviation, and volume profile. {{RISK_INTERPRETATION}}"
+        }
+      }
+    ]
+  }</script>
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230a0a0b'/><text x='16' y='22' text-anchor='middle' font-size='18' font-weight='700' font-family='system-ui' fill='%234a6fa5'>NX</text></svg>" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .lp-hero{padding:80px 24px 48px;text-align:center;max-width:800px;margin:0 auto}
+    .lp-hero h1{font-size:2.2rem;font-weight:700;color:#fff;margin-bottom:12px;line-height:1.2}
+    .lp-hero .subtitle{font-size:1.05rem;color:var(--muted,#a1a1aa);line-height:1.6;max-width:640px;margin:0 auto 28px}
+    .breadcrumb{text-align:center;padding:12px 24px 0;font-size:.82rem;color:var(--dim,#71717a)}
+    .breadcrumb a{color:#4a6fa5;text-decoration:none}
+    .lp-cta{display:inline-flex;gap:12px}
+    .lp-cta a{padding:12px 28px;border-radius:8px;font-weight:600;font-size:.95rem;text-decoration:none;transition:all .2s}
+    .lp-cta .primary{background:linear-gradient(135deg,#4a6fa5,#3d8b6e);color:#fff}
+    .lp-cta .primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(74,111,165,.4)}
+    .lp-cta .secondary{border:1px solid rgba(255,255,255,.12);color:#d4d4d8;background:rgba(255,255,255,.04)}
+    .lp-section{max-width:800px;margin:0 auto;padding:40px 24px}
+    .lp-section h2{font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:14px}
+    .lp-section h3{font-size:1.1rem;font-weight:600;color:#d4d4d8;margin:20px 0 6px}
+    .lp-section p,.lp-section li{color:var(--muted,#a1a1aa);line-height:1.7;font-size:.95rem}
+    .lp-section ul{padding-left:20px;margin:10px 0}
+    .lp-section li{margin-bottom:6px}
+    .metric-strip{display:flex;flex-wrap:wrap;gap:16px;margin:24px 0;justify-content:center}
+    .metric-strip .m{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:16px 20px;min-width:130px;text-align:center}
+    .metric-strip .m .label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:#71717a;margin-bottom:4px}
+    .metric-strip .m .value{font-size:1.25rem;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace}
+    .risk-score-badge{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-weight:700;font-size:1.1rem;font-family:'JetBrains Mono',monospace}
+    .risk-low{background:rgba(61,139,110,.15);color:#5ec4a0;border:1px solid rgba(61,139,110,.3)}
+    .risk-medium{background:rgba(234,179,8,.12);color:#eab308;border:1px solid rgba(234,179,8,.25)}
+    .risk-high{background:rgba(227,93,106,.12);color:#e35d6a;border:1px solid rgba(227,93,106,.25)}
+    .liq-table{width:100%;border-collapse:collapse;margin:20px 0}
+    .liq-table th,.liq-table td{padding:10px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.06);font-size:.88rem}
+    .liq-table th{color:#a1a1aa;font-weight:600;text-transform:uppercase;font-size:.75rem;letter-spacing:.05em}
+    .liq-table td{color:#d4d4d8}
+    .long{color:#3d8b6e}.short{color:#e35d6a}
+    .faq-item{border-bottom:1px solid rgba(255,255,255,.06);padding:18px 0}
+    .faq-item h3{color:#fff;cursor:pointer;margin:0 0 6px;font-size:.95rem}
+    .faq-item p{margin:0}
+    .lp-links{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}
+    .lp-links a{padding:8px 16px;border-radius:6px;border:1px solid rgba(255,255,255,.08);color:#4a6fa5;text-decoration:none;font-size:.85rem;font-weight:500;transition:all .2s}
+    .lp-links a:hover{background:rgba(74,111,165,.1);border-color:#4a6fa5}
+    .lp-footer{text-align:center;padding:36px 24px;border-top:1px solid rgba(255,255,255,.06);margin-top:36px}
+    .lp-footer p{color:var(--dim,#71717a);font-size:.85rem}
+    .lp-footer a{color:#4a6fa5;text-decoration:none}
+  </style>
+</head>
+<body>
+  <nav class="breadcrumb">
+    <a href="/">Nexxore</a> › <a href="/onchain-derivatives">Derivatives</a> › {{TOKEN_SYMBOL}} Risk
+  </nav>
+
+  <main>
+    <section class="lp-hero">
+      <h1>{{TOKEN_NAME}} Perpetual Risk Dashboard</h1>
+      <p class="subtitle">Real-time {{TOKEN_SYMBOL}} perp risk metrics across {{EXCHANGE_COUNT}} exchanges. Open interest, liquidation levels, long/short positioning, and volume — everything you need to manage risk.</p>
+      <div class="lp-cta">
+        <a href="/perps" class="primary">Trade {{TOKEN_SYMBOL}} Perps →</a>
+        <a href="/funding-rate/{{TOKEN_SLUG}}" class="secondary">{{TOKEN_SYMBOL}} Funding Rates</a>
+      </div>
+    </section>
+
+    <!-- Risk score + key metrics -->
+    <section class="lp-section" style="padding-top:0;text-align:center">
+      <div style="margin-bottom:20px">
+        <span class="risk-score-badge {{RISK_CLASS}}">Risk Score: {{RISK_SCORE}} / 10</span>
+      </div>
+      <div class="metric-strip">
+        <div class="m"><div class="label">Open Interest</div><div class="value">${{OI_FORMATTED}}</div></div>
+        <div class="m"><div class="label">OI Δ 24h</div><div class="value">{{OI_CHANGE_24H}}%</div></div>
+        <div class="m"><div class="label">Long / Short</div><div class="value">{{LS_RATIO}}</div></div>
+        <div class="m"><div class="label">Volume 24h</div><div class="value">${{VOLUME_24H}}</div></div>
+        <div class="m"><div class="label">Liquidated 24h</div><div class="value">${{LIQUIDATION_24H}}</div></div>
+      </div>
+      <p style="font-size:.82rem;color:#71717a;margin-top:4px">Last updated: {{LAST_UPDATED}} UTC</p>
+    </section>
+
+    <!-- OI by exchange -->
+    <section class="lp-section">
+      <h2>{{TOKEN_SYMBOL}} Open Interest by Exchange</h2>
+      <table class="liq-table">
+        <thead><tr><th>Exchange</th><th>Open Interest</th><th>OI Δ 24h</th><th>Volume 24h</th><th>Type</th></tr></thead>
+        <tbody>{{OI_EXCHANGE_ROWS}}</tbody>
+      </table>
+    </section>
+
+    <!-- Liquidation levels -->
+    <section class="lp-section">
+      <h2>Key {{TOKEN_SYMBOL}} Liquidation Levels</h2>
+      <p>Clusters of leveraged positions that face forced liquidation at specific price points. These levels often act as support/resistance magnets.</p>
+      <table class="liq-table">
+        <thead><tr><th>Direction</th><th>Price Level</th><th>Est. Volume</th><th>Risk</th></tr></thead>
+        <tbody>{{LIQUIDATION_ROWS}}</tbody>
+      </table>
+    </section>
+
+    <!-- Risk analysis -->
+    <section class="lp-section">
+      <h2>{{TOKEN_SYMBOL}} Risk Analysis</h2>
+      <h3>Risk Score Breakdown</h3>
+      <ul>
+        <li><strong>OI Concentration</strong> ({{OI_RISK}}/10) — {{OI_RISK_NOTE}}</li>
+        <li><strong>Liquidation Proximity</strong> ({{LIQ_RISK}}/10) — {{LIQ_RISK_NOTE}}</li>
+        <li><strong>Funding Deviation</strong> ({{FUND_RISK}}/10) — {{FUND_RISK_NOTE}}</li>
+        <li><strong>Volume Health</strong> ({{VOL_RISK}}/10) — {{VOL_RISK_NOTE}}</li>
+      </ul>
+      <h3>What This Means for Traders</h3>
+      <p>{{RISK_SUMMARY}}</p>
+    </section>
+
+    <!-- FAQ -->
+    <section class="lp-section">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-item">
+        <h3>What is the current {{TOKEN_SYMBOL}} open interest?</h3>
+        <p>Total {{TOKEN_SYMBOL}} perpetual open interest across tracked exchanges is ${{OI_FORMATTED}} (as of {{LAST_UPDATED}}). OI has {{OI_CHANGE_DIRECTION}} {{OI_CHANGE_24H}}% in the last 24 hours.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Where are the key {{TOKEN_SYMBOL}} liquidation levels?</h3>
+        <p>Major {{TOKEN_SYMBOL}} long liquidation clusters sit at {{LONG_LIQ_LEVELS}}. Short liquidation clusters are concentrated at {{SHORT_LIQ_LEVELS}}.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What does the {{TOKEN_SYMBOL}} long/short ratio tell us?</h3>
+        <p>The {{TOKEN_SYMBOL}} long/short ratio is currently {{LS_RATIO}}. A ratio above 1.0 means more accounts are long. Extreme readings often precede squeezes.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How much {{TOKEN_SYMBOL}} was liquidated in the last 24 hours?</h3>
+        <p>${{LIQUIDATION_24H}} worth of {{TOKEN_SYMBOL}} positions were liquidated in the past 24 hours. {{LIQUIDATION_BREAKDOWN}}</p>
+      </div>
+      <div class="faq-item">
+        <h3>What is the {{TOKEN_SYMBOL}} perp risk score?</h3>
+        <p>Nexxore assigns {{TOKEN_SYMBOL}} a perp risk score of {{RISK_SCORE}}/10. {{RISK_INTERPRETATION}}</p>
+      </div>
+    </section>
+
+    <!-- Related -->
+    <section class="lp-section">
+      <h2>Compare Perp Risk</h2>
+      <div class="lp-links">{{RELATED_TOKEN_LINKS}}</div>
+    </section>
+
+    <!-- Nav links -->
+    <section class="lp-section">
+      <h2>Explore Nexxore</h2>
+      <div class="lp-links">
+        <a href="/funding-rate/{{TOKEN_SLUG}}">{{TOKEN_SYMBOL}} Funding Rate</a>
+        <a href="/perps">Perps Trading</a>
+        <a href="/onchain-derivatives">Derivatives Analytics</a>
+        <a href="/analytics">DeFi Analytics</a>
+        <a href="/strategy-builder">Strategy Builder</a>
+        <a href="/terminal">Real-Time Terminal</a>
+      </div>
+    </section>
+
+    <section class="lp-hero" style="padding:40px 24px 60px">
+      <h2 style="font-size:1.6rem;color:#fff">Manage {{TOKEN_SYMBOL}} Risk</h2>
+      <p class="subtitle">Real-time risk intelligence for {{TOKEN_SYMBOL}} perpetual traders. Free and open.</p>
+      <div class="lp-cta">
+        <a href="/perps" class="primary">Open Risk Dashboard →</a>
+        <a href="/" class="secondary">Back to Nexxore</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lp-footer">
+    <p>© 2026 <a href="/">Nexxore</a> — DeFi Risk Analytics Platform.</p>
+  </footer>
+</body>
+</html>
