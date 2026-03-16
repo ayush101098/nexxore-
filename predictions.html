@@ -551,74 +551,57 @@ body::before {
       <section class="edge-hero">
         <div class="hero-top">
           <div class="hero-titles">
-            <h1>Prediction Market <span class="accent">Edge Engine</span></h1>
-            <p class="hero-sub">5-agent autonomous intelligence scanning 4 platforms — Polymarket, Manifold Markets, Metaculus, Kalshi. Detects probability mispricing across 1000+ live events, runs 6-model AI consensus, tracks smart money flows, and surfaces actionable edge. 24/7.</p>
+            <h1>Prediction Market <span class="accent">Scanner</span></h1>
+            <p class="hero-sub">Live data from Polymarket and Manifold Markets APIs. Browse real-time odds, volume, liquidity, and price momentum across hundreds of open markets. No fake signals — only real exchange data.</p>
           </div>
           <div class="hero-meta">
-            <span class="meta-chip live"><span class="dot"></span> All Agents Live</span>
-            <span class="meta-chip">$0.13/req avg</span>
-            <span class="meta-chip">99.7% uptime</span>
+            <span class="meta-chip live"><span class="dot"></span> Live API Data</span>
+            <span class="meta-chip">Polymarket + Manifold</span>
           </div>
         </div>
 
-        <div class="agents-grid" id="agentCards">
+        <div class="agents-grid" id="agentCards" style="grid-template-columns:repeat(3,1fr);">
           <div class="agent-card active" data-agent="alpha" style="--agent-color:var(--cyan)">
             <div class="agent-card-top"><span class="agent-icon">&#9678;</span><span class="agent-live"><span class="dot"></span> Live</span></div>
-            <div class="agent-card-name">Alpha Agent</div>
-            <div class="agent-card-role">Scans markets for mispriced probabilities 24/7</div>
-            <div class="agent-card-stat"><span class="agent-stat-label">Anomalies</span><span class="agent-stat-value" id="alphaAnomalies">47</span></div>
+            <div class="agent-card-name">Market Scanner</div>
+            <div class="agent-card-role">Browse all open markets with real odds and volume</div>
+            <div class="agent-card-stat"><span class="agent-stat-label">Markets</span><span class="agent-stat-value" id="alphaAnomalies">—</span></div>
           </div>
-          <div class="agent-card" data-agent="forecast" style="--agent-color:var(--violet)">
-            <div class="agent-card-top"><span class="agent-icon">&#9672;</span><span class="agent-live"><span class="dot"></span> Live</span></div>
-            <div class="agent-card-name">Forecast Agent</div>
-            <div class="agent-card-role">Multi-model AI consensus + news sentiment</div>
-            <div class="agent-card-stat"><span class="agent-stat-label">Models</span><span class="agent-stat-value">6</span></div>
-          </div>
-          <div class="agent-card" data-agent="execution" style="--agent-color:var(--green)">
+          <div class="agent-card" data-agent="movers" style="--agent-color:var(--green)">
             <div class="agent-card-top"><span class="agent-icon">&#11041;</span><span class="agent-live"><span class="dot"></span> Live</span></div>
-            <div class="agent-card-name">Execution Agent</div>
-            <div class="agent-card-role">Gateway execution with position management</div>
-            <div class="agent-card-stat"><span class="agent-stat-label">Avg Edge</span><span class="agent-stat-value" id="execEdge">8.4c</span></div>
+            <div class="agent-card-name">Price Movers</div>
+            <div class="agent-card-role">Markets with biggest real price changes (24h/7d)</div>
+            <div class="agent-card-stat"><span class="agent-stat-label">Moving</span><span class="agent-stat-value" id="moversCount">—</span></div>
           </div>
-          <div class="agent-card" data-agent="risk" style="--agent-color:var(--gold)">
-            <div class="agent-card-top"><span class="agent-icon">&#9671;</span><span class="agent-live"><span class="dot"></span> Live</span></div>
-            <div class="agent-card-name">Risk Agent</div>
-            <div class="agent-card-role">System health, heartbeat, alert escalation</div>
-            <div class="agent-card-stat"><span class="agent-stat-label">Alerts</span><span class="agent-stat-value" id="riskAlerts">3</span></div>
-          </div>
-          <div class="agent-card" data-agent="liquidity" style="--agent-color:var(--red)">
-            <div class="agent-card-top"><span class="agent-icon">&#9670;</span><span class="agent-live"><span class="dot"></span> Live</span></div>
-            <div class="agent-card-name">Liquidity Agent</div>
-            <div class="agent-card-role">Smart money tracking + whale flow detection</div>
-            <div class="agent-card-stat"><span class="agent-stat-label">Tracking</span><span class="agent-stat-value" id="liqTracking">5</span></div>
+          <div class="agent-card" data-agent="volume" style="--agent-color:var(--violet)">
+            <div class="agent-card-top"><span class="agent-icon">&#9672;</span><span class="agent-live"><span class="dot"></span> Live</span></div>
+            <div class="agent-card-name">Volume Leaders</div>
+            <div class="agent-card-role">Highest volume and deepest liquidity markets</div>
+            <div class="agent-card-stat"><span class="agent-stat-label">Leaders</span><span class="agent-stat-value" id="volumeLeaders">—</span></div>
           </div>
         </div>
       </section>
 
       <div class="stats-bar">
-        <div class="stat-cell"><div class="stat-cell-label">24h Volume</div><div class="stat-cell-value" id="totalVolume">$2.4B</div><div class="stat-cell-delta up">+12.4%</div></div>
-        <div class="stat-cell"><div class="stat-cell-label">Active Markets</div><div class="stat-cell-value" id="activeMarkets">847</div><div class="stat-cell-delta up">+23 today</div></div>
-        <div class="stat-cell"><div class="stat-cell-label">Mispriced Found</div><div class="stat-cell-value" style="color:var(--cyan)" id="mispricedCount">47</div><div class="stat-cell-delta neutral">Before adjustment</div></div>
-        <div class="stat-cell"><div class="stat-cell-label">Avg Entry Edge</div><div class="stat-cell-value" style="color:var(--green)">8-12c</div><div class="stat-cell-delta neutral">Per position</div></div>
-        <div class="stat-cell"><div class="stat-cell-label">Platforms</div><div class="stat-cell-value" style="color:var(--violet)" id="platformCount">4</div><div class="stat-cell-delta up" id="platformNames">Poly + Manifold + Meta + Kalshi</div></div>
-        <div class="stat-cell"><div class="stat-cell-label">Model Accuracy</div><div class="stat-cell-value" id="modelAccuracy">73.2%</div><div class="stat-cell-delta neutral">30d rolling</div></div>
+        <div class="stat-cell"><div class="stat-cell-label">Total Volume</div><div class="stat-cell-value" id="totalVolume">—</div><div class="stat-cell-delta neutral" id="totalVolumeDelta">Loading...</div></div>
+        <div class="stat-cell"><div class="stat-cell-label">Active Markets</div><div class="stat-cell-value" id="activeMarkets">—</div><div class="stat-cell-delta neutral" id="activeMarketsDelta">Scanning...</div></div>
+        <div class="stat-cell"><div class="stat-cell-label">Markets Loaded</div><div class="stat-cell-value" style="color:var(--cyan)" id="mispricedCount">—</div><div class="stat-cell-delta neutral">From live APIs</div></div>
+        <div class="stat-cell"><div class="stat-cell-label">Avg Liquidity</div><div class="stat-cell-value" style="color:var(--green)" id="avgLiquidity">—</div><div class="stat-cell-delta neutral">Per market</div></div>
+        <div class="stat-cell"><div class="stat-cell-label">Platforms</div><div class="stat-cell-value" style="color:var(--violet)" id="platformCount">2</div><div class="stat-cell-delta up" id="platformNames">Polymarket + Manifold</div></div>
+        <div class="stat-cell"><div class="stat-cell-label">Last Refresh</div><div class="stat-cell-value" id="lastRefresh" style="font-size:0.85rem">—</div><div class="stat-cell-delta neutral">Auto every 2 min</div></div>
       </div>
 
       <div class="agent-tabs" id="agentTabs">
-        <button class="agent-tab active" data-panel="alpha">&#9678; Alpha</button>
-        <button class="agent-tab" data-panel="forecast">&#9672; Forecast</button>
-        <button class="agent-tab" data-panel="execution">&#11041; Execution</button>
-        <button class="agent-tab" data-panel="risk">&#9671; Risk</button>
-        <button class="agent-tab" data-panel="liquidity">&#9670; Liquidity</button>
-        <button class="agent-tab" data-panel="performance">&#9635; Performance</button>
-        <button class="agent-tab" data-panel="config">&#9881; Config</button>
+        <button class="agent-tab active" data-panel="alpha">&#9678; All Markets</button>
+        <button class="agent-tab" data-panel="movers">&#11041; Price Movers</button>
+        <button class="agent-tab" data-panel="volume">&#9672; Volume Leaders</button>
       </div>
 
-      <!-- ALPHA PANEL -->
+      <!-- ALPHA PANEL — ALL MARKETS -->
       <div class="agent-panel active" id="panel-alpha">
         <div class="grid-wide mb-20">
           <div class="card edge-cyan">
-            <div class="card-head"><div class="card-title">Mispriced Markets Scanner <span class="badge live">24/7</span></div><span style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim)">Updated 8s ago</span></div>
+            <div class="card-head"><div class="card-title">Live Markets <span class="badge live">Real-Time</span></div><span style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim)" id="scanTimestamp">Loading...</span></div>
             <div class="card-body">
               <div style="display:flex;gap:6px;margin-bottom:10px;"><input type="text" class="search-input" id="marketSearch" placeholder="Search markets..." style="flex:1"></div>
               <div class="chips mb-12" id="categoryFilters">
@@ -636,44 +619,41 @@ body::before {
                 <span class="chip active" data-platform="all">All Platforms</span>
                 <span class="chip" data-platform="Polymarket" style="--ac:var(--cyan)">Polymarket</span>
                 <span class="chip" data-platform="Manifold" style="--ac:var(--violet)">Manifold</span>
-                <span class="chip" data-platform="Metaculus" style="--ac:var(--gold)">Metaculus</span>
-                <span class="chip" data-platform="Kalshi" style="--ac:var(--green)">Kalshi</span>
               </div>
-              <div class="mispriced-list" id="mispricedList" style="max-height:480px;overflow-y:auto;"><div id="scanLoader" style="text-align:center;padding:28px 16px;"><div style="font-family:var(--mono);font-size:0.72rem;color:var(--cyan);margin-bottom:6px;animation:pulse 1.5s infinite;">Scanning 4 platforms...</div><div style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim);">Polymarket &middot; Manifold Markets &middot; Metaculus &middot; Kalshi</div></div></div>
+              <div class="mispriced-list" id="mispricedList" style="max-height:480px;overflow-y:auto;"><div id="scanLoader" style="text-align:center;padding:28px 16px;"><div style="font-family:var(--mono);font-size:0.72rem;color:var(--cyan);margin-bottom:6px;animation:pulse 1.5s infinite;">Scanning live APIs...</div><div style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim);">Polymarket &middot; Manifold Markets</div></div></div>
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:12px;">
             <div class="card" id="marketDetailCard">
               <div class="market-detail-head">
                 <div class="market-detail-top">
-                  <div><div class="market-cat" id="detailCategory">Crypto</div><div class="market-title" id="detailTitle">Will Bitcoin reach $150K before July 2026?</div></div>
-                  <div class="market-meta-right"><div class="market-platform" id="detailPlatform">Polymarket</div><div class="market-expiry" id="detailExpiry">Jul 1, 2026</div></div>
+                  <div><div class="market-cat" id="detailCategory">—</div><div class="market-title" id="detailTitle">Select a market to view details</div></div>
+                  <div class="market-meta-right"><div class="market-platform" id="detailPlatform">—</div><div class="market-expiry" id="detailExpiry">—</div></div>
                 </div>
                 <div class="odds-row">
-                  <div class="odds-card"><div class="odds-label">YES</div><div class="odds-value yes" id="detailYes">42c</div><div class="odds-change up" id="detailYesChange">+3.2%</div></div>
-                  <div class="odds-card"><div class="odds-label">NO</div><div class="odds-value no" id="detailNo">58c</div><div class="odds-change down" id="detailNoChange">-3.2%</div></div>
+                  <div class="odds-card"><div class="odds-label">YES</div><div class="odds-value yes" id="detailYes">—</div><div class="odds-change neutral" id="detailYesChange">—</div></div>
+                  <div class="odds-card"><div class="odds-label">NO</div><div class="odds-value no" id="detailNo">—</div><div class="odds-change neutral" id="detailNoChange">—</div></div>
                 </div>
               </div>
-              <div class="card-body">
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-                  <span class="badge ai">AI Signal</span>
-                  <span class="edge-pill pos" id="aiVerdict">BUY YES +12.4c edge</span>
-                  <span style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim);margin-left:auto">Conf: <strong id="aiConfidence" style="color:var(--green)">78%</strong></span>
+              <div class="card-body" id="detailBody">
+                <div style="display:grid;gap:6px;" id="detailMetrics">
+                  <div class="hb-item"><span class="hb-label">Volume (Total)</span><span class="hb-value" id="detailVolume">—</span></div>
+                  <div class="hb-item"><span class="hb-label">Volume (24h)</span><span class="hb-value" id="detailVolume24h">—</span></div>
+                  <div class="hb-item"><span class="hb-label">Liquidity</span><span class="hb-value" id="detailLiquidity">—</span></div>
+                  <div class="hb-item"><span class="hb-label">24h Price Change</span><span class="hb-value" id="detailPriceChange1d">—</span></div>
+                  <div class="hb-item"><span class="hb-label">7d Price Change</span><span class="hb-value" id="detailPriceChange7d">—</span></div>
+                  <div class="hb-item"><span class="hb-label">Bid / Ask</span><span class="hb-value" id="detailBidAsk">—</span></div>
                 </div>
-                <p style="font-size:0.7rem;color:var(--text-muted);line-height:1.6" id="aiAnalysis"><strong style="color:var(--text)">Strong bullish signal.</strong> Model estimates fair value at 55c vs market 42c. Key factors: institutional accumulation, ETF inflow momentum, low funding rates.</p>
+                <div style="margin-top:10px;text-align:center;">
+                  <a id="detailLink" href="#" target="_blank" style="font-family:var(--mono);font-size:0.65rem;color:var(--cyan);text-decoration:none;">View on platform →</a>
+                </div>
               </div>
             </div>
             <div class="card" style="flex:1">
-              <div class="card-head"><div class="card-title">Agent Memory <span class="badge auto">Semantic Search</span></div></div>
+              <div class="card-head"><div class="card-title">Data Feed Log</div></div>
               <div class="card-body" style="padding:0;">
                 <div class="memory-log" id="memoryLog">
-                  <div><span class="ts">[02:14:08]</span> <span class="agent-name alpha">[ALPHA]</span> Anomaly: BTC $150K by Jul 2026 YES 42c, fair value 55c. <span class="hl">Edge: +12.4c</span></div>
-                  <div><span class="ts">[02:16:22]</span> <span class="agent-name forecast">[FORECAST]</span> Parsed 47 X posts, 12 articles. Sentiment: <span class="hl">bullish</span> (0.72). Macro: Fed dovish confirmed.</div>
-                  <div><span class="ts">[02:18:01]</span> <span class="agent-name execution">[EXEC]</span> Edge confirmed. Executing: BUY YES $500 @ 42c</div>
-                  <div><span class="ts">[02:18:02]</span> <span class="agent-name execution">[EXEC]</span> Filled. 1,190 shares @ 42c.</div>
-                  <div><span class="ts">[02:20:00]</span> <span class="agent-name risk">[RISK]</span> Heartbeat OK. All agents operational. RPC: 142ms</div>
-                  <div><span class="ts">[02:25:00]</span> <span class="agent-name risk">[RISK]</span> Token spend 1h: $0.89 (13 req). Budget: nominal.</div>
-                  <div><span class="ts">[02:30:01]</span> <span class="agent-name liquidity">[LIQ]</span> Position BTC $150K moved 42c to 44c. Unrealized: <span class="hl">+$23.80</span></div>
+                  <div><span class="ts">[--:--:--]</span> <span class="agent-name alpha">[SCANNER]</span> Initializing live API connections...</div>
                 </div>
               </div>
             </div>
@@ -681,273 +661,25 @@ body::before {
         </div>
       </div>
 
-      <!-- FORECAST PANEL -->
-      <div class="agent-panel" id="panel-forecast">
-        <div class="grid-2 mb-20">
-          <div class="card edge-violet">
-            <div class="card-head"><div class="card-title">Morning Digest <span class="badge ai">Auto-Generated</span></div><span style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim)">6:00 AM</span></div>
-            <div class="card-body">
-              <div style="font-size:0.72rem;color:var(--text-muted);line-height:1.7;">
-                <p style="margin-bottom:10px;"><strong style="color:var(--text)">Executive Summary</strong><br>Bullish macro setup strengthening. Fed minutes confirmed dovish pivot. BTC ETF inflows accelerated to $1.2B. Crypto prediction markets show widening edge opportunities.</p>
-                <p style="margin-bottom:8px;"><strong style="color:var(--text)">Key Positions</strong></p>
-                <div style="display:grid;gap:4px;">
-                  <div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--bg2);border-radius:var(--radius);font-family:var(--mono);font-size:0.65rem;"><span>BTC $150K by Jul 2026</span><span style="color:var(--green)">YES 42c Fair 55c</span></div>
-                  <div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--bg2);border-radius:var(--radius);font-family:var(--mono);font-size:0.65rem;"><span>Fed Rate Cut Mar 2026</span><span style="color:var(--green)">YES 68c Fair 74c</span></div>
-                  <div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--bg2);border-radius:var(--radius);font-family:var(--mono);font-size:0.65rem;"><span>SOL ETF Approval 2026</span><span style="color:var(--green)">YES 48c Fair 58c</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <div class="card">
-              <div class="card-head"><div class="card-title">Live News Feed <span class="badge live">Live</span></div></div>
-              <div class="card-body" style="max-height:200px;overflow-y:auto;" id="newsListPanel">
-                <div class="alert-item"><div class="alert-icon">&#128200;</div><div class="alert-content"><div class="alert-title">Fed signals potential rate cut as inflation cools to 2.3%</div><div class="alert-time">Reuters 12m ago <span style="color:var(--green)">HIGH</span></div></div></div>
-                <div class="alert-item"><div class="alert-icon">B</div><div class="alert-content"><div class="alert-title">Bitcoin ETF sees record $1.2B inflow</div><div class="alert-time">Bloomberg 34m ago <span style="color:var(--green)">HIGH</span></div></div></div>
-                <div class="alert-item"><div class="alert-icon">&#127963;</div><div class="alert-content"><div class="alert-title">White House announces new tariff framework for tech imports</div><div class="alert-time">WSJ 1h ago <span style="color:var(--gold)">MED</span></div></div></div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-head"><div class="card-title">Social Sentiment</div></div>
-              <div class="card-body">
-                <div style="display:grid;gap:6px;">
-                  <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);width:55px;">Twitter</span><div class="progress-track" style="flex:1"><div class="progress-fill green" style="width:72%"></div></div><span style="font-family:var(--mono);font-size:0.6rem;color:var(--green)">+54%</span></div>
-                  <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);width:55px;">Reddit</span><div class="progress-track" style="flex:1"><div class="progress-fill green" style="width:65%"></div></div><span style="font-family:var(--mono);font-size:0.6rem;color:var(--green)">+43%</span></div>
-                  <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);width:55px;">News</span><div class="progress-track" style="flex:1"><div class="progress-fill green" style="width:58%"></div></div><span style="font-family:var(--mono);font-size:0.6rem;color:var(--green)">+33%</span></div>
-                  <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);width:55px;">Telegram</span><div class="progress-track" style="flex:1"><div class="progress-fill violet" style="width:61%"></div></div><span style="font-family:var(--mono);font-size:0.6rem;color:var(--violet)">+38%</span></div>
-                </div>
-                <p style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim);margin-top:8px;">142 sources 12.4K mentions (24h)</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card mb-20">
-          <div class="card-head"><div class="card-title">Multi-Model AI Consensus <span class="badge ai">6 Models</span></div></div>
+      <!-- MOVERS PANEL -->
+      <div class="agent-panel" id="panel-movers">
+        <div class="card edge-green mb-20">
+          <div class="card-head"><div class="card-title">Biggest Price Movers <span class="badge live">Real Data</span></div><span style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim)">Based on actual API price change fields</span></div>
           <div class="card-body">
-            <div class="grid-3 mb-12" id="aiModelsGrid">
-              <div style="padding:10px;background:var(--bg2);border-radius:var(--radius);text-align:center;"><div style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:3px">GPT-4o</div><div style="font-size:1rem;font-weight:700;font-family:var(--mono);color:var(--green)">YES 72%</div><div style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim)">Conf: 85%</div></div>
-              <div style="padding:10px;background:var(--bg2);border-radius:var(--radius);text-align:center;"><div style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:3px">Claude 4</div><div style="font-size:1rem;font-weight:700;font-family:var(--mono);color:var(--green)">YES 68%</div><div style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim)">Conf: 82%</div></div>
-              <div style="padding:10px;background:var(--bg2);border-radius:var(--radius);text-align:center;"><div style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:3px">Gemini Pro</div><div style="font-size:1rem;font-weight:700;font-family:var(--mono);color:var(--gold)">YES 54%</div><div style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim)">Conf: 71%</div></div>
-              <div style="padding:10px;background:var(--bg2);border-radius:var(--radius);text-align:center;"><div style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:3px">Perplexity</div><div style="font-size:1rem;font-weight:700;font-family:var(--mono);color:var(--green)">YES 65%</div><div style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim)">Conf: 78%</div></div>
-              <div style="padding:10px;background:var(--bg2);border-radius:var(--radius);text-align:center;"><div style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:3px">DeepSeek R1</div><div style="font-size:1rem;font-weight:700;font-family:var(--mono);color:var(--green)">YES 67%</div><div style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim)">Conf: 76%</div></div>
-              <div style="padding:10px;background:var(--bg2);border-radius:var(--radius);text-align:center;"><div style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim);margin-bottom:3px">Mistral Large</div><div style="font-size:1rem;font-weight:700;font-family:var(--mono);color:var(--green)">YES 70%</div><div style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim)">Conf: 80%</div></div>
-            </div>
-            <div style="padding:10px;background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.1);border-radius:var(--radius);display:flex;justify-content:space-between;align-items:center;">
-              <span style="font-size:0.72rem;color:var(--text-muted)">Ensemble Consensus (6 models)</span>
-              <span style="font-size:1rem;font-weight:700;font-family:var(--mono);color:var(--green)" id="consensusValue">YES 66% +/-4%</span>
+            <div class="mispriced-list" id="moversList" style="max-height:600px;overflow-y:auto;">
+              <div style="text-align:center;padding:28px;color:var(--text-dim);font-size:0.72rem;">Loading movers...</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- EXECUTION PANEL -->
-      <div class="agent-panel" id="panel-execution">
-        <div class="grid-2 mb-20">
-          <div class="card edge-green">
-            <div class="card-head"><div class="card-title">Active Positions <span class="badge live">Gateway</span></div><span style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim)">7 open</span></div>
-            <div class="card-body" style="padding:6px 14px 14px;">
-              <table class="order-table">
-                <thead><tr><th>Market</th><th>Side</th><th>Size</th><th>Entry</th><th>Now</th><th>P&amp;L</th></tr></thead>
-                <tbody id="positionsTable">
-                  <tr><td style="color:var(--text);font-weight:500;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">BTC $150K Jul 2026</td><td><span class="order-side buy">YES</span></td><td>$500</td><td>42c</td><td>44c</td><td style="color:var(--green);font-weight:600">+$23.80</td></tr>
-                  <tr><td style="color:var(--text);font-weight:500;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Fed Rate Cut Mar</td><td><span class="order-side buy">YES</span></td><td>$300</td><td>65c</td><td>68c</td><td style="color:var(--green);font-weight:600">+$13.85</td></tr>
-                  <tr><td style="color:var(--text);font-weight:500;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">SOL ETF 2026</td><td><span class="order-side buy">YES</span></td><td>$400</td><td>45c</td><td>48c</td><td style="color:var(--green);font-weight:600">+$26.67</td></tr>
-                  <tr><td style="color:var(--text);font-weight:500;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">GPT-5 Released 2026</td><td><span class="order-side buy">YES</span></td><td>$200</td><td>70c</td><td>72c</td><td style="color:var(--green);font-weight:600">+$5.71</td></tr>
-                  <tr><td style="color:var(--text);font-weight:500;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">TikTok Ban US</td><td><span class="order-side sell">NO</span></td><td>$250</td><td>62c</td><td>65c</td><td style="color:var(--green);font-weight:600">+$12.10</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <div class="card">
-              <div class="card-head"><div class="card-title">Recent Executions</div></div>
-              <div class="card-body" style="max-height:180px;overflow-y:auto;" id="executionLog">
-                <div class="alert-item"><div class="alert-icon">&#10003;</div><div class="alert-content"><div class="alert-title">BUY YES "BTC $150K" 1,190 shares @ 42c</div><div class="alert-time">2h ago Gateway Whitelist</div></div></div>
-                <div class="alert-item"><div class="alert-icon">&#10003;</div><div class="alert-content"><div class="alert-title">BUY YES "Fed Rate Cut" 461 shares @ 65c</div><div class="alert-time">5h ago Gateway Edge: +6.2c</div></div></div>
-                <div class="alert-item"><div class="alert-icon">&#10003;</div><div class="alert-content"><div class="alert-title">BUY YES "SOL ETF 2026" 889 shares @ 45c</div><div class="alert-time">8h ago Gateway Edge: +10.1c</div></div></div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-head"><div class="card-title">Smart Money Flow <span class="badge live">Live</span></div></div>
-              <div class="card-body" style="max-height:180px;overflow-y:auto;" id="whaleList"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- RISK PANEL -->
-      <div class="agent-panel" id="panel-risk">
-        <div class="grid-2 mb-20">
-          <div class="card edge-gold">
-            <div class="card-head"><div class="card-title">System Health <span class="badge live">Every 5 Min</span></div></div>
-            <div class="card-body">
-              <div class="hb-grid mb-16">
-                <div class="hb-item"><span class="hb-label">Alpha Agent</span><span class="hb-value ok">Running</span></div>
-                <div class="hb-item"><span class="hb-label">Forecast Agent</span><span class="hb-value ok">Running</span></div>
-                <div class="hb-item"><span class="hb-label">Execution Agent</span><span class="hb-value ok">Running</span></div>
-                <div class="hb-item"><span class="hb-label">Risk Agent</span><span class="hb-value ok">Running</span></div>
-                <div class="hb-item"><span class="hb-label">Liquidity Agent</span><span class="hb-value ok">Running</span></div>
-                <div class="hb-item"><span class="hb-label">RPC Latency</span><span class="hb-value ok" id="rpcLatency">142ms</span></div>
-                <div class="hb-item"><span class="hb-label">Polymarket WS</span><span class="hb-value ok" id="polyWs">Connected</span></div>
-                <div class="hb-item"><span class="hb-label">Positions Synced</span><span class="hb-value ok">7/7</span></div>
-                <div class="hb-item"><span class="hb-label">Last Heartbeat</span><span class="hb-value ok" id="lastHeartbeat">12s ago</span></div>
-                <div class="hb-item"><span class="hb-label">Token Spend (1h)</span><span class="hb-value" style="color:var(--violet)">$0.89</span></div>
-              </div>
-              <div style="padding:8px;background:rgba(0,232,122,0.05);border:1px solid rgba(0,232,122,0.1);border-radius:var(--radius);text-align:center;">
-                <span style="font-family:var(--mono);font-size:0.7rem;font-weight:600;color:var(--green)">All Systems Operational</span>
-                <span style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim);display:block;margin-top:2px;">Uptime: 99.7% (30d) 3 alerts fired</span>
-              </div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-head"><div class="card-title">Alert History <span class="badge alert">Telegram</span></div></div>
-            <div class="card-body" id="alertHistory">
-              <div class="alert-item"><div class="alert-icon">!</div><div class="alert-content"><div class="alert-title">RPC unresponsive switched to backup. Zero position impact.</div><div class="alert-time">3 days ago Auto-resolved 14s</div></div></div>
-              <div class="alert-item"><div class="alert-icon">!</div><div class="alert-content"><div class="alert-title">Polymarket API rate limit throttled 10 req/min for 2 min.</div><div class="alert-time">5 days ago Auto-resolved</div></div></div>
-              <div class="alert-item"><div class="alert-icon">!</div><div class="alert-content"><div class="alert-title">WebSocket disconnected reconnected 3.2s. No missed updates.</div><div class="alert-time">8 days ago Auto-resolved</div></div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- LIQUIDITY PANEL -->
-      <div class="agent-panel" id="panel-liquidity">
-        <div class="grid-2 mb-20">
-          <div class="card edge-red">
-            <div class="card-head"><div class="card-title">Top Traders (30d) <span class="badge auto">Auto-Track</span></div></div>
-            <div class="card-body" id="leaderboard">
-              <div class="leader-item"><div class="leader-rank gold">1</div><div class="leader-info"><div class="leader-name">gabagool22</div><div class="leader-stats"><span>Win: 78%</span><span>Trades: 1.2K</span></div></div><div class="leader-pnl">+$892K</div></div>
-              <div class="leader-item"><div class="leader-rank silver">2</div><div class="leader-info"><div class="leader-name">Anjun</div><div class="leader-stats"><span>Win: 74%</span><span>Trades: 956</span></div></div><div class="leader-pnl">+$654K</div></div>
-              <div class="leader-item"><div class="leader-rank bronze">3</div><div class="leader-info"><div class="leader-name">Account88888</div><div class="leader-stats"><span>Win: 71%</span><span>Trades: 2.1K</span></div></div><div class="leader-pnl">+$487K</div></div>
-              <div class="leader-item"><div class="leader-rank def">4</div><div class="leader-info"><div class="leader-name">PurpleThunder</div><div class="leader-stats"><span>Win: 69%</span><span>Trades: 1.8K</span></div></div><div class="leader-pnl">+$312K</div></div>
-              <div class="leader-item"><div class="leader-rank def">5</div><div class="leader-info"><div class="leader-name">Domer</div><div class="leader-stats"><span>Win: 67%</span><span>Trades: 3.2K</span></div></div><div class="leader-pnl">+$245K</div></div>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <div class="card">
-              <div class="card-head"><div class="card-title">Active Mirror Positions</div></div>
-              <div class="card-body">
-                <div style="display:grid;gap:6px;" id="activeCopies">
-                  <div style="padding:8px 10px;background:var(--bg2);border-radius:var(--radius);border-left:2px solid var(--violet);display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:0.72rem;font-weight:600;color:var(--text)">Mirroring gabagool22</div><div style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim)">BUY YES BTC $100K Jun @ 67c 2h ago</div></div><span style="font-family:var(--mono);font-size:0.68rem;font-weight:700;color:var(--green)">+$142</span></div>
-                  <div style="padding:8px 10px;background:var(--bg2);border-radius:var(--radius);border-left:2px solid var(--violet);display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:0.72rem;font-weight:600;color:var(--text)">Mirroring Anjun</div><div style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim)">BUY NO TikTok Ban @ 65c 5h ago</div></div><span style="font-family:var(--mono);font-size:0.68rem;font-weight:700;color:var(--green)">+$87</span></div>
-                </div>
-                <p style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim);margin-top:8px;text-align:center;">Click any trader to mirror. Size: 10% of their position.</p>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-head"><div class="card-title">Wallet Analyzer</div></div>
-              <div class="card-body">
-                <div style="display:flex;gap:6px;margin-bottom:10px;"><input type="text" class="search-input" id="walletInput" placeholder="Enter wallet or username..." style="flex:1"><button class="header-btn" id="walletSearchBtn" style="padding:7px 12px;">Track</button></div>
-                <div id="walletResult"><p style="font-size:0.68rem;color:var(--text-dim);text-align:center;padding:12px;">Enter a Polymarket wallet to analyze and mirror positions.</p></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PERFORMANCE PANEL -->
-      <div class="agent-panel" id="panel-performance">
-        <div class="grid-3 mb-16">
-          <div class="stat-cell" style="border-left:2px solid var(--green);"><div class="stat-cell-label">Total P&amp;L (30d)</div><div class="stat-cell-value" style="color:var(--green);font-size:1.3rem" id="totalPnl">+$4,247</div><div class="stat-cell-delta up">+32% vs last month</div></div>
-          <div class="stat-cell"><div class="stat-cell-label">Win Rate</div><div class="stat-cell-value" style="font-size:1.3rem" id="winRate">68%</div><div class="stat-cell-delta neutral">51 W / 24 L</div></div>
-          <div class="stat-cell"><div class="stat-cell-label">Best Trade</div><div class="stat-cell-value" style="color:var(--green);font-size:1.3rem">+$842</div><div class="stat-cell-delta neutral">Fed Rate Cut 3d ago</div></div>
-        </div>
-        <div class="grid-2 mb-20">
-          <div class="card">
-            <div class="card-head"><div class="card-title">P&amp;L Chart Last 30 Trades</div></div>
-            <div class="card-body">
-              <div class="perf-bars" id="perfChart"></div>
-              <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:0.55rem;color:var(--text-dim);margin-top:3px;"><span>30 trades ago</span><span>Latest</span></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-head"><div class="card-title">Model Performance</div></div>
-            <div class="card-body">
-              <div style="display:grid;gap:6px;">
-                <div class="hb-item"><span class="hb-label">30-Day Accuracy</span><span class="hb-value ok">73.2%</span></div>
-                <div class="hb-item"><span class="hb-label">Avg Return/Trade</span><span class="hb-value ok">+8.2%</span></div>
-                <div class="hb-item"><span class="hb-label">Sharpe Ratio</span><span class="hb-value ok">2.1</span></div>
-                <div class="hb-item"><span class="hb-label">Max Drawdown</span><span class="hb-value warn">-12.4%</span></div>
-                <div class="hb-item"><span class="hb-label">Profit Factor</span><span class="hb-value ok">2.8x</span></div>
-                <div class="hb-item"><span class="hb-label">Avg Edge/Position</span><span class="hb-value ok">8.4c</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CONFIG PANEL -->
-      <div class="agent-panel" id="panel-config">
-        <div class="grid-2 mb-20">
-          <div class="card">
-            <div class="card-head"><div class="card-title">config.json 5-Agent System</div></div>
-            <div class="card-body" style="padding:0;">
-              <div class="config-code"><span class="comment">// Nexxore Predictions Edge Engine</span>
-<span class="comment">// One Gateway. One config. Isolation via dmScope: per-agent.</span>
-{
-  <span class="key">"gateway"</span>: <span class="str">"polymarket-clob-v2"</span>,
-  <span class="key">"dmScope"</span>: <span class="str">"per-agent"</span>,
-  <span class="key">"agents"</span>: {
-    <span class="key">"alpha"</span>: {
-      <span class="key">"schedule"</span>: <span class="str">"*/30 * * * * *"</span>,
-      <span class="key">"memory"</span>: <span class="str">"MEMORY.md"</span>,
-      <span class="key">"alerts"</span>: [<span class="str">"telegram"</span>],
-      <span class="key">"edgeThreshold"</span>: <span class="num">0.05</span>,
-      <span class="key">"maxMarkets"</span>: <span class="num">500</span>
-    },
-    <span class="key">"forecast"</span>: {
-      <span class="key">"schedule"</span>: <span class="str">"0 6 * * *"</span>,
-      <span class="key">"sources"</span>: [<span class="str">"x"</span>, <span class="str">"news"</span>, <span class="str">"macro"</span>, <span class="str">"onchain"</span>],
-      <span class="key">"models"</span>: <span class="num">6</span>
-    },
-    <span class="key">"execution"</span>: {
-      <span class="key">"mode"</span>: <span class="str">"gateway"</span>,
-      <span class="key">"whitelist"</span>: <span class="bool">true</span>,
-      <span class="key">"maxPositionSize"</span>: <span class="num">500</span>
-    },
-    <span class="key">"risk"</span>: {
-      <span class="key">"heartbeat"</span>: <span class="str">"*/5 * * * *"</span>,
-      <span class="key">"output"</span>: <span class="str">"HEARTBEAT.md"</span>,
-      <span class="key">"checks"</span>: [<span class="str">"agents"</span>, <span class="str">"rpc"</span>, <span class="str">"positions"</span>]
-    },
-    <span class="key">"liquidity"</span>: {
-      <span class="key">"trackedWallets"</span>: <span class="num">5</span>,
-      <span class="key">"mirrorSize"</span>: <span class="num">0.1</span>,
-      <span class="key">"minTraderPnl"</span>: <span class="num">100000</span>
-    }
-  },
-  <span class="key">"tokenOptimization"</span>: {
-    <span class="key">"bootstrap"</span>: <span class="str">"AGENTS.md"</span>,
-    <span class="key">"memory"</span>: <span class="str">"MEMORY.md"</span>,
-    <span class="key">"avgCostPerReq"</span>: <span class="num">0.13</span>
-  }
-}</div>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <div class="card">
-              <div class="card-head"><div class="card-title">Memory Architecture</div></div>
-              <div class="card-body">
-                <div style="display:grid;gap:6px;">
-                  <div style="padding:8px 10px;background:var(--bg2);border-radius:var(--radius);display:flex;align-items:center;gap:8px;"><span style="font-size:1rem">&#128196;</span><div><div style="font-family:var(--mono);font-size:0.7rem;font-weight:600;color:var(--cyan)">AGENTS.md</div><div style="font-size:0.58rem;color:var(--text-dim)">Bootstrap only. Critical rules. Every request.</div></div></div>
-                  <div style="padding:8px 10px;background:var(--bg2);border-radius:var(--radius);display:flex;align-items:center;gap:8px;"><span style="font-size:1rem">&#128196;</span><div><div style="font-family:var(--mono);font-size:0.7rem;font-weight:600;color:var(--violet)">MEMORY.md</div><div style="font-size:0.58rem;color:var(--text-dim)">Markets, patterns, past trades. Semantic search.</div></div></div>
-                  <div style="padding:8px 10px;background:var(--bg2);border-radius:var(--radius);display:flex;align-items:center;gap:8px;"><span style="font-size:1rem">&#128196;</span><div><div style="font-family:var(--mono);font-size:0.7rem;font-weight:600;color:var(--gold)">HEARTBEAT.md</div><div style="font-size:0.58rem;color:var(--text-dim)">Every 5 min. Agent status, errors, positions.</div></div></div>
-                </div>
-                <div style="margin-top:10px;padding:8px 10px;background:rgba(0,200,255,0.03);border-radius:var(--radius);border:1px solid rgba(0,200,255,0.08);">
-                  <p style="font-size:0.65rem;color:var(--text-muted);line-height:1.5;"><strong style="color:var(--cyan)">Token optimization:</strong> Critical rules in bootstrap. Everything else via semantic search. Spend dropped <strong style="color:var(--green)">3x</strong>: $0.40 to $0.13/req.</p>
-                </div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-head"><div class="card-title">Edit Any Agent</div></div>
-              <div class="card-body">
-                <p style="font-size:0.7rem;color:var(--text-muted);line-height:1.5;">Plain .md text files. Change one line and the agent behaves differently. No deploy. No build.</p>
-                <div style="margin-top:8px;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);line-height:1.6;">
-                  <span style="color:var(--green)">$</span> vim MEMORY.md<br>
-                  <span style="color:var(--text-dim)">// change edge threshold 5c to 8c</span><br>
-                  <span style="color:var(--green)">$</span> <span style="color:var(--cyan)">// agent picks it up next cycle</span>
-                </div>
-              </div>
+      <!-- VOLUME PANEL -->
+      <div class="agent-panel" id="panel-volume">
+        <div class="card edge-violet mb-20">
+          <div class="card-head"><div class="card-title">Volume &amp; Liquidity Leaders <span class="badge live">Real Data</span></div><span style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim)">Sorted by total volume</span></div>
+          <div class="card-body">
+            <div class="mispriced-list" id="volumeList" style="max-height:600px;overflow-y:auto;">
+              <div style="text-align:center;padding:28px;color:var(--text-dim);font-size:0.72rem;">Loading volume leaders...</div>
             </div>
           </div>
         </div>
@@ -1020,7 +752,7 @@ body::before {
         document.querySelectorAll('.chip[data-category]').forEach(function(c) { c.classList.remove('active'); });
         chip.classList.add('active');
         selectedCategory = chip.dataset.category;
-        renderMispricedList();
+        renderMarketList();
       });
     });
     document.querySelectorAll('.chip[data-platform]').forEach(function(chip) {
@@ -1028,56 +760,13 @@ body::before {
         document.querySelectorAll('.chip[data-platform]').forEach(function(c) { c.classList.remove('active'); });
         chip.classList.add('active');
         selectedPlatform = chip.dataset.platform;
-        renderMispricedList();
+        renderMarketList();
       });
     });
     var searchEl = document.getElementById('marketSearch');
-    if (searchEl) searchEl.addEventListener('input', function(e) { searchQuery = e.target.value; renderMispricedList(); });
+    if (searchEl) searchEl.addEventListener('input', function(e) { searchQuery = e.target.value; renderMarketList(); });
 
-    // ML MODEL
-    var MLModel = {
-      calculateFairValue: function(m) {
-        var base = m.yesOdds / 100;
-        var volMom = m.volumeChange || 0;
-        var volAdj = volMom > 30 ? 0.06 : volMom > 15 ? 0.03 : volMom > 5 ? 0.01 : volMom < -15 ? -0.03 : 0;
-        var pxChg = parseFloat(m.yesChange || 0);
-        var momAdj = pxChg > 8 ? 0.06 : pxChg > 5 ? 0.04 : pxChg > 2 ? 0.02 : pxChg < -8 ? -0.06 : pxChg < -5 ? -0.04 : pxChg < -2 ? -0.02 : 0;
-        var liq = m.liquidity || m.volume || 0;
-        var liqAdj = liq > 100000000 ? 0.03 : liq > 10000000 ? 0.02 : liq > 1000000 ? 0.01 : liq > 10000 ? 0 : -0.02;
-        var smart = (volMom > 20 && Math.abs(pxChg) > 3) ? (pxChg > 0 ? 0.05 : -0.05) : 0;
-        var timeDecay = 0;
-        if (m.expiry && m.expiry !== 'TBD') {
-          try {
-            var exp = new Date(m.expiry);
-            var now = new Date();
-            var daysLeft = Math.max(0, (exp - now) / 86400000);
-            if (daysLeft < 7) timeDecay = (base > 0.5) ? 0.05 : -0.05;
-            else if (daysLeft < 30) timeDecay = (base > 0.5) ? 0.02 : -0.02;
-          } catch(e) {}
-        }
-        var platformAdj = 0;
-        if (m.platform === 'Metaculus') platformAdj = 0.01;
-        if (m.platform === 'Manifold' && liq < 5000) platformAdj = -0.02;
-        var catAdj = 0;
-        if (m.category === 'crypto' && volMom > 10) catAdj = pxChg > 0 ? 0.02 : -0.02;
-        return Math.round(Math.min(0.95, Math.max(0.05, base + volAdj + momAdj + liqAdj + smart + timeDecay + platformAdj + catAdj)) * 100);
-      },
-      generateSignal: function(m, fv) {
-        var edge = fv - m.yesOdds;
-        var verdict, conf;
-        if (edge > 12) { verdict = 'STRONG BUY YES'; conf = Math.min(95, 75 + Math.abs(edge)); }
-        else if (edge > 8) { verdict = 'BUY YES'; conf = Math.min(90, 65 + Math.abs(edge)); }
-        else if (edge > 5) { verdict = 'LEAN YES'; conf = Math.min(80, 55 + Math.abs(edge)); }
-        else if (edge > 3) { verdict = 'SLIGHT YES'; conf = Math.min(70, 48 + Math.abs(edge)); }
-        else if (edge < -12) { verdict = 'STRONG BUY NO'; conf = Math.min(95, 75 + Math.abs(edge)); }
-        else if (edge < -8) { verdict = 'BUY NO'; conf = Math.min(90, 65 + Math.abs(edge)); }
-        else if (edge < -5) { verdict = 'LEAN NO'; conf = Math.min(80, 55 + Math.abs(edge)); }
-        else if (edge < -3) { verdict = 'SLIGHT NO'; conf = Math.min(70, 48 + Math.abs(edge)); }
-        else { verdict = 'HOLD'; conf = 40; }
-        return { verdict: verdict, confidence: Math.round(conf), edge: edge };
-      }
-    };
-
+    // === UTILITY FUNCTIONS ===
     function categorizeMarket(title) {
       var l = title.toLowerCase();
       if (/bitcoin|btc|ethereum|eth|crypto|solana|sol|xrp|dogecoin|defi|nft|binance|coinbase|stablecoin|altcoin|memecoin|doge|pepe|layer.?2|rollup|airdrop|cardano|polygon|avalanche|chainlink|uniswap/.test(l)) return 'crypto';
@@ -1095,12 +784,23 @@ body::before {
       try { return new Date(d).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}); } catch(e) { return 'TBD'; }
     }
     function formatVolume(v) {
+      if (!v || v === 0) return '—';
       if (v >= 1e9) return '$' + (v/1e9).toFixed(1) + 'B';
       if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
       if (v >= 1e3) return '$' + (v/1e3).toFixed(1) + 'K';
       return '$' + Math.round(v);
     }
+    function formatPriceChange(v) {
+      if (v === null || v === undefined || isNaN(v)) return '—';
+      var pct = (v * 100).toFixed(1);
+      return (v >= 0 ? '+' : '') + pct + '%';
+    }
+    function priceChangeColor(v) {
+      if (!v || v === 0) return 'var(--text-muted)';
+      return v > 0 ? 'var(--green)' : 'var(--red)';
+    }
 
+    // === DATA FETCHERS — REAL API DATA ONLY ===
     function fetchPolymarketData() {
       var all = [], seen = {};
       var urls = [
@@ -1119,7 +819,7 @@ body::before {
         GAMMA_API + '/events?order=startDate&ascending=false&limit=100',
         GAMMA_API + '/events?order=liquidity&ascending=false&limit=100'
       ];
-      addMemoryLine('alpha', 'Polymarket: dispatching ' + urls.length + ' parallel scans...');
+      addMemoryLine('alpha', 'Polymarket: dispatching ' + urls.length + ' parallel API calls...');
       return Promise.allSettled(urls.map(function(u) { return fetch(u); }))
       .then(function(results) {
         var promises = [];
@@ -1145,21 +845,34 @@ body::before {
               } else if (m.lastTradePrice !== undefined) { yp = parseFloat(m.lastTradePrice); }
               if (yp <= 0.01 || yp >= 0.99) return;
               all.push({
-                id: id, title: title, category: categorizeMarket(title), platform: 'Polymarket',
-                yesOdds: Math.round(yp * 100), noOdds: Math.round((1 - yp) * 100),
+                id: id,
+                title: title,
+                category: categorizeMarket(title),
+                platform: 'Polymarket',
+                yesOdds: Math.round(yp * 100),
+                noOdds: Math.round((1 - yp) * 100),
                 volume: parseFloat(m.volume || item.volume || 0),
-                liquidity: parseFloat(m.liquidity || item.liquidity || 0),
-                volumeChange: Math.random() * 50 - 10,
-                yesChange: (Math.random() * 10 - 5).toFixed(1),
+                volume24h: parseFloat(m.volume24hr || item.volume24hr || 0),
+                volume1wk: parseFloat(m.volume1wk || item.volume1wk || 0),
+                liquidity: parseFloat(m.liquidityClob || m.liquidity || item.liquidityClob || item.liquidity || 0),
+                priceChange1d: m.oneDayPriceChange != null ? parseFloat(m.oneDayPriceChange) : null,
+                priceChange7d: m.oneWeekPriceChange != null ? parseFloat(m.oneWeekPriceChange) : null,
+                priceChange30d: m.oneMonthPriceChange != null ? parseFloat(m.oneMonthPriceChange) : null,
+                lastTradePrice: m.lastTradePrice != null ? parseFloat(m.lastTradePrice) : null,
+                bestBid: m.bestBid != null ? parseFloat(m.bestBid) : null,
+                bestAsk: m.bestAsk != null ? parseFloat(m.bestAsk) : null,
+                spread: m.spread != null ? parseFloat(m.spread) : null,
                 expiry: formatExpiry(m.endDate || item.endDate),
-                clobTokenIds: m.clobTokenIds || []
+                expiryRaw: m.endDate || item.endDate || null,
+                slug: m.slug || item.slug || '',
+                url: m.slug ? 'https://polymarket.com/event/' + (item.slug || m.slug) : ''
               });
             });
           });
         });
-        addMemoryLine('alpha', 'Polymarket: <span class="hl">' + all.length + ' markets</span> ingested.');
+        addMemoryLine('alpha', 'Polymarket: <span class="hl">' + all.length + ' markets</span> ingested (real data).');
         return all;
-      }).catch(function(e) { console.error('Poly fetch:', e); return all; });
+      }).catch(function(e) { console.error('Poly fetch:', e); addMemoryLine('alpha', 'Polymarket error: ' + e.message); return all; });
     }
 
     function fetchManifoldData() {
@@ -1180,180 +893,179 @@ body::before {
         dataArr.forEach(function(data) {
           (Array.isArray(data) ? data : []).forEach(function(m) {
             if (!m || seen[m.id] || !m.question) return;
+            if (m.outcomeType !== 'BINARY') return;
             seen[m.id] = true;
             var yp = m.probability;
             if (!yp || yp < 0.02 || yp > 0.98) return;
             all.push({
-              id: 'mf_' + m.id, title: m.question, category: categorizeMarket(m.question),
-              platform: 'Manifold', yesOdds: Math.round(yp * 100), noOdds: Math.round((1 - yp) * 100),
-              volume: m.volume || 0, liquidity: m.totalLiquidity || 0,
-              volumeChange: Math.random() * 30 - 5, yesChange: (Math.random() * 8 - 4).toFixed(1),
+              id: 'mf_' + m.id,
+              title: m.question,
+              category: categorizeMarket(m.question),
+              platform: 'Manifold',
+              yesOdds: Math.round(yp * 100),
+              noOdds: Math.round((1 - yp) * 100),
+              volume: m.volume || 0,
+              volume24h: m.volume24Hours || 0,
+              volume1wk: null,
+              liquidity: m.totalLiquidity || 0,
+              priceChange1d: null,
+              priceChange7d: null,
+              priceChange30d: null,
+              lastTradePrice: yp,
+              bestBid: null,
+              bestAsk: null,
+              spread: null,
               expiry: formatExpiry(m.closeTime ? new Date(m.closeTime).toISOString() : null),
-              url: m.url || ''
+              expiryRaw: m.closeTime ? new Date(m.closeTime).toISOString() : null,
+              slug: m.slug || '',
+              url: m.url || ('https://manifold.markets/' + (m.creatorUsername || '') + '/' + (m.slug || ''))
             });
           });
         });
-        addMemoryLine('alpha', 'Manifold: <span class="hl">' + all.length + ' markets</span> ingested.');
+        addMemoryLine('alpha', 'Manifold: <span class="hl">' + all.length + ' markets</span> ingested (real data).');
         return all;
-      }).catch(function(e) { console.warn('Manifold fetch:', e); return []; });
+      }).catch(function(e) { console.warn('Manifold fetch:', e); addMemoryLine('alpha', 'Manifold error: ' + e.message); return []; });
     }
 
-    function getKalshiFallback() {
-      return [
-        {id:'k1',title:'Fed cuts interest rates in March 2026?',category:'economy',platform:'Kalshi',yesOdds:68,noOdds:32,volume:89200000,volumeChange:15.2,yesChange:'+5.1',expiry:'Mar 15, 2026'},
-        {id:'k2',title:'Bitcoin above $150K by July 2026?',category:'crypto',platform:'Kalshi',yesOdds:42,noOdds:58,volume:234000000,volumeChange:28.4,yesChange:'+8.2',expiry:'Jul 31, 2026'},
-        {id:'k3',title:'GPT-5 released in 2026?',category:'tech',platform:'Kalshi',yesOdds:72,noOdds:28,volume:167000000,volumeChange:12.4,yesChange:'+3.8',expiry:'Dec 31, 2026'},
-        {id:'k4',title:'S&P 500 above 6500 by June 2026?',category:'economy',platform:'Kalshi',yesOdds:55,noOdds:45,volume:124000000,volumeChange:8.7,yesChange:'+2.4',expiry:'Jun 30, 2026'},
-        {id:'k5',title:'SEC approves Solana ETF in 2026?',category:'crypto',platform:'Kalshi',yesOdds:48,noOdds:52,volume:145000000,volumeChange:32.1,yesChange:'+12.4',expiry:'Dec 31, 2026'},
-        {id:'k6',title:'Tesla Full Self-Driving Level 4 approved?',category:'tech',platform:'Kalshi',yesOdds:32,noOdds:68,volume:134000000,volumeChange:15.2,yesChange:'+4.1',expiry:'Dec 31, 2026'},
-        {id:'k7',title:'US recession declared in 2026?',category:'economy',platform:'Kalshi',yesOdds:18,noOdds:82,volume:156000000,volumeChange:-5.4,yesChange:'-2.8',expiry:'Dec 31, 2026'},
-        {id:'k8',title:'TikTok ban enforced in US?',category:'culture',platform:'Kalshi',yesOdds:35,noOdds:65,volume:112000000,volumeChange:-12.3,yesChange:'-5.1',expiry:'Dec 31, 2026'},
-        {id:'k9',title:'Ukraine ceasefire agreement signed in 2026?',category:'politics',platform:'Kalshi',yesOdds:28,noOdds:72,volume:145000000,volumeChange:18.9,yesChange:'+6.8',expiry:'Dec 31, 2026'},
-        {id:'k10',title:'Chiefs win Super Bowl LX?',category:'sports',platform:'Kalshi',yesOdds:15,noOdds:85,volume:456000000,volumeChange:18.9,yesChange:'+3.1',expiry:'Feb 8, 2026'},
-        {id:'k11',title:'NVIDIA stock above $200 by June?',category:'tech',platform:'Kalshi',yesOdds:58,noOdds:42,volume:178000000,volumeChange:24.6,yesChange:'+9.2',expiry:'Jun 30, 2026'},
-        {id:'k12',title:'Ethereum above $8000 in 2026?',category:'crypto',platform:'Kalshi',yesOdds:35,noOdds:65,volume:156000000,volumeChange:18.9,yesChange:'+6.4',expiry:'Dec 31, 2026'},
-        {id:'k13',title:'OpenAI IPO in 2026?',category:'tech',platform:'Kalshi',yesOdds:35,noOdds:65,volume:89400000,volumeChange:22.1,yesChange:'+8.4',expiry:'Dec 31, 2026'},
-        {id:'k14',title:'Gold price above $3000/oz by EOY?',category:'economy',platform:'Kalshi',yesOdds:62,noOdds:38,volume:89400000,volumeChange:9.8,yesChange:'+3.1',expiry:'Dec 31, 2026'},
-        {id:'k15',title:'Solana above $500 in 2026?',category:'crypto',platform:'Kalshi',yesOdds:32,noOdds:68,volume:98700000,volumeChange:42.1,yesChange:'+15.2',expiry:'Dec 31, 2026'},
-        {id:'k16',title:'Bitcoin above $200K by December 2026?',category:'crypto',platform:'Kalshi',yesOdds:22,noOdds:78,volume:312000000,volumeChange:34.7,yesChange:'+11.3',expiry:'Dec 31, 2026'},
-        {id:'k17',title:'XRP above $5 in 2026?',category:'crypto',platform:'Kalshi',yesOdds:28,noOdds:72,volume:67800000,volumeChange:19.4,yesChange:'+7.2',expiry:'Dec 31, 2026'},
-        {id:'k18',title:'Dogecoin above $1 in 2026?',category:'crypto',platform:'Kalshi',yesOdds:18,noOdds:82,volume:89400000,volumeChange:45.2,yesChange:'+14.8',expiry:'Dec 31, 2026'},
-        {id:'k19',title:'US debt ceiling crisis causes default?',category:'economy',platform:'Kalshi',yesOdds:8,noOdds:92,volume:234000000,volumeChange:-3.2,yesChange:'-1.1',expiry:'Sep 30, 2026'},
-        {id:'k20',title:'Fed funds rate below 3.5% by December?',category:'economy',platform:'Kalshi',yesOdds:45,noOdds:55,volume:167000000,volumeChange:11.3,yesChange:'+4.2',expiry:'Dec 31, 2026'},
-        {id:'k21',title:'Republicans win Senate majority 2026 midterms?',category:'politics',platform:'Kalshi',yesOdds:52,noOdds:48,volume:287000000,volumeChange:6.8,yesChange:'+2.1',expiry:'Nov 3, 2026'},
-        {id:'k22',title:'Trump announces 2028 presidential run?',category:'politics',platform:'Kalshi',yesOdds:15,noOdds:85,volume:178000000,volumeChange:8.4,yesChange:'+3.2',expiry:'Dec 31, 2026'},
-        {id:'k23',title:'Apple Vision Pro 2 released in 2026?',category:'tech',platform:'Kalshi',yesOdds:62,noOdds:38,volume:56700000,volumeChange:14.1,yesChange:'+5.3',expiry:'Dec 31, 2026'},
-        {id:'k24',title:'SpaceX Starship reaches orbit successfully?',category:'tech',platform:'Kalshi',yesOdds:78,noOdds:22,volume:123000000,volumeChange:8.9,yesChange:'+2.8',expiry:'Jun 30, 2026'},
-        {id:'k25',title:'US housing prices drop 10%+ in 2026?',category:'economy',platform:'Kalshi',yesOdds:12,noOdds:88,volume:145000000,volumeChange:-7.3,yesChange:'-2.4',expiry:'Dec 31, 2026'},
-        {id:'k26',title:'Oil price above $100/barrel in 2026?',category:'climate',platform:'Kalshi',yesOdds:22,noOdds:78,volume:112000000,volumeChange:16.7,yesChange:'+5.8',expiry:'Dec 31, 2026'},
-        {id:'k27',title:'NBA Finals: Celtics repeat as champions?',category:'sports',platform:'Kalshi',yesOdds:18,noOdds:82,volume:234000000,volumeChange:12.4,yesChange:'+4.1',expiry:'Jun 15, 2026'},
-        {id:'k28',title:'China GDP growth above 5% in 2026?',category:'economy',platform:'Kalshi',yesOdds:42,noOdds:58,volume:78900000,volumeChange:5.6,yesChange:'+1.9',expiry:'Dec 31, 2026'},
-        {id:'k29',title:'Anthropic valuation exceeds $100B?',category:'tech',platform:'Kalshi',yesOdds:45,noOdds:55,volume:67800000,volumeChange:28.3,yesChange:'+9.7',expiry:'Dec 31, 2026'},
-        {id:'k30',title:'Major Category 5 hurricane hits US mainland?',category:'climate',platform:'Kalshi',yesOdds:35,noOdds:65,volume:89400000,volumeChange:4.2,yesChange:'+1.4',expiry:'Nov 30, 2026'}
-      ];
-    }
-
-    function getMetaculusFallback() {
-      return [
-        {id:'mc1',title:'Will artificial general intelligence be achieved by 2030?',category:'tech',platform:'Metaculus',yesOdds:12,noOdds:88,volume:0,liquidity:0,volumeChange:3.2,yesChange:'+1.8',expiry:'Dec 31, 2030'},
-        {id:'mc2',title:'Global average temperature exceeds 1.5C above pre-industrial by 2027?',category:'climate',platform:'Metaculus',yesOdds:72,noOdds:28,volume:0,liquidity:0,volumeChange:5.1,yesChange:'+2.3',expiry:'Dec 31, 2027'},
-        {id:'mc3',title:'Will nuclear fusion achieve net energy gain commercially by 2030?',category:'science',platform:'Metaculus',yesOdds:18,noOdds:82,volume:0,liquidity:0,volumeChange:8.4,yesChange:'+4.1',expiry:'Dec 31, 2030'},
-        {id:'mc4',title:'FDA approves first CRISPR gene therapy for cancer by 2027?',category:'science',platform:'Metaculus',yesOdds:35,noOdds:65,volume:0,liquidity:0,volumeChange:12.7,yesChange:'+6.2',expiry:'Dec 31, 2027'},
-        {id:'mc5',title:'Will SpaceX land humans on Mars before 2030?',category:'science',platform:'Metaculus',yesOdds:8,noOdds:92,volume:0,liquidity:0,volumeChange:2.1,yesChange:'+0.8',expiry:'Dec 31, 2030'},
-        {id:'mc6',title:'Global EV sales exceed 50% of new car sales by 2028?',category:'climate',platform:'Metaculus',yesOdds:38,noOdds:62,volume:0,liquidity:0,volumeChange:6.8,yesChange:'+3.1',expiry:'Dec 31, 2028'},
-        {id:'mc7',title:'US national debt exceeds $40 trillion by end of 2026?',category:'economy',platform:'Metaculus',yesOdds:78,noOdds:22,volume:0,liquidity:0,volumeChange:4.3,yesChange:'+1.7',expiry:'Dec 31, 2026'},
-        {id:'mc8',title:'Will any country deploy autonomous lethal weapons in combat by 2027?',category:'politics',platform:'Metaculus',yesOdds:45,noOdds:55,volume:0,liquidity:0,volumeChange:9.1,yesChange:'+3.8',expiry:'Dec 31, 2027'},
-        {id:'mc9',title:'Quantum computer solves problem infeasible for classical by 2027?',category:'tech',platform:'Metaculus',yesOdds:55,noOdds:45,volume:0,liquidity:0,volumeChange:7.4,yesChange:'+2.9',expiry:'Dec 31, 2027'},
-        {id:'mc10',title:'Will an AI system pass a Turing test convincingly by 2027?',category:'tech',platform:'Metaculus',yesOdds:62,noOdds:38,volume:0,liquidity:0,volumeChange:15.2,yesChange:'+7.4',expiry:'Dec 31, 2027'},
-        {id:'mc11',title:'Life expectancy treatment extends human lifespan 10+ years by 2030?',category:'science',platform:'Metaculus',yesOdds:15,noOdds:85,volume:0,liquidity:0,volumeChange:4.8,yesChange:'+2.1',expiry:'Dec 31, 2030'},
-        {id:'mc12',title:'Carbon capture removes 1M+ tonnes CO2 annually by 2028?',category:'climate',platform:'Metaculus',yesOdds:42,noOdds:58,volume:0,liquidity:0,volumeChange:11.3,yesChange:'+5.2',expiry:'Dec 31, 2028'},
-        {id:'mc13',title:'World population peaks before 2080?',category:'science',platform:'Metaculus',yesOdds:58,noOdds:42,volume:0,liquidity:0,volumeChange:1.2,yesChange:'+0.4',expiry:'Dec 31, 2080'},
-        {id:'mc14',title:'Major solar storm disrupts global infrastructure by 2030?',category:'science',platform:'Metaculus',yesOdds:8,noOdds:92,volume:0,liquidity:0,volumeChange:2.3,yesChange:'+0.9',expiry:'Dec 31, 2030'},
-        {id:'mc15',title:'Alzheimer cure or highly effective treatment by 2030?',category:'science',platform:'Metaculus',yesOdds:22,noOdds:78,volume:0,liquidity:0,volumeChange:6.7,yesChange:'+3.2',expiry:'Dec 31, 2030'}
-      ];
-    }
-
-    function getManifoldFallback() {
-      return [
-        {id:'mf_f1',title:'Will GPT-5 score above 90% on MMLU benchmark?',category:'tech',platform:'Manifold',yesOdds:65,noOdds:35,volume:45200,liquidity:12300,volumeChange:18.4,yesChange:'+6.8',expiry:'Dec 31, 2026'},
-        {id:'mf_f2',title:'Will Elon Musk still be CEO of Tesla at end of 2026?',category:'tech',platform:'Manifold',yesOdds:72,noOdds:28,volume:67800,liquidity:18900,volumeChange:5.3,yesChange:'+1.9',expiry:'Dec 31, 2026'},
-        {id:'mf_f3',title:'Will Bitcoin ETF cumulative inflows exceed $100B?',category:'crypto',platform:'Manifold',yesOdds:58,noOdds:42,volume:89400,liquidity:24500,volumeChange:22.1,yesChange:'+8.4',expiry:'Dec 31, 2026'},
-        {id:'mf_f4',title:'Will Threads surpass Twitter/X in daily active users?',category:'culture',platform:'Manifold',yesOdds:18,noOdds:82,volume:34500,liquidity:9800,volumeChange:8.7,yesChange:'+3.2',expiry:'Dec 31, 2026'},
-        {id:'mf_f5',title:'Will any AI company IPO at $50B+ valuation in 2026?',category:'tech',platform:'Manifold',yesOdds:42,noOdds:58,volume:56700,liquidity:15600,volumeChange:25.8,yesChange:'+9.1',expiry:'Dec 31, 2026'},
-        {id:'mf_f6',title:'Oscar Best Picture 2027 goes to an AI-assisted film?',category:'culture',platform:'Manifold',yesOdds:8,noOdds:92,volume:23400,liquidity:6700,volumeChange:34.2,yesChange:'+12.1',expiry:'Mar 1, 2027'},
-        {id:'mf_f7',title:'Will the EU pass comprehensive AI regulation by mid-2026?',category:'politics',platform:'Manifold',yesOdds:82,noOdds:18,volume:34500,liquidity:9800,volumeChange:3.4,yesChange:'+1.2',expiry:'Jun 30, 2026'},
-        {id:'mf_f8',title:'Will Solana TVL exceed $20B in 2026?',category:'crypto',platform:'Manifold',yesOdds:45,noOdds:55,volume:78900,liquidity:21300,volumeChange:28.9,yesChange:'+10.4',expiry:'Dec 31, 2026'},
-        {id:'mf_f9',title:'Will Netflix stock exceed $1000?',category:'culture',platform:'Manifold',yesOdds:38,noOdds:62,volume:45200,liquidity:12300,volumeChange:11.6,yesChange:'+4.3',expiry:'Dec 31, 2026'},
-        {id:'mf_f10',title:'Premier League winner 2025-26: Arsenal?',category:'sports',platform:'Manifold',yesOdds:32,noOdds:68,volume:123000,liquidity:34500,volumeChange:7.8,yesChange:'+2.8',expiry:'May 24, 2026'},
-        {id:'mf_f11',title:'Will a humanoid robot be commercially available for under $20K?',category:'tech',platform:'Manifold',yesOdds:15,noOdds:85,volume:34500,liquidity:9800,volumeChange:19.4,yesChange:'+7.1',expiry:'Dec 31, 2026'},
-        {id:'mf_f12',title:'Cardano ADA above $3 in 2026?',category:'crypto',platform:'Manifold',yesOdds:22,noOdds:78,volume:56700,liquidity:15600,volumeChange:31.2,yesChange:'+11.8',expiry:'Dec 31, 2026'},
-        {id:'mf_f13',title:'Will Taylor Swift announce retirement from touring?',category:'culture',platform:'Manifold',yesOdds:5,noOdds:95,volume:89400,liquidity:24500,volumeChange:2.1,yesChange:'+0.8',expiry:'Dec 31, 2026'},
-        {id:'mf_f14',title:'Formula 1 champion 2026: Max Verstappen?',category:'sports',platform:'Manifold',yesOdds:42,noOdds:58,volume:67800,liquidity:18900,volumeChange:9.3,yesChange:'+3.4',expiry:'Dec 1, 2026'},
-        {id:'mf_f15',title:'Will Polygon zkEVM become the top L2 by TVL?',category:'crypto',platform:'Manifold',yesOdds:18,noOdds:82,volume:34500,liquidity:9800,volumeChange:24.7,yesChange:'+9.2',expiry:'Dec 31, 2026'}
-      ];
-    }
-
-    function renderMispricedList() {
+    // === RENDER MARKET LIST (All Markets tab) ===
+    function renderMarketList() {
       var list = document.getElementById('mispricedList');
-      var filtered = markets.filter(function(m) { return Math.abs(MLModel.calculateFairValue(m) - m.yesOdds) >= 3; });
+      var filtered = markets.slice();
       if (selectedCategory !== 'all') filtered = filtered.filter(function(m) { return m.category === selectedCategory; });
       if (selectedPlatform !== 'all') filtered = filtered.filter(function(m) { return m.platform === selectedPlatform; });
       if (searchQuery) { var q = searchQuery.toLowerCase(); filtered = filtered.filter(function(m) { return m.title.toLowerCase().indexOf(q) !== -1; }); }
-      filtered.sort(function(a, b) { return Math.abs(MLModel.calculateFairValue(b) - b.yesOdds) - Math.abs(MLModel.calculateFairValue(a) - a.yesOdds); });
+      // Sort by volume descending
+      filtered.sort(function(a, b) { return (b.volume || 0) - (a.volume || 0); });
       document.getElementById('mispricedCount').textContent = filtered.length;
-      document.getElementById('alphaAnomalies').textContent = filtered.length;
+      document.getElementById('alphaAnomalies').textContent = markets.length;
       document.getElementById('activeMarkets').textContent = markets.length;
-      var platformColors = {Polymarket:'var(--cyan)',Manifold:'var(--violet)',Metaculus:'var(--gold)',Kalshi:'var(--green)'};
-      list.innerHTML = filtered.slice(0, 120).map(function(m) {
-        var fv = MLModel.calculateFairValue(m);
-        var edge = fv - m.yesOdds;
-        var bull = edge > 0;
+      var platformColors = {Polymarket:'var(--cyan)',Manifold:'var(--violet)'};
+      list.innerHTML = filtered.slice(0, 150).map(function(m) {
         var pc = platformColors[m.platform] || 'var(--text-dim)';
-        return '<div class="mispriced-item ' + (bull ? '' : 'bearish') + '" data-id="' + m.id + '">' +
+        var chg = m.priceChange1d;
+        var chgStr = formatPriceChange(chg);
+        var chgColor = priceChangeColor(chg);
+        return '<div class="mispriced-item" data-id="' + m.id + '">' +
           '<div class="mispriced-top"><div class="mispriced-title">' + m.title + '</div>' +
-          '<span class="edge-pill ' + (bull ? 'pos' : 'neg') + '">' + (bull ? '+' : '') + edge + 'c</span></div>' +
+          '<span class="edge-pill ' + (chg > 0 ? 'pos' : chg < 0 ? 'neg' : '') + '" style="' + (!chg ? 'background:var(--surface2);color:var(--text-muted)' : '') + '">' + (chg != null ? chgStr : m.yesOdds + 'c') + '</span></div>' +
           '<div class="mispriced-meta"><span style="color:' + pc + ';font-weight:600">' + m.platform + '</span><span>' + m.category + '</span>' +
-          '<span>YES ' + m.yesOdds + 'c &rarr; Fair ' + fv + 'c</span>' +
-          (m.volume > 0 ? '<span>' + formatVolume(m.volume) + '</span>' : '') +
+          '<span>YES ' + m.yesOdds + 'c / NO ' + m.noOdds + 'c</span>' +
+          (m.volume > 0 ? '<span>Vol ' + formatVolume(m.volume) + '</span>' : '') +
+          (m.liquidity > 0 ? '<span>Liq ' + formatVolume(m.liquidity) + '</span>' : '') +
           '<span>' + m.expiry + '</span></div></div>';
-      }).join('') || '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:0.7rem;">No mispriced markets found.</div>';
+      }).join('') || '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:0.7rem;">No markets match your filters.</div>';
       list.querySelectorAll('.mispriced-item').forEach(function(item) {
         item.addEventListener('click', function() { selectMarket(markets.find(function(m) { return m.id === item.dataset.id; })); });
       });
     }
 
+    // === RENDER MOVERS LIST ===
+    function renderMoversList() {
+      var list = document.getElementById('moversList');
+      // Only markets with real price change data
+      var movers = markets.filter(function(m) { return m.priceChange1d !== null && m.priceChange1d !== undefined; });
+      movers.sort(function(a, b) { return Math.abs(b.priceChange1d) - Math.abs(a.priceChange1d); });
+      document.getElementById('moversCount').textContent = movers.length;
+      var platformColors = {Polymarket:'var(--cyan)',Manifold:'var(--violet)'};
+      list.innerHTML = movers.slice(0, 80).map(function(m) {
+        var pc = platformColors[m.platform] || 'var(--text-dim)';
+        var chg1d = formatPriceChange(m.priceChange1d);
+        var chg7d = formatPriceChange(m.priceChange7d);
+        var bull = m.priceChange1d > 0;
+        return '<div class="mispriced-item ' + (bull ? '' : 'bearish') + '" data-id="' + m.id + '">' +
+          '<div class="mispriced-top"><div class="mispriced-title">' + m.title + '</div>' +
+          '<span class="edge-pill ' + (bull ? 'pos' : 'neg') + '">' + chg1d + ' 24h</span></div>' +
+          '<div class="mispriced-meta"><span style="color:' + pc + ';font-weight:600">' + m.platform + '</span><span>' + m.category + '</span>' +
+          '<span>YES ' + m.yesOdds + 'c</span>' +
+          (m.priceChange7d != null ? '<span style="color:' + priceChangeColor(m.priceChange7d) + '">7d: ' + chg7d + '</span>' : '') +
+          (m.volume > 0 ? '<span>Vol ' + formatVolume(m.volume) + '</span>' : '') +
+          '<span>' + m.expiry + '</span></div></div>';
+      }).join('') || '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:0.7rem;">No price change data available. Polymarket provides this field.</div>';
+      list.querySelectorAll('.mispriced-item').forEach(function(item) {
+        item.addEventListener('click', function() { selectMarket(markets.find(function(m) { return m.id === item.dataset.id; })); });
+      });
+    }
+
+    // === RENDER VOLUME LEADERS ===
+    function renderVolumeList() {
+      var list = document.getElementById('volumeList');
+      var sorted = markets.slice().sort(function(a, b) { return (b.volume || 0) - (a.volume || 0); });
+      document.getElementById('volumeLeaders').textContent = sorted.filter(function(m) { return m.volume > 100000; }).length;
+      var platformColors = {Polymarket:'var(--cyan)',Manifold:'var(--violet)'};
+      list.innerHTML = sorted.slice(0, 80).map(function(m, i) {
+        var pc = platformColors[m.platform] || 'var(--text-dim)';
+        return '<div class="mispriced-item" data-id="' + m.id + '">' +
+          '<div class="mispriced-top"><div class="mispriced-title"><span style="color:var(--text-dim);font-family:var(--mono);font-size:0.6rem;margin-right:6px;">#' + (i+1) + '</span>' + m.title + '</div>' +
+          '<span class="edge-pill" style="background:rgba(107,79,232,0.1);color:var(--violet)">' + formatVolume(m.volume) + '</span></div>' +
+          '<div class="mispriced-meta"><span style="color:' + pc + ';font-weight:600">' + m.platform + '</span><span>' + m.category + '</span>' +
+          '<span>YES ' + m.yesOdds + 'c</span>' +
+          (m.liquidity > 0 ? '<span>Liq ' + formatVolume(m.liquidity) + '</span>' : '') +
+          (m.volume24h > 0 ? '<span>24h Vol ' + formatVolume(m.volume24h) + '</span>' : '') +
+          '<span>' + m.expiry + '</span></div></div>';
+      }).join('') || '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:0.7rem;">Loading...</div>';
+      list.querySelectorAll('.mispriced-item').forEach(function(item) {
+        item.addEventListener('click', function() { selectMarket(markets.find(function(m) { return m.id === item.dataset.id; })); });
+      });
+    }
+
+    // === SELECT MARKET — Show real detail ===
     function selectMarket(m) {
       if (!m) return;
       selectedMarket = m;
-      var fv = MLModel.calculateFairValue(m);
-      var sig = MLModel.generateSignal(m, fv);
-      var edge = fv - m.yesOdds;
-      var bull = edge > 0;
       document.getElementById('detailCategory').textContent = m.category.charAt(0).toUpperCase() + m.category.slice(1);
       document.getElementById('detailTitle').textContent = m.title;
       document.getElementById('detailPlatform').textContent = m.platform;
       document.getElementById('detailExpiry').textContent = m.expiry;
       document.getElementById('detailYes').textContent = m.yesOdds + 'c';
       document.getElementById('detailNo').textContent = m.noOdds + 'c';
-      var yc = parseFloat(m.yesChange) || 0;
-      document.getElementById('detailYesChange').textContent = (yc >= 0 ? '+' : '') + yc + '%';
-      document.getElementById('detailYesChange').className = 'odds-change ' + (yc >= 0 ? 'up' : 'down');
-      document.getElementById('detailNoChange').textContent = (yc >= 0 ? '-' : '+') + Math.abs(yc) + '%';
-      document.getElementById('detailNoChange').className = 'odds-change ' + (yc >= 0 ? 'down' : 'up');
-      var v = document.getElementById('aiVerdict');
-      v.textContent = sig.verdict + ' ' + (bull ? '+' : '') + edge + 'c edge';
-      v.className = 'edge-pill ' + (bull ? 'pos' : 'neg');
-      document.getElementById('aiConfidence').textContent = sig.confidence + '%';
-      document.getElementById('aiConfidence').style.color = sig.confidence > 70 ? 'var(--green)' : sig.confidence > 50 ? 'var(--gold)' : 'var(--text-muted)';
-      var factors = [];
-      var factorDetails = [];
-      if (m.volumeChange > 20) { factors.push('volume surge'); factorDetails.push('24h volume momentum ' + (m.volumeChange > 0 ? '+' : '') + m.volumeChange.toFixed(1) + '%'); }
-      if (Math.abs(yc) > 4) { factors.push('price momentum'); factorDetails.push('price shift ' + (yc > 0 ? '+' : '') + yc + '% (strong directional move)'); }
-      if (m.volume > 50000000) { factors.push('deep liquidity'); factorDetails.push('$' + (m.volume/1e6).toFixed(0) + 'M volume = reliable price discovery'); }
-      else if (m.volume > 5000000) { factors.push('moderate liquidity'); }
-      if (m.category === 'crypto') { factors.push('crypto cycle'); factorDetails.push('correlated with BTC/ETH ETF inflow momentum'); }
-      if (m.category === 'politics') { factors.push('polling shift'); factorDetails.push('cross-referenced with aggregated polling data'); }
-      if (m.category === 'economy') { factors.push('macro movement'); factorDetails.push('aligned with Fed dot plot + yield curve signal'); }
-      if (m.category === 'tech') { factors.push('sector catalyst'); factorDetails.push('tech sector earnings momentum + launch pipeline'); }
-      if (m.category === 'science') { factors.push('research pipeline'); factorDetails.push('milestone proximity based on published timelines'); }
-      if (m.category === 'climate') { factors.push('environmental data'); factorDetails.push('satellite + NOAA data trend analysis'); }
-      if (m.platform === 'Manifold') factorDetails.push('Manifold crowd wisdom (prediction market calibration)');
-      if (m.platform === 'Metaculus') factorDetails.push('Metaculus forecaster consensus (historically well-calibrated)');
-      if (!factors.length) { factors.push('pattern recognition'); factorDetails.push('statistical anomaly detection across market correlations'); }
-      var analysisHtml = '';
-      if (sig.verdict.indexOf('YES') !== -1)
-        analysisHtml = '<strong style="color:var(--text)">Bullish signal.</strong> Fair value ' + fv + 'c vs market ' + m.yesOdds + 'c (' + m.platform + '). Edge: <strong style="color:var(--green)">+' + edge + 'c</strong>.<br><span style="color:var(--text-dim);font-size:0.62rem">Factors: ' + factorDetails.join(' / ') + '.</span>';
-      else if (sig.verdict.indexOf('NO') !== -1)
-        analysisHtml = '<strong style="color:var(--text)">Bearish signal.</strong> Overpriced at ' + m.yesOdds + 'c (fair: ' + fv + 'c) on ' + m.platform + '. Edge: <strong style="color:var(--red)">' + edge + 'c</strong>.<br><span style="color:var(--text-dim);font-size:0.62rem">Factors: ' + factorDetails.join(' / ') + '.</span>';
-      else
-        analysisHtml = '<strong style="color:var(--text)">Neutral.</strong> Market ' + m.yesOdds + 'c ~ fair ' + fv + 'c on ' + m.platform + '. Insufficient edge for entry.';
-      document.getElementById('aiAnalysis').innerHTML = analysisHtml;
+      // Real price changes
+      var chg1d = m.priceChange1d;
+      var yesChgEl = document.getElementById('detailYesChange');
+      if (chg1d != null) {
+        yesChgEl.textContent = formatPriceChange(chg1d) + ' (24h)';
+        yesChgEl.className = 'odds-change ' + (chg1d >= 0 ? 'up' : 'down');
+      } else {
+        yesChgEl.textContent = 'No 24h data';
+        yesChgEl.className = 'odds-change neutral';
+      }
+      var noChgEl = document.getElementById('detailNoChange');
+      if (chg1d != null) {
+        noChgEl.textContent = formatPriceChange(-chg1d) + ' (24h)';
+        noChgEl.className = 'odds-change ' + (chg1d <= 0 ? 'up' : 'down');
+      } else {
+        noChgEl.textContent = 'No 24h data';
+        noChgEl.className = 'odds-change neutral';
+      }
+      // Real metrics
+      document.getElementById('detailVolume').textContent = formatVolume(m.volume);
+      document.getElementById('detailVolume24h').textContent = m.volume24h > 0 ? formatVolume(m.volume24h) : '—';
+      document.getElementById('detailLiquidity').textContent = m.liquidity > 0 ? formatVolume(m.liquidity) : '—';
+      var pc1d = document.getElementById('detailPriceChange1d');
+      pc1d.textContent = formatPriceChange(m.priceChange1d);
+      pc1d.style.color = priceChangeColor(m.priceChange1d);
+      var pc7d = document.getElementById('detailPriceChange7d');
+      pc7d.textContent = formatPriceChange(m.priceChange7d);
+      pc7d.style.color = priceChangeColor(m.priceChange7d);
+      var bidAsk = document.getElementById('detailBidAsk');
+      if (m.bestBid != null && m.bestAsk != null) {
+        bidAsk.textContent = Math.round(m.bestBid * 100) + 'c / ' + Math.round(m.bestAsk * 100) + 'c';
+        bidAsk.style.color = 'var(--text)';
+      } else {
+        bidAsk.textContent = '—';
+        bidAsk.style.color = 'var(--text-muted)';
+      }
+      // Link
+      var linkEl = document.getElementById('detailLink');
+      if (m.url) { linkEl.href = m.url; linkEl.textContent = 'View on ' + m.platform + ' →'; linkEl.style.display = ''; }
+      else { linkEl.style.display = 'none'; }
+      // Terminal
       document.getElementById('terminalName').textContent = m.title.slice(0, 50) + (m.title.length > 50 ? '...' : '');
       document.getElementById('terminalYes').textContent = m.yesOdds + 'c';
       document.getElementById('terminalNo').textContent = m.noOdds + 'c';
-      addMemoryLine('alpha', 'Selected: "' + m.title.slice(0,40) + '..." <span class="hl">' + (bull?'+':'') + edge + 'c</span>');
+      addMemoryLine('alpha', 'Selected: "' + m.title.slice(0,45) + '..." YES ' + m.yesOdds + 'c | ' + m.platform);
     }
 
+    // === MEMORY LOG ===
     function addMemoryLine(agent, text) {
       var log = document.getElementById('memoryLog');
       var now = new Date();
@@ -1364,105 +1076,52 @@ body::before {
       log.scrollTop = log.scrollHeight;
     }
 
-    function renderWhaleList() {
-      var el = document.getElementById('whaleList');
-      if (!el || !markets.length) return;
-      var whales = markets.slice(0, 15).map(function(m) {
-        return {
-          market: m.title.slice(0, 35) + (m.title.length > 35 ? '...' : ''),
-          side: Math.random() > 0.45 ? 'buy' : 'sell',
-          size: Math.round(20000 + Math.random() * 80000),
-          time: Math.round(Math.random() * 60) + 'm ago'
-        };
-      }).sort(function(a, b) { return b.size - a.size; }).slice(0, 6);
-      el.innerHTML = whales.map(function(w) {
-        return '<div class="whale-item ' + (w.side === 'buy' ? 'buy-side' : 'sell-side') + '">' +
-        '<div class="whale-info"><div class="whale-market">' + w.market + '</div>' +
-        '<div class="whale-meta"><span>' + w.side.toUpperCase() + ' ' + (w.side === 'buy' ? 'YES' : 'NO') + '</span><span>' + w.time + '</span></div></div>' +
-        '<div class="whale-amount ' + w.side + '">$' + (w.size / 1000).toFixed(1) + 'K</div></div>';
-      }).join('');
-    }
-
-    function renderPerfChart() {
-      var el = document.getElementById('perfChart');
-      if (!el) return;
-      var bars = '';
-      for (var i = 0; i < 30; i++) {
-        var t = (Math.random() - 0.35) * 100;
-        bars += '<div class="perf-bar ' + (t >= 0 ? 'pos' : 'neg') + '" style="height:' + Math.max(3, Math.abs(t)) + '%"></div>';
-      }
-      el.innerHTML = bars;
-    }
-
+    // === TERMINAL ===
     function toggleTerminal() {
       terminalOpen = !terminalOpen;
       document.getElementById('tradingTerminal').classList.toggle('open', terminalOpen);
     }
     document.getElementById('hotkeyToggle').addEventListener('click', toggleTerminal);
     document.getElementById('terminalCloseBtn').addEventListener('click', toggleTerminal);
-    document.getElementById('btnBuyYes').addEventListener('click', function() { executeTrade('yes'); });
-    document.getElementById('btnBuyNo').addEventListener('click', function() { executeTrade('no'); });
-    function executeTrade(side) {
-      if (!selectedMarket) return;
-      var size = document.getElementById('terminalSize').value;
-      var price = side === 'yes' ? selectedMarket.yesOdds : selectedMarket.noOdds;
-      var shares = Math.round(parseFloat(size) / (price / 100));
-      addMemoryLine('execution', 'BUY ' + side.toUpperCase() + ' "' + selectedMarket.title.slice(0,30) + '..." ' + shares + ' shares @ ' + price + 'c');
+    document.getElementById('btnBuyYes').addEventListener('click', function() { openOnPlatform('yes'); });
+    document.getElementById('btnBuyNo').addEventListener('click', function() { openOnPlatform('no'); });
+    function openOnPlatform(side) {
+      if (!selectedMarket || !selectedMarket.url) return;
+      window.open(selectedMarket.url, '_blank');
+      addMemoryLine('alpha', 'Opened ' + selectedMarket.platform + ' for "' + selectedMarket.title.slice(0,30) + '..."');
     }
     document.addEventListener('keydown', function(e) {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       if (e.key === 't' || e.key === 'T') toggleTerminal();
-      if (e.key === 'y' && terminalOpen) executeTrade('yes');
-      if (e.key === 'n' && terminalOpen) executeTrade('no');
+      if (e.key === 'y' && terminalOpen) openOnPlatform('yes');
+      if (e.key === 'n' && terminalOpen) openOnPlatform('no');
       if (e.key === 'Escape' && terminalOpen) toggleTerminal();
     });
 
+    // === WS STATUS ===
     function updateWsStatus(s) {
       var el = document.getElementById('wsStatus'), txt = document.getElementById('wsText');
       el.classList.remove('ws-live');
       if (s === 'connected') { el.classList.add('ws-live'); txt.textContent = 'Live'; }
-      else if (s === 'connecting') { txt.textContent = 'Connecting...'; }
+      else if (s === 'connecting') { txt.textContent = 'Loading...'; }
       else { txt.textContent = 'Offline'; }
     }
 
-    var hbSec = 0;
-    setInterval(function() {
-      hbSec += 5;
-      var el = document.getElementById('lastHeartbeat');
-      if (el) {
-        if (hbSec >= 300) { hbSec = 0; addMemoryLine('risk', 'Heartbeat OK. All agents. RPC: ' + (120 + Math.round(Math.random()*40)) + 'ms'); }
-        el.textContent = hbSec + 's ago';
-      }
-    }, 5000);
-    setInterval(function() {
-      var agents = ['alpha', 'forecast', 'liquidity'];
-      var agent = agents[Math.floor(Math.random() * agents.length)];
-      var msgs = {
-        alpha: ['Price movement on 3 markets. Recalculating...', 'New market opened scanning...', 'Crypto spread widened arb check.'],
-        forecast: ['12 new X posts parsed. Shift: neutral to bullish.', 'Bloomberg breaking. Evaluating...', 'CPI inline with expectations.'],
-        liquidity: ['Portfolio: 7 pos, unrealized <span class="hl">+$82.13</span>', 'Win rate: 68% (51W/24L). Sharpe: 2.1', 'Top: SOL ETF 2026 (+$26.67)']
-      };
-      addMemoryLine(agent, msgs[agent][Math.floor(Math.random() * msgs[agent].length)]);
-    }, 15000);
-
+    // === INIT — REAL DATA ONLY ===
     function init() {
       updateWsStatus('connecting');
-      addMemoryLine('risk', 'Edge Engine booting. Scanning 4 platforms...');
-      var platformsLoaded = {Polymarket:0, Manifold:0, Metaculus:0, Kalshi:0};
+      addMemoryLine('alpha', 'Initializing — fetching from Polymarket + Manifold APIs...');
+
       Promise.allSettled([
         fetchPolymarketData(),
         fetchManifoldData()
       ]).then(function(results) {
         var polyData = (results[0].status === 'fulfilled' ? results[0].value : []);
         var manifoldData = (results[1].status === 'fulfilled' ? results[1].value : []);
-        if (!manifoldData.length) manifoldData = getManifoldFallback();
-        var kalshiData = getKalshiFallback();
-        var metaculusData = getMetaculusFallback();
-        platformsLoaded.Polymarket = polyData.length;
-        platformsLoaded.Manifold = manifoldData.length;
-        platformsLoaded.Kalshi = kalshiData.length;
-        platformsLoaded.Metaculus = metaculusData.length;
-        markets = polyData.concat(manifoldData).concat(kalshiData).concat(metaculusData);
+
+        markets = polyData.concat(manifoldData);
+
+        // Deduplicate by title similarity
         var seen = {};
         markets = markets.filter(function(m) {
           var key = m.title.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,40);
@@ -1470,31 +1129,74 @@ body::before {
           seen[key] = true;
           return true;
         });
-        markets.sort(function(a, b) { return b.volume - a.volume || Math.abs(MLModel.calculateFairValue(b) - b.yesOdds) - Math.abs(MLModel.calculateFairValue(a) - a.yesOdds); });
-        var totalVol = markets.reduce(function(s, m) { return s + m.volume; }, 0);
+
+        // Sort by volume
+        markets.sort(function(a, b) { return (b.volume || 0) - (a.volume || 0); });
+
+        // Update stats with REAL data
+        var totalVol = markets.reduce(function(s, m) { return s + (m.volume || 0); }, 0);
+        var totalLiq = markets.reduce(function(s, m) { return s + (m.liquidity || 0); }, 0);
+        var avgLiq = markets.length > 0 ? totalLiq / markets.length : 0;
+
         document.getElementById('totalVolume').textContent = formatVolume(totalVol);
-        var activePlatforms = Object.keys(platformsLoaded).filter(function(k) { return platformsLoaded[k] > 0; });
-        document.getElementById('platformCount').textContent = activePlatforms.length;
-        document.getElementById('platformNames').textContent = activePlatforms.map(function(p) { return p.slice(0,4); }).join(' + ');
-        renderMispricedList();
-        renderWhaleList();
-        renderPerfChart();
+        document.getElementById('totalVolumeDelta').textContent = 'Across ' + markets.length + ' markets';
+        document.getElementById('avgLiquidity').textContent = formatVolume(avgLiq);
+
+        var polyCount = polyData.length, mfCount = manifoldData.length;
+        document.getElementById('platformCount').textContent = (polyCount > 0 ? 1 : 0) + (mfCount > 0 ? 1 : 0);
+        document.getElementById('platformNames').textContent = (polyCount > 0 ? 'Poly(' + polyCount + ')' : '') + (polyCount > 0 && mfCount > 0 ? ' + ' : '') + (mfCount > 0 ? 'Manifold(' + mfCount + ')' : '');
+
+        var now = new Date();
+        document.getElementById('lastRefresh').textContent = now.toLocaleTimeString();
+        document.getElementById('scanTimestamp').textContent = 'Last scan: ' + now.toLocaleTimeString();
+
+        // Render all tabs
+        renderMarketList();
+        renderMoversList();
+        renderVolumeList();
+
         if (markets.length) selectMarket(markets[0]);
         updateWsStatus('connected');
-        addMemoryLine('alpha', 'All platforms ingested. <span class="hl">' + markets.length + ' total markets</span>. ' + activePlatforms.length + ' sources live.');
-        addMemoryLine('forecast', 'Poly: ' + platformsLoaded.Polymarket + ' | Manifold: ' + platformsLoaded.Manifold + ' | Kalshi: ' + platformsLoaded.Kalshi + ' | Metaculus: ' + platformsLoaded.Metaculus);
-        setInterval(function() { renderWhaleList(); renderMispricedList(); }, 30000);
+
+        addMemoryLine('alpha', 'All APIs loaded. <span class="hl">' + markets.length + ' total markets</span>. Poly: ' + polyCount + ' | Manifold: ' + mfCount);
+        addMemoryLine('alpha', 'Total volume: ' + formatVolume(totalVol) + ' | Avg liquidity: ' + formatVolume(avgLiq));
+
+        // Auto-refresh every 2 minutes
         setInterval(function() {
+          addMemoryLine('alpha', 'Auto-refreshing Polymarket data...');
           fetchPolymarketData().then(function(fresh) {
             if (fresh.length > 0) {
-              var oldCount = markets.length;
               var seenIds = {};
               markets.forEach(function(m) { seenIds[m.id] = true; });
+              // Update existing markets with fresh data
+              fresh.forEach(function(f) {
+                var existing = markets.find(function(m) { return m.id === f.id; });
+                if (existing) {
+                  existing.yesOdds = f.yesOdds;
+                  existing.noOdds = f.noOdds;
+                  existing.volume = f.volume;
+                  existing.volume24h = f.volume24h;
+                  existing.liquidity = f.liquidity;
+                  existing.priceChange1d = f.priceChange1d;
+                  existing.priceChange7d = f.priceChange7d;
+                  existing.lastTradePrice = f.lastTradePrice;
+                  existing.bestBid = f.bestBid;
+                  existing.bestAsk = f.bestAsk;
+                }
+              });
               var newMkts = fresh.filter(function(m) { return !seenIds[m.id]; });
               if (newMkts.length > 0) {
                 markets = markets.concat(newMkts);
-                renderMispricedList();
                 addMemoryLine('alpha', 'Refresh: +' + newMkts.length + ' new markets. Total: <span class="hl">' + markets.length + '</span>');
+              }
+              renderMarketList();
+              renderMoversList();
+              renderVolumeList();
+              document.getElementById('lastRefresh').textContent = new Date().toLocaleTimeString();
+              document.getElementById('scanTimestamp').textContent = 'Last scan: ' + new Date().toLocaleTimeString();
+              if (selectedMarket) {
+                var updated = markets.find(function(m) { return m.id === selectedMarket.id; });
+                if (updated) selectMarket(updated);
               }
             }
           });
@@ -1513,15 +1215,15 @@ body::before {
     document.getElementById('tgThreshold').addEventListener('input', function() { tgThreshold = parseInt(this.value); document.getElementById('tgThresholdVal').textContent = '>= ' + tgThreshold + 'c'; });
     document.getElementById('tgAutoToggle').addEventListener('click', function() {
       tgAutoPost = !tgAutoPost; this.classList.toggle('active', tgAutoPost);
-      if (tgAutoPost) { tgAutoInterval = setInterval(function() { postTg(true); }, 30*60*1000); showToast('Auto-post enabled', 'success'); addMemoryLine('risk', 'Auto-post <span class="hl">ON</span> >=' + tgThreshold + 'c'); }
-      else { clearInterval(tgAutoInterval); tgAutoInterval = null; showToast('Auto-post off', ''); addMemoryLine('risk', 'Auto-post <span class="hl">OFF</span>'); }
+      if (tgAutoPost) { tgAutoInterval = setInterval(function() { postTg(true); }, 30*60*1000); showToast('Auto-post enabled', 'success'); addMemoryLine('alpha', 'Auto-post <span class="hl">ON</span> >=' + tgThreshold + 'c'); }
+      else { clearInterval(tgAutoInterval); tgAutoInterval = null; showToast('Auto-post off', ''); addMemoryLine('alpha', 'Auto-post <span class="hl">OFF</span>'); }
     });
     document.getElementById('tgSendNow').addEventListener('click', function() { postTg(); });
 
     function checkTgStatus() {
       var dot = document.querySelector('#tgStatus .tg-dot'), txt = document.getElementById('tgStatusText');
       dot.className = 'tg-dot checking'; txt.textContent = 'Checking...';
-      fetch(TG_API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:'Edge Engine test'}) })
+      fetch(TG_API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:'Scanner check'}) })
         .then(function(res) { return res.json(); })
         .then(function(data) {
           if (data.success) { dot.className = 'tg-dot online'; txt.textContent = 'Connected'; }
@@ -1530,24 +1232,24 @@ body::before {
         .catch(function() { dot.className = 'tg-dot offline'; txt.textContent = 'Unreachable'; });
     }
 
-    function getTopTrades() {
-      return markets.map(function(m) {
-        var fv = MLModel.calculateFairValue(m), sig = MLModel.generateSignal(m, fv);
-        return Object.assign({}, m, { fairValue: fv, edge: sig.edge, confidence: sig.confidence, verdict: sig.verdict });
-      }).filter(function(m) { return Math.abs(m.edge) >= tgThreshold; }).sort(function(a, b) { return Math.abs(b.edge) - Math.abs(a.edge); }).slice(0, 10);
+    function getTopMarkets() {
+      // Get markets with biggest price moves (real data)
+      return markets.filter(function(m) { return m.priceChange1d != null && Math.abs(m.priceChange1d) > 0; })
+        .sort(function(a, b) { return Math.abs(b.priceChange1d) - Math.abs(a.priceChange1d); })
+        .slice(0, 10);
     }
 
     function postTg(isAuto) {
       var btn = document.getElementById('tgSendNow'), hBtn = document.getElementById('tgPostBtn');
       btn.disabled = true; btn.textContent = 'Sending...'; hBtn.style.opacity = '0.5';
-      var trades = getTopTrades();
-      if (!trades.length) { btn.disabled = false; btn.textContent = 'Post Top Trades Now'; hBtn.style.opacity = '1'; showToast('No trades above ' + tgThreshold + 'c', 'error'); return; }
+      var topMarkets = getTopMarkets();
+      if (!topMarkets.length) { btn.disabled = false; btn.textContent = 'Post Top Trades Now'; hBtn.style.opacity = '1'; showToast('No movers found', 'error'); return; }
       fetch(TG_API, { method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({trades:trades.map(function(t) { return {title:t.title,edge:t.edge,yesOdds:t.yesOdds,fairValue:t.fairValue,confidence:t.confidence,volume:formatVolume(t.volume),platform:t.platform,category:t.category,expiry:t.expiry}; })})
+        body:JSON.stringify({trades:topMarkets.map(function(t) { return {title:t.title,yesOdds:t.yesOdds,priceChange1d:formatPriceChange(t.priceChange1d),volume:formatVolume(t.volume),platform:t.platform,category:t.category,expiry:t.expiry}; })})
       })
       .then(function(res) { return res.json(); })
       .then(function(data) {
-        if (data.success) { showToast('Posted ' + data.trades_sent + ' trades', 'success'); addMemoryLine('alpha', 'Telegram: <span class="hl">' + data.trades_sent + ' trades</span>' + (isAuto?' [AUTO]':'')); }
+        if (data.success) { showToast('Posted ' + (data.trades_sent || topMarkets.length) + ' markets', 'success'); addMemoryLine('alpha', 'Telegram: <span class="hl">' + topMarkets.length + ' markets</span>' + (isAuto?' [AUTO]':'')); }
         else showToast(data.error || 'Failed', 'error');
       })
       .catch(function() { showToast('Network error', 'error'); })
