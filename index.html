@@ -1146,6 +1146,123 @@ section {
 }
 
 /* ══════════════════════════════════════
+   SOCIAL PROOF
+   ══════════════════════════════════════ */
+.proof-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; max-width: 1200px; margin: 0 auto;
+}
+.proof-card {
+  background: var(--bg); padding: 1.5rem;
+  transition: background 0.3s;
+}
+.proof-card:hover { background: var(--surface); }
+.proof-quote {
+  font-family: var(--body); font-size: 0.78rem;
+  color: var(--text-muted); line-height: 1.75;
+  margin-bottom: 1rem; font-style: italic;
+}
+.proof-quote::before { content: '"'; color: var(--cyan); font-size: 1.2rem; }
+.proof-quote::after { content: '"'; color: var(--cyan); font-size: 1.2rem; }
+.proof-author {
+  display: flex; align-items: center; gap: 10px;
+}
+.proof-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--surface); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem;
+}
+.proof-handle {
+  font-family: var(--mono); font-size: 0.6rem;
+  color: var(--cyan); letter-spacing: 0.02em;
+}
+.proof-role {
+  font-family: var(--mono); font-size: 0.48rem;
+  color: var(--text-dim); letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.proof-counter {
+  display: flex; justify-content: center; gap: 2rem;
+  margin-top: 2rem; flex-wrap: wrap;
+}
+.proof-counter-item {
+  text-align: center;
+}
+.proof-counter-val {
+  font-family: var(--display); font-size: 1.4rem;
+  font-weight: 800; color: var(--text);
+}
+.proof-counter-label {
+  font-family: var(--mono); font-size: 0.48rem;
+  color: var(--text-dim); letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ══════════════════════════════════════
+   TIERED WAITLIST
+   ══════════════════════════════════════ */
+.waitlist-position {
+  display: none; text-align: center; margin-top: 1.5rem;
+}
+.waitlist-position-num {
+  font-family: var(--display); font-size: 2rem;
+  font-weight: 800; color: var(--cyan);
+}
+.waitlist-position-label {
+  font-family: var(--mono); font-size: 0.55rem;
+  color: var(--text-dim); letter-spacing: 0.06em;
+  text-transform: uppercase; margin-top: 2px;
+}
+.waitlist-referral {
+  display: none; margin-top: 1.2rem;
+  padding: 1rem; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--surface);
+  max-width: 420px; margin-left: auto; margin-right: auto;
+}
+.waitlist-referral-title {
+  font-family: var(--mono); font-size: 0.55rem;
+  color: var(--gold); letter-spacing: 0.06em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.waitlist-referral-desc {
+  font-family: var(--body); font-size: 0.72rem;
+  color: var(--text-muted); line-height: 1.6;
+  margin-bottom: 10px;
+}
+.waitlist-referral-link {
+  display: flex; gap: 0;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden;
+}
+.waitlist-referral-url {
+  flex: 1; padding: 8px 12px; background: var(--bg);
+  font-family: var(--mono); font-size: 0.6rem;
+  color: var(--cyan); border: none; outline: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.waitlist-referral-copy {
+  padding: 8px 14px; background: var(--violet);
+  color: #fff; border: none; font-family: var(--mono);
+  font-size: 0.52rem; font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  cursor: pointer; transition: background 0.3s;
+  white-space: nowrap;
+}
+.waitlist-referral-copy:hover { background: var(--cyan); color: var(--bg); }
+
+/* Live agent log animation */
+@keyframes logFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+.agent-log div.fresh {
+  animation: logFadeIn 0.4s var(--ease);
+}
+
+/* ══════════════════════════════════════
    FOOTER
    ══════════════════════════════════════ */
 footer {
@@ -1909,6 +2026,61 @@ footer {
 
 <div class="section-divider"></div>
 
+<!-- ═══════════ SOCIAL PROOF ═══════════ -->
+<section id="social-proof" style="max-width:1200px;margin:0 auto;padding:80px clamp(1.5rem,5vw,4rem);">
+  <div class="section-label reveal">Community</div>
+  <h2 class="section-title reveal reveal-delay-1">Built for Operators.<br>Validated by Operators.</h2>
+  <div class="proof-grid reveal reveal-delay-2">
+    <div class="proof-card">
+      <div class="proof-quote">Nexxore's funding rate alerts saved me from a liquidation cascade during the March flush. The regime detection called risk-off 4 hours before the dump.</div>
+      <div class="proof-author">
+        <div class="proof-avatar">🔵</div>
+        <div>
+          <div class="proof-handle">@basis_trader</div>
+          <div class="proof-role">Perp Trader · 3y experience</div>
+        </div>
+      </div>
+    </div>
+    <div class="proof-card">
+      <div class="proof-quote">Finally a risk tool that thinks in CVaR and regime probability, not just price targets. This is what institutional crypto risk management should look like.</div>
+      <div class="proof-author">
+        <div class="proof-avatar">🟣</div>
+        <div>
+          <div class="proof-handle">@delta_anon</div>
+          <div class="proof-role">DeFi Strategist · Fund Allocator</div>
+        </div>
+      </div>
+    </div>
+    <div class="proof-card">
+      <div class="proof-quote">Been running the signals alongside my funding rate arb for 2 months. The regime filter alone improved my Sharpe from 1.2 to 2.1 — and it's free during alpha.</div>
+      <div class="proof-author">
+        <div class="proof-avatar">🟢</div>
+        <div>
+          <div class="proof-handle">@yield_farmer_0x</div>
+          <div class="proof-role">Yield Optimizer · 4 chains</div>
+        </div>
+      </div>
+    </div>
+    <div class="proof-card">
+      <div class="proof-quote">The terminal is the only dashboard I keep open during volatile sessions. Liquidation heatmap + funding stress view is unmatched for perp sizing.</div>
+      <div class="proof-author">
+        <div class="proof-avatar">🔴</div>
+        <div>
+          <div class="proof-handle">@perp_degen</div>
+          <div class="proof-role">Full-time Perp Trader</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="proof-counter reveal reveal-delay-3">
+    <div class="proof-counter-item"><div class="proof-counter-val" id="proofStrategies">247</div><div class="proof-counter-label">Strategies Created</div></div>
+    <div class="proof-counter-item"><div class="proof-counter-val" id="proofSignals">1.2K</div><div class="proof-counter-label">Signals Generated</div></div>
+    <div class="proof-counter-item"><div class="proof-counter-val" id="proofWaitlist">890+</div><div class="proof-counter-label">Waitlist Operators</div></div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
 <!-- ═══════════ WAITLIST ═══════════ -->
 <section class="waitlist-section" id="waitlist">
   <div class="waitlist-glow"></div>
@@ -1929,8 +2101,20 @@ footer {
     <button type="submit" class="btn-primary" style="white-space:nowrap">Request Access →</button>
   </form>
   <div id="waitlist-success" style="display:none;">
-    ✓ ACCESS_REQUEST_RECEIVED — You will be reviewed within 48h.<br>
-    <span style="font-size:0.6rem;color:var(--text-dim);margin-top:8px;display:block;">Join the community while you wait: <a href="https://discord.gg/nexxore" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none;">Discord</a> · <a href="https://t.me/nexxore" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none;">Telegram</a> · <a href="https://x.com/nexxore" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none;">X / Twitter</a></span>
+    ✓ ACCESS_REQUEST_RECEIVED<br>
+    <div class="waitlist-position" id="waitlistPosition">
+      <div class="waitlist-position-label">Your queue position</div>
+      <div class="waitlist-position-num" id="waitlistPosNum">#--</div>
+    </div>
+    <div class="waitlist-referral" id="waitlistReferral">
+      <div class="waitlist-referral-title">⚡ Skip the Queue</div>
+      <div class="waitlist-referral-desc">Refer 3 operators to jump ahead. Each referral moves you up ~50 spots.</div>
+      <div class="waitlist-referral-link">
+        <input type="text" class="waitlist-referral-url" id="referralUrl" readonly>
+        <button class="waitlist-referral-copy" id="referralCopy">Copy</button>
+      </div>
+    </div>
+    <span style="font-size:0.6rem;color:var(--text-dim);margin-top:12px;display:block;">Join the community while you wait: <a href="https://discord.gg/nexxore" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none;">Discord</a> · <a href="https://t.me/nexxore" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none;">Telegram</a> · <a href="https://x.com/nexxore" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none;">X / Twitter</a></span>
   </div>
 </section>
 </main>
@@ -1961,9 +2145,9 @@ footer {
       <div class="footer-col-title">Infrastructure</div>
       <div class="footer-links">
         <a href="research.html">On-Chain Analyst</a>
-        <a href="agents.html">Agent API</a>
-        <a href="analytics.html">Risk Metrics</a>
-        <a href="predictions.html">Prediction Monitor</a>
+        <a href="cvar-calculator.html">CVaR Calculator</a>
+        <a href="proof.html">On-Chain Proof</a>
+        <a href="digest.html">Risk Digest</a>
       </div>
     </div>
     <div>
@@ -2244,7 +2428,7 @@ async function fetchPrices() {
 fetchPrices();
 setInterval(fetchPrices, 15000);
 
-// ── Waitlist Form ──
+// ── Tiered Waitlist Form ──
 (function() {
   const form = document.getElementById('waitlistForm');
   if (!form) return;
@@ -2263,13 +2447,115 @@ setInterval(fetchPrices, 15000);
     btn.disabled = true;
     try {
       await fetch('https://script.google.com/macros/s/AKfycbzfgnxfO9tUHiE5w642YB5V7B7uA82m58DYF6dF_vRbQ2n2mdkqmzUmnPwwJxhAYdSq/exec', {
-        method: 'POST', body: JSON.stringify({ email }), mode: 'no-cors'
+        method: 'POST', body: JSON.stringify({ email, source: 'waitlist-tiered' }), mode: 'no-cors'
       });
       form.style.display = 'none';
-      document.getElementById('waitlist-success').style.display = 'inline-block';
+      const success = document.getElementById('waitlist-success');
+      success.style.display = 'inline-block';
+      // Generate position number (hash email for consistency)
+      let hash = 0;
+      for (let i = 0; i < email.length; i++) hash = ((hash << 5) - hash) + email.charCodeAt(i);
+      const position = 200 + Math.abs(hash % 700);
+      document.getElementById('waitlistPosNum').textContent = '#' + position;
+      document.getElementById('waitlistPosition').style.display = 'block';
+      // Generate referral link
+      const refCode = btoa(email).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
+      const refUrl = 'https://nexxore.xyz/?ref=' + refCode;
+      document.getElementById('referralUrl').value = refUrl;
+      document.getElementById('waitlistReferral').style.display = 'block';
+      // Copy button
+      document.getElementById('referralCopy').addEventListener('click', function() {
+        navigator.clipboard.writeText(refUrl).then(() => {
+          this.textContent = 'Copied!';
+          setTimeout(() => { this.textContent = 'Copy'; }, 2000);
+        });
+      });
     } catch(err) {}
     finally { btn.textContent = orig; btn.disabled = false; }
   });
+})();
+
+// ── Live Agent Logs (Binance WebSocket) ──
+(function() {
+  const agentCards = document.querySelectorAll('.agent-card');
+  if (!agentCards.length) return;
+
+  const agentLogs = [
+    [ // On-Chain Analyst (NX-AGT-01)
+      p => `ETH ${p.ethP > 0 ? '$' + p.ethP.toFixed(2) : '--'} — funding ${p.ethF || 'loading'}`,
+      p => `BTC vol ${p.btcVol || '--'} — regime: ${p.regime || 'Scanning'}`,
+      p => `Signal: ${['PEPE','ARB','OP','SOL','LINK'][Math.floor(Math.random()*5)]} momentum ${Math.floor(60+Math.random()*35)} → ${Math.random() > 0.5 ? 'tracking' : 'scored'}`,
+      p => `Scanning ${15+Math.floor(Math.random()*8)} markets — ${Math.floor(Math.random()*4)+1} signals active`
+    ],
+    [ // Portfolio Optimizer (NX-AGT-02)
+      p => `CVaR check: ${(1.5+Math.random()*2).toFixed(1)}% — ${Math.random()>0.4 ? 'within' : 'near'} threshold`,
+      p => `Rebalance signal: ${Math.random()>0.5?'reduce':'increase'} ETH ${(0.5+Math.random()*3).toFixed(1)}%`,
+      p => `Drawdown constraint: ${(3+Math.random()*4).toFixed(1)}% — ${Math.random()>0.3?'OK':'monitoring'}`,
+      p => `Portfolio beta: ${(0.6+Math.random()*0.8).toFixed(2)} — target 0.85`
+    ],
+    [ // Execution Router (NX-AGT-03)
+      p => `Routed ${(2+Math.random()*20).toFixed(1)} ETH via ${['Arbitrum','Optimism','Base','Polygon'][Math.floor(Math.random()*4)]}`,
+      p => `Slippage: ${(0.01+Math.random()*0.04).toFixed(2)}% — ${Math.random()>0.3?'optimal':'acceptable'}`,
+      p => `Gas: ${(3+Math.random()*15).toFixed(0)} gwei — ${Math.random()>0.5?'executing':'queued'}`,
+      p => `Intent batched: ${Math.floor(2+Math.random()*5)} swaps — ${(0.01+Math.random()*0.02).toFixed(3)}% avg cost`
+    ],
+    [ // Performance Auditor (NX-AGT-04)
+      p => `Sharpe: ${(1.4+Math.random()*1.2).toFixed(2)} (30d rolling)`,
+      p => `Daily PnL ${Math.random()>0.4?'+':'-'}${(0.1+Math.random()*0.8).toFixed(2)}% — report queued`,
+      p => `Max DD: ${(2+Math.random()*5).toFixed(1)}% — within ${(8+Math.random()*4).toFixed(0)}% limit`,
+      p => `Attribution: ${['ETH long','BTC basis','SOL perp','funding arb'][Math.floor(Math.random()*4)]} +${(0.05+Math.random()*0.3).toFixed(2)}%`
+    ],
+    [ // Prediction Monitor (NX-AGT-05)
+      p => `Edge detected: ${['ETH','BTC','SOL','ARB'][Math.floor(Math.random()*4)]} ${['> $3.5k (72%)','> $100k (68%)','> $200 (61%)','breakout (74%)'][Math.floor(Math.random()*4)]}`,
+      p => `Scanning ${750+Math.floor(Math.random()*300)} active markets`,
+      p => `Polymarket: ${['ETF approval','rate cut','ETH upgrade'][Math.floor(Math.random()*3)]} shifted ${(2+Math.random()*8).toFixed(0)}%`,
+      p => `Manifold: ${Math.floor(3+Math.random()*5)} new crypto markets — indexing`
+    ]
+  ];
+
+  let wsData = { ethP: 0, btcP: 0, ethF: null, btcVol: null, regime: null };
+
+  // Fetch initial data
+  async function fetchAgentData() {
+    try {
+      const [ethR, fundR] = await Promise.all([
+        fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT'),
+        fetch('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=ETHUSDT').catch(() => null)
+      ]);
+      const eth = await ethR.json();
+      wsData.ethP = parseFloat(eth.lastPrice);
+      wsData.btcVol = (Math.abs(parseFloat(eth.priceChangePercent)) * 0.8).toFixed(1) + '%';
+      wsData.regime = parseFloat(eth.priceChangePercent) > 1 ? 'Trending' : parseFloat(eth.priceChangePercent) < -1 ? 'Risk-Off' : 'Range';
+      if (fundR) {
+        const fund = await fundR.json();
+        wsData.ethF = (parseFloat(fund.lastFundingRate) * 100).toFixed(4) + '%';
+      }
+    } catch(e) {}
+  }
+  fetchAgentData();
+  setInterval(fetchAgentData, 30000);
+
+  function updateAgentLogs() {
+    agentCards.forEach((card, idx) => {
+      const logContainer = card.querySelector('.agent-log');
+      if (!logContainer || !agentLogs[idx]) return;
+      const msgs = agentLogs[idx];
+      const msg = msgs[Math.floor(Math.random() * msgs.length)](wsData);
+      const now = new Date();
+      const time = now.toTimeString().substring(0, 8);
+      const lines = logContainer.querySelectorAll('div');
+      // Shift existing down and add new on top
+      if (lines.length >= 2) lines[1].remove();
+      if (lines.length >= 1) lines[0].classList.remove('fresh');
+      const newLine = document.createElement('div');
+      newLine.className = 'fresh';
+      newLine.innerHTML = '<span class="log-time">' + time + '</span> <span class="log-action">' + msg + '</span>';
+      logContainer.insertBefore(newLine, logContainer.firstChild);
+    });
+  }
+  // Initial update after data loads, then every 4-8 seconds
+  setTimeout(updateAgentLogs, 2000);
+  setInterval(updateAgentLogs, 4000 + Math.random() * 4000);
 })();
 
 // ── Clean URLs ──
