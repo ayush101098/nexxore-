@@ -2634,14 +2634,14 @@
 
     // Main update function
     async function updateAllSections() {
-      updateQuickStats();
-      updateVerdictCard();
-      updateTechnicalSection();
-      updateFundamentalSection();
-      updateDerivativesSection();
-      updateOnchainSection();
-      updateTokenomicsSection();
-      updateTokenNewsSection();
+      try { updateQuickStats(); } catch(e) { console.error('QuickStats error:', e); }
+      try { updateVerdictCard(); } catch(e) { console.error('Verdict error:', e); }
+      try { updateTechnicalSection(); } catch(e) { console.error('Technical error:', e); }
+      try { updateFundamentalSection(); } catch(e) { console.error('Fundamental error:', e); }
+      try { updateDerivativesSection(); } catch(e) { console.error('Derivatives error:', e); }
+      try { updateOnchainSection(); } catch(e) { console.error('OnChain error:', e); }
+      try { updateTokenomicsSection(); } catch(e) { console.error('Tokenomics error:', e); }
+      try { updateTokenNewsSection(); } catch(e) { console.error('TokenNews error:', e); }
     }
 
     function renderMarketsGrid() {
@@ -3081,6 +3081,7 @@
       const startTime = performance.now();
       console.log('🚀 Initializing On-Chain Analyst Agent v3.3 (refined)...');
       
+      try {
       // Sync init - fast
       initTabs();
       updateTime();
@@ -3153,6 +3154,18 @@
       }, 30000);
       
       console.log(`✅ Agent initialized in ${(performance.now() - startTime).toFixed(0)}ms`);
+      } catch(e) {
+        console.error('🚨 FATAL init error:', e);
+        document.getElementById('initLoading')?.remove();
+        // Still try to update with whatever data we have
+        try { updateAllSections(); } catch(e2) { console.error('Update fallback failed:', e2); }
+      }
+      // Safety net: replace lingering '--' after 10s
+      setTimeout(() => {
+        document.querySelectorAll('.row-value').forEach(el => {
+          if (el.textContent.trim() === '--') el.textContent = 'N/A';
+        });
+      }, 10000);
     }
 
     document.addEventListener('DOMContentLoaded', init);

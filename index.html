@@ -304,6 +304,8 @@ nav.scrolled {
 .ticker-val.up { color: var(--green); }
 .ticker-val.down { color: var(--red); }
 .ticker-val.live { display: flex; align-items: center; gap: 6px; color: var(--green); }
+.ticker-loading { animation: skeletonPulse 1.5s ease-in-out infinite; color: var(--text-dim) !important; }
+@keyframes skeletonPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
 /* ══════════════════════════════════════
    PROMPT 02 — CINEMATIC HERO
@@ -1299,25 +1301,25 @@ footer {
   <div class="ticker-track" id="ticker">
     <div class="ticker-item"><span class="ticker-label">ETH Funding</span><span class="ticker-val up">+0.0082%</span></div>
     <div class="ticker-item"><span class="ticker-label">BTC Regime</span><span class="ticker-val">Trending</span></div>
-    <div class="ticker-item"><span class="ticker-label">Capital Monitored</span><span class="ticker-val">$142.3M</span></div>
+    <div class="ticker-item"><span class="ticker-label">Protocols Tracked</span><span class="ticker-val">50+</span></div>
     <div class="ticker-item"><span class="ticker-label">Active Strategies</span><span class="ticker-val">24</span></div>
     <div class="ticker-item"><span class="ticker-label">SOL Funding</span><span class="ticker-val down">-0.0031%</span></div>
     <div class="ticker-item"><span class="ticker-label">Risk Status</span><span class="ticker-val live"><span class="status-dot"></span>Nominal</span></div>
     <div class="ticker-item"><span class="ticker-label">Vol Regime</span><span class="ticker-val">Low-Med</span></div>
     <div class="ticker-item"><span class="ticker-label">CVaR 95%</span><span class="ticker-val">4.2%</span></div>
-    <div class="ticker-item"><span class="ticker-label">ETH Mark</span><span class="ticker-val up" id="tickerEth">$--</span></div>
-    <div class="ticker-item"><span class="ticker-label">BTC Mark</span><span class="ticker-val up" id="tickerBtc">$--</span></div>
+    <div class="ticker-item"><span class="ticker-label">ETH Mark</span><span class="ticker-val up ticker-loading js-price-eth" id="tickerEth">$--</span></div>
+    <div class="ticker-item"><span class="ticker-label">BTC Mark</span><span class="ticker-val up ticker-loading js-price-btc" id="tickerBtc">$--</span></div>
     <!-- Duplicate for seamless loop -->
     <div class="ticker-item"><span class="ticker-label">ETH Funding</span><span class="ticker-val up">+0.0082%</span></div>
     <div class="ticker-item"><span class="ticker-label">BTC Regime</span><span class="ticker-val">Trending</span></div>
-    <div class="ticker-item"><span class="ticker-label">Capital Monitored</span><span class="ticker-val">$142.3M</span></div>
+    <div class="ticker-item"><span class="ticker-label">Protocols Tracked</span><span class="ticker-val">50+</span></div>
     <div class="ticker-item"><span class="ticker-label">Active Strategies</span><span class="ticker-val">24</span></div>
     <div class="ticker-item"><span class="ticker-label">SOL Funding</span><span class="ticker-val down">-0.0031%</span></div>
     <div class="ticker-item"><span class="ticker-label">Risk Status</span><span class="ticker-val live"><span class="status-dot"></span>Nominal</span></div>
     <div class="ticker-item"><span class="ticker-label">Vol Regime</span><span class="ticker-val">Low-Med</span></div>
     <div class="ticker-item"><span class="ticker-label">CVaR 95%</span><span class="ticker-val">4.2%</span></div>
-    <div class="ticker-item"><span class="ticker-label">ETH Mark</span><span class="ticker-val up">$--</span></div>
-    <div class="ticker-item"><span class="ticker-label">BTC Mark</span><span class="ticker-val up">$--</span></div>
+    <div class="ticker-item"><span class="ticker-label">ETH Mark</span><span class="ticker-val up ticker-loading js-price-eth">$--</span></div>
+    <div class="ticker-item"><span class="ticker-label">BTC Mark</span><span class="ticker-val up ticker-loading js-price-btc">$--</span></div>
   </div>
 </div>
 
@@ -1350,7 +1352,7 @@ footer {
   </h1>
 
   <p class="hero-sub">
-    Nexxore is the on-chain risk desk for serious crypto capital — modeling regime shifts, convexity exposure, and capital survivability in real time.
+    Regime detection, funding rate alerts, and CVaR modeling for perp traders and DeFi allocators. 50+ protocols across 4 chains — one risk infrastructure.
   </p>
 
   <div class="hero-actions">
@@ -1360,8 +1362,8 @@ footer {
 
   <div class="hero-stats">
     <div class="hero-stat-item">
-      <div class="hero-stat-val" data-target="142" data-suffix="M">$0<span>M</span></div>
-      <div class="hero-stat-label">Capital Monitored</div>
+      <div class="hero-stat-val" data-target="50" data-suffix="+">0<span>+</span></div>
+      <div class="hero-stat-label">Protocols Tracked</div>
     </div>
     <div class="hero-stat-item">
       <div class="hero-stat-val" data-target="24">0</div>
@@ -1927,7 +1929,8 @@ footer {
     <button type="submit" class="btn-primary" style="white-space:nowrap">Request Access →</button>
   </form>
   <div id="waitlist-success" style="display:none;">
-    ✓ ACCESS_REQUEST_RECEIVED — You will be reviewed within 48h.
+    ✓ ACCESS_REQUEST_RECEIVED — You will be reviewed within 48h.<br>
+    <span style="font-size:0.6rem;color:var(--text-dim);margin-top:8px;display:block;">Join the community while you wait: <a href="https://discord.gg/nexxore" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none;">Discord</a> · <a href="https://t.me/nexxore" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none;">Telegram</a> · <a href="https://x.com/nexxore" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none;">X / Twitter</a></span>
   </div>
 </section>
 </main>
@@ -1967,9 +1970,9 @@ footer {
       <div class="footer-col-title">Resources</div>
       <div class="footer-links">
         <a href="docs.html">Documentation</a>
-        <a href="#">Discord</a>
+        <a href="https://discord.gg/nexxore" target="_blank" rel="noopener">Discord</a>
         <a href="https://x.com/nexxore" target="_blank">X / Twitter</a>
-        <a href="#">Telegram</a>
+        <a href="https://t.me/nexxore" target="_blank" rel="noopener">Telegram</a>
       </div>
     </div>
   </div>
@@ -2220,10 +2223,22 @@ async function fetchPrices() {
     const btc = await btcR.json();
     const ethP = parseFloat(eth.lastPrice);
     const btcP = parseFloat(btc.lastPrice);
+    const ethChg = parseFloat(eth.priceChangePercent);
+    const btcChg = parseFloat(btc.priceChangePercent);
     const fmtEth = '$' + ethP.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fmtBtc = '$' + btcP.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    document.querySelectorAll('#tickerEth').forEach(e => e.textContent = fmtEth);
-    document.querySelectorAll('#tickerBtc').forEach(e => e.textContent = fmtBtc);
+    document.querySelectorAll('.js-price-eth').forEach(e => {
+      e.textContent = fmtEth;
+      e.classList.remove('ticker-loading');
+      e.classList.toggle('up', ethChg >= 0);
+      e.classList.toggle('down', ethChg < 0);
+    });
+    document.querySelectorAll('.js-price-btc').forEach(e => {
+      e.textContent = fmtBtc;
+      e.classList.remove('ticker-loading');
+      e.classList.toggle('up', btcChg >= 0);
+      e.classList.toggle('down', btcChg < 0);
+    });
   } catch(e) {}
 }
 fetchPrices();
