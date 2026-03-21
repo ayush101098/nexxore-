@@ -1,0 +1,46 @@
+{
+  "name": "@nexxore/mcp-server",
+  "version": "1.0.0",
+  "description": "Hyperliquid MCP Server — Cohort intelligence, trader analytics, market data, trade flow. 26 tools.",
+  "type": "module",
+  "main": "dist/server/index.js",
+  "bin": {
+    "nexxore-mcp": "dist/server/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx server/index.ts",
+    "start": "node dist/server/index.js",
+    "db:up": "docker compose up -d timescaledb",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f timescaledb",
+    "ingest": "python ingestion/run.py",
+    "ingest:backfill": "python ingestion/run.py --backfill",
+    "cohorts": "python cohorts/run.py",
+    "cohorts:once": "python cohorts/run.py --once"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "pg": "^8.13.1",
+    "zod": "^3.24.2",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "hyperliquid",
+    "trading",
+    "cohorts",
+    "defi",
+    "nexxore"
+  ],
+  "license": "MIT"
+}

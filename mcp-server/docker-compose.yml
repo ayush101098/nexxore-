@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+  # ─── TimescaleDB ───────────────────────────────────────
+  # Single instance, two schemas: trading + predictions
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: nexxore-timescaledb
+    restart: unless-stopped
+    ports:
+      - "${TIMESCALE_PORT:-5433}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nexxore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexxore_dev_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-nexxore_mcp}
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ./storage/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nexxore}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    shm_size: "256mb"
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_preload_libraries=timescaledb"
+      - "-c"
+      - "max_connections=200"
+      - "-c"
+      - "work_mem=64MB"
+      - "-c"
+      - "maintenance_work_mem=256MB"
+      - "-c"
+      - "effective_cache_size=1GB"
+
+  # ─── Ingestion ─────────────────────────────────────────
+  # WebSocket trade stream + fill indexer (runs forever)
+  ingestion:
+    build: .
+    container_name: nexxore-ingestion
+    restart: unless-stopped
+    command: python -m ingestion.run
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nexxore}:${POSTGRES_PASSWORD:-nexxore_dev_2026}@timescaledb:5432/${POSTGRES_DB:-nexxore_mcp}
+
+  # ─── Cohort Classifier ────────────────────────────────
+  # Recomputes wallet metrics + tier assignments (runs forever)
+  cohorts:
+    build: .
+    container_name: nexxore-cohorts
+    restart: unless-stopped
+    command: python -m cohorts.run
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nexxore}:${POSTGRES_PASSWORD:-nexxore_dev_2026}@timescaledb:5432/${POSTGRES_DB:-nexxore_mcp}
+
+  # ─── MCP Server ────────────────────────────────────────
+  # Model Context Protocol server (stdio transport)
+  mcp:
+    build: .
+    container_name: nexxore-mcp
+    restart: unless-stopped
+    command: python -m mcp_server.server
+    stdin_open: true
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nexxore}:${POSTGRES_PASSWORD:-nexxore_dev_2026}@timescaledb:5432/${POSTGRES_DB:-nexxore_mcp}
+
+volumes:
+  timescale_data:
+    driver: local
