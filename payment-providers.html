@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Provider Analytics — B2B/B2C/C2B/C2C Stablecoin Flows | Nexxore</title>
+  <meta name="description" content="Stablecoin payment flow analytics segmented by B2B, B2C, C2B, and C2C use cases. Volume, count, day-of-week heatmap, and geographic distribution across chains.">
+  <meta name="keywords" content="stablecoin payments, B2B crypto payments, C2C payments, payment analytics, stablecoin flows, cross-border payments, crypto payment rails, defi risk analytics">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <link rel="canonical" href="https://nexxore.xyz/payment-providers">
+
+  <meta property="og:title" content="Payment Provider Analytics — B2B/B2C/C2B/C2C | Nexxore">
+  <meta property="og:description" content="Stablecoin payment flow analytics: volume, count, day-of-week heatmap, and geographic distribution by use case.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nexxore.xyz/payment-providers">
+  <meta property="og:image" content="https://nexxore.xyz/assets/icons/og-image.png">
+  <meta property="og:site_name" content="Nexxore">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@nexxore">
+  <meta name="twitter:title" content="Payment Provider Analytics | Nexxore Terminal">
+  <meta name="twitter:description" content="Track stablecoin payment flows: B2B, B2C, C2B, C2C — volume, count, heatmap, geography.">
+  <meta name="twitter:image" content="https://nexxore.xyz/assets/icons/og-image.png">
+  <meta name="theme-color" content="#0a0a0b">
+
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":["SoftwareApplication","WebApplication"],"name":"Nexxore Payment Provider Analytics","url":"https://nexxore.xyz/payment-providers","applicationCategory":"FinanceApplication","applicationSubCategory":"Stablecoin Payment Analytics","operatingSystem":"Web Browser","description":"Stablecoin payment flow analytics segmented by B2B, B2C, C2B, and C2C use cases with volume, count, heatmap, and geographic distribution.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["B2B/B2C/C2B/C2C Payment Classification","Stablecoin Volume Analytics","Payment Count Tracking","Day-of-Week Heatmap","Geographic Distribution","Multi-Chain Coverage","Real-Time Payment Monitoring"]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Nexxore","item":"https://nexxore.xyz/"},{"@type":"ListItem","position":2,"name":"Terminal","item":"https://nexxore.xyz/terminal"},{"@type":"ListItem","position":3,"name":"Payment Providers","item":"https://nexxore.xyz/payment-providers"}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://nexxore.xyz/#organization","name":"Nexxore","alternateName":["Nexxore DeFi","Nexxore Analytics","NEXXORE","nexxore","nexxore.xyz"],"url":"https://nexxore.xyz","logo":{"@type":"ImageObject","url":"https://nexxore.xyz/assets/icons/og-image.png","width":1200,"height":630},"image":"https://nexxore.xyz/assets/icons/og-image.png","description":"Nexxore is the institutional-grade DeFi risk analytics platform for crypto traders and funds.","foundingDate":"2025","sameAs":["https://x.com/nexxore","https://github.com/ayush101098/nexxore-"],"knowsAbout":["DeFi Risk Analytics","Stablecoin Payment Analytics","Cross-Border Payments","On-Chain Analytics"]}</script>
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6QGB2RQVP0"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-6QGB2RQVP0');</script>
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230a0a0b'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' font-weight='800' font-family='system-ui' fill='%234a6fa5'%3ENX%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg: #0a0a0b;
+      --bg-elevated: #0f1012;
+      --bg-card: #141517;
+      --bg-overlay: #18191c;
+      --text: #d4d4d8;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --text-dim: #52525b;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --accent: #4a6fa5;
+      --accent-dim: rgba(74,111,165,0.12);
+      --green: #3d8b6e;
+      --green-dim: rgba(61,139,110,0.12);
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --cyan: #06b6d4;
+      /* Use case colors */
+      --b2b: #4a6fa5;
+      --c2c: #3d8b6e;
+      --c2b: #f59e0b;
+      --b2c: #8b5cf6;
+      --b2b-bg: rgba(74,111,165,0.15);
+      --c2c-bg: rgba(61,139,110,0.15);
+      --c2b-bg: rgba(245,158,11,0.15);
+      --b2c-bg: rgba(139,92,246,0.15);
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --radius-xs: 6px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    ::selection { background: rgba(74,111,165,0.3); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+    /* ═══ HEADER ═══ */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,10,11,0.95);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .logo-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(74,111,165,0.5);
+    }
+    .header-nav {
+      display: flex;
+      gap: 4px;
+    }
+    .header-nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: var(--radius-xs);
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .header-nav a:hover { color: var(--text); background: var(--bg-card); }
+    .header-nav a.active { color: var(--text); background: var(--bg-card); border: 1px solid var(--border); }
+
+    /* ═══ LAYOUT ═══ */
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: calc(100vh - 52px);
+    }
+
+    /* ═══ SIDEBAR ═══ */
+    .sidebar {
+      border-right: 1px solid var(--border);
+      padding: 16px 0;
+      background: var(--bg);
+      overflow-y: auto;
+    }
+    .sidebar-section {
+      padding: 0 12px;
+      margin-bottom: 8px;
+    }
+    .sidebar-heading {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 8px 12px 6px;
+    }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.8rem;
+      border-radius: var(--radius-xs);
+      transition: all 0.15s;
+      margin: 1px 0;
+    }
+    .sidebar-link:hover { color: var(--text); background: var(--bg-card); }
+    .sidebar-link.active {
+      color: var(--text);
+      background: var(--accent-dim);
+      border: 1px solid rgba(74,111,165,0.2);
+    }
+    .sidebar-link .icon { font-size: 0.9rem; width: 20px; text-align: center; }
+    .sidebar-sub {
+      padding-left: 16px;
+    }
+    .sidebar-sub .sidebar-link {
+      font-size: 0.75rem;
+      padding: 5px 12px;
+      color: var(--text-muted);
+    }
+    .sidebar-sub .sidebar-link.active {
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .sidebar-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 12px 12px;
+    }
+
+    /* ═══ MAIN CONTENT ═══ */
+    .main {
+      padding: 24px 32px;
+      overflow-y: auto;
+      max-height: calc(100vh - 52px);
+    }
+
+    /* ═══ PAGE TITLE ═══ */
+    .page-title {
+      margin-bottom: 24px;
+    }
+    .page-title h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .page-title p {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+    }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .breadcrumb a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    .breadcrumb a:hover { color: var(--accent); }
+    .breadcrumb .sep { opacity: 0.4; }
+
+    /* ═══ STATS ROW ═══ */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+    .stat-label {
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      margin-top: 4px;
+    }
+    .stat-change {
+      font-size: 0.72rem;
+      font-family: var(--mono);
+      margin-top: 2px;
+    }
+    .stat-change.up { color: var(--green); }
+    .stat-change.down { color: var(--red); }
+
+    /* ═══ FILTER BAR ═══ */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .filter-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .filter-select {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 0.8rem;
+      padding: 6px 28px 6px 10px;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2371717a'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      transition: border-color 0.15s;
+    }
+    .filter-select:hover { border-color: var(--border-hover); }
+    .filter-select:focus { border-color: var(--accent); }
+
+    .filter-pills {
+      display: flex;
+      gap: 4px;
+    }
+    .filter-pill {
+      padding: 5px 10px;
+      border-radius: var(--radius-xs);
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-pill:hover { border-color: var(--border-hover); color: var(--text); }
+    .filter-pill.active {
+      background: var(--accent-dim);
+      border-color: rgba(74,111,165,0.3);
+      color: var(--accent);
+    }
+
+    /* ═══ SECTION ═══ */
+    .section {
+      margin-bottom: 32px;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    /* ═══ CHART PANEL ═══ */
+    .chart-panel {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .chart-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .chart-toggles {
+      display: flex;
+      gap: 2px;
+      background: var(--bg-card);
+      border-radius: var(--radius-xs);
+      padding: 2px;
+    }
+    .chart-toggle {
+      padding: 4px 10px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: var(--mono);
+      transition: all 0.15s;
+    }
+    .chart-toggle:hover { color: var(--text-secondary); }
+    .chart-toggle.active {
+      color: var(--text);
+      background: var(--bg-elevated);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .chart-container {
+      position: relative;
+      height: 320px;
+    }
+    .chart-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* ═══ METHODOLOGY ═══ */
+    .methodology {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .methodology h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .methodology p {
+      color: var(--text-secondary);
+      font-size: 0.84rem;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+    .methodology p:last-child { margin-bottom: 0; }
+    .use-case-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .use-case-card {
+      border-radius: var(--radius);
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+    .use-case-card.b2b { background: var(--b2b-bg); border-color: rgba(74,111,165,0.25); }
+    .use-case-card.c2c { background: var(--c2c-bg); border-color: rgba(61,139,110,0.25); }
+    .use-case-card.c2b { background: var(--c2b-bg); border-color: rgba(245,158,11,0.25); }
+    .use-case-card.b2c { background: var(--b2c-bg); border-color: rgba(139,92,246,0.25); }
+    .use-case-tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .use-case-card.b2b .use-case-tag { color: var(--b2b); background: rgba(74,111,165,0.2); }
+    .use-case-card.c2c .use-case-tag { color: var(--c2c); background: rgba(61,139,110,0.2); }
+    .use-case-card.c2b .use-case-tag { color: var(--c2b); background: rgba(245,158,11,0.2); }
+    .use-case-card.b2c .use-case-tag { color: var(--b2c); background: rgba(139,92,246,0.2); }
+    .use-case-card h4 {
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .use-case-card p {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .use-case-card .signals {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .signal-tag {
+      font-size: 0.62rem;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.04);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    /* ═══ HEATMAP ═══ */
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: 80px repeat(7, 1fr);
+      gap: 3px;
+    }
+    .heatmap-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      padding: 0 4px;
+    }
+    .heatmap-day-label {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 4px 0;
+      font-weight: 600;
+    }
+    .heatmap-cell {
+      border-radius: 4px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-family: var(--mono);
+      font-weight: 500;
+      color: var(--text);
+      transition: transform 0.1s;
+      cursor: default;
+      position: relative;
+    }
+    .heatmap-cell:hover { transform: scale(1.05); z-index: 2; }
+    .heatmap-cell[data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-overlay);
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.68rem;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    /* ═══ GEO SECTION ═══ */
+    .geo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* ═══ ANALYSIS BOX ═══ */
+    .analysis-box {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+    .analysis-box h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .analysis-box p {
+      color: var(--text-secondary);
+      font-size: 0.84rem;
+      line-height: 1.75;
+    }
+    .analysis-box .highlight {
+      color: var(--text);
+      font-weight: 600;
+    }
+    .analysis-box .stat-inline {
+      font-family: var(--mono);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ═══ LEGEND ═══ */
+    .legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }
+
+    /* ═══ FOOTER ═══ */
+    .footer {
+      padding: 24px 32px;
+      border-top: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 0.72rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-links {
+      display: flex;
+      gap: 16px;
+    }
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.72rem;
+    }
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .use-case-grid { grid-template-columns: repeat(2, 1fr); }
+      .geo-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .use-case-grid { grid-template-columns: 1fr; }
+      .main { padding: 16px; }
+      .filter-bar { flex-direction: column; align-items: flex-start; }
+      .heatmap-grid { grid-template-columns: 60px repeat(7, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="header">
+    <a class="logo" href="index">
+      <span class="logo-dot"></span>
+      <span>nexxore</span>
+    </a>
+    <nav class="header-nav">
+      <a href="terminal">Terminal</a>
+      <a href="perps">Perps</a>
+      <a href="vaults">Vaults</a>
+      <a href="stablecoin-hub">Stablecoins</a>
+      <a href="payment-providers" class="active">Payments</a>
+      <a href="research-agent">Research</a>
+      <a href="mcp-server">MCP</a>
+    </nav>
+  </header>
+
+  <!-- ═══ LAYOUT: SIDEBAR + MAIN ═══ -->
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-heading">Terminal</div>
+      <div class="sidebar-section">
+        <a class="sidebar-link active" href="payment-providers">
+          <span class="icon">💳</span> Payment Providers
+        </a>
+        <div class="sidebar-sub">
+          <a class="sidebar-link active" href="payment-providers">B2B / B2C / C2B / C2C</a>
+          <a class="sidebar-link" href="#">Crypto Cards</a>
+          <a class="sidebar-link" href="#">Geo Payment Corridors</a>
+          <a class="sidebar-link" href="#">Machine Payments</a>
+          <a class="sidebar-link" href="#">Agentic Payments</a>
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <a class="sidebar-link" href="stablecoin-hub">
+          <span class="icon">🪙</span> Stablecoin Issuers
+        </a>
+        <div class="sidebar-sub">
+          <a class="sidebar-link" href="#">Adjusted Transfers</a>
+          <a class="sidebar-link" href="#">Circulating Supply</a>
+          <a class="sidebar-link" href="#">Holder Concentration</a>
+          <a class="sidebar-link" href="#">Mints & Burns</a>
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <a class="sidebar-link" href="#">
+          <span class="icon">🏷️</span> Attribution & Labels
+        </a>
+        <a class="sidebar-link" href="#">
+          <span class="icon">💰</span> Fees
+        </a>
+        <a class="sidebar-link" href="#">
+          <span class="icon">🏦</span> Lending
+        </a>
+        <a class="sidebar-link" href="perps">
+          <span class="icon">📈</span> Perpetuals
+        </a>
+        <a class="sidebar-link" href="predictions">
+          <span class="icon">🔮</span> Prediction Markets
+        </a>
+        <a class="sidebar-link" href="#">
+          <span class="icon">⚖️</span> Sanctions
+        </a>
+        <a class="sidebar-link" href="#">
+          <span class="icon">🥩</span> Staking
+        </a>
+        <a class="sidebar-link" href="#">
+          <span class="icon">🔄</span> Trading
+        </a>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <a href="index">Nexxore</a>
+        <span class="sep">›</span>
+        <a href="terminal">Terminal</a>
+        <span class="sep">›</span>
+        <a href="payment-providers">Payment Providers</a>
+        <span class="sep">›</span>
+        <span>B2B / B2C / C2B / C2C</span>
+      </div>
+
+      <!-- Page Title -->
+      <div class="page-title">
+        <h1>Stablecoin Payment Flows</h1>
+        <p>On-chain payment analytics segmented by use case — B2B, B2C, C2B, and C2C — with volume, frequency, day-of-week, and geographic breakdowns across major chains.</p>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Volume (30d)</div>
+          <div class="stat-value">$284.7B</div>
+          <div class="stat-change up">+12.3% vs prev 30d</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Transactions (30d)</div>
+          <div class="stat-value">18.4M</div>
+          <div class="stat-change up">+8.7%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg. Ticket Size</div>
+          <div class="stat-value">$15,473</div>
+          <div class="stat-change up">+3.1%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Addresses</div>
+          <div class="stat-value">2.1M</div>
+          <div class="stat-change up">+14.6%</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <span class="filter-label">Date Range</span>
+          <select class="filter-select" id="dateRange">
+            <option value="all">All Time</option>
+            <option value="1y">1 Year</option>
+            <option value="6m">6 Months</option>
+            <option value="3m" selected>3 Months</option>
+            <option value="1m">1 Month</option>
+            <option value="7d">7 Days</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-label">Blockchains</span>
+          <select class="filter-select" id="blockchainFilter">
+            <option value="all">All Chains</option>
+            <option value="ethereum">Ethereum</option>
+            <option value="tron">Tron</option>
+            <option value="bsc">BSC</option>
+            <option value="solana">Solana</option>
+            <option value="arbitrum">Arbitrum</option>
+            <option value="polygon">Polygon</option>
+            <option value="base">Base</option>
+            <option value="avalanche">Avalanche</option>
+            <option value="optimism">Optimism</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-label">Stablecoins</span>
+          <select class="filter-select" id="stablecoinFilter">
+            <option value="all">All Stablecoins</option>
+            <option value="usdt">USDT</option>
+            <option value="usdc">USDC</option>
+            <option value="dai">DAI</option>
+            <option value="busd">BUSD</option>
+            <option value="frax">FRAX</option>
+            <option value="pyusd">PYUSD</option>
+            <option value="usde">USDe</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ═══ USE CASES + METHODOLOGY ═══ -->
+      <section class="section" id="use-cases">
+        <div class="section-header">
+          <h2 class="section-title">Use Cases</h2>
+        </div>
+
+        <div class="methodology">
+          <h3>Methodology</h3>
+          <p>
+            Stablecoin payment flows are segmented into <strong>B2B, C2C, C2B,</strong> and <strong>B2C</strong> categories
+            using a combination of behavioral pattern analysis, entity labels, cross-referencing against
+            external data sources, and validation through discussions with industry participants. While the
+            classification is inherently probabilistic, the methodology is designed to provide a directional
+            view of real-economy stablecoin usage. Each segment is identified through a distinct set of
+            on-chain behavioral signals:
+          </p>
+
+          <div class="use-case-grid">
+            <div class="use-case-card b2b">
+              <span class="use-case-tag">B2B</span>
+              <h4>Business to Business</h4>
+              <p>Larger ticket sizes, non-reversible directional transfers, low counterparty diversity, and recurring patterns consistent with invoice settlement.</p>
+              <div class="signals">
+                <span class="signal-tag">Large tickets</span>
+                <span class="signal-tag">Recurring</span>
+                <span class="signal-tag">Low diversity</span>
+                <span class="signal-tag">Non-reversible</span>
+              </div>
+            </div>
+            <div class="use-case-card c2c">
+              <span class="use-case-tag">C2C</span>
+              <h4>Consumer to Consumer</h4>
+              <p>High transaction counts, smaller average ticket sizes, and broad counterparty diversity — peer-to-peer value transfer.</p>
+              <div class="signals">
+                <span class="signal-tag">High tx count</span>
+                <span class="signal-tag">Small tickets</span>
+                <span class="signal-tag">Broad diversity</span>
+                <span class="signal-tag">P2P</span>
+              </div>
+            </div>
+            <div class="use-case-card c2b">
+              <span class="use-case-tag">C2B</span>
+              <h4>Consumer to Business</h4>
+              <p>Moderate ticket sizes, one-directional flows toward business wallets, and recurring transaction behavior.</p>
+              <div class="signals">
+                <span class="signal-tag">Moderate tickets</span>
+                <span class="signal-tag">One-directional</span>
+                <span class="signal-tag">To business</span>
+                <span class="signal-tag">Recurring</span>
+              </div>
+            </div>
+            <div class="use-case-card b2c">
+              <span class="use-case-tag">B2C</span>
+              <h4>Business to Consumer</h4>
+              <p>Recurring outbound payments from business wallets to a wide range of individual wallets, also at moderate ticket sizes.</p>
+              <div class="signals">
+                <span class="signal-tag">Outbound</span>
+                <span class="signal-tag">Wide range</span>
+                <span class="signal-tag">Moderate</span>
+                <span class="signal-tag">Recurring</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ PAYMENTS VOLUME BY USE CASE ═══ -->
+      <section class="section" id="volume">
+        <div class="chart-panel">
+          <div class="chart-header">
+            <span class="chart-title">Payments Volume by Use Case</span>
+            <div class="chart-toggles" data-chart="volumeChart">
+              <button class="chart-toggle" data-period="D">D</button>
+              <button class="chart-toggle active" data-period="W">W</button>
+              <button class="chart-toggle" data-period="M">M</button>
+              <button class="chart-toggle" data-period="Y">Y</button>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="volumeChart"></canvas>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--b2b)"></div> B2B</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--c2c)"></div> C2C</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--c2b)"></div> C2B</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--b2c)"></div> B2C</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ PAYMENTS COUNT BY USE CASE ═══ -->
+      <section class="section" id="count">
+        <div class="chart-panel">
+          <div class="chart-header">
+            <span class="chart-title">Payments Count by Use Case</span>
+            <div class="chart-toggles" data-chart="countChart">
+              <button class="chart-toggle" data-period="D">D</button>
+              <button class="chart-toggle active" data-period="W">W</button>
+              <button class="chart-toggle" data-period="M">M</button>
+              <button class="chart-toggle" data-period="Y">Y</button>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="countChart"></canvas>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--b2b)"></div> B2B</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--c2c)"></div> C2C</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--c2b)"></div> C2B</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--b2c)"></div> B2C</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ PAYMENTS VOLUME BY DAY OF WEEK (HEATMAP) ═══ -->
+      <section class="section" id="heatmap">
+        <div class="chart-panel">
+          <div class="chart-header">
+            <span class="chart-title">Payments Volume by Day of Week (Heatmap)</span>
+          </div>
+          <div class="heatmap-grid" id="heatmapContainer">
+            <!-- Generated by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ DAY OF WEEK BREAKDOWN ═══ -->
+      <section class="section" id="dow-breakdown">
+        <div class="analysis-box">
+          <h3>Day of Week Breakdown</h3>
+          <p>
+            A key narrative around stablecoin payments adoption is that blockchains serve as
+            <span class="highlight">24/7 payments rails</span>. The data supports this: while weekday volumes are highest
+            across all segments, weekends still capture meaningful activity — Sunday B2B
+            volume is <span class="stat-inline">~56%</span> of Monday's peak, and C2C flows remain relatively stable throughout
+            the week. C2B and C2C flows show the least weekend dropoff, while B2B and B2C
+            volumes decline more significantly, suggesting consumers are more day-of-week
+            agnostic than businesses.
+          </p>
+          <p style="margin-top:12px;">
+            This pattern is consistent with traditional payments behavior, where
+            business-driven flows concentrate on working days, but notably the <span class="highlight">consumer-side
+            persistence reinforces the 24/7 utility thesis</span> for stablecoins.
+          </p>
+        </div>
+      </section>
+
+      <!-- ═══ GEOGRAPHY ═══ -->
+      <section class="section" id="geography">
+        <div class="section-header">
+          <h2 class="section-title">Geography</h2>
+        </div>
+
+        <div class="methodology" style="margin-bottom:20px;">
+          <h3>v1 Methodology</h3>
+          <p>
+            We attribute each blockchain address to a region and country using three
+            signals — deposits to local exchanges, withdrawals from local exchanges, and a
+            timezone-based activity classifier. To identify local exchange interactions, we combine
+            proprietary centralized exchange (CEX) labels with cross-chain transfer datasets.
+          </p>
+          <p>
+            The charts below show the relative regional share of payments volume sent or
+            received over time, based on only high-confidence addresses. Note that the
+            % of volume sent by geography includes payments where the receiver
+            geography is uncertain, and vice versa.
+          </p>
+        </div>
+
+        <div class="geo-grid">
+          <div class="chart-panel">
+            <div class="chart-header">
+              <span class="chart-title">% Payments Volume Sent by Region</span>
+              <div class="chart-toggles" data-chart="geoSentChart">
+                <button class="chart-toggle" data-period="D">D</button>
+                <button class="chart-toggle active" data-period="W">W</button>
+                <button class="chart-toggle" data-period="M">M</button>
+                <button class="chart-toggle" data-period="Y">Y</button>
+              </div>
+            </div>
+            <div class="chart-container" style="height:280px;">
+              <canvas id="geoSentChart"></canvas>
+            </div>
+            <div class="legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#4a6fa5"></div> North America</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#3d8b6e"></div> Europe</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> East Asia</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div> Southeast Asia</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#06b6d4"></div> LATAM</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Other</div>
+            </div>
+          </div>
+
+          <div class="chart-panel">
+            <div class="chart-header">
+              <span class="chart-title">% Payments Volume Received by Region</span>
+              <div class="chart-toggles" data-chart="geoRecvChart">
+                <button class="chart-toggle" data-period="D">D</button>
+                <button class="chart-toggle active" data-period="W">W</button>
+                <button class="chart-toggle" data-period="M">M</button>
+                <button class="chart-toggle" data-period="Y">Y</button>
+              </div>
+            </div>
+            <div class="chart-container" style="height:280px;">
+              <canvas id="geoRecvChart"></canvas>
+            </div>
+            <div class="legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#4a6fa5"></div> North America</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#3d8b6e"></div> Europe</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> East Asia</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div> Southeast Asia</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#06b6d4"></div> LATAM</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Other</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ FOOTER ═══ -->
+      <footer class="footer">
+        <span>© 2025 Nexxore · Terminal Analytics</span>
+        <div class="footer-links">
+          <a href="index">Home</a>
+          <a href="research-agent">Research</a>
+          <a href="docs">Docs</a>
+          <a href="https://x.com/nexxore" target="_blank">@nexxore</a>
+        </div>
+      </footer>
+
+    </main>
+  </div>
+
+  <!-- ═══ JAVASCRIPT ═══ -->
+  <script>
+  (function() {
+    'use strict';
+
+    // ═══ COLOR PALETTE ═══
+    const COLORS = {
+      b2b: '#4a6fa5',
+      c2c: '#3d8b6e',
+      c2b: '#f59e0b',
+      b2c: '#8b5cf6',
+      b2bBg: 'rgba(74,111,165,0.15)',
+      c2cBg: 'rgba(61,139,110,0.15)',
+      c2bBg: 'rgba(245,158,11,0.15)',
+      b2cBg: 'rgba(139,92,246,0.15)',
+      // Geo
+      na: '#4a6fa5',
+      eu: '#3d8b6e',
+      ea: '#f59e0b',
+      sea: '#8b5cf6',
+      latam: '#06b6d4',
+      other: '#ef4444'
+    };
+
+    // ═══ DATA GENERATION ═══
+    function generateWeeklyLabels(count) {
+      const labels = [];
+      const now = new Date();
+      for (let i = count - 1; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i * 7);
+        labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+      }
+      return labels;
+    }
+
+    function generateMonthlyLabels(count) {
+      const labels = [];
+      const now = new Date();
+      for (let i = count - 1; i >= 0; i--) {
+        const d = new Date(now);
+        d.setMonth(d.getMonth() - i);
+        labels.push(d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+      }
+      return labels;
+    }
+
+    function generateDailyLabels(count) {
+      const labels = [];
+      const now = new Date();
+      for (let i = count - 1; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+      }
+      return labels;
+    }
+
+    function generateTrendData(base, variance, count, trendFactor = 1.005) {
+      const data = [];
+      let val = base;
+      for (let i = 0; i < count; i++) {
+        val = val * trendFactor + (Math.random() - 0.4) * variance;
+        val = Math.max(val * 0.7, val);
+        data.push(Math.round(val));
+      }
+      return data;
+    }
+
+    // ═══ CHART DEFAULTS ═══
+    Chart.defaults.color = '#71717a';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.04)';
+    Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+    Chart.defaults.font.size = 11;
+
+    const chartInstances = {};
+
+    function createStackedAreaChart(canvasId, labels, datasets, yLabel, isVolume = true) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+
+      if (chartInstances[canvasId]) {
+        chartInstances[canvasId].destroy();
+      }
+
+      chartInstances[canvasId] = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#18191c',
+              borderColor: 'rgba(255,255,255,0.08)',
+              borderWidth: 1,
+              titleColor: '#d4d4d8',
+              bodyColor: '#a1a1aa',
+              padding: 10,
+              cornerRadius: 6,
+              titleFont: { weight: '600' },
+              callbacks: {
+                label: function(context) {
+                  let val = context.parsed.y;
+                  if (isVolume) {
+                    if (val >= 1e9) return `${context.dataset.label}: $${(val / 1e9).toFixed(2)}B`;
+                    if (val >= 1e6) return `${context.dataset.label}: $${(val / 1e6).toFixed(1)}M`;
+                    return `${context.dataset.label}: $${val.toLocaleString()}`;
+                  }
+                  if (val >= 1e6) return `${context.dataset.label}: ${(val / 1e6).toFixed(2)}M`;
+                  if (val >= 1e3) return `${context.dataset.label}: ${(val / 1e3).toFixed(1)}K`;
+                  return `${context.dataset.label}: ${val.toLocaleString()}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: {
+                maxTicksLimit: 12,
+                font: { size: 10, family: "'JetBrains Mono', monospace" }
+              }
+            },
+            y: {
+              stacked: true,
+              grid: {
+                color: 'rgba(255,255,255,0.03)',
+                drawBorder: false
+              },
+              ticks: {
+                font: { size: 10, family: "'JetBrains Mono', monospace" },
+                callback: function(val) {
+                  if (isVolume) {
+                    if (val >= 1e9) return '$' + (val / 1e9).toFixed(1) + 'B';
+                    if (val >= 1e6) return '$' + (val / 1e6).toFixed(0) + 'M';
+                    return '$' + val.toLocaleString();
+                  }
+                  if (val >= 1e6) return (val / 1e6).toFixed(1) + 'M';
+                  if (val >= 1e3) return (val / 1e3).toFixed(0) + 'K';
+                  return val;
+                }
+              }
+            }
+          },
+          elements: {
+            line: { tension: 0.3, borderWidth: 2 },
+            point: { radius: 0, hoverRadius: 4 }
+          }
+        }
+      });
+
+      return chartInstances[canvasId];
+    }
+
+    function makeDatasets(dataArrays, fill = true) {
+      return [
+        {
+          label: 'B2B',
+          data: dataArrays[0],
+          borderColor: COLORS.b2b,
+          backgroundColor: fill ? COLORS.b2bBg : 'transparent',
+          fill: fill,
+          order: 4
+        },
+        {
+          label: 'C2C',
+          data: dataArrays[1],
+          borderColor: COLORS.c2c,
+          backgroundColor: fill ? COLORS.c2cBg : 'transparent',
+          fill: fill,
+          order: 3
+        },
+        {
+          label: 'C2B',
+          data: dataArrays[2],
+          borderColor: COLORS.c2b,
+          backgroundColor: fill ? COLORS.c2bBg : 'transparent',
+          fill: fill,
+          order: 2
+        },
+        {
+          label: 'B2C',
+          data: dataArrays[3],
+          borderColor: COLORS.b2c,
+          backgroundColor: fill ? COLORS.b2cBg : 'transparent',
+          fill: fill,
+          order: 1
+        }
+      ];
+    }
+
+    // ═══ VOLUME CHART DATA ═══
+    const volumeData = {
+      D: {
+        labels: generateDailyLabels(30),
+        data: [
+          generateTrendData(3.2e9, 4e8, 30, 1.003),
+          generateTrendData(1.8e9, 3e8, 30, 1.004),
+          generateTrendData(1.1e9, 2e8, 30, 1.003),
+          generateTrendData(0.6e9, 1e8, 30, 1.005)
+        ]
+      },
+      W: {
+        labels: generateWeeklyLabels(24),
+        data: [
+          generateTrendData(22e9, 3e9, 24, 1.008),
+          generateTrendData(12e9, 2e9, 24, 1.010),
+          generateTrendData(7.5e9, 1.5e9, 24, 1.007),
+          generateTrendData(4.2e9, 0.8e9, 24, 1.012)
+        ]
+      },
+      M: {
+        labels: generateMonthlyLabels(12),
+        data: [
+          generateTrendData(92e9, 12e9, 12, 1.02),
+          generateTrendData(52e9, 8e9, 12, 1.025),
+          generateTrendData(31e9, 5e9, 12, 1.018),
+          generateTrendData(17e9, 3e9, 12, 1.03)
+        ]
+      },
+      Y: {
+        labels: ['2019', '2020', '2021', '2022', '2023', '2024', '2025'],
+        data: [
+          [120e9, 380e9, 920e9, 680e9, 840e9, 1200e9, 1420e9],
+          [40e9, 180e9, 520e9, 410e9, 580e9, 820e9, 980e9],
+          [25e9, 95e9, 310e9, 240e9, 340e9, 510e9, 620e9],
+          [12e9, 55e9, 180e9, 140e9, 210e9, 340e9, 430e9]
+        ]
+      }
+    };
+
+    // ═══ COUNT CHART DATA ═══
+    const countData = {
+      D: {
+        labels: generateDailyLabels(30),
+        data: [
+          generateTrendData(42000, 8000, 30, 1.004),
+          generateTrendData(185000, 25000, 30, 1.005),
+          generateTrendData(98000, 15000, 30, 1.003),
+          generateTrendData(65000, 10000, 30, 1.006)
+        ]
+      },
+      W: {
+        labels: generateWeeklyLabels(24),
+        data: [
+          generateTrendData(290000, 50000, 24, 1.008),
+          generateTrendData(1280000, 180000, 24, 1.010),
+          generateTrendData(680000, 95000, 24, 1.007),
+          generateTrendData(450000, 70000, 24, 1.012)
+        ]
+      },
+      M: {
+        labels: generateMonthlyLabels(12),
+        data: [
+          generateTrendData(1200000, 200000, 12, 1.02),
+          generateTrendData(5400000, 700000, 12, 1.025),
+          generateTrendData(2800000, 400000, 12, 1.018),
+          generateTrendData(1900000, 280000, 12, 1.03)
+        ]
+      },
+      Y: {
+        labels: ['2019', '2020', '2021', '2022', '2023', '2024', '2025'],
+        data: [
+          [2.1e6, 8.4e6, 22e6, 18e6, 24e6, 38e6, 46e6],
+          [8.2e6, 32e6, 86e6, 72e6, 96e6, 148e6, 178e6],
+          [4.5e6, 16e6, 42e6, 36e6, 52e6, 82e6, 98e6],
+          [3.1e6, 11e6, 28e6, 24e6, 35e6, 56e6, 68e6]
+        ]
+      }
+    };
+
+    // ═══ RENDER CHARTS ═══
+    function renderVolumeChart(period = 'W') {
+      const d = volumeData[period];
+      createStackedAreaChart('volumeChart', d.labels, makeDatasets(d.data), 'Volume ($)', true);
+    }
+
+    function renderCountChart(period = 'W') {
+      const d = countData[period];
+      createStackedAreaChart('countChart', d.labels, makeDatasets(d.data), 'Count', false);
+    }
+
+    // ═══ GEO CHARTS ═══
+    function createGeoChart(canvasId, title) {
+      const labels = generateWeeklyLabels(16);
+      const regions = ['North America', 'Europe', 'East Asia', 'Southeast Asia', 'LATAM', 'Other'];
+      const colors = [COLORS.na, COLORS.eu, COLORS.ea, COLORS.sea, COLORS.latam, COLORS.other];
+      const alphas = [
+        'rgba(74,111,165,0.5)',
+        'rgba(61,139,110,0.5)',
+        'rgba(245,158,11,0.5)',
+        'rgba(139,92,246,0.5)',
+        'rgba(6,182,212,0.5)',
+        'rgba(239,68,68,0.5)'
+      ];
+
+      // Generate percentage data that sums to ~100%
+      const basePcts = canvasId === 'geoSentChart'
+        ? [28, 24, 18, 14, 10, 6]
+        : [22, 26, 20, 16, 9, 7];
+
+      const datasets = regions.map((region, i) => {
+        const data = labels.map(() => {
+          return basePcts[i] + (Math.random() - 0.5) * 4;
+        });
+        return {
+          label: region,
+          data,
+          borderColor: colors[i],
+          backgroundColor: alphas[i],
+          fill: true,
+          order: regions.length - i
+        };
+      });
+
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+
+      chartInstances[canvasId] = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#18191c',
+              borderColor: 'rgba(255,255,255,0.08)',
+              borderWidth: 1,
+              titleColor: '#d4d4d8',
+              bodyColor: '#a1a1aa',
+              padding: 10,
+              cornerRadius: 6,
+              callbacks: {
+                label: function(ctx) {
+                  return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { maxTicksLimit: 8, font: { size: 10, family: "'JetBrains Mono', monospace" } }
+            },
+            y: {
+              stacked: true,
+              min: 0,
+              max: 100,
+              grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false },
+              ticks: {
+                font: { size: 10, family: "'JetBrains Mono', monospace" },
+                callback: val => val + '%'
+              }
+            }
+          },
+          elements: {
+            line: { tension: 0.3, borderWidth: 1.5 },
+            point: { radius: 0, hoverRadius: 3 }
+          }
+        }
+      });
+    }
+
+    // ═══ HEATMAP ═══
+    function renderHeatmap() {
+      const container = document.getElementById('heatmapContainer');
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const categories = [
+        { label: 'B2B', color: COLORS.b2b, baseVolumes: [100, 98, 95, 92, 88, 68, 56] },
+        { label: 'C2C', color: COLORS.c2c, baseVolumes: [92, 94, 93, 95, 91, 86, 84] },
+        { label: 'C2B', color: COLORS.c2b, baseVolumes: [96, 97, 94, 93, 90, 80, 74] },
+        { label: 'B2C', color: COLORS.b2c, baseVolumes: [100, 96, 94, 92, 86, 62, 52] }
+      ];
+
+      let html = '';
+
+      // Day headers
+      html += '<div class="heatmap-label"></div>';
+      days.forEach(d => {
+        html += `<div class="heatmap-day-label">${d}</div>`;
+      });
+
+      // Category rows
+      categories.forEach(cat => {
+        html += `<div class="heatmap-label" style="color:${cat.color};font-weight:600;font-family:var(--mono);font-size:0.72rem;">${cat.label}</div>`;
+        cat.baseVolumes.forEach((vol, i) => {
+          const variance = Math.round((Math.random() - 0.5) * 6);
+          const v = Math.min(100, Math.max(20, vol + variance));
+          const opacity = 0.1 + (v / 100) * 0.55;
+          const volB = ((v / 100) * (cat.label === 'B2B' ? 4.2 : cat.label === 'C2C' ? 2.8 : cat.label === 'C2B' ? 1.6 : 0.9)).toFixed(1);
+          html += `<div class="heatmap-cell" style="background:${cat.color};opacity:${opacity.toFixed(2)};" data-tooltip="${cat.label} · ${days[i]} · $${volB}B">
+            ${v}%
+          </div>`;
+        });
+      });
+
+      container.innerHTML = html;
+    }
+
+    // ═══ TOGGLE HANDLERS ═══
+    document.querySelectorAll('.chart-toggles').forEach(group => {
+      group.querySelectorAll('.chart-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          group.querySelectorAll('.chart-toggle').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          const chartId = group.dataset.chart;
+          const period = btn.dataset.period;
+
+          if (chartId === 'volumeChart') renderVolumeChart(period);
+          else if (chartId === 'countChart') renderCountChart(period);
+          else if (chartId === 'geoSentChart' || chartId === 'geoRecvChart') {
+            createGeoChart(chartId, chartId === 'geoSentChart' ? 'Sent' : 'Received');
+          }
+        });
+      });
+    });
+
+    // ═══ FILTER HANDLERS ═══
+    ['dateRange', 'blockchainFilter', 'stablecoinFilter'].forEach(id => {
+      document.getElementById(id).addEventListener('change', () => {
+        // Re-render all charts with "filtered" data (simulated)
+        const activeToggles = document.querySelectorAll('.chart-toggle.active');
+        activeToggles.forEach(t => t.click());
+      });
+    });
+
+    // ═══ INIT ═══
+    renderVolumeChart('W');
+    renderCountChart('W');
+    createGeoChart('geoSentChart', 'Sent');
+    createGeoChart('geoRecvChart', 'Received');
+    renderHeatmap();
+
+  })();
+  </script>
+
+</body>
+</html>
