@@ -459,70 +459,60 @@
     <div class="score-panel">
       <div>
         <div class="score-intro">Your DeFi <strong>risk score</strong></div>
-        <div class="score-subtext">Real-time assessment across all your connected positions. Updated every 2 minutes.</div>
+        <div class="score-subtext" id="scoreSubtext">Connect your wallet to see a live risk assessment across all your positions.</div>
       </div>
 
       <div class="score-card">
         <div class="score-label">Current Risk Score</div>
-        <div class="score-number">42</div>
-        <div class="score-status status-safe"><span class="status-dot"></span> Low Risk</div>
+        <div class="score-number" id="scoreNumber">--</div>
+        <div class="score-status" id="scoreStatus" style="display: none;">
+          <span class="status-dot"></span>
+          <span id="statusText">Loading...</span>
+        </div>
+        <button id="connectBtn" style="
+          margin-top: 20px;
+          padding: 12px 24px;
+          background: #3b82f6;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          letter-spacing: 0.05em;
+          transition: all 0.3s;
+        " onmouseover="this.style.background='#1e40af'" onmouseout="this.style.background='#3b82f6'">
+          Connect Wallet
+        </button>
       </div>
     </div>
 
     <!-- Right: Breakdown -->
     <div class="breakdown">
       <div class="breakdown-title">Risk Contributors</div>
-
-      <div class="position-row">
-        <div class="position-label">
-          <div class="position-name">ETH Perpetual (8x)</div>
-          <div class="position-detail">Liquidation in 12% • Negative funding</div>
-        </div>
-        <div class="position-contribution">
-          <div class="contribution-bar">
-            <div class="contribution-fill" style="width: 68%"></div>
-          </div>
-          <div class="contribution-pct">68%</div>
-        </div>
-      </div>
-
-      <div class="position-row">
-        <div class="position-label">
-          <div class="position-name">USDC Lending</div>
-          <div class="position-detail">Collateral ratio 185% • Safe</div>
-        </div>
-        <div class="position-contribution">
-          <div class="contribution-bar">
-            <div class="contribution-fill" style="width: 18%"></div>
-          </div>
-          <div class="contribution-pct">18%</div>
-        </div>
-      </div>
-
-      <div class="position-row">
-        <div class="position-label">
-          <div class="position-name">Curve Liquidity</div>
-          <div class="position-detail">IL risk moderate • Yield farming</div>
-        </div>
-        <div class="position-contribution">
-          <div class="contribution-bar">
-            <div class="contribution-fill" style="width: 14%"></div>
-          </div>
-          <div class="contribution-pct">14%</div>
+      <div id="positionsContainer">
+        <div style="
+          padding: 40px;
+          text-align: center;
+          color: var(--text-dim);
+          font-size: 13px;
+        ">
+          Connect your wallet to see position breakdown
         </div>
       </div>
 
       <!-- Actions -->
-      <div class="actions">
+      <div class="actions" id="actionsContainer" style="display: none;">
         <a href="#" class="action-card">
           <div class="action-icon">📊</div>
-          <div class="action-label">Reduce ETH Exposure</div>
-          <div class="action-desc">Close 50% of position</div>
+          <div class="action-label">Manage Risk</div>
+          <div class="action-desc">Reduce exposure</div>
         </a>
         <a href="#" class="action-card">
           <div class="action-icon">💰</div>
-          <div class="action-label">Lock in Profit</div>
-          <div class="action-desc">Take 8% gains on perp</div>
+          <div class="action-label">Alerts</div>
+          <div class="action-desc">Set thresholds</div>
         </a>
       </div>
     </div>
@@ -535,19 +525,19 @@
       <div class="insight-card">
         <div class="insight-metric">
           <div class="insight-label">Current State</div>
-          <div class="insight-value">Risk-On</div>
-          <div class="insight-label" style="margin-top: 4px;">Volatility normalizing. Good window to take profits.</div>
+          <div class="insight-value" id="regimeValue">--</div>
+          <div class="insight-label" style="margin-top: 4px;" id="regimeDesc">Waiting for data...</div>
         </div>
       </div>
     </div>
 
     <div class="insight-block">
-      <div class="insight-title">Funding Rates</div>
+      <div class="insight-title">Market Volatility</div>
       <div class="insight-card">
         <div class="insight-metric">
-          <div class="insight-label">BTC Perpetual</div>
-          <div class="insight-value">-0.032%</div>
-          <div class="insight-change">↓ Negative • Short funded</div>
+          <div class="insight-label">Daily Volatility</div>
+          <div class="insight-value" id="volatilityValue">--</div>
+          <div class="insight-change" id="volatilityChange">Loading...</div>
         </div>
       </div>
     </div>
@@ -556,7 +546,7 @@
   <!-- Share section -->
   <div style="margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border); text-align: center;">
     <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 20px;">Share your risk score</div>
-    <button style="
+    <button id="shareBtn" style="
       background: var(--accent);
       color: white;
       border: none;
@@ -568,6 +558,7 @@
       cursor: pointer;
       letter-spacing: 0.05em;
       transition: all 0.3s;
+      display: none;
     " onmouseover="this.style.background='var(--accent-dark)'" onmouseout="this.style.background='var(--accent)'">
       Share Score Card
     </button>
@@ -590,6 +581,192 @@
     </div>
   </div>
 </div>
+
+<script>
+  // ================================================
+  // WALLET CONNECTION
+  // ================================================
+
+  let userAddress = null;
+  let riskData = null;
+
+  const connectBtn = document.getElementById('connectBtn');
+  connectBtn.addEventListener('click', connectWallet);
+
+  async function connectWallet() {
+    if (!window.ethereum) {
+      alert('MetaMask not detected. Please install MetaMask to continue.');
+      window.open('https://metamask.io/download/', '_blank');
+      return;
+    }
+
+    try {
+      connectBtn.disabled = true;
+      connectBtn.textContent = 'Connecting...';
+
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      userAddress = accounts[0];
+
+      connectBtn.textContent = 'Connected: ' + userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
+      connectBtn.style.background = '#10b981'; // Green
+
+      // Fetch risk score
+      await fetchRiskScore(userAddress);
+
+      // Set up account change listener
+      window.ethereum.on('accountsChanged', (accs) => {
+        if (accs.length === 0) {
+          disconnectWallet();
+        } else if (accs[0] !== userAddress) {
+          userAddress = accs[0];
+          fetchRiskScore(userAddress);
+        }
+      });
+    } catch (err) {
+      console.error('Connection failed:', err);
+      alert('Failed to connect wallet: ' + err.message);
+      connectBtn.disabled = false;
+      connectBtn.textContent = 'Connect Wallet';
+    }
+  }
+
+  function disconnectWallet() {
+    userAddress = null;
+    riskData = null;
+    connectBtn.textContent = 'Connect Wallet';
+    connectBtn.style.background = '#3b82f6';
+    connectBtn.disabled = false;
+    updateUI();
+  }
+
+  // ================================================
+  // FETCH & DISPLAY RISK SCORE
+  // ================================================
+
+  async function fetchRiskScore(address) {
+    try {
+      const response = await fetch('/api/risk-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address, chain: 'ethereum' })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      riskData = await response.json();
+      updateUI();
+    } catch (err) {
+      console.error('Failed to fetch risk score:', err);
+      alert('Failed to calculate risk score: ' + err.message);
+    }
+  }
+
+  function updateUI() {
+    if (!riskData) {
+      document.getElementById('scoreNumber').textContent = '--';
+      document.getElementById('scoreStatus').style.display = 'none';
+      document.getElementById('positionsContainer').innerHTML = `
+        <div style="
+          padding: 40px;
+          text-align: center;
+          color: var(--text-dim);
+          font-size: 13px;
+        ">
+          Connect your wallet to see position breakdown
+        </div>
+      `;
+      document.getElementById('actionsContainer').style.display = 'none';
+      document.getElementById('shareBtn').style.display = 'none';
+      return;
+    }
+
+    // Update score
+    document.getElementById('scoreNumber').textContent = riskData.riskScore;
+    const statusEl = document.getElementById('scoreStatus');
+    statusEl.style.display = 'flex';
+    statusEl.style.alignItems = 'center';
+    statusEl.style.gap = '8px';
+
+    const statusText = document.getElementById('statusText');
+    statusText.textContent = riskData.status.charAt(0).toUpperCase() + riskData.status.slice(1);
+
+    const statusDot = statusEl.querySelector('.status-dot');
+    statusDot.className = 'status-dot';
+    if (riskData.status === 'safe') statusDot.style.background = '#10b981';
+    else if (riskData.status === 'moderate') statusDot.style.background = '#f59e0b';
+    else if (riskData.status === 'elevated') statusDot.style.background = '#f59e0b';
+    else statusDot.style.background = '#ef4444';
+
+    // Update positions
+    if (riskData.positions && riskData.positions.length > 0) {
+      const posHTML = riskData.positions.map(pos => `
+        <div class="position-row">
+          <div class="position-label">
+            <div class="position-name">${pos.protocol} ${pos.leverage ? `(${pos.leverage}x)` : ''}</div>
+            <div class="position-detail">
+              ${pos.liquidationDistance ? `Liquidation in ${pos.liquidationDistance.toFixed(0)}%` : ''}
+              ${pos.status ? '• ' + pos.status : ''}
+            </div>
+          </div>
+          <div class="position-contribution">
+            <div class="contribution-bar">
+              <div class="contribution-fill" style="width: ${pos.contribution}%"></div>
+            </div>
+            <div class="contribution-pct">${pos.contribution}%</div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('positionsContainer').innerHTML = posHTML;
+    }
+
+    // Update market insights
+    document.getElementById('regimeValue').textContent = riskData.market.regime || 'Risk-On';
+    document.getElementById('regimeDesc').textContent = 'Market environment is ' + (riskData.market.regime || 'constructive');
+    document.getElementById('volatilityValue').textContent = (riskData.market.volatility * 100).toFixed(2) + '%';
+    document.getElementById('volatilityChange').textContent = 'Daily annualized risk';
+
+    // Show actions
+    document.getElementById('actionsContainer').style.display = 'grid';
+    document.getElementById('shareBtn').style.display = 'inline-block';
+  }
+
+  // ================================================
+  // SHARE FUNCTIONALITY
+  // ================================================
+
+  document.getElementById('shareBtn').addEventListener('click', () => {
+    if (!riskData) return;
+
+    const text = `My Nexxore risk score: ${riskData.riskScore}/100
+Status: ${riskData.status}
+Top risk: ${riskData.topRisk?.protocol || 'N/A'}
+
+Know your DeFi risk:
+nexxore.xyz/risk-score`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'Nexxore Risk Score',
+        text: text
+      });
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(text);
+      alert('Risk score copied to clipboard!');
+    }
+  });
+
+  // Auto-load if address in URL
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('address')) {
+    userAddress = params.get('address');
+    document.getElementById('scoreSubtext').textContent = 'Analyzing your positions...';
+    fetchRiskScore(userAddress);
+  }
+</script>
 
 </body>
 </html>
