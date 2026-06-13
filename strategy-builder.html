@@ -380,7 +380,11 @@
         <span class="label"><span class="status-dot live" id="statusDot"></span>LIVE</span>
         <span id="spotPrice">—</span>
       </div>
-      <button class="connect-btn disconnected" id="connectBtn" onclick="toggleWallet()">Connect Wallet</button>
+      <select class="connect-btn disconnected" id="connectType" style="background:var(--bg-card);color:var(--t1);border:1px solid var(--border)">
+        <option value="wallet">MetaMask</option>
+        <option value="deribit">Deribit API Key</option>
+      </select>
+      <button class="connect-btn disconnected" id="connectBtn" onclick="handleConnectAction()">Connect</button>
     </div>
   </header>
 
@@ -586,6 +590,8 @@ const ST = {
   nextId: 1, synthetic: false,
   perpSide: 'buy', perpLeverage: 10,
   walletAddress: null, walletConnected: false,
+  deribitConnected: false, deribitCredentialId: null,
+  deribitMode: 'trading', deribitChainWs: null,
   refreshInterval: null
 };
 
@@ -609,6 +615,45 @@ function toast(msg, type = 'info', duration = 4000) {
 // ═══════════════════════════════════════════════════
 //  WALLET CONNECTION
 // ═══════════════════════════════════════════════════
+async function handleConnectAction() {
+  const mode = document.getElementById('connectType').value;
+  if (mode === 'deribit') return connectDeribit();
+  return toggleWallet();
+}
+
+async function connectDeribit() {
+  const clientId = prompt('Deribit client_id');
+  if (!clientId) return;
+  const clientSecret = prompt('Deribit client_secret');
+  if (!clientSecret) return;
+  if (!ST.walletConnected) {
+    toast('Connect MetaMask first to bind Deribit credentials.', 'warning');
+    return;
+  }
+  try {
+    const res = await fetch('/api/deribit/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        walletAddress: ST.walletAddress,
+        clientId,
+        clientSecret,
+        mode: ST.deribitMode
+      })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Deribit auth failed');
+    ST.deribitConnected = true;
+    ST.deribitCredentialId = data.credentialId;
+    document.getElementById('connectBtn').textContent = 'Deribit Connected';
+    document.getElementById('connectBtn').className = 'connect-btn connected';
+    toast('Deribit connected successfully', 'success');
+    await loadPositions();
+  } catch (e) {
+    toast(`Deribit connect failed: ${e.message}`, 'error');
+  }
+}
+
 async function toggleWallet() {
   if (ST.walletConnected) {
     ST.walletConnected = false;
@@ -739,6 +784,7 @@ async function loadChain() {
   ST.synthetic = d.synthetic || false;
   document.getElementById('chainSource').textContent = ST.synthetic ? 'SYNTHETIC' : 'DERIBIT';
   renderChain();
+  startDeribitChainFeed();
 }
 
 async function loadMarketInfo() {
@@ -751,6 +797,18 @@ async function loadMarketInfo() {
 
 async function loadPositions() {
   if (!ST.walletConnected || !ST.walletAddress) return;
+  if (ST.deribitConnected && ST.deribitCredentialId) {
+    try {
+      const u = new URL('/api/deribit/positions', window.location.origin);
+      u.searchParams.set('walletAddress', ST.walletAddress);
+      u.searchParams.set('credentialId', ST.deribitCredentialId);
+      const r = await fetch(u.toString());
+      const d = await r.json();
+      ST.positions = d.positions || [];
+      renderPositions();
+      return;
+    } catch (_) {}
+  }
   try {
     const r = await fetch(`/api/perps/trade-history/${ST.walletAddress}`);
     const d = await r.json();
@@ -760,6 +818,44 @@ async function loadPositions() {
     ST.positions = [];
     renderPositions();
   }
+}
+
+function startDeribitChainFeed() {
+  if (ST.synthetic || !ST.chain || ST.chain.length === 0) return;
+  if (ST.deribitChainWs) {
+    try { ST.deribitChainWs.close(); } catch (_) {}
+    ST.deribitChainWs = null;
+  }
+  const instruments = [];
+  ST.chain.forEach(row => {
+    if (row.call?.instrument) instruments.push(row.call.instrument);
+    if (row.put?.instrument) instruments.push(row.put.instrument);
+  });
+  if (instruments.length === 0) return;
+  const ws = new WebSocket('wss://www.deribit.com/ws/api/v2');
+  ST.deribitChainWs = ws;
+  ws.onopen = () => {
+    const channels = instruments.slice(0, 120).map(i => `book.${i}.100ms`);
+    ws.send(JSON.stringify({ jsonrpc: '2.0', id: 77, method: 'public/subscribe', params: { channels } }));
+  };
+  ws.onmessage = ev => {
+    try {
+      const msg = JSON.parse(ev.data);
+      const data = msg.params?.data;
+      if (!data?.instrument_name) return;
+      for (const row of ST.chain) {
+        for (const side of ['call', 'put']) {
+          const opt = row[side];
+          if (opt && opt.instrument === data.instrument_name) {
+            if (data.best_bid_price != null) opt.bid = Number(data.best_bid_price) * (ST.spot || 1);
+            if (data.best_ask_price != null) opt.ask = Number(data.best_ask_price) * (ST.spot || 1);
+            if (data.mark_iv != null) opt.iv = Number(data.mark_iv).toFixed(1);
+          }
+        }
+      }
+      renderChain();
+    } catch (_) {}
+  };
 }
 
 // ═══════════════════════════════════════════════════
@@ -1341,6 +1437,10 @@ async function executeOptionStrategy() {
   if (optLegs.length === 0) { toast('Add option legs first', 'warning'); return; }
   if (!ST.walletConnected) { toast('Connect your wallet first', 'warning'); return; }
 
+  if (!ST.deribitConnected || !ST.deribitCredentialId) {
+    toast('Connect Deribit API key before execution', 'warning');
+    return;
+  }
   const btn = document.getElementById('optionExecBtn');
   btn.disabled = true;
   btn.textContent = '⏳ Preparing...';
@@ -1359,29 +1459,52 @@ async function executeOptionStrategy() {
     }
   }
 
-  // Build Deribit trade intent
-  const instruments = optLegs.map(l =>
-    `${l.side.toUpperCase()} ${l.qty}× ${l.instrument || (ST.asset + '-' + l.strike + '-' + l.type[0].toUpperCase())}`
+  let estimatedFee = 0;
+  let estNotional = 0;
+  optLegs.forEach(leg => {
+    const px = Number(leg.side === 'buy' ? (leg.ask || leg.mark || 0) : (leg.bid || leg.mark || 0));
+    estNotional += px * Number(leg.qty || 0);
+  });
+  estimatedFee = estNotional * 0.0005;
+  const shouldExecute = confirm(
+    `Confirm Deribit strategy execution?\nLegs: ${optLegs.length}\nNotional: $${fmt(estNotional)}\nEstimated Fee: $${fmt(estimatedFee)}`
   );
+  if (!shouldExecute) {
+    btn.disabled = false;
+    btn.textContent = '◎ Execute Strategy on Deribit';
+    return;
+  }
 
-  // Log the strategy
-  try {
-    await fetch('/api/perps/log-trade', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        asset: ST.asset, type: 'option-strategy',
-        strategy: ST.activeTemplate || 'Custom',
-        legs: optLegs, walletAddress: ST.walletAddress,
-        status: 'submitted', timestamp: Date.now()
-      })
-    });
-  } catch (e) {}
-
-  toast(`Strategy submitted: ${instruments.join(' | ')}`, 'success', 6000);
-
-  // Open Deribit in new tab for execution
-  window.open(`https://www.deribit.com/options/${ST.asset}`, '_blank');
+  const payloadLegs = optLegs.map(leg => ({
+    side: leg.side,
+    instrument_name: leg.instrument,
+    qty: Number(leg.qty || 0),
+    orderType: 'market',
+    price: leg.side === 'buy' ? leg.ask : leg.bid,
+    mark: leg.mark
+  }));
+  const orderRes = await fetch('/api/deribit/order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      walletAddress: ST.walletAddress,
+      credentialId: ST.deribitCredentialId,
+      legs: payloadLegs,
+      strategyId: ST.activeTemplate || 'custom'
+    })
+  });
+  const orderData = await orderRes.json();
+  if (!orderData.success) {
+    toast(orderData.message || orderData.code || 'Deribit order failed', 'error', 5000);
+    btn.disabled = false;
+    btn.textContent = '◎ Execute Strategy on Deribit';
+    return;
+  }
+  toast(`Strategy executed with ${payloadLegs.length} legs`, 'success', 4000);
+  const fillsUrl = new URL('/api/deribit/fills', window.location.origin);
+  fillsUrl.searchParams.set('walletAddress', ST.walletAddress);
+  fetch(fillsUrl.toString()).catch(() => {});
+  await loadPositions();
 
   btn.disabled = false;
   btn.textContent = '◎ Execute Strategy on Deribit';

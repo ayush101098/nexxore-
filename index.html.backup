@@ -1,0 +1,2206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexxore — AI Orchestration Layer for DeFi</title>
+
+  <!-- GA -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6QGB2RQVP0"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-6QGB2RQVP0');</script>
+
+  <!-- SEO -->
+  <meta name="description" content="Nexxore is an AI-native DeFi execution and orchestration platform. Deploy autonomous financial agents to automate trading, yield optimization, risk management, and cross-protocol execution.">
+  <meta name="keywords" content="defi risk analytics, perpetual funding analytics, crypto trading risk tools, onchain trading analytics, defi strategy analytics, on-chain intelligence, DeFi vaults, delta-neutral strategy, regime detection, yield optimization">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="https://nexxore.xyz/">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%2305050D' stroke='%2300C8FF' stroke-width='4'/%3E%3Ctext x='50' y='62' text-anchor='middle' font-size='36' font-weight='800' font-family='system-ui' fill='%2300C8FF'%3ENX%3C/text%3E%3C/svg%3E">
+
+  <!-- OG -->
+  <meta property="og:title" content="Nexxore — AI Orchestration Layer for DeFi">
+  <meta property="og:description" content="AI-native execution platform for autonomous financial agents. Automate trading, yield optimization, risk management, and DeFi workflows.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nexxore.xyz">
+  <meta property="og:image" content="https://nexxore.xyz/assets/icons/og-image.png">
+  <meta property="og:site_name" content="Nexxore">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@nexxore">
+  <meta name="twitter:title" content="Nexxore — AI Orchestration Layer for DeFi">
+  <meta name="twitter:description" content="Deploy autonomous AI agents for DeFi execution. Automate trades, yields, risk management, and protocol coordination.">
+  <meta name="twitter:image" content="https://nexxore.xyz/assets/icons/og-image.png">
+  <meta name="theme-color" content="#05050D">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Structured Data: Organization -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://nexxore.xyz/#organization","name":"Nexxore","alternateName":["Nexxore DeFi","Nexxore Agents","NEXXORE","nexxore","nexxore.xyz"],"url":"https://nexxore.xyz","logo":{"@type":"ImageObject","url":"https://nexxore.xyz/assets/icons/og-image.png","width":1200,"height":630},"image":"https://nexxore.xyz/assets/icons/og-image.png","description":"Nexxore is an AI-native DeFi execution and orchestration platform. Deploy autonomous financial agents for trading, yield optimization, risk management, and cross-protocol coordination across DeFi.","foundingDate":"2025","sameAs":["https://x.com/nexxore","https://github.com/ayush101098/nexxore-"],"contactPoint":{"@type":"ContactPoint","contactType":"customer support","url":"https://nexxore.xyz/#waitlist"},"knowsAbout":["AI Agents","DeFi Execution","Autonomous Trading","Yield Optimization","Risk Management","Smart Contract Automation","Cross-Chain Coordination","AI Orchestration","Financial Agents","DeFi Infrastructure"]}</script>
+  <!-- Structured Data: WebSite (Sitelinks Search Box) -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://nexxore.xyz/#website","name":"Nexxore","alternateName":["Nexxore DeFi","Nexxore Agents","nexxore"],"url":"https://nexxore.xyz","description":"Nexxore — AI orchestration layer for DeFi. Deploy autonomous financial agents for trading, yield optimization, risk management, and cross-protocol execution.","publisher":{"@id":"https://nexxore.xyz/#organization"},"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://nexxore.xyz/terminal?q={search_term_string}"},"query-input":"required name=search_term_string"}}</script>
+  <!-- Structured Data: SoftwareApplication -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Nexxore","url":"https://nexxore.xyz","applicationCategory":"FinanceApplication","applicationSubCategory":"DeFi Orchestration","operatingSystem":"Web Browser","description":"AI-native DeFi execution and orchestration platform. Deploy and manage autonomous financial agents for trading, yield optimization, risk management, and cross-protocol execution.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","availability":"https://schema.org/LimitedAvailability"},"featureList":["Autonomous Trading Agents","Yield Optimization Agents","Risk Management Agents","Research & Monitoring Agents","Workflow Orchestration","Cross-Protocol Execution","AI Intelligence Layer","Strategy Automation","Multi-Chain Coordination","Customizable Agent Logic"]}</script>
+  <!-- Structured Data: BreadcrumbList -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Nexxore","item":"https://nexxore.xyz/"}]}</script>
+  <!-- Structured Data: FAQPage (brand) -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Nexxore?","acceptedAnswer":{"@type":"Answer","text":"Nexxore is an AI-native DeFi execution and orchestration platform. It allows users to create, deploy, manage, and monetize intelligent on-chain agents that automate complex crypto and DeFi actions across protocols, chains, and strategies."}},{"@type":"Question","name":"What can I do with Nexxore agents?","acceptedAnswer":{"@type":"Answer","text":"Nexxore agents automate: (1) Trading and execution, (2) Yield optimization across protocols, (3) Risk management and liquidation protection, (4) Research and monitoring, (5) Cross-protocol coordination, (6) Workflow orchestration, (7) Position rebalancing. All with customizable logic and permissions."}},{"@type":"Question","name":"Who is Nexxore for?","acceptedAnswer":{"@type":"Answer","text":"Nexxore is built for retail DeFi users seeking smarter automation, advanced traders needing execution speed and risk systems, crypto-native funds requiring scalable infrastructure, and developers building on-chain automation systems."}},{"@type":"Question","name":"What chains does Nexxore support?","acceptedAnswer":{"@type":"Answer","text":"Nexxore agents operate across Ethereum, Arbitrum, Base, Optimism, Polygon, Solana, and other EVM-compatible chains. Agents can coordinate and execute across multiple chains simultaneously."}},{"@type":"Question","name":"How is Nexxore different from manual DeFi tools?","acceptedAnswer":{"@type":"Answer","text":"Nexxore turns manual DeFi into autonomous execution. Instead of manually switching protocols, managing positions, and executing repetitive actions, Nexxore agents handle these tasks autonomously with AI intelligence and customizable permissions."}}]}</script>
+
+<style>
+/* ═══════════════════════════════════════════════════════
+   NEXXORE V8 — INSTITUTIONAL QUANT DESK DESIGN SYSTEM
+   Bloomberg Terminal × Palantir × Renaissance Tech
+   ═══════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #05050D;
+  --bg2: #080814;
+  --surface: #0C0C1A;
+  --surface2: #111122;
+  --border: #16162A;
+  --border-hi: #252545;
+  --cyan: #00C8FF;
+  --green: #00E87A;
+  --violet: #6B4FE8;
+  --gold: #E8A020;
+  --red: #FF3D5A;
+  --text: #E2E2F0;
+  --text-muted: #7070A0;
+  --text-dim: #404060;
+  --display: 'Space Grotesk', sans-serif;
+  --body: 'Inter', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius: 3px;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+::selection { background: rgba(0,200,255,0.15); color: #fff; }
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+  opacity: 0.02;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px;
+}
+
+/* ── CUSTOM CURSOR ── */
+.cursor {
+  position: fixed; top: 0; left: 0;
+  width: 6px; height: 6px;
+  background: var(--cyan);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  mix-blend-mode: screen;
+  box-shadow: 0 0 10px var(--cyan);
+  transition: width 0.2s var(--ease), height 0.2s var(--ease), opacity 0.2s;
+}
+.cursor-ring {
+  position: fixed; top: 0; left: 0;
+  width: 32px; height: 32px;
+  border: 1px solid rgba(0,200,255,0.25);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99998;
+  transition: width 0.18s var(--ease), height 0.18s var(--ease), border-color 0.2s;
+}
+
+/* ── SCROLL PROGRESS ── */
+.scroll-bar {
+  position: fixed; top: 0; left: 0;
+  height: 2px; width: 0%;
+  background: linear-gradient(90deg, var(--cyan), var(--violet));
+  z-index: 10000;
+  transition: width 50ms linear;
+}
+
+/* ── PAGE LOAD SEQUENCE ── */
+.page-loader {
+  position: fixed; inset: 0; z-index: 100000;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 1.5rem;
+  transition: opacity 0.6s var(--ease), visibility 0.6s;
+}
+.page-loader.loaded { opacity: 0; visibility: hidden; pointer-events: none; }
+.loader-logo {
+  font-family: var(--mono); font-size: 0.7rem; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--cyan); opacity: 0;
+  animation: loaderFadeIn 0.4s 0.1s forwards;
+}
+.loader-bar {
+  width: 120px; height: 1px; background: var(--border);
+  position: relative; overflow: hidden;
+  opacity: 0; animation: loaderFadeIn 0.4s 0.3s forwards;
+}
+.loader-bar::after {
+  content: ''; position: absolute; inset: 0;
+  background: var(--cyan);
+  animation: loaderFill 1.2s 0.5s var(--ease) forwards;
+  transform-origin: left;
+  transform: scaleX(0);
+}
+@keyframes loaderFadeIn { to { opacity: 1; } }
+@keyframes loaderFill { to { transform: scaleX(1); } }
+
+/* ══════════════════════════════════════
+   PROMPT 01 — NAVIGATION BAR
+   ══════════════════════════════════════ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 1000;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 clamp(1rem, 3vw, 2.5rem);
+  height: 52px;
+  background: rgba(5,5,13,0.5);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border-bottom: 1px solid transparent;
+  transition: all 0.4s var(--ease);
+}
+nav.scrolled {
+  background: rgba(5,5,13,0.92);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border-bottom-color: var(--border);
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: var(--text);
+}
+.nav-logo-mark {
+  width: 30px; height: 30px;
+  flex-shrink: 0;
+  transition: transform 0.3s var(--ease), filter 0.3s;
+  filter: drop-shadow(0 0 4px rgba(0,200,255,0.15));
+}
+.nav-logo-mark svg { width: 100%; height: 100%; }
+.nav-logo:hover .nav-logo-mark {
+  transform: scale(1.08);
+  filter: drop-shadow(0 0 8px rgba(0,200,255,0.3));
+}
+.nav-brand-text {
+  font-family: var(--mono); font-size: 0.72rem; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text);
+}
+.nav-center {
+  display: flex; align-items: center; gap: 0;
+  list-style: none;
+  position: absolute; left: 50%; transform: translateX(-50%);
+}
+.nav-center a {
+  font-family: var(--mono); font-size: 0.62rem; font-weight: 400;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-muted); text-decoration: none;
+  padding: 6px 14px; border-radius: var(--radius);
+  transition: color 0.3s, background 0.3s;
+  position: relative;
+}
+.nav-center a:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.nav-center a::after {
+  content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+  width: 0; height: 1px; background: var(--cyan);
+  transition: width 0.3s var(--ease);
+}
+.nav-center a:hover::after { width: 60%; }
+.nav-right {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.status-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: statusPulse 2.5s ease infinite;
+}
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.nav-cta {
+  font-family: var(--mono); font-size: 0.6rem; font-weight: 500;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--bg); text-decoration: none;
+  padding: 7px 16px;
+  border-radius: var(--radius);
+  background: var(--cyan);
+  border: 1px solid var(--cyan);
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.nav-cta::before {
+  content: ''; position: absolute; inset: -1px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--cyan), var(--violet));
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: -1;
+}
+.nav-cta:hover { background: transparent; color: var(--cyan); }
+.nav-cta:hover::before { opacity: 1; }
+.nav-mcp {
+  font-family: var(--mono); font-size: 0.55rem; font-weight: 500;
+  color: var(--green); text-decoration: none;
+  padding: 5px 10px; border: 1px solid rgba(0,232,122,0.2);
+  background: rgba(0,232,122,0.04); border-radius: var(--radius);
+  transition: all 0.3s; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.nav-mcp:hover { background: rgba(0,232,122,0.1); border-color: rgba(0,232,122,0.35); }
+.nav-x {
+  display: flex; align-items: center; padding: 6px;
+  color: var(--text-muted); transition: color 0.3s; text-decoration: none;
+}
+.nav-x:hover { color: var(--text); }
+.hamburger {
+  display: none; flex-direction: column; gap: 5px; cursor: pointer;
+  background: none; border: none; padding: 4px;
+}
+.hamburger span {
+  width: 18px; height: 1.5px; background: var(--text-muted);
+  transition: all 0.3s;
+}
+
+/* ══════════════════════════════════════
+   TICKER STRIP
+   ══════════════════════════════════════ */
+.ticker-wrap {
+  position: relative; margin-top: 52px;
+  height: 32px; overflow: hidden;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+.ticker-track {
+  display: flex; align-items: center;
+  height: 32px; white-space: nowrap;
+  animation: tickerScroll 50s linear infinite;
+}
+.ticker-track:hover { animation-play-state: paused; }
+@keyframes tickerScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-item {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 0 18px; height: 32px;
+  border-right: 1px solid var(--border);
+  font-family: var(--mono); font-size: 0.62rem;
+}
+.ticker-label { color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+.ticker-val { color: var(--text-muted); font-weight: 500; }
+.ticker-val.up { color: var(--green); }
+.ticker-val.down { color: var(--red); }
+.ticker-val.live { display: flex; align-items: center; gap: 6px; color: var(--green); }
+.ticker-loading { animation: skeletonPulse 1.5s ease-in-out infinite; color: var(--text-dim) !important; }
+@keyframes skeletonPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ══════════════════════════════════════
+   PROMPT 02 — CINEMATIC HERO
+   ══════════════════════════════════════ */
+.hero {
+  position: relative; min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: flex-start; justify-content: center;
+  padding: 140px clamp(1.5rem, 5vw, 4rem) 80px;
+  overflow: hidden;
+  max-width: 1200px; margin: 0 auto;
+}
+
+/* 3D Perspective Grid */
+.hero-grid-3d {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,200,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,200,255,0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+  transform: perspective(800px) rotateX(25deg);
+  transform-origin: center 120%;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 60%, black 20%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 60%, black 20%, transparent 70%);
+  animation: gridDrift 25s linear infinite;
+}
+@keyframes gridDrift {
+  0% { background-position: 0 0; }
+  100% { background-position: 60px 60px; }
+}
+
+/* Floating Orbs */
+.hero-orb {
+  position: absolute; border-radius: 50%;
+  pointer-events: none; filter: blur(80px);
+  animation: orbFloat 8s ease-in-out infinite;
+}
+.hero-orb-1 {
+  width: 400px; height: 400px; top: 15%; right: 10%;
+  background: radial-gradient(circle, rgba(0,200,255,0.08) 0%, transparent 70%);
+}
+.hero-orb-2 {
+  width: 300px; height: 300px; bottom: 20%; left: 5%;
+  background: radial-gradient(circle, rgba(107,79,232,0.06) 0%, transparent 70%);
+  animation-delay: -3s;
+}
+.hero-orb-3 {
+  width: 200px; height: 200px; top: 40%; left: 40%;
+  background: radial-gradient(circle, rgba(0,232,122,0.04) 0%, transparent 70%);
+  animation-delay: -5s;
+}
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(15px, -20px) scale(1.05); }
+  66% { transform: translate(-10px, 15px) scale(0.95); }
+}
+
+/* Particle Field */
+.hero-particles {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+}
+.particle {
+  position: absolute; width: 1px; height: 1px;
+  background: var(--cyan); border-radius: 50%;
+  opacity: 0;
+  animation: particleDrift 6s ease-in-out infinite;
+}
+@keyframes particleDrift {
+  0% { opacity: 0; transform: translateY(0); }
+  20% { opacity: 0.6; }
+  80% { opacity: 0.3; }
+  100% { opacity: 0; transform: translateY(-80px); }
+}
+
+/* Breadcrumb */
+.hero-breadcrumb {
+  font-family: var(--mono); font-size: 0.6rem; font-weight: 400;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 1.5rem;
+  opacity: 0; animation: fadeUp 0.5s 0.8s var(--ease) forwards;
+  display: flex; align-items: center; gap: 8px;
+}
+.hero-breadcrumb .sep { color: var(--border-hi); }
+.hero-breadcrumb .active { color: var(--cyan); }
+
+/* Badge */
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 0.6rem; font-weight: 400;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--green);
+  padding: 5px 12px; border: 1px solid rgba(0,232,122,0.2);
+  border-radius: var(--radius); margin-bottom: 1.8rem;
+  background: rgba(0,232,122,0.04);
+  opacity: 0; animation: fadeUp 0.5s 1s var(--ease) forwards;
+}
+
+/* Title */
+.hero-title {
+  font-family: var(--display);
+  font-size: clamp(2.6rem, 5.5vw, 4.4rem);
+  font-weight: 800; line-height: 1.06;
+  letter-spacing: -0.03em; color: var(--text);
+  margin-bottom: 1.5rem; max-width: 740px;
+  opacity: 0; animation: fadeUp 0.6s 1.2s var(--ease) forwards;
+}
+.hero-title .accent {
+  background: linear-gradient(135deg, var(--cyan), var(--violet));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  font-family: var(--body); font-size: 0.88rem; font-weight: 400;
+  color: var(--text-muted); line-height: 1.8;
+  max-width: 540px; margin-bottom: 2.5rem;
+  opacity: 0; animation: fadeUp 0.6s 1.4s var(--ease) forwards;
+}
+.hero-actions {
+  display: flex; gap: 1rem; margin-bottom: 3.5rem;
+  opacity: 0; animation: fadeUp 0.6s 1.5s var(--ease) forwards;
+}
+
+/* Stats */
+.hero-stats {
+  display: flex; gap: 0; flex-wrap: wrap;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  opacity: 0; animation: fadeUp 0.6s 1.6s var(--ease) forwards;
+}
+.hero-stat-item {
+  padding: 1.2rem 1.8rem;
+  border-right: 1px solid var(--border);
+  background: rgba(12,12,26,0.5);
+  min-width: 140px;
+}
+.hero-stat-item:last-child { border-right: none; }
+.hero-stat-val {
+  font-family: var(--display); font-size: 1.6rem; font-weight: 700;
+  color: var(--text); line-height: 1;
+}
+.hero-stat-val span { font-size: 0.85rem; color: var(--text-muted); }
+.hero-stat-label {
+  font-family: var(--mono); font-size: 0.58rem;
+  color: var(--text-dim); letter-spacing: 0.06em;
+  text-transform: uppercase; margin-top: 0.4rem;
+}
+
+/* Risk Terminal Widget */
+.hero-terminal {
+  position: absolute; bottom: 12%; right: clamp(2rem, 5vw, 4rem);
+  width: clamp(260px, 22vw, 320px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(8,8,20,0.85);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  opacity: 0; animation: fadeUp 0.8s 1.8s var(--ease) forwards;
+}
+.hero-terminal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(12,12,26,0.6);
+}
+.hero-terminal-title {
+  font-family: var(--mono); font-size: 0.55rem;
+  color: var(--text-dim); letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.hero-terminal-live {
+  display: flex; align-items: center; gap: 4px;
+  font-family: var(--mono); font-size: 0.5rem;
+  color: var(--green); letter-spacing: 0.04em;
+}
+.hero-terminal-body { padding: 10px 12px; }
+.terminal-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 0;
+  font-family: var(--mono); font-size: 0.6rem;
+}
+.terminal-row-label { color: var(--text-dim); }
+.terminal-row-val { color: var(--text-muted); font-weight: 500; }
+.terminal-row-val.cyan { color: var(--cyan); }
+.terminal-row-val.green { color: var(--green); }
+.terminal-row-val.gold { color: var(--gold); }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── BUTTONS ── */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 24px;
+  background: var(--cyan); color: var(--bg);
+  font-family: var(--mono); font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  text-decoration: none; border-radius: var(--radius);
+  border: 1px solid var(--cyan);
+  transition: all 0.3s var(--ease); cursor: pointer;
+  position: relative; overflow: hidden;
+}
+.btn-primary:hover { background: transparent; color: var(--cyan); }
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 24px;
+  background: transparent; color: var(--text);
+  font-family: var(--mono); font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  text-decoration: none; border-radius: var(--radius);
+  border: 1px solid var(--border-hi);
+  transition: all 0.3s var(--ease); cursor: pointer;
+}
+.btn-secondary:hover { border-color: var(--cyan); color: var(--cyan); }
+
+/* ══════════════════════════════════════
+   SHARED SECTION STYLES
+   ══════════════════════════════════════ */
+section {
+  padding: 100px clamp(1.5rem, 5vw, 4rem);
+  max-width: 1200px; margin: 0 auto;
+  position: relative;
+}
+.section-label {
+  font-family: var(--mono); font-size: 0.58rem; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--cyan); margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-label::before {
+  content: ''; width: 16px; height: 1px; background: var(--cyan);
+}
+.section-title {
+  font-family: var(--display);
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 800; letter-spacing: -0.025em;
+  color: var(--text); line-height: 1.15;
+}
+.section-sub {
+  font-family: var(--body); font-size: 0.85rem;
+  color: var(--text-muted); margin-top: 0.8rem;
+  line-height: 1.7; max-width: 560px;
+}
+.section-divider {
+  height: 1px;
+  background: var(--border);
+  max-width: 1200px; margin: 0 auto;
+  position: relative;
+}
+.section-divider::after {
+  content: '◆';
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 0.5rem; color: var(--border-hi);
+  background: var(--bg); padding: 0 12px;
+}
+
+/* ══════════════════════════════════════
+   PROMPT 03 — PROBLEM SECTION
+   ══════════════════════════════════════ */
+.problem-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 1px; margin-top: 3rem;
+  background: var(--border); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.problem-card {
+  padding: 2rem 1.8rem; background: var(--bg);
+  position: relative; transition: background 0.4s var(--ease);
+  overflow: hidden;
+}
+.problem-card:hover { background: var(--surface); }
+.problem-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; transform: scaleX(0); transform-origin: left;
+  transition: transform 0.4s var(--ease);
+}
+.problem-card:hover::before { transform: scaleX(1); }
+.problem-card:nth-child(1)::before { background: var(--red); }
+.problem-card:nth-child(2)::before { background: var(--gold); }
+.problem-card:nth-child(3)::before { background: var(--violet); }
+.problem-card:nth-child(4)::before { background: var(--cyan); }
+
+.problem-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.problem-icon { width: 32px; height: 32px; opacity: 0.9; }
+.problem-severity {
+  font-family: var(--mono); font-size: 0.5rem; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: var(--radius);
+}
+.severity-critical { background: rgba(255,61,90,0.1); color: var(--red); border: 1px solid rgba(255,61,90,0.2); }
+.severity-high { background: rgba(232,160,32,0.1); color: var(--gold); border: 1px solid rgba(232,160,32,0.2); }
+.severity-medium { background: rgba(107,79,232,0.08); color: var(--violet); border: 1px solid rgba(107,79,232,0.2); }
+.severity-elevated { background: rgba(0,200,255,0.08); color: var(--cyan); border: 1px solid rgba(0,200,255,0.15); }
+
+.problem-title {
+  font-family: var(--display); font-size: 0.95rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.5rem; letter-spacing: -0.01em;
+}
+.problem-desc {
+  font-family: var(--body); font-size: 0.78rem; color: var(--text-muted); line-height: 1.7;
+  margin-bottom: 1rem;
+}
+.problem-bar-wrap {
+  margin-top: auto;
+}
+.problem-bar-label {
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 0.52rem;
+  color: var(--text-dim); letter-spacing: 0.04em;
+  text-transform: uppercase; margin-bottom: 4px;
+}
+.problem-bar {
+  height: 3px; background: var(--border); border-radius: 2px;
+  overflow: hidden;
+}
+.problem-bar-fill {
+  height: 100%; border-radius: 2px;
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 1.2s var(--ease);
+}
+.problem-card:nth-child(1) .problem-bar-fill { background: var(--red); }
+.problem-card:nth-child(2) .problem-bar-fill { background: var(--gold); }
+.problem-card:nth-child(3) .problem-bar-fill { background: var(--violet); }
+.problem-card:nth-child(4) .problem-bar-fill { background: var(--cyan); }
+
+/* ══════════════════════════════════════
+   PROMPT 04 — RISK STACK ARCHITECTURE
+   ══════════════════════════════════════ */
+.stack-container {
+  margin-top: 3rem;
+  display: flex; flex-direction: column; gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  position: relative;
+}
+/* Vertical pipeline line */
+.stack-container::before {
+  content: '';
+  position: absolute; left: 40px; top: 0; bottom: 0;
+  width: 1px; background: var(--border);
+  z-index: 1;
+}
+.stack-row {
+  display: grid; grid-template-columns: 80px 1fr auto;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.3s var(--ease);
+  cursor: pointer;
+  position: relative;
+}
+.stack-row:last-child { border-bottom: none; }
+.stack-row:hover { background: var(--surface); }
+.stack-row.active { background: var(--surface); }
+.stack-row.active .stack-num { color: var(--cyan); }
+.stack-row.active .stack-body { max-height: 300px; }
+.stack-num {
+  font-family: var(--display); font-size: 2rem; font-weight: 800;
+  color: var(--text-dim); display: flex; align-items: flex-start;
+  justify-content: center; padding: 2rem 0;
+  transition: color 0.3s; position: relative; z-index: 2;
+}
+.stack-body {
+  padding: 2rem 2rem 2rem 0;
+  border-left: 1px solid var(--border);
+}
+.stack-title {
+  font-family: var(--display); font-size: 1rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.5rem; letter-spacing: -0.01em;
+}
+.stack-desc {
+  font-family: var(--body); font-size: 0.78rem; color: var(--text-muted); line-height: 1.7;
+  margin-bottom: 1rem; max-width: 520px;
+}
+.stack-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.stack-tag {
+  font-family: var(--mono); font-size: 0.55rem; padding: 3px 10px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text-dim); letter-spacing: 0.02em;
+  transition: border-color 0.3s, color 0.3s;
+}
+.stack-row:hover .stack-tag { border-color: var(--border-hi); color: var(--text-muted); }
+.stack-confidence {
+  margin-top: 1rem;
+}
+.stack-confidence-label {
+  font-family: var(--mono); font-size: 0.5rem; color: var(--text-dim);
+  letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px;
+}
+.stack-confidence-bar {
+  height: 2px; background: var(--border); border-radius: 2px;
+  overflow: hidden; width: 200px;
+}
+.stack-confidence-fill {
+  height: 100%; background: var(--cyan); border-radius: 2px;
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 1s var(--ease);
+}
+.stack-output {
+  padding: 2rem; border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; justify-content: center;
+  min-width: 170px; text-align: right;
+}
+.stack-output-label {
+  font-family: var(--mono); font-size: 0.52rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 0.3rem;
+}
+.stack-output-val {
+  font-family: var(--mono); font-size: 0.72rem; color: var(--cyan);
+  line-height: 1.5; font-weight: 500;
+}
+
+/* ══════════════════════════════════════
+   PROMPT 05 — RISK DESK CARDS
+   ══════════════════════════════════════ */
+.desk-group-header {
+  display: flex; align-items: center; gap: 10px;
+  margin: 3rem 0 0.8rem;
+}
+.desk-group-header:first-child { margin-top: 3rem; }
+.desk-group-title {
+  font-family: var(--mono); font-size: 0.55rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-dim);
+}
+.desk-group-line {
+  flex: 1; height: 1px; background: var(--border);
+}
+.desk-cards {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden;
+}
+.desk-card {
+  padding: 1.4rem; background: var(--bg);
+  text-decoration: none; color: inherit;
+  display: flex; flex-direction: column;
+  position: relative; transition: background 0.3s var(--ease);
+  min-height: 160px;
+}
+.desk-card:hover { background: var(--surface); }
+.desk-card-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+.desk-card-id {
+  font-family: var(--mono); font-size: 0.48rem; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-dim);
+}
+.desk-card-status {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--mono); font-size: 0.48rem; font-weight: 500;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: var(--radius);
+}
+.status-live { background: rgba(0,232,122,0.08); color: var(--green); border: 1px solid rgba(0,232,122,0.15); }
+.status-alpha { background: rgba(0,200,255,0.06); color: var(--cyan); border: 1px solid rgba(0,200,255,0.12); }
+.status-soon { background: rgba(255,255,255,0.02); color: var(--text-dim); border: 1px solid var(--border); }
+.desk-card-title {
+  font-family: var(--display); font-size: 0.88rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.3rem; letter-spacing: -0.01em;
+}
+.desk-card-desc {
+  font-family: var(--body); font-size: 0.72rem; color: var(--text-muted); line-height: 1.6;
+  max-width: 280px; flex: 1;
+}
+.desk-card-arrow {
+  font-size: 0.8rem; color: var(--text-dim);
+  transition: transform 0.3s, color 0.3s;
+  align-self: flex-end; margin-top: 0.8rem;
+}
+.desk-card:hover .desk-card-arrow { transform: translateX(4px); color: var(--cyan); }
+
+/* Sparkline in card */
+.desk-sparkline {
+  margin-top: auto; padding-top: 0.6rem;
+}
+.desk-sparkline svg { width: 100%; height: 24px; }
+
+/* ══════════════════════════════════════
+   PROMPT 06 — NX-PERPS TRADING WIDGET
+   ══════════════════════════════════════ */
+.perps-container {
+  display: grid; grid-template-columns: 1.3fr 0.7fr;
+  gap: 1px; margin-top: 3rem;
+  background: var(--border); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.perps-terminal { background: var(--bg); }
+.terminal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.terminal-pair {
+  display: flex; align-items: center; gap: 8px;
+}
+.terminal-pair-name {
+  font-family: var(--mono); font-size: 0.7rem; font-weight: 600;
+  color: var(--text); letter-spacing: 0.02em;
+}
+.terminal-pair-badge {
+  font-family: var(--mono); font-size: 0.45rem; font-weight: 500;
+  padding: 2px 6px; border-radius: var(--radius);
+  background: rgba(0,232,122,0.08); color: var(--green);
+  border: 1px solid rgba(0,232,122,0.15);
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.terminal-tabs {
+  display: flex; gap: 0;
+  font-family: var(--mono); font-size: 0.52rem;
+}
+.terminal-tab {
+  padding: 4px 10px; color: var(--text-dim);
+  letter-spacing: 0.04em; text-transform: uppercase;
+  cursor: pointer; transition: color 0.3s;
+  border-bottom: 1px solid transparent;
+}
+.terminal-tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+.terminal-tab:hover { color: var(--text-muted); }
+.perps-body { padding: 1.2rem 1.5rem; }
+.perps-price-row {
+  display: flex; align-items: baseline; gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+.perps-price {
+  font-family: var(--mono); font-size: 1.8rem; font-weight: 600;
+  color: var(--text); letter-spacing: -0.02em;
+}
+.perps-change {
+  font-family: var(--mono); font-size: 0.78rem; font-weight: 500;
+}
+.perps-change.up { color: var(--green); }
+.perps-change.down { color: var(--red); }
+
+/* Chart Area */
+.chart-area {
+  height: 100px; margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.8rem;
+  position: relative;
+}
+.chart-area svg { width: 100%; height: 100%; }
+
+/* Orderbook Strip */
+.orderbook-strip {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; margin-bottom: 1rem;
+  background: var(--border); border-radius: var(--radius);
+  overflow: hidden;
+}
+.ob-side {
+  padding: 8px 10px; background: var(--bg);
+}
+.ob-side-label {
+  font-family: var(--mono); font-size: 0.48rem;
+  color: var(--text-dim); letter-spacing: 0.06em;
+  text-transform: uppercase; margin-bottom: 4px;
+}
+.ob-row {
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 0.58rem;
+  padding: 1px 0;
+}
+.ob-price-bid { color: var(--green); }
+.ob-price-ask { color: var(--red); }
+.ob-size { color: var(--text-dim); }
+
+/* Metrics Grid */
+.perps-metrics {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; margin-bottom: 1rem;
+  background: var(--border); border-radius: var(--radius);
+  overflow: hidden;
+}
+.perps-metric {
+  padding: 8px 10px; background: var(--bg);
+}
+.perps-metric-label {
+  font-family: var(--mono); font-size: 0.48rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+.perps-metric-val {
+  font-family: var(--mono); font-size: 0.72rem; color: var(--text); font-weight: 500;
+}
+.perps-actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.perps-btn {
+  display: block; text-align: center; padding: 10px;
+  font-family: var(--mono); font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.04em; text-decoration: none;
+  border-radius: var(--radius); border: none; cursor: pointer;
+  transition: all 0.3s;
+}
+.perps-btn-long {
+  background: rgba(0,232,122,0.08); color: var(--green);
+  border: 1px solid rgba(0,232,122,0.15);
+}
+.perps-btn-long:hover { background: rgba(0,232,122,0.18); }
+.perps-btn-short {
+  background: rgba(255,61,90,0.08); color: var(--red);
+  border: 1px solid rgba(255,61,90,0.15);
+}
+.perps-btn-short:hover { background: rgba(255,61,90,0.18); }
+
+/* Right panel */
+.perps-info { background: var(--bg); display: flex; flex-direction: column; }
+.perps-info-card {
+  padding: 1.2rem 1.4rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.3s;
+}
+.perps-info-card:last-child { border-bottom: none; }
+.perps-info-card:hover { background: var(--surface); }
+.perps-info-title {
+  font-family: var(--display); font-size: 0.82rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.4rem; letter-spacing: -0.01em;
+}
+.perps-info-desc {
+  font-family: var(--body); font-size: 0.7rem; color: var(--text-muted); line-height: 1.6;
+}
+
+/* ══════════════════════════════════════
+   PROMPT 07 — AGENTS GRID
+   ══════════════════════════════════════ */
+.agents-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1px; margin-top: 3rem;
+  background: var(--border); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.agent-card {
+  padding: 1.4rem; background: var(--bg);
+  text-decoration: none; color: inherit;
+  display: flex; flex-direction: column;
+  transition: background 0.3s var(--ease);
+  position: relative;
+}
+.agent-card:hover { background: var(--surface); }
+.agent-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+.agent-indicator {
+  width: 6px; height: 6px; border-radius: 50%;
+  animation: statusPulse 2s ease infinite;
+}
+.agent-indicator.cyan { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+.agent-indicator.violet { background: var(--violet); box-shadow: 0 0 8px var(--violet); }
+.agent-indicator.green { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.agent-indicator.gold { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.agent-indicator.red { background: var(--red); box-shadow: 0 0 8px var(--red); }
+.agent-class {
+  font-family: var(--mono); font-size: 0.45rem; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 2px 6px; border-radius: var(--radius);
+  color: var(--text-dim); border: 1px solid var(--border);
+}
+.agent-role {
+  font-family: var(--mono); font-size: 0.52rem;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  margin-bottom: 0.3rem;
+}
+.agent-name {
+  font-family: var(--display); font-size: 0.88rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.3rem; letter-spacing: -0.01em;
+}
+.agent-desc {
+  font-family: var(--body); font-size: 0.68rem; color: var(--text-muted); line-height: 1.6;
+  margin-bottom: 0.8rem; flex: 1;
+}
+/* Activity log lines */
+.agent-log {
+  font-family: var(--mono); font-size: 0.48rem;
+  color: var(--text-dim); line-height: 1.8;
+  border-top: 1px solid var(--border);
+  padding-top: 0.6rem;
+  letter-spacing: 0.02em;
+}
+.agent-log .log-time { color: var(--text-dim); }
+.agent-log .log-action { color: var(--text-muted); }
+
+/* ══════════════════════════════════════
+   PROMPT 08 — ROADMAP TIMELINE
+   ══════════════════════════════════════ */
+.roadmap-timeline {
+  position: relative; margin-top: 4rem;
+  padding: 0 20px;
+}
+/* Central line */
+.roadmap-line {
+  position: absolute; left: 50%; top: 0; bottom: 0;
+  width: 1px; background: var(--border);
+  transform: translateX(-50%);
+}
+.roadmap-line-fill {
+  width: 100%; background: linear-gradient(180deg, var(--cyan), var(--violet));
+  height: 0; transition: height 1.5s var(--ease);
+}
+.roadmap-phases {
+  display: flex; flex-direction: column; gap: 0;
+  position: relative;
+}
+.roadmap-phase {
+  display: flex; align-items: flex-start;
+  position: relative;
+  min-height: 160px;
+}
+.roadmap-phase:nth-child(odd) { flex-direction: row; }
+.roadmap-phase:nth-child(even) { flex-direction: row-reverse; }
+.roadmap-phase-content {
+  width: calc(50% - 30px);
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  transition: background 0.3s, border-color 0.3s;
+}
+.roadmap-phase-content:hover { background: var(--surface); border-color: var(--border-hi); }
+.roadmap-phase.active .roadmap-phase-content {
+  border-color: var(--cyan);
+  background: rgba(0,200,255,0.02);
+}
+/* Node on timeline */
+.roadmap-node {
+  position: absolute; left: 50%; top: 1.5rem;
+  transform: translateX(-50%);
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  z-index: 2;
+  transition: all 0.3s;
+}
+.roadmap-phase.done .roadmap-node { background: var(--green); border-color: var(--green); box-shadow: 0 0 8px rgba(0,232,122,0.3); }
+.roadmap-phase.active .roadmap-node { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 8px rgba(0,200,255,0.3); animation: statusPulse 2s ease infinite; }
+.phase-num {
+  font-family: var(--mono); font-size: 0.52rem;
+  color: var(--text-dim); letter-spacing: 0.08em;
+  margin-bottom: 0.4rem;
+}
+.phase-status {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--mono); font-size: 0.5rem; font-weight: 500;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: var(--radius);
+  margin-bottom: 0.6rem;
+}
+.phase-done { background: rgba(0,232,122,0.08); color: var(--green); }
+.phase-active-badge { background: rgba(0,200,255,0.06); color: var(--cyan); }
+.phase-pending { background: rgba(255,255,255,0.02); color: var(--text-dim); }
+.phase-title {
+  font-family: var(--display); font-size: 1rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.4rem; letter-spacing: -0.01em;
+}
+.phase-desc {
+  font-family: var(--body); font-size: 0.72rem; color: var(--text-muted); line-height: 1.6;
+}
+
+/* ══════════════════════════════════════
+   PROMPT 09 — WAITLIST / CTA
+   ══════════════════════════════════════ */
+.waitlist-section {
+  padding: 120px 24px; text-align: center; position: relative;
+  max-width: 1200px; margin: 0 auto;
+}
+.waitlist-glow {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px; height: 500px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(107,79,232,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.waitlist-eyebrow {
+  font-family: var(--mono); font-size: 0.55rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--violet); margin-bottom: 1rem;
+}
+.waitlist-title {
+  font-family: var(--display);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800; color: var(--text);
+  line-height: 1.15; margin-bottom: 1rem;
+  letter-spacing: -0.025em;
+}
+.waitlist-sub {
+  font-family: var(--body); font-size: 0.82rem;
+  color: var(--text-muted); line-height: 1.8;
+  max-width: 520px; margin: 0 auto 2rem;
+}
+.waitlist-tags {
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  justify-content: center; margin-bottom: 2rem;
+}
+.waitlist-tag {
+  font-family: var(--mono); font-size: 0.55rem; font-weight: 500;
+  padding: 5px 12px; border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text-dim);
+  letter-spacing: 0.04em; text-transform: uppercase;
+  transition: all 0.3s;
+}
+.waitlist-tag:hover { border-color: var(--violet); color: var(--violet); }
+.waitlist-form {
+  display: flex; gap: 0; max-width: 420px; margin: 0 auto;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; transition: border-color 0.3s;
+  background: var(--surface);
+}
+.waitlist-form:focus-within { border-color: var(--cyan); }
+.waitlist-input {
+  flex: 1; padding: 12px 16px; background: transparent;
+  border: none; color: var(--text); font-family: var(--mono);
+  font-size: 0.72rem; outline: none;
+}
+.waitlist-input::placeholder { color: var(--text-dim); }
+.waitlist-form .btn-primary {
+  border-radius: 0; border: none; border-left: 1px solid var(--border);
+  font-size: 0.6rem; padding: 12px 18px;
+}
+#waitlist-success {
+  font-family: var(--mono); font-size: 0.7rem; color: var(--green);
+  margin-top: 1rem; letter-spacing: 0.04em;
+  padding: 12px 20px;
+  border: 1px solid rgba(0,232,122,0.2);
+  border-radius: var(--radius);
+  background: rgba(0,232,122,0.04);
+  display: inline-block;
+}
+
+/* ══════════════════════════════════════
+   SOCIAL PROOF
+   ══════════════════════════════════════ */
+.proof-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; max-width: 1200px; margin: 0 auto;
+}
+.proof-card {
+  background: var(--bg); padding: 1.5rem;
+  transition: background 0.3s;
+}
+.proof-card:hover { background: var(--surface); }
+.proof-quote {
+  font-family: var(--body); font-size: 0.78rem;
+  color: var(--text-muted); line-height: 1.75;
+  margin-bottom: 1rem; font-style: italic;
+}
+.proof-quote::before { content: '"'; color: var(--cyan); font-size: 1.2rem; }
+.proof-quote::after { content: '"'; color: var(--cyan); font-size: 1.2rem; }
+.proof-author {
+  display: flex; align-items: center; gap: 10px;
+}
+.proof-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--surface); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem;
+}
+.proof-handle {
+  font-family: var(--mono); font-size: 0.6rem;
+  color: var(--cyan); letter-spacing: 0.02em;
+}
+.proof-role {
+  font-family: var(--mono); font-size: 0.48rem;
+  color: var(--text-dim); letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.proof-counter {
+  display: flex; justify-content: center; gap: 2rem;
+  margin-top: 2rem; flex-wrap: wrap;
+}
+.proof-counter-item {
+  text-align: center;
+}
+.proof-counter-val {
+  font-family: var(--display); font-size: 1.4rem;
+  font-weight: 800; color: var(--text);
+}
+.proof-counter-label {
+  font-family: var(--mono); font-size: 0.48rem;
+  color: var(--text-dim); letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ══════════════════════════════════════
+   TIERED WAITLIST
+   ══════════════════════════════════════ */
+.waitlist-position {
+  display: none; text-align: center; margin-top: 1.5rem;
+}
+.waitlist-position-num {
+  font-family: var(--display); font-size: 2rem;
+  font-weight: 800; color: var(--cyan);
+}
+.waitlist-position-label {
+  font-family: var(--mono); font-size: 0.55rem;
+  color: var(--text-dim); letter-spacing: 0.06em;
+  text-transform: uppercase; margin-top: 2px;
+}
+.waitlist-referral {
+  display: none; margin-top: 1.2rem;
+  padding: 1rem; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--surface);
+  max-width: 420px; margin-left: auto; margin-right: auto;
+}
+.waitlist-referral-title {
+  font-family: var(--mono); font-size: 0.55rem;
+  color: var(--gold); letter-spacing: 0.06em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.waitlist-referral-desc {
+  font-family: var(--body); font-size: 0.72rem;
+  color: var(--text-muted); line-height: 1.6;
+  margin-bottom: 10px;
+}
+.waitlist-referral-link {
+  display: flex; gap: 0;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden;
+}
+.waitlist-referral-url {
+  flex: 1; padding: 8px 12px; background: var(--bg);
+  font-family: var(--mono); font-size: 0.6rem;
+  color: var(--cyan); border: none; outline: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.waitlist-referral-copy {
+  padding: 8px 14px; background: var(--violet);
+  color: #fff; border: none; font-family: var(--mono);
+  font-size: 0.52rem; font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  cursor: pointer; transition: background 0.3s;
+  white-space: nowrap;
+}
+.waitlist-referral-copy:hover { background: var(--cyan); color: var(--bg); }
+
+/* Live agent log animation */
+@keyframes logFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+.agent-log div.fresh {
+  animation: logFadeIn 0.4s var(--ease);
+}
+
+/* ══════════════════════════════════════
+   FOOTER
+   ══════════════════════════════════════ */
+footer {
+  padding: 60px clamp(1.5rem, 5vw, 4rem) 30px;
+  max-width: 1200px; margin: 0 auto;
+  border-top: 1px solid var(--border);
+}
+.footer-grid {
+  display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 2rem;
+}
+.footer-brand-name {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 0.8rem; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text); margin-bottom: 0.8rem;
+}
+.footer-brand-desc {
+  font-family: var(--body); font-size: 0.72rem; color: var(--text-muted); line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+.footer-tagline {
+  font-family: var(--mono); font-size: 0.6rem; color: var(--text-dim); font-style: italic;
+}
+.footer-col-title {
+  font-family: var(--mono); font-size: 0.52rem; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 1rem;
+}
+.footer-links { display: flex; flex-direction: column; gap: 0.5rem; }
+.footer-links a {
+  font-family: var(--body); font-size: 0.72rem; color: var(--text-muted);
+  text-decoration: none; transition: color 0.3s;
+}
+.footer-links a:hover { color: var(--text); }
+.footer-bottom {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 3rem; padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.footer-copy {
+  font-family: var(--mono); font-size: 0.58rem; color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+
+/* ══════════════════════════════════════
+   PROMPT 10 — SCROLL REVEAL & POLISH
+   ══════════════════════════════════════ */
+.reveal {
+  opacity: 0; transform: translateY(28px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+.reveal.visible { opacity: 1; transform: none; }
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+
+/* Counter animation helper */
+.counter-animate { transition: all 0.3s; }
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .hero-terminal { display: none; }
+  .desk-cards { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+  body { cursor: auto; }
+  .cursor, .cursor-ring { display: none; }
+  .stack-row { grid-template-columns: 60px 1fr; }
+  .stack-output { display: none; }
+  .stack-container::before { left: 30px; }
+  .perps-container { grid-template-columns: 1fr; }
+  .roadmap-line { display: none; }
+  .roadmap-node { display: none; }
+  .roadmap-phase, .roadmap-phase:nth-child(even) { flex-direction: column; align-items: stretch; }
+  .roadmap-phase-content { width: 100%; }
+  .roadmap-phases { gap: 1rem; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .hero-stats { flex-wrap: wrap; }
+  .hero-stat-item { min-width: auto; flex: 1; }
+}
+@media (max-width: 640px) {
+  .nav-center { display: none; }
+  .nav-mcp { display: none; }
+  .hamburger { display: flex; }
+  nav.menu-open .nav-center {
+    display: flex; flex-direction: column;
+    position: fixed; inset: 52px 0 0 0;
+    background: rgba(5,5,13,0.97);
+    backdrop-filter: blur(20px);
+    align-items: center; justify-content: center;
+    gap: 2rem; z-index: 90;
+  }
+  nav.menu-open .nav-center a { font-size: 0.9rem; }
+  .problem-grid { grid-template-columns: 1fr; }
+  .desk-cards { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .waitlist-form { flex-direction: column; }
+  .hero-stats { flex-direction: column; border: none; }
+  .hero-stat-item { border-right: none; border-bottom: 1px solid var(--border); }
+  .hero-actions { flex-direction: column; }
+  .perps-metrics { grid-template-columns: repeat(2, 1fr); }
+  .agents-grid { grid-template-columns: 1fr; }
+  .orderbook-strip { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .stack-row { grid-template-columns: 50px 1fr; }
+  .stack-num { font-size: 1.5rem; padding: 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Page Loader -->
+<div class="page-loader" id="pageLoader">
+  <div class="loader-logo">NX · NEXXORE</div>
+  <div class="loader-bar"></div>
+</div>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="scroll-bar" id="scrollBar"></div>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav id="nav">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-mark"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#00d4ff"/><stop offset="1" stop-color="#0066ff"/></linearGradient></defs><circle cx="38" cy="36" r="22" stroke="url(#lg)" stroke-width="4.5" fill="none" opacity="0.95"/><circle cx="62" cy="36" r="22" stroke="url(#lg)" stroke-width="4.5" fill="none" opacity="0.85"/><circle cx="50" cy="58" r="22" stroke="url(#lg)" stroke-width="4.5" fill="none" opacity="0.85"/></svg></div>
+    <span class="nav-brand-text">Nexxore</span>
+  </a>
+  <ul class="nav-center" id="navLinks">
+    <li><a href="#stack">Architecture</a></li>
+    <li><a href="#desk">Products</a></li>
+    <li><a href="research.html" style="color:var(--cyan)">Analyst</a></li>
+    <li><a href="terminal.html" style="color:var(--green)">Terminal</a></li>
+    <li><a href="predictions.html" style="color:var(--violet)">Predictions</a></li>
+    <li><a href="mcp-server.html" class="nav-mcp">⚡ MCP</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="https://x.com/nexxore" target="_blank" class="nav-x"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+    <a href="#waitlist" class="nav-cta">Request Access</a>
+    <div class="hamburger" id="hamburger">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════ TICKER ═══════════ -->
+<div class="ticker-wrap">
+  <div class="ticker-track" id="ticker">
+    <div class="ticker-item"><span class="ticker-label">BTC</span><span class="ticker-val ticker-loading js-price-btc">$--</span></div>
+    <div class="ticker-item"><span class="ticker-label">ETH</span><span class="ticker-val ticker-loading js-price-eth">$--</span></div>
+    <div class="ticker-item"><span class="ticker-label">SOL</span><span class="ticker-val ticker-loading js-price-sol">$--</span></div>
+    <div class="ticker-item"><span class="ticker-label">BTC Funding</span><span class="ticker-val ticker-loading js-fund-btc">--</span></div>
+    <div class="ticker-item"><span class="ticker-label">ETH Funding</span><span class="ticker-val ticker-loading js-fund-eth">--</span></div>
+    <div class="ticker-item"><span class="ticker-label">SOL Funding</span><span class="ticker-val ticker-loading js-fund-sol">--</span></div>
+    <!-- Duplicate for seamless loop -->
+    <div class="ticker-item"><span class="ticker-label">BTC</span><span class="ticker-val ticker-loading js-price-btc">$--</span></div>
+    <div class="ticker-item"><span class="ticker-label">ETH</span><span class="ticker-val ticker-loading js-price-eth">$--</span></div>
+    <div class="ticker-item"><span class="ticker-label">SOL</span><span class="ticker-val ticker-loading js-price-sol">$--</span></div>
+    <div class="ticker-item"><span class="ticker-label">BTC Funding</span><span class="ticker-val ticker-loading js-fund-btc">--</span></div>
+    <div class="ticker-item"><span class="ticker-label">ETH Funding</span><span class="ticker-val ticker-loading js-fund-eth">--</span></div>
+    <div class="ticker-item"><span class="ticker-label">SOL Funding</span><span class="ticker-val ticker-loading js-fund-sol">--</span></div>
+  </div>
+</div>
+
+<!-- ═══════════ HERO ═══════════ -->
+<main id="main-content">
+<section class="hero">
+  <div class="hero-grid-3d"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-orb hero-orb-3"></div>
+
+  <h1 class="hero-title">
+    Autonomous financial <span class="accent">agents</span><br>for DeFi.
+  </h1>
+
+  <p class="hero-sub">
+    Deploy AI-powered agents that automate trading, yield optimization, risk management, and cross-protocol execution. Turn manual DeFi into autonomous workflows.
+  </p>
+
+  <div class="hero-actions">
+    <a href="terminal.html" class="btn-primary">Launch Terminal →</a>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════ STACK ═══════════ -->
+<section id="stack">
+  <div class="section-label reveal">Architecture</div>
+  <h2 class="section-title reveal reveal-delay-1">Three-Layer Risk Stack</h2>
+  <p class="section-sub reveal reveal-delay-2">Data ingestion, risk modeling, and execution routing.</p>
+
+  <div class="stack-container reveal reveal-delay-2">
+    <div class="stack-row active">
+      <div class="stack-num">01</div>
+      <div class="stack-body">
+        <div class="stack-title">Data Ingestion</div>
+        <div class="stack-desc">Normalized feeds from Binance, DefiLlama, CoinGecko, and Dexscreener. Funding rates, order book depth, on-chain TVL, and volatility data piped into a common schema.</div>
+        <div class="stack-tags">
+          <span class="stack-tag">Funding rates</span>
+          <span class="stack-tag">Order book depth</span>
+          <span class="stack-tag">On-chain TVL</span>
+          <span class="stack-tag">Volatility data</span>
+        </div>
+      </div>
+      <div class="stack-output">
+        <div class="stack-output-label">Sources</div>
+        <div class="stack-output-val">Binance · DefiLlama<br>CoinGecko · Dexscreener</div>
+      </div>
+    </div>
+    <div class="stack-row">
+      <div class="stack-num">02</div>
+      <div class="stack-body">
+        <div class="stack-title">Risk Modeling</div>
+        <div class="stack-desc">Regime classification from rolling volatility and momentum. Parametric CVaR and expected shortfall. Liquidation density mapping and protocol risk scoring.</div>
+        <div class="stack-tags">
+          <span class="stack-tag">Regime detection</span>
+          <span class="stack-tag">CVaR / VaR</span>
+          <span class="stack-tag">Liquidation modeling</span>
+          <span class="stack-tag">Protocol scoring</span>
+        </div>
+      </div>
+      <div class="stack-output">
+        <div class="stack-output-label">Models</div>
+        <div class="stack-output-val">Parametric CVaR<br>Rolling volatility</div>
+      </div>
+    </div>
+    <div class="stack-row">
+      <div class="stack-num">03</div>
+      <div class="stack-body">
+        <div class="stack-title">Execution & Routing</div>
+        <div class="stack-desc">Position routing across Ethereum, Arbitrum, Base, and Solana. Slippage-aware execution, delta-neutral construction, and multi-venue liquidity aggregation.</div>
+        <div class="stack-tags">
+          <span class="stack-tag">Slippage-aware routing</span>
+          <span class="stack-tag">Multi-chain execution</span>
+          <span class="stack-tag">Delta-neutral hedging</span>
+        </div>
+      </div>
+      <div class="stack-output">
+        <div class="stack-output-label">Chains</div>
+        <div class="stack-output-val">Ethereum · Arbitrum<br>Base · Solana</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════ DESK ═══════════ -->
+<section id="desk">
+  <div class="section-label reveal">Products</div>
+  <h2 class="section-title reveal reveal-delay-1">Live Tools</h2>
+  <p class="section-sub reveal reveal-delay-2">Analytics, modeling, and execution infrastructure. All open access.</p>
+
+  <div class="reveal reveal-delay-2">
+    <div class="desk-group-header">
+      <span class="desk-group-title">Capital Monitoring</span>
+      <span class="desk-group-line"></span>
+    </div>
+    <div class="desk-cards">
+      <a href="research.html" class="desk-card">
+        <div class="desk-card-top">
+          <span class="desk-card-status status-live"><span class="status-dot"></span> Live</span>
+        </div>
+        <div class="desk-card-title">On-Chain Analyst</div>
+        <div class="desk-card-desc">Market signals, funding rates, and regime detection across 20+ pairs.</div>
+        <span class="desk-card-arrow">→</span>
+      </a>
+      <a href="analytics.html" class="desk-card">
+        <div class="desk-card-top">
+          <span class="desk-card-status status-live"><span class="status-dot"></span> Live</span>
+        </div>
+        <div class="desk-card-title">Portfolio Risk</div>
+        <div class="desk-card-desc">Exposure mapping, drawdown analysis, P&L attribution.</div>
+        <span class="desk-card-arrow">→</span>
+      </a>
+      <a href="analytics.html" class="desk-card">
+        <div class="desk-card-top">
+          <span class="desk-card-status status-alpha">Alpha</span>
+        </div>
+        <div class="desk-card-title">Performance Attribution</div>
+        <div class="desk-card-desc">Strategy-level return and risk decomposition.</div>
+        <span class="desk-card-arrow">→</span>
+      </a>
+      <a href="predictions.html" class="desk-card">
+        <div class="desk-card-top">
+          <span class="desk-card-status status-live"><span class="status-dot"></span> Live</span>
+        </div>
+        <div class="desk-card-title">Prediction Markets</div>
+        <div class="desk-card-desc">AI edge detection across Polymarket & Manifold. Real-time odds, volume, and mispricing signals.</div>
+        <span class="desk-card-arrow">→</span>
+      </a>
+    </div>
+
+    <div class="desk-group-header">
+      <span class="desk-group-title">Capital Structuring</span>
+      <span class="desk-group-line"></span>
+    </div>
+    <div class="desk-cards">
+      <a href="strategy-builder.html" class="desk-card">
+        <div class="desk-card-top">
+          <span class="desk-card-status status-alpha">Alpha</span>
+        </div>
+        <div class="desk-card-title">Strategy Builder</div>
+        <div class="desk-card-desc">Regime-aware allocation logic with backtesting.</div>
+        <span class="desk-card-arrow">→</span>
+      </a>
+      <a href="delta-neutral.html" class="desk-card">
+        <div class="desk-card-top">
+          <span class="desk-card-status status-alpha">Alpha</span>
+        </div>
+        <div class="desk-card-title">Delta-Neutral Builder</div>
+        <div class="desk-card-desc">Automated hedging across spot and perpetuals.</div>
+        <span class="desk-card-arrow">→</span>
+      </a>
+      <a href="stablecoin-hub.html" class="desk-card">
+        <div class="desk-card-top">
+          <span class="desk-card-status status-soon">Soon</span>
+        </div>
+        <div class="desk-card-title">Stablecoin Risk Hub</div>
+        <div class="desk-card-desc">Peg monitoring, depeg defense, stablecoin risk.</div>
+        <span class="desk-card-arrow">→</span>
+      </a>
+    </div>
+
+    <div class="desk-group-header">
+      <span class="desk-group-title">Capital Deployment</span>
+      <span class="desk-group-line"></span>
+    </div>
+    <div class="desk-cards">
+      <a href="perps.html" class="desk-card">
+        <div class="desk-card-top">
+          <span class="desk-card-status status-live"><span class="status-dot"></span> Live</span>
+        </div>
+        <div class="desk-card-title">Perpetuals</div>
+        <div class="desk-card-desc">Funding rates, open interest, and liquidation data across venues.</div>
+        <span class="desk-card-arrow">→</span>
+      </a>
+      <a href="vaults.html" class="desk-card">
+        <div class="desk-card-top">
+          <span class="desk-card-status status-live"><span class="status-dot"></span> Live</span>
+        </div>
+        <div class="desk-card-title">Vaults</div>
+        <div class="desk-card-desc">Risk-ranked yield strategies from conservative to active.</div>
+        <span class="desk-card-arrow">→</span>
+      </a>
+      <a href="agents.html" class="desk-card">
+        <div class="desk-card-top">
+          <span class="desk-card-status status-alpha">Alpha</span>
+        </div>
+        <div class="desk-card-title">Agent API</div>
+        <div class="desk-card-desc">Programmatic risk analytics for funds and protocols.</div>
+        <span class="desk-card-arrow">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════ PREDICTIONS AGENT SHOWCASE ═══════════ -->
+<section id="predictions" style="padding:4rem clamp(1rem,3vw,2.5rem);max-width:1200px;margin:0 auto;">
+  <div class="section-label reveal">Intelligence</div>
+  <h2 class="section-title reveal reveal-delay-1">Prediction Market Agent</h2>
+  <p class="section-sub reveal reveal-delay-2">AI-powered edge detection engine scanning Polymarket & Manifold in real time. Browse live odds, detect probability mispricings, and track volume leaders.</p>
+
+  <!-- Hero Stats -->
+  <div class="reveal reveal-delay-2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;margin-top:2.5rem;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+    <div style="padding:1.2rem 1.4rem;background:var(--bg);">
+      <div style="font-family:var(--mono);font-size:0.5rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem;">Markets Scanned</div>
+      <div style="font-family:var(--display);font-size:1.4rem;font-weight:700;color:var(--cyan);">750+</div>
+      <div style="font-family:var(--mono);font-size:0.52rem;color:var(--green);margin-top:0.2rem;">Live from APIs</div>
+    </div>
+    <div style="padding:1.2rem 1.4rem;background:var(--bg);">
+      <div style="font-family:var(--mono);font-size:0.5rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem;">Platforms</div>
+      <div style="font-family:var(--display);font-size:1.4rem;font-weight:700;color:var(--violet);">2</div>
+      <div style="font-family:var(--mono);font-size:0.52rem;color:var(--text-muted);margin-top:0.2rem;">Polymarket · Manifold</div>
+    </div>
+    <div style="padding:1.2rem 1.4rem;background:var(--bg);">
+      <div style="font-family:var(--mono);font-size:0.5rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem;">Refresh Rate</div>
+      <div style="font-family:var(--display);font-size:1.4rem;font-weight:700;color:var(--green);">2 min</div>
+      <div style="font-family:var(--mono);font-size:0.52rem;color:var(--text-muted);margin-top:0.2rem;">Auto-refresh</div>
+    </div>
+    <div style="padding:1.2rem 1.4rem;background:var(--bg);">
+      <div style="font-family:var(--mono);font-size:0.5rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem;">Categories</div>
+      <div style="font-family:var(--display);font-size:1.4rem;font-weight:700;color:var(--gold);">9</div>
+      <div style="font-family:var(--mono);font-size:0.52rem;color:var(--text-muted);margin-top:0.2rem;">Crypto · Politics · AI & more</div>
+    </div>
+  </div>
+
+  <!-- 3-Agent Grid -->
+  <div class="reveal reveal-delay-2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1px;margin-top:2rem;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+    <div style="padding:1.4rem;background:var(--bg);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem;">
+        <span style="font-size:1rem;">&#9678;</span>
+        <span style="font-family:var(--mono);font-size:0.5rem;color:var(--green);display:flex;align-items:center;gap:4px;"><span style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;animation:statusPulse 2s ease infinite;"></span> Live</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:0.52rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cyan);margin-bottom:0.3rem;">NX-PRED-01</div>
+      <div style="font-family:var(--display);font-size:0.88rem;font-weight:700;color:var(--text);margin-bottom:0.3rem;">Market Scanner</div>
+      <div style="font-size:0.68rem;color:var(--text-muted);line-height:1.6;margin-bottom:0.8rem;">Browse all open prediction markets with real odds, volume, and liquidity. Filter by category, platform, and search.</div>
+      <div style="font-family:var(--mono);font-size:0.48rem;color:var(--text-dim);border-top:1px solid var(--border);padding-top:0.6rem;">Real-time Polymarket + Manifold API data</div>
+    </div>
+    <div style="padding:1.4rem;background:var(--bg);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem;">
+        <span style="font-size:1rem;">&#11041;</span>
+        <span style="font-family:var(--mono);font-size:0.5rem;color:var(--green);display:flex;align-items:center;gap:4px;"><span style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;animation:statusPulse 2s ease infinite;"></span> Live</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:0.52rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--green);margin-bottom:0.3rem;">NX-PRED-02</div>
+      <div style="font-family:var(--display);font-size:0.88rem;font-weight:700;color:var(--text);margin-bottom:0.3rem;">Price Movers</div>
+      <div style="font-size:0.68rem;color:var(--text-muted);line-height:1.6;margin-bottom:0.8rem;">Track markets with the biggest real price changes in 24h and 7d. Identify momentum shifts before the crowd.</div>
+      <div style="font-family:var(--mono);font-size:0.48rem;color:var(--text-dim);border-top:1px solid var(--border);padding-top:0.6rem;">24h & 7d price delta tracking</div>
+    </div>
+    <div style="padding:1.4rem;background:var(--bg);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem;">
+        <span style="font-size:1rem;">&#9672;</span>
+        <span style="font-family:var(--mono);font-size:0.5rem;color:var(--green);display:flex;align-items:center;gap:4px;"><span style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;animation:statusPulse 2s ease infinite;"></span> Live</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:0.52rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--violet);margin-bottom:0.3rem;">NX-PRED-03</div>
+      <div style="font-family:var(--display);font-size:0.88rem;font-weight:700;color:var(--text);margin-bottom:0.3rem;">Volume Leaders</div>
+      <div style="font-size:0.68rem;color:var(--text-muted);line-height:1.6;margin-bottom:0.8rem;">Highest volume and deepest liquidity markets ranked in real time. Where the smart money flows.</div>
+      <div style="font-family:var(--mono);font-size:0.48rem;color:var(--text-dim);border-top:1px solid var(--border);padding-top:0.6rem;">Volume + liquidity depth sorting</div>
+    </div>
+  </div>
+
+  <!-- Feature List -->
+  <div class="reveal reveal-delay-3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1px;margin-top:2rem;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+    <div style="padding:1.2rem 1.4rem;background:var(--bg);">
+      <div style="font-family:var(--display);font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:0.4rem;">&#9670; Live API Data</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);line-height:1.6;">Real-time odds, volume, and liquidity streamed directly from Polymarket and Manifold Markets APIs. No simulated data.</div>
+    </div>
+    <div style="padding:1.2rem 1.4rem;background:var(--bg);">
+      <div style="font-family:var(--display);font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:0.4rem;">&#9670; Category Filtering</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);line-height:1.6;">Filter across Crypto, Politics, Economy, Sports, AI/Tech, Climate, Science, and Culture. Cross-platform search.</div>
+    </div>
+    <div style="padding:1.2rem 1.4rem;background:var(--bg);">
+      <div style="font-family:var(--display);font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:0.4rem;">&#9670; Market Detail View</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);line-height:1.6;">Click any market for full detail: YES/NO odds, 24h & 7d price changes, volume, liquidity, bid/ask spread, and direct platform link.</div>
+    </div>
+    <div style="padding:1.2rem 1.4rem;background:var(--bg);">
+      <div style="font-family:var(--display);font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:0.4rem;">&#9670; Telegram Alerts</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);line-height:1.6;">Auto-post high-edge trades to Telegram. Configurable threshold, auto-post interval, and one-click top trade posting.</div>
+    </div>
+    <div style="padding:1.2rem 1.4rem;background:var(--bg);">
+      <div style="font-family:var(--display);font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:0.4rem;">&#9670; Trading Terminal</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);line-height:1.6;">Hotkey-activated trading terminal overlay for quick order entry with buy/sell buttons and amount input per market.</div>
+    </div>
+    <div style="padding:1.2rem 1.4rem;background:var(--bg);">
+      <div style="font-family:var(--display);font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:0.4rem;">&#9670; WebSocket Live Feed</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);line-height:1.6;">Real-time connection status indicator. Auto-refresh every 2 minutes with live connection monitoring and reconnect handling.</div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="reveal reveal-delay-3" style="text-align:center;margin-top:2.5rem;">
+    <a href="predictions.html" style="display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:0.72rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--bg);text-decoration:none;padding:12px 28px;border-radius:var(--radius);background:var(--cyan);border:1px solid var(--cyan);transition:all 0.3s;">Open Prediction Scanner →</a>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════ WAITLIST ═══════════ -->
+<section class="waitlist-section" id="waitlist">
+  <div class="waitlist-glow"></div>
+  <h2 class="waitlist-title reveal">Get early access.</h2>
+  <p class="waitlist-sub reveal reveal-delay-1">
+    New tools and data sources ship regularly. Leave your email and we'll notify you.
+  </p>
+  <form class="waitlist-form reveal reveal-delay-2" id="waitlistForm">
+    <input type="email" class="waitlist-input" placeholder="you@email.com" id="emailInput" required autocomplete="email">
+    <button type="submit" class="btn-primary" style="white-space:nowrap">Submit →</button>
+  </form>
+  <div id="waitlist-success" style="display:none;">
+    Request received. We’ll be in touch.
+  </div>
+</section>
+</main>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <div class="footer-brand-name">
+        <div class="nav-logo-mark" style="width:22px;height:22px;"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lgf" x1="0" x2="1"><stop offset="0" stop-color="#00d4ff"/><stop offset="1" stop-color="#0066ff"/></linearGradient></defs><circle cx="38" cy="36" r="22" stroke="url(#lgf)" stroke-width="4.5" fill="none" opacity="0.95"/><circle cx="62" cy="36" r="22" stroke="url(#lgf)" stroke-width="4.5" fill="none" opacity="0.85"/><circle cx="50" cy="58" r="22" stroke="url(#lgf)" stroke-width="4.5" fill="none" opacity="0.85"/></svg></div>
+        nexxore
+      </div>
+      <div class="footer-brand-desc">On-chain risk analytics for DeFi capital.</div>
+    </div>
+    <div>
+      <div class="footer-col-title">Product</div>
+      <div class="footer-links">
+        <a href="perps.html">Perpetuals</a>
+        <a href="predictions.html">Predictions</a>
+        <a href="vaults.html">Vaults</a>
+        <a href="mcp-server.html">MCP Server</a>
+        <a href="stablecoin-hub.html">Stablecoin Hub</a>
+        <a href="strategy-builder.html">Strategy Builder</a>
+        <a href="delta-neutral.html">Delta-Neutral</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-title">Analytics</div>
+      <div class="footer-links">
+        <a href="research.html">On-Chain Analyst</a>
+        <a href="cvar-calculator.html">CVaR Calculator</a>
+        <a href="proof.html">On-Chain Proof</a>
+        <a href="digest.html">Risk Digest</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-title">Resources</div>
+      <div class="footer-links">
+        <a href="docs.html">Documentation</a>
+        <a href="https://discord.gg/nexxore" target="_blank" rel="noopener">Discord</a>
+        <a href="https://x.com/nexxore" target="_blank">X / Twitter</a>
+        <a href="https://t.me/nexxore" target="_blank" rel="noopener">Telegram</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Nexxore</div>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════════
+     SCRIPTS
+     ═══════════════════════════════════════════════ -->
+<script>
+// ── Page Loader ──
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('pageLoader').classList.add('loaded');
+  }, 1800);
+});
+
+// ── Custom Cursor with trailing ring ──
+(function() {
+  if (window.innerWidth < 900) return;
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  if (!cursor || !ring) return;
+  let mx = 0, my = 0, rx = 0, ry = 0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx + 'px';
+    cursor.style.top = my + 'px';
+  });
+
+  function animate() {
+    rx += (mx - rx) * 0.1;
+    ry += (my - ry) * 0.1;
+    ring.style.left = rx + 'px';
+    ring.style.top = ry + 'px';
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+  document.querySelectorAll('a, button, input, .desk-card, .problem-card, .agent-card, .stack-row').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.style.width = '12px'; cursor.style.height = '12px';
+      ring.style.width = '44px'; ring.style.height = '44px';
+      ring.style.borderColor = 'rgba(0,200,255,0.5)';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.style.width = '6px'; cursor.style.height = '6px';
+      ring.style.width = '32px'; ring.style.height = '32px';
+      ring.style.borderColor = 'rgba(0,200,255,0.25)';
+    });
+  });
+})();
+
+// ── Scroll Progress Bar ──
+(function() {
+  const bar = document.getElementById('scrollBar');
+  if (!bar) return;
+  window.addEventListener('scroll', () => {
+    const p = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+    bar.style.width = (p * 100) + '%';
+  }, { passive: true });
+})();
+
+// ── Nav Scroll ──
+(function() {
+  const nav = document.getElementById('nav');
+  if (!nav) return;
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 50);
+  }, { passive: true });
+})();
+
+// ── Hamburger ──
+(function() {
+  const hamburger = document.getElementById('hamburger');
+  const nav = document.getElementById('nav');
+  if (!hamburger || !nav) return;
+  hamburger.addEventListener('click', () => nav.classList.toggle('menu-open'));
+})();
+
+// ── Hero Particles ──
+(function() {
+  const container = document.getElementById('heroParticles');
+  if (!container) return;
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.top = Math.random() * 100 + '%';
+    p.style.animationDelay = (Math.random() * 6) + 's';
+    p.style.animationDuration = (4 + Math.random() * 4) + 's';
+    container.appendChild(p);
+  }
+})();
+
+// ── Scroll Reveal ──
+(function() {
+  const reveals = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+  reveals.forEach(r => obs.observe(r));
+})();
+
+// ── Counter Animations ──
+(function() {
+  const counters = document.querySelectorAll('[data-target]');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const el = e.target;
+      const target = parseInt(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      const prefix = el.textContent.startsWith('$') ? '$' : '';
+      let current = 0;
+      const step = Math.max(1, Math.ceil(target / 40));
+      const timer = setInterval(() => {
+        current += step;
+        if (current >= target) {
+          current = target;
+          clearInterval(timer);
+        }
+        el.innerHTML = prefix + current + (suffix ? '<span>' + suffix + '</span>' : '');
+      }, 30);
+      obs.unobserve(el);
+    });
+  }, { threshold: 0.5 });
+  counters.forEach(c => obs.observe(c));
+})();
+
+// ── Problem Bar Animation ──
+(function() {
+  const bars = document.querySelectorAll('.problem-bar-fill');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const w = e.target.dataset.width;
+        e.target.style.transform = 'scaleX(' + (w / 100) + ')';
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  bars.forEach(b => obs.observe(b));
+})();
+
+// ── Stack Confidence Bar Animation ──
+(function() {
+  const bars = document.querySelectorAll('.stack-confidence-fill');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const w = e.target.dataset.width;
+        e.target.style.transform = 'scaleX(' + (w / 100) + ')';
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  bars.forEach(b => obs.observe(b));
+})();
+
+// ── Roadmap Progress Fill ──
+(function() {
+  const fill = document.getElementById('roadmapFill');
+  if (!fill) return;
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        fill.style.height = '35%'; // Phase 1 done, Phase 2 active
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  obs.observe(fill.parentElement);
+})();
+
+// ── Sparkline Generator ──
+function genSparkline() {
+  const pts = [];
+  let v = 50;
+  for (let i = 0; i <= 40; i++) {
+    v = Math.max(8, Math.min(92, v + (Math.random() - 0.45) * 10));
+    pts.push({ x: (i / 40) * 400, y: 100 - v });
+  }
+  const line = pts.map((p, i) => (i === 0 ? 'M' + p.x + ',' + p.y : 'L' + p.x + ',' + p.y)).join(' ');
+  const fill = line + ' L400,100 L0,100 Z';
+  const sp = document.getElementById('sparkPath');
+  const sf = document.getElementById('sparkFill');
+  if (sp) sp.setAttribute('d', line);
+  if (sf) sf.setAttribute('d', fill);
+}
+genSparkline();
+
+// ── Live Price Simulation (2.8s) ──
+(function() {
+  let basePrice = 3247.80;
+  function updatePrice() {
+    const change = (Math.random() - 0.49) * 4;
+    basePrice = Math.max(3100, Math.min(3400, basePrice + change));
+    const pct = ((basePrice - 3179.04) / 3179.04 * 100);
+    const isUp = pct >= 0;
+    const fmt = '$' + basePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const pctStr = (isUp ? '+' : '') + pct.toFixed(2) + '%';
+
+    const pp = document.getElementById('perpPrice');
+    const mp = document.getElementById('markPrice');
+    const pc = document.getElementById('perpChange');
+    const pc2 = document.getElementById('perpChange2');
+    if (pp) pp.textContent = fmt;
+    if (mp) mp.textContent = fmt;
+    if (pc) { pc.textContent = pctStr; pc.className = 'perps-change ' + (isUp ? 'up' : 'down'); }
+    if (pc2) { pc2.textContent = pctStr; pc2.style.color = isUp ? 'var(--green)' : 'var(--red)'; }
+
+    // Update orderbook
+    const spread = 0.4 + Math.random() * 0.4;
+    const bidBase = basePrice - spread;
+    const askBase = basePrice + spread;
+    ['bid1','bid2','bid3'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = (bidBase - i * 0.4).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+    });
+    ['ask1','ask2','ask3'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = (askBase + i * 0.4).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+    });
+
+    genSparkline();
+  }
+  setInterval(updatePrice, 2800);
+})();
+
+// ── Binance API Live Prices ──
+async function fetchPrices() {
+  try {
+    const [ethR, btcR] = await Promise.all([
+      fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT'),
+      fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT')
+    ]);
+    const eth = await ethR.json();
+    const btc = await btcR.json();
+    const ethP = parseFloat(eth.lastPrice);
+    const btcP = parseFloat(btc.lastPrice);
+    const ethChg = parseFloat(eth.priceChangePercent);
+    const btcChg = parseFloat(btc.priceChangePercent);
+    const fmtEth = '$' + ethP.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtBtc = '$' + btcP.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    document.querySelectorAll('.js-price-eth').forEach(e => {
+      e.textContent = fmtEth;
+      e.classList.remove('ticker-loading');
+      e.classList.toggle('up', ethChg >= 0);
+      e.classList.toggle('down', ethChg < 0);
+    });
+    document.querySelectorAll('.js-price-btc').forEach(e => {
+      e.textContent = fmtBtc;
+      e.classList.remove('ticker-loading');
+      e.classList.toggle('up', btcChg >= 0);
+      e.classList.toggle('down', btcChg < 0);
+    });
+  } catch(e) {}
+}
+fetchPrices();
+setInterval(fetchPrices, 15000);
+
+// ── Tiered Waitlist Form ──
+(function() {
+  const form = document.getElementById('waitlistForm');
+  if (!form) return;
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const input = document.getElementById('emailInput');
+    const email = input.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      input.style.borderColor = 'var(--red)';
+      setTimeout(() => { input.style.borderColor = ''; }, 1500);
+      return;
+    }
+    const btn = form.querySelector('button');
+    const orig = btn.textContent;
+    btn.textContent = 'Submitting...';
+    btn.disabled = true;
+    try {
+      await fetch('https://script.google.com/macros/s/AKfycbzfgnxfO9tUHiE5w642YB5V7B7uA82m58DYF6dF_vRbQ2n2mdkqmzUmnPwwJxhAYdSq/exec', {
+        method: 'POST', body: JSON.stringify({ email, source: 'waitlist-tiered' }), mode: 'no-cors'
+      });
+      form.style.display = 'none';
+      const success = document.getElementById('waitlist-success');
+      success.style.display = 'inline-block';
+      // Generate position number (hash email for consistency)
+      let hash = 0;
+      for (let i = 0; i < email.length; i++) hash = ((hash << 5) - hash) + email.charCodeAt(i);
+      const position = 200 + Math.abs(hash % 700);
+      document.getElementById('waitlistPosNum').textContent = '#' + position;
+      document.getElementById('waitlistPosition').style.display = 'block';
+      // Generate referral link
+      const refCode = btoa(email).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
+      const refUrl = 'https://nexxore.xyz/?ref=' + refCode;
+      document.getElementById('referralUrl').value = refUrl;
+      document.getElementById('waitlistReferral').style.display = 'block';
+      // Copy button
+      document.getElementById('referralCopy').addEventListener('click', function() {
+        navigator.clipboard.writeText(refUrl).then(() => {
+          this.textContent = 'Copied!';
+          setTimeout(() => { this.textContent = 'Copy'; }, 2000);
+        });
+      });
+    } catch(err) {}
+    finally { btn.textContent = orig; btn.disabled = false; }
+  });
+})();
+
+// ── Live Agent Logs (Binance WebSocket) ──
+(function() {
+  const agentCards = document.querySelectorAll('.agent-card');
+  if (!agentCards.length) return;
+
+  const agentLogs = [
+    [ // On-Chain Analyst (NX-AGT-01)
+      p => `ETH ${p.ethP > 0 ? '$' + p.ethP.toFixed(2) : '--'} — funding ${p.ethF || 'loading'}`,
+      p => `BTC vol ${p.btcVol || '--'} — regime: ${p.regime || 'Scanning'}`,
+      p => `Signal: ${['PEPE','ARB','OP','SOL','LINK'][Math.floor(Math.random()*5)]} momentum ${Math.floor(60+Math.random()*35)} → ${Math.random() > 0.5 ? 'tracking' : 'scored'}`,
+      p => `Scanning ${15+Math.floor(Math.random()*8)} markets — ${Math.floor(Math.random()*4)+1} signals active`
+    ],
+    [ // Portfolio Optimizer (NX-AGT-02)
+      p => `CVaR check: ${(1.5+Math.random()*2).toFixed(1)}% — ${Math.random()>0.4 ? 'within' : 'near'} threshold`,
+      p => `Rebalance signal: ${Math.random()>0.5?'reduce':'increase'} ETH ${(0.5+Math.random()*3).toFixed(1)}%`,
+      p => `Drawdown constraint: ${(3+Math.random()*4).toFixed(1)}% — ${Math.random()>0.3?'OK':'monitoring'}`,
+      p => `Portfolio beta: ${(0.6+Math.random()*0.8).toFixed(2)} — target 0.85`
+    ],
+    [ // Execution Router (NX-AGT-03)
+      p => `Routed ${(2+Math.random()*20).toFixed(1)} ETH via ${['Arbitrum','Optimism','Base','Polygon'][Math.floor(Math.random()*4)]}`,
+      p => `Slippage: ${(0.01+Math.random()*0.04).toFixed(2)}% — ${Math.random()>0.3?'optimal':'acceptable'}`,
+      p => `Gas: ${(3+Math.random()*15).toFixed(0)} gwei — ${Math.random()>0.5?'executing':'queued'}`,
+      p => `Intent batched: ${Math.floor(2+Math.random()*5)} swaps — ${(0.01+Math.random()*0.02).toFixed(3)}% avg cost`
+    ],
+    [ // Performance Auditor (NX-AGT-04)
+      p => `Sharpe: ${(1.4+Math.random()*1.2).toFixed(2)} (30d rolling)`,
+      p => `Daily PnL ${Math.random()>0.4?'+':'-'}${(0.1+Math.random()*0.8).toFixed(2)}% — report queued`,
+      p => `Max DD: ${(2+Math.random()*5).toFixed(1)}% — within ${(8+Math.random()*4).toFixed(0)}% limit`,
+      p => `Attribution: ${['ETH long','BTC basis','SOL perp','funding arb'][Math.floor(Math.random()*4)]} +${(0.05+Math.random()*0.3).toFixed(2)}%`
+    ],
+    [ // Prediction Monitor (NX-AGT-05)
+      p => `Edge detected: ${['ETH','BTC','SOL','ARB'][Math.floor(Math.random()*4)]} ${['> $3.5k (72%)','> $100k (68%)','> $200 (61%)','breakout (74%)'][Math.floor(Math.random()*4)]}`,
+      p => `Scanning ${750+Math.floor(Math.random()*300)} active markets`,
+      p => `Polymarket: ${['ETF approval','rate cut','ETH upgrade'][Math.floor(Math.random()*3)]} shifted ${(2+Math.random()*8).toFixed(0)}%`,
+      p => `Manifold: ${Math.floor(3+Math.random()*5)} new crypto markets — indexing`
+    ]
+  ];
+
+  let wsData = { ethP: 0, btcP: 0, ethF: null, btcVol: null, regime: null };
+
+  // Fetch initial data
+  async function fetchAgentData() {
+    try {
+      const [ethR, fundR] = await Promise.all([
+        fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT'),
+        fetch('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=ETHUSDT').catch(() => null)
+      ]);
+      const eth = await ethR.json();
+      wsData.ethP = parseFloat(eth.lastPrice);
+      wsData.btcVol = (Math.abs(parseFloat(eth.priceChangePercent)) * 0.8).toFixed(1) + '%';
+      wsData.regime = parseFloat(eth.priceChangePercent) > 1 ? 'Trending' : parseFloat(eth.priceChangePercent) < -1 ? 'Risk-Off' : 'Range';
+      if (fundR) {
+        const fund = await fundR.json();
+        wsData.ethF = (parseFloat(fund.lastFundingRate) * 100).toFixed(4) + '%';
+      }
+    } catch(e) {}
+  }
+  fetchAgentData();
+  setInterval(fetchAgentData, 30000);
+
+  function updateAgentLogs() {
+    agentCards.forEach((card, idx) => {
+      const logContainer = card.querySelector('.agent-log');
+      if (!logContainer || !agentLogs[idx]) return;
+      const msgs = agentLogs[idx];
+      const msg = msgs[Math.floor(Math.random() * msgs.length)](wsData);
+      const now = new Date();
+      const time = now.toTimeString().substring(0, 8);
+      const lines = logContainer.querySelectorAll('div');
+      // Shift existing down and add new on top
+      if (lines.length >= 2) lines[1].remove();
+      if (lines.length >= 1) lines[0].classList.remove('fresh');
+      const newLine = document.createElement('div');
+      newLine.className = 'fresh';
+      newLine.innerHTML = '<span class="log-time">' + time + '</span> <span class="log-action">' + msg + '</span>';
+      logContainer.insertBefore(newLine, logContainer.firstChild);
+    });
+  }
+  // Initial update after data loads, then every 4-8 seconds
+  setTimeout(updateAgentLogs, 2000);
+  setInterval(updateAgentLogs, 4000 + Math.random() * 4000);
+})();
+
+// ── Clean URLs ──
+document.querySelectorAll('a[href$=".html"]').forEach(link => {
+  const href = link.getAttribute('href');
+  if (!href) return;
+  const [path, hash] = href.split('#');
+  const cleaned = path.replace(/\.html$/, '');
+  link.setAttribute('href', hash ? cleaned + '#' + hash : cleaned);
+});
+if (window.location.pathname.endsWith('.html')) {
+  window.history.replaceState({}, '', window.location.pathname.replace(/\.html$/, '') + window.location.search + window.location.hash);
+}
+
+// ── Smooth Scroll ──
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const t = document.querySelector(a.getAttribute('href'));
+    if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  });
+});
+</script>
+</body>
+</html>

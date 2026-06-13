@@ -501,6 +501,7 @@ body::before {
       <div class="product-tag">Predictions Edge Engine</div>
     </div>
     <div class="header-right">
+      <button class="header-btn" id="connectTradeBtn" style="border-color:rgba(0,232,122,0.25);color:var(--green)">Connect to trade</button>
       <button class="header-btn" id="hotkeyToggle"><span class="kbd">T</span> Terminal</button>
       <button class="header-btn" id="telegramBtn">Alerts</button>
       <button class="header-btn" id="tgPostBtn" style="border-color:rgba(0,200,255,0.2);color:var(--cyan)">Post Trades</button>
@@ -645,9 +646,14 @@ body::before {
                   <div class="hb-item"><span class="hb-label">Bid / Ask</span><span class="hb-value" id="detailBidAsk">—</span></div>
                 </div>
                 <div style="margin-top:10px;text-align:center;">
+                  <button id="takeTradeBtn" class="terminal-btn buy" style="display:none;padding:6px 12px;margin-bottom:8px;">Take this trade</button>
                   <a id="detailLink" href="#" target="_blank" style="font-family:var(--mono);font-size:0.65rem;color:var(--cyan);text-decoration:none;">View on platform →</a>
                 </div>
               </div>
+            </div>
+            <div class="card">
+              <div class="card-head"><div class="card-title">My Positions</div><button id="refreshPositionsBtn" class="header-btn" style="padding:4px 8px;font-size:0.6rem;">Refresh</button></div>
+              <div class="card-body" id="myPositionsBody" style="max-height:220px;overflow:auto;font-family:var(--mono);font-size:0.62rem;color:var(--text-muted);">Connect to trade to load positions.</div>
             </div>
             <div class="card" style="flex:1">
               <div class="card-head"><div class="card-title">Data Feed Log</div></div>
@@ -728,6 +734,7 @@ body::before {
     var selectedPlatform = 'all';
     var searchQuery = '';
     var terminalOpen = false;
+    var tradingState = { walletAddress: null, connected: false, credentialId: null, edgeThresholdBps: 300 };
 
     // TAB NAV
     document.querySelectorAll('.agent-tab').forEach(function(tab) {
@@ -1058,6 +1065,14 @@ body::before {
       var linkEl = document.getElementById('detailLink');
       if (m.url) { linkEl.href = m.url; linkEl.textContent = 'View on ' + m.platform + ' →'; linkEl.style.display = ''; }
       else { linkEl.style.display = 'none'; }
+      var edgeBps = Math.round(Math.abs(Number(m.priceChange1d || 0)) * 10000);
+      var takeTradeBtn = document.getElementById('takeTradeBtn');
+      if (tradingState.connected && m.platform === 'Polymarket' && edgeBps >= tradingState.edgeThresholdBps && Number(m.liquidity || 0) >= 10000) {
+        takeTradeBtn.style.display = 'inline-flex';
+        takeTradeBtn.textContent = 'Take this trade (' + edgeBps + 'bps edge)';
+      } else {
+        takeTradeBtn.style.display = 'none';
+      }
       // Terminal
       document.getElementById('terminalName').textContent = m.title.slice(0, 50) + (m.title.length > 50 ? '...' : '');
       document.getElementById('terminalYes').textContent = m.yesOdds + 'c';
@@ -1085,10 +1100,108 @@ body::before {
     document.getElementById('terminalCloseBtn').addEventListener('click', toggleTerminal);
     document.getElementById('btnBuyYes').addEventListener('click', function() { openOnPlatform('yes'); });
     document.getElementById('btnBuyNo').addEventListener('click', function() { openOnPlatform('no'); });
+    document.getElementById('connectTradeBtn').addEventListener('click', connectToTrade);
+    document.getElementById('refreshPositionsBtn').addEventListener('click', loadMyPositions);
+    document.getElementById('takeTradeBtn').addEventListener('click', function() {
+      if (!selectedMarket) return;
+      executePolymarketTrade(selectedMarket.yesOdds >= 50 ? 'yes' : 'no');
+    });
     function openOnPlatform(side) {
-      if (!selectedMarket || !selectedMarket.url) return;
+      if (!selectedMarket) return;
+      if (tradingState.connected && selectedMarket.platform === 'Polymarket') {
+        executePolymarketTrade(side);
+        return;
+      }
+      if (!selectedMarket.url) return;
       window.open(selectedMarket.url, '_blank');
       addMemoryLine('alpha', 'Opened ' + selectedMarket.platform + ' for "' + selectedMarket.title.slice(0,30) + '..."');
+    }
+    async function connectToTrade() {
+      if (tradingState.connected) {
+        tradingState.connected = false;
+        tradingState.walletAddress = null;
+        tradingState.credentialId = null;
+        document.getElementById('connectTradeBtn').textContent = 'Connect to trade';
+        document.getElementById('myPositionsBody').textContent = 'Disconnected.';
+        return;
+      }
+      if (!window.ethereum) { showToast('MetaMask not available', 'error'); return; }
+      try {
+        var accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (!accounts || !accounts.length) return;
+        var walletAddress = accounts[0];
+        var l2Key = prompt('Paste your Polymarket L2 key');
+        if (!l2Key) return;
+        var resp = await fetch('/api/polymarket/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ walletAddress: walletAddress, l2Key: l2Key })
+        });
+        var data = await resp.json();
+        if (!data.success) throw new Error(data.message || 'Auth failed');
+        tradingState.connected = true;
+        tradingState.walletAddress = walletAddress;
+        tradingState.credentialId = data.credentialId;
+        document.getElementById('connectTradeBtn').textContent = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+        showToast('Connected for live trading', 'success');
+        loadMyPositions();
+      } catch (e) {
+        showToast('Trade connect failed: ' + e.message, 'error');
+      }
+    }
+    async function executePolymarketTrade(side) {
+      if (!selectedMarket || !tradingState.connected) { showToast('Connect to trade first', 'error'); return; }
+      if (selectedMarket.platform !== 'Polymarket') { showToast('Only Polymarket trade execution is wired', 'error'); return; }
+      var size = Number(document.getElementById('terminalSize').value || 0);
+      if (!size || size <= 0) { showToast('Enter valid size', 'error'); return; }
+      var tokenId = selectedMarket.id;
+      var bookResp = await fetch('/api/polymarket/book?tokenId=' + encodeURIComponent(tokenId));
+      var bookData = await bookResp.json();
+      var bestAsk = Number(bookData?.book?.asks?.[0]?.price || (selectedMarket.yesOdds / 100) || 0.5);
+      var edgeBps = Math.round(Math.abs(Number(selectedMarket.priceChange1d || 0)) * 10000);
+      var liquidity = Number(selectedMarket.liquidity || 0);
+      if (!confirm('Confirm ' + side.toUpperCase() + ' order?\nSize: $' + size + '\nEstimated fill: ' + (bestAsk * 100).toFixed(2) + 'c')) return;
+      var orderResp = await fetch('/api/polymarket/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress: tradingState.walletAddress,
+          credentialId: tradingState.credentialId,
+          tokenId: tokenId,
+          side: side.toUpperCase(),
+          size: size,
+          orderType: 'market',
+          price: bestAsk,
+          edgeBps: edgeBps,
+          liquidityUsd: liquidity
+        })
+      });
+      var orderData = await orderResp.json();
+      if (!orderData.success) { showToast(orderData.message || orderData.code || 'Order failed', 'error'); return; }
+      showToast('Order submitted', 'success');
+      loadMyPositions();
+    }
+    async function loadMyPositions() {
+      if (!tradingState.connected) return;
+      try {
+        var url = '/api/polymarket/orders?walletAddress=' + encodeURIComponent(tradingState.walletAddress) + '&credentialId=' + encodeURIComponent(tradingState.credentialId);
+        var res = await fetch(url);
+        var data = await res.json();
+        var orders = data.orders || [];
+        var trades = data.trades || [];
+        var body = document.getElementById('myPositionsBody');
+        if (!orders.length && !trades.length) {
+          body.textContent = 'No open orders or fills yet.';
+          return;
+        }
+        body.innerHTML =
+          '<div style="margin-bottom:6px;color:var(--cyan)">Open Orders: ' + orders.length + '</div>' +
+          orders.slice(0, 8).map(function(o) { return '<div style="padding:4px 0;border-bottom:1px solid var(--border)">' + (o.side || o.action || 'ORDER') + ' ' + (o.size || o.quantity || '-') + ' @ ' + (o.price || '-') + '</div>'; }).join('') +
+          '<div style="margin:8px 0 6px;color:var(--green)">Recent Trades: ' + trades.length + '</div>' +
+          trades.slice(0, 8).map(function(t) { return '<div style="padding:4px 0;border-bottom:1px solid var(--border)">' + (t.side || 'TRADE') + ' ' + (t.size || t.quantity || '-') + ' @ ' + (t.price || '-') + '</div>'; }).join('');
+      } catch (e) {
+        document.getElementById('myPositionsBody').textContent = 'Failed to load positions: ' + e.message;
+      }
     }
     document.addEventListener('keydown', function(e) {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
