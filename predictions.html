@@ -479,6 +479,23 @@ body::before {
 .strategy-name { font-size:0.68rem; font-weight:600; color:var(--text); margin-bottom:2px; }
 .strategy-desc { font-size:0.58rem; color:var(--text-dim); line-height:1.45; margin-bottom:6px; }
 .strategy-tool { font-family:var(--mono); font-size:0.52rem; font-weight:600; color:var(--cyan); text-transform:uppercase; letter-spacing:0.4px; }
+.strategy-live {
+  font-family:var(--mono); font-size:0.46rem; font-weight:700; color:var(--green);
+  border:1px solid rgba(25,230,197,0.35); border-radius:2px; padding:1px 4px;
+  margin-left:6px; letter-spacing:0.4px; vertical-align:1px; white-space:nowrap;
+}
+.book-row {
+  display:flex; align-items:center; gap:10px; padding:3px 9px;
+  font-family:var(--mono); font-size:0.6rem; border-radius:2px; margin-bottom:2px;
+  position:relative; overflow:hidden;
+}
+.book-row .depth { position:absolute; top:0; bottom:0; left:0; opacity:0.1; }
+.book-row > span { position:relative; }
+.book-quote {
+  display:flex; justify-content:space-between; padding:5px 9px; margin:3px 0;
+  font-family:var(--mono); font-size:0.6rem; border:1px dashed rgba(247,185,85,0.5);
+  border-radius:2px; color:var(--gold); background:rgba(247,185,85,0.05);
+}
 
 .tools-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
 .tool-card {
@@ -816,21 +833,21 @@ body::before {
         </div>
 
         <div class="card edge-gold mb-16">
-          <div class="card-head"><div class="card-title">Strategy Playbook <span class="badge ai">Mapped to Code</span></div><span style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim)">Every strategy links to a working open-source implementation below</span></div>
+          <div class="card-head"><div class="card-title">Strategy Playbook <span class="badge live">All 12 Run Live</span></div><span style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim)">Click any strategy to run it now on live market data</span></div>
           <div class="card-body">
             <div class="strategy-grid">
-              <div class="strategy-cell" data-repo="alsk1992/CloddsBot"><div class="strategy-name">Cross-Venue Arbitrage</div><div class="strategy-desc">Same event priced differently on Polymarket vs Kalshi — buy the gap, sell the premium.</div><div class="strategy-tool">CloddsBot &middot; Harrier</div></div>
-              <div class="strategy-cell" data-repo="alsk1992/CloddsBot"><div class="strategy-name">Latency Arbitrage</div><div class="strategy-desc">Binance spot moves before Polymarket crypto markets reprice. Speed is the edge.</div><div class="strategy-tool">CloddsBot</div></div>
-              <div class="strategy-cell" data-repo="MrFadiAi/Polymarket-bot"><div class="strategy-name">Smart-Money Copy Trading</div><div class="strategy-desc">Mirror wallets ranked by PnL, win rate and activity — automatically.</div><div class="strategy-tool">Polymarket-bot &middot; Harrier</div></div>
-              <div class="strategy-cell" data-repo="ent0n29/polybot"><div class="strategy-name">Trader Reverse-Engineering</div><div class="strategy-desc">Decode any wallet's repeated patterns and adapt its playbook to your own book.</div><div class="strategy-tool">polybot</div></div>
-              <div class="strategy-cell" data-repo="HarrierOnChain/Prediction-Markets-Trading-Bot-Toolkits"><div class="strategy-name">Market Making &amp; Penny Clipping</div><div class="strategy-desc">Quote inside the spread and capture it on both sides of the book.</div><div class="strategy-tool">CloddsBot &middot; Harrier</div></div>
-              <div class="strategy-cell" data-repo="lihanyu81/polymarket_lp_tool"><div class="strategy-name">Liquidity Reward Farming</div><div class="strategy-desc">Auto-managed limit orders tuned to maximize Polymarket LP rewards.</div><div class="strategy-tool">polymarket_lp_tool</div></div>
-              <div class="strategy-cell" data-repo="HarrierOnChain/Prediction-Markets-Trading-Bot-Toolkits"><div class="strategy-name">Spread Farming</div><div class="strategy-desc">Systematically harvest wide spreads across thin, neglected markets.</div><div class="strategy-tool">Harrier Toolkit</div></div>
-              <div class="strategy-cell" data-repo="HarrierOnChain/Prediction-Markets-Trading-Bot-Toolkits"><div class="strategy-name">Whale Alerts</div><div class="strategy-desc">Detect large flow the moment it hits and position ahead of the herd.</div><div class="strategy-tool">Harrier Toolkit</div></div>
-              <div class="strategy-cell" data-repo="alsk1992/CloddsBot"><div class="strategy-name">Mean Reversion</div><div class="strategy-desc">Fade panic-driven overreactions back toward fair probability.</div><div class="strategy-tool">CloddsBot</div></div>
-              <div class="strategy-cell" data-repo="nicolastinkl/hermes_weatherbot"><div class="strategy-name">Model-Based Weather Trading</div><div class="strategy-desc">Gaussian bucket pricing on multi-source temperature forecasts.</div><div class="strategy-tool">hermes_weatherbot</div></div>
-              <div class="strategy-cell" data-repo="mvanhorn/last30days-skill"><div class="strategy-name">Pre-Trade Intelligence</div><div class="strategy-desc">30-day synthesis of Reddit, X, YouTube, HN and news before you enter.</div><div class="strategy-tool">last30days</div></div>
-              <div class="strategy-cell" data-repo="evan-kolberg/prediction-market-backtesting"><div class="strategy-name">Backtest Before Deploying</div><div class="strategy-desc">Validate any idea against 72M+ real historical trades first.</div><div class="strategy-tool">backtesting &middot; dataset</div></div>
+              <div class="strategy-cell" data-strategy="arb"><div class="strategy-name">Cross-Venue Arbitrage<span class="strategy-live">&#9654; RUN</span></div><div class="strategy-desc">Same event priced differently across venues — scan every live gap in cents.</div><div class="strategy-tool">CloddsBot engine</div></div>
+              <div class="strategy-cell" data-strategy="latency"><div class="strategy-name">Latency Arbitrage<span class="strategy-live">&#9654; RUN</span></div><div class="strategy-desc">Live Binance spot feed vs Polymarket odds — with a repricing-window signal.</div><div class="strategy-tool">Binance + Polymarket</div></div>
+              <div class="strategy-cell" data-strategy="copytrade"><div class="strategy-name">Smart-Money Copy Trading<span class="strategy-live">&#9654; RUN</span></div><div class="strategy-desc">Rank live wallets by deployed capital and activity — mirror the survivors.</div><div class="strategy-tool">Polymarket-bot engine</div></div>
+              <div class="strategy-cell" data-strategy="reverse"><div class="strategy-name">Trader Reverse-Engineering<span class="strategy-live">&#9654; RUN</span></div><div class="strategy-desc">Decode any wallet's repeated patterns and adapt its playbook to your own book.</div><div class="strategy-tool">polybot engine</div></div>
+              <div class="strategy-cell" data-strategy="mm"><div class="strategy-name">Market Making &amp; Penny Clipping<span class="strategy-live">&#9654; RUN</span></div><div class="strategy-desc">The real order book, your clip quotes, and the capture per round trip.</div><div class="strategy-tool">Live CLOB book</div></div>
+              <div class="strategy-cell" data-strategy="lp"><div class="strategy-name">Liquidity Reward Farming<span class="strategy-live">&#9654; RUN</span></div><div class="strategy-desc">The reward programs paying right now, with real daily rates.</div><div class="strategy-tool">polymarket_lp_tool engine</div></div>
+              <div class="strategy-cell" data-strategy="spreadfarm"><div class="strategy-name">Spread Farming<span class="strategy-live">&#9654; RUN</span></div><div class="strategy-desc">Live scan for the widest quoted spreads with enough liquidity to farm.</div><div class="strategy-tool">Harrier engine</div></div>
+              <div class="strategy-cell" data-strategy="whale"><div class="strategy-name">Whale Alerts<span class="strategy-live">&#9654; RUN</span></div><div class="strategy-desc">Every $10K+ trade, live off the public tape, auto-refreshing.</div><div class="strategy-tool">Harrier engine</div></div>
+              <div class="strategy-cell" data-strategy="meanrev"><div class="strategy-name">Mean Reversion<span class="strategy-live">&#9654; RUN</span></div><div class="strategy-desc">The hardest 24h overreactions, with the explicit fade and a trend filter.</div><div class="strategy-tool">CloddsBot engine</div></div>
+              <div class="strategy-cell" data-strategy="weather"><div class="strategy-name">Model-Based Weather Trading<span class="strategy-live">&#9654; RUN</span></div><div class="strategy-desc">A live forecast feed next to the live weather markets it prices.</div><div class="strategy-tool">hermes engine</div></div>
+              <div class="strategy-cell" data-strategy="intel"><div class="strategy-name">Pre-Trade Intelligence<span class="strategy-live">&#9654; RUN</span></div><div class="strategy-desc">30-day narrative scan on any topic before you take the position.</div><div class="strategy-tool">last30days engine</div></div>
+              <div class="strategy-cell" data-strategy="backtest"><div class="strategy-name">Backtest Before Deploying<span class="strategy-live">&#9654; RUN</span></div><div class="strategy-desc">Run momentum, mean reversion or hold on real CLOB price history.</div><div class="strategy-tool">Backtesting engine</div></div>
             </div>
           </div>
         </div>
@@ -1585,18 +1602,217 @@ body::before {
       }).catch(function(e) { box.innerHTML = dNote('Directory load failed: ' + escapeHtml(e.message)); });
     };
 
+    // === STRATEGY ENGINES — the 12 playbook strategies, each running live ===
+
+    // Latency arbitrage: live Binance spot vs Polymarket crypto odds
+    function demoLatency(box) {
+      whenMarketsReady(box, function() {
+        box.innerHTML = dNote('Pulling the live Binance feed and matching Polymarket markets&hellip;');
+        var syms = [
+          { s: 'BTCUSDT', label: 'BTC', re: /bitcoin|\bbtc\b/i },
+          { s: 'ETHUSDT', label: 'ETH', re: /ethereum|\beth\b/i },
+          { s: 'SOLUSDT', label: 'SOL', re: /solana|\bsol\b/i }
+        ];
+        Promise.all(syms.map(function(x) {
+          return fetch('https://api.binance.com/api/v3/klines?symbol=' + x.s + '&interval=1m&limit=60')
+            .then(function(r) { return r.json(); }).catch(function() { return null; });
+        })).then(function(all) {
+          var anyHot = false;
+          var blocks = syms.map(function(x, i) {
+            var kl = all[i];
+            if (!Array.isArray(kl) || kl.length < 10) return '';
+            var closes = kl.map(function(k) { return parseFloat(k[4]); });
+            var last = closes[closes.length - 1];
+            var m5 = (last / closes[closes.length - 6] - 1) * 100;
+            var h1 = (last / closes[0] - 1) * 100;
+            var lo = Math.min.apply(null, closes), hi = Math.max.apply(null, closes);
+            var spark = closes.map(function(c2) {
+              var h = hi > lo ? 3 + 97 * (c2 - lo) / (hi - lo) : 50;
+              return '<div style="flex:1;background:' + (h1 >= 0 ? 'var(--green)' : 'var(--red)') + ';opacity:0.8;height:' + h.toFixed(0) + '%"></div>';
+            }).join('');
+            var hot = Math.abs(m5) >= 0.15;
+            if (hot) anyHot = true;
+            var rel = markets.filter(function(m) { return m.platform === 'Polymarket' && x.re.test(m.title); })
+              .sort(function(a, b) { return (b.volume || 0) - (a.volume || 0); }).slice(0, 3);
+            return '<div class="demo-item" style="border-left-color:' + (hot ? 'var(--gold)' : 'var(--border)') + '">' +
+              '<div class="di-top"><span class="di-title">' + x.label + ' spot <b style="font-family:var(--mono)">$' + last.toLocaleString(undefined, { maximumFractionDigits: 2 }) + '</b></span>' +
+              '<span class="edge-pill ' + (hot ? 'pos' : '') + '"' + (hot ? '' : ' style="background:var(--surface2);color:var(--text-muted)"') + '>' + (hot ? 'REPRICE WINDOW' : 'in sync') + '</span></div>' +
+              '<div style="display:flex;align-items:flex-end;gap:1px;height:34px;margin:6px 0;background:var(--bg2);padding:3px;border-radius:2px;">' + spark + '</div>' +
+              '<div class="di-meta"><span style="color:' + (m5 >= 0 ? 'var(--green)' : 'var(--red)') + '">5m ' + (m5 >= 0 ? '+' : '') + m5.toFixed(2) + '%</span>' +
+              '<span style="color:' + (h1 >= 0 ? 'var(--green)' : 'var(--red)') + '">1h ' + (h1 >= 0 ? '+' : '') + h1.toFixed(2) + '%</span>' +
+              '<span>Binance 1m closes, last hour</span></div>' +
+              (rel.length ? '<div style="margin-top:6px;border-top:1px solid var(--border);padding-top:5px;">' + rel.map(function(m) {
+                return '<div class="di-meta" style="margin-top:3px;"><span style="color:var(--text)">' + escapeHtml(m.title.slice(0, 52)) + '</span><span>YES ' + m.yesOdds + 'c</span>' +
+                  (m.priceChange1d != null ? '<span style="color:' + priceChangeColor(m.priceChange1d) + '">' + formatPriceChange(m.priceChange1d) + ' 24h</span>' : '') + '</div>';
+              }).join('') + '</div>' : '') +
+              '</div>';
+          }).join('');
+          box.innerHTML =
+            dNote('The strategy: <b>Binance spot leads, Polymarket lags</b>. Both feeds below are live — a sharp 5-minute spot move (&ge;0.15%) opens a window where the related prediction markets haven\'t repriced yet.' + (anyHot ? ' <b style="color:var(--gold)">A window is open right now.</b>' : ' Markets are currently in sync.')) +
+            blocks +
+            dNote('Under each spot feed: the highest-volume live Polymarket markets for that asset, with their current YES price and 24h repricing. Re-open to rescan.');
+        });
+      });
+    }
+
+    // Market making & penny clipping: real CLOB order book + your clip quotes
+    function demoPennyClip(box) {
+      whenMarketsReady(box, function() {
+        var cands = markets.filter(function(m) {
+          return m.platform === 'Polymarket' && m.tokenId && (m.volume24h || 0) > 10000 && m.bestBid != null && m.bestAsk != null;
+        }).sort(function(a, b) { return (b.volume24h || 0) - (a.volume24h || 0); }).slice(0, 15);
+        if (!cands.length) { box.innerHTML = dNote('No bookable markets loaded yet — try again shortly.'); return; }
+        box.innerHTML =
+          dNote('The strategy: quote <b>inside the spread</b> and capture it on both sides. Below is the real Polymarket order book, live from the CLOB — with the exact prices a penny-clipper would post.') +
+          '<div class="demo-controls"><select class="demo-select" id="pcMarket">' +
+          cands.map(function(m, i) { return '<option value="' + i + '">' + escapeHtml(m.title.slice(0, 60)) + '</option>'; }).join('') +
+          '</select><button class="demo-btn" id="pcLoad">Load Book</button></div>' +
+          '<div id="pcOut"></div>';
+        var out = box.querySelector('#pcOut');
+        function bookRow(p, s, color, maxN) {
+          var notional = p * s;
+          return '<div class="book-row"><div class="depth" style="background:' + color + ';width:' + Math.min(100, Math.round(notional / maxN * 100)) + '%"></div>' +
+            '<span style="color:' + color + ';width:52px;">' + (p * 100).toFixed(1) + 'c</span>' +
+            '<span style="flex:1;color:var(--text-muted);">' + Math.round(s).toLocaleString() + ' shares</span>' +
+            '<span style="color:var(--text-dim);">$' + Math.round(notional).toLocaleString() + '</span></div>';
+        }
+        function load(retriesLeft) {
+          var sel = box.querySelector('#pcMarket');
+          var m = cands[+sel.value];
+          out.innerHTML = dNote('Fetching the live order book&hellip;');
+          fetch('https://clob.polymarket.com/book?token_id=' + m.tokenId)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+              var bids = (d.bids || []).map(function(x) { return { p: parseFloat(x.price), s: parseFloat(x.size) }; }).sort(function(a, b) { return b.p - a.p; }).slice(0, 5);
+              var asks = (d.asks || []).map(function(x) { return { p: parseFloat(x.price), s: parseFloat(x.size) }; }).sort(function(a, b) { return a.p - b.p; }).slice(0, 5);
+              if (!bids.length || !asks.length) {
+                // stale or one-sided book: auto-advance to the next active market
+                if (retriesLeft > 0 && +sel.value < cands.length - 1) {
+                  sel.value = String(+sel.value + 1);
+                  load(retriesLeft - 1);
+                  return;
+                }
+                out.innerHTML = dNote('Book is one-sided or empty for this market — pick another.');
+                return;
+              }
+              var bb = bids[0].p, ba = asks[0].p;
+              var spread = (ba - bb) * 100;
+              var tick = 0.001;
+              // room to clip inside the spread? otherwise join the touch like a real MM
+              var canClip = ba - bb > 2 * tick;
+              var clipBid = canClip ? bb + tick : bb;
+              var clipAsk = canClip ? ba - tick : ba;
+              var capture = (clipAsk - clipBid) * 100;
+              var quoteLbl = canClip ? 'clip inside' : 'join the touch';
+              var maxN = Math.max.apply(null, bids.concat(asks).map(function(x) { return x.p * x.s; }));
+              out.innerHTML =
+                '<div class="demo-stat-grid" style="grid-template-columns:repeat(4,1fr);">' +
+                dStat(spread.toFixed(1) + 'c', 'Live spread', spread >= 2 ? 'var(--green)' : 'var(--gold)') +
+                dStat(((bb + ba) / 2 * 100).toFixed(1) + 'c', 'Mid price') +
+                dStat(capture > 0 ? capture.toFixed(1) + 'c' : '—', 'Capture / round trip', 'var(--gold)') +
+                dStat(m.rewardsDailyRate > 0 ? '$' + Math.round(m.rewardsDailyRate) + '/d' : 'none', 'LP rewards on top', 'var(--violet)') + '</div>' +
+                asks.slice().reverse().map(function(x) { return bookRow(x.p, x.s, 'var(--red)', maxN); }).join('') +
+                '<div class="book-quote"><span>YOUR ASK &mdash; ' + quoteLbl + '</span><span>' + (clipAsk * 100).toFixed(1) + 'c</span></div>' +
+                '<div class="book-quote"><span>YOUR BID &mdash; ' + quoteLbl + '</span><span>' + (clipBid * 100).toFixed(1) + 'c</span></div>' +
+                bids.map(function(x) { return bookRow(x.p, x.s, 'var(--green)', maxN); }).join('') +
+                dNote('Top 5 levels each side, live. ' + (canClip
+                  ? 'Post both clip quotes and a fill on each side nets <b>' + capture.toFixed(1) + 'c per share</b> before fees'
+                  : 'This book is quoted to the tick — no room inside, so you join the touch and a round trip earns the full <b>' + spread.toFixed(1) + 'c spread</b> before fees') +
+                  (m.rewardsDailyRate > 0 ? ' — plus this market pays LP rewards for quoting within ' + m.rewardsMaxSpread + 'c of mid' : '') + '.');
+            })
+            .catch(function(e) { out.innerHTML = dNote('Book fetch failed: ' + escapeHtml(e.message)); });
+        }
+        box.querySelector('#pcLoad').addEventListener('click', function() { load(0); });
+        load(6);
+      });
+    }
+
+    // Spread farming: live scan for the widest quoted spreads worth farming
+    function demoSpreadFarm(box) {
+      whenMarketsReady(box, function() {
+        var cands = markets.filter(function(m) {
+          return m.platform === 'Polymarket' && m.bestBid != null && m.bestAsk != null && m.bestAsk > m.bestBid && (m.liquidity || 0) > 5000;
+        }).map(function(m) {
+          return { m: m, spr: (m.bestAsk - m.bestBid) * 100 };
+        }).filter(function(x) { return x.spr >= 2 && x.spr <= 30; })
+          .sort(function(a, b) { return b.spr - a.spr; });
+        var top = cands.slice(0, 12);
+        var avg = cands.length ? cands.reduce(function(s, x) { return s + x.spr; }, 0) / cands.length : 0;
+        var withRw = cands.filter(function(x) { return x.m.rewardsDailyRate > 0; }).length;
+        box.innerHTML =
+          dNote('The strategy: systematically harvest <b>wide spreads in thin, neglected markets</b>. This scan just ran on the live quote data: every Polymarket market quoting a 2–30c spread with &ge;$5K liquidity.') +
+          '<div class="demo-stat-grid">' + dStat(cands.length, 'Farmable markets live') + dStat(avg.toFixed(1) + 'c', 'Avg spread', 'var(--gold)') + dStat(withRw, 'Also pay LP rewards', 'var(--violet)') + '</div>' +
+          (top.length ? top.map(function(x) {
+            var m = x.m;
+            return '<div class="demo-item" style="border-left-color:var(--gold)">' +
+              '<div class="di-top"><span class="di-title">' + escapeHtml(m.title.slice(0, 75)) + '</span>' +
+              '<span class="edge-pill" style="background:rgba(247,185,85,0.12);color:var(--gold)">' + x.spr.toFixed(1) + 'c wide</span></div>' +
+              '<div class="di-meta"><span>bid ' + Math.round(m.bestBid * 100) + 'c / ask ' + Math.round(m.bestAsk * 100) + 'c</span>' +
+              '<span>liq ' + formatVolume(m.liquidity) + '</span><span>vol ' + formatVolume(m.volume) + '</span>' +
+              (m.rewardsDailyRate > 0 ? '<span style="color:var(--violet)">+$' + Math.round(m.rewardsDailyRate) + '/d rewards</span>' : '') +
+              '<span>' + m.expiry + '</span></div></div>';
+          }).join('') : dNote('No farmable spreads in the current load — re-open to rescan.'));
+      });
+    }
+
+    // Mean reversion: live overreaction scanner with the explicit fade
+    function demoMeanRev(box) {
+      whenMarketsReady(box, function() {
+        var movers = markets.filter(function(m) {
+          return m.priceChange1d != null && Math.abs(m.priceChange1d) >= 0.08 && (m.volume || 0) > 20000 && m.yesOdds > 5 && m.yesOdds < 95;
+        }).sort(function(a, b) { return Math.abs(b.priceChange1d) - Math.abs(a.priceChange1d); }).slice(0, 12);
+        var biggest = movers.length ? Math.abs(movers[0].priceChange1d) * 100 : 0;
+        box.innerHTML =
+          dNote('The strategy: <b>fade panic-driven overreactions</b> back toward fair probability. This scan just ran live: every liquid market that repriced &ge;8 points in 24h, with the explicit fade for each. A 7d move in the same direction weakens the fade — it\'s trend, not panic.') +
+          '<div class="demo-stat-grid">' + dStat(movers.length, 'Overreactions live') + dStat(biggest ? biggest.toFixed(0) + 'pts' : '—', 'Biggest 24h move', 'var(--red)') + dStat(movers.filter(function(m) { return m.priceChange7d != null && m.priceChange1d * m.priceChange7d < 0; }).length, 'Clean fades (7d opposes)', 'var(--green)') + '</div>' +
+          (movers.length ? movers.map(function(m) {
+            var up = m.priceChange1d > 0;
+            var fade = up ? 'FADE: BUY NO @ ' + m.noOdds + 'c' : 'FADE: BUY YES @ ' + m.yesOdds + 'c';
+            var trendWarn = m.priceChange7d != null && m.priceChange1d * m.priceChange7d > 0;
+            return '<div class="demo-item" style="border-left-color:' + (trendWarn ? 'var(--border)' : 'var(--green)') + '">' +
+              '<div class="di-top"><span class="di-title">' + escapeHtml(m.title.slice(0, 72)) + '</span>' +
+              '<span class="edge-pill ' + (up ? 'pos' : 'neg') + '">' + formatPriceChange(m.priceChange1d) + ' 24h</span></div>' +
+              '<div class="di-meta"><span style="color:var(--gold);font-weight:600">' + fade + '</span>' +
+              (m.priceChange7d != null ? '<span style="color:' + priceChangeColor(m.priceChange7d) + '">7d ' + formatPriceChange(m.priceChange7d) + (trendWarn ? ' — trend, weak fade' : ' — opposes, clean fade') + '</span>' : '') +
+              '<span>vol ' + formatVolume(m.volume) + '</span><span>' + m.expiry + '</span></div></div>';
+          }).join('') : dNote('No 8-point overreactions in the current load — markets are calm. Re-open to rescan.'));
+      });
+    }
+
+    // The 12 playbook strategies — every one runs live
+    var STRATEGIES = {
+      arb:        { name: 'Cross-Venue Arbitrage', repo: 'alsk1992/CloddsBot', desc: 'Same event, different price on different venues. Live scan matching Polymarket vs Manifold and measuring every gap in cents.', run: function(b) { TOOL_DEMOS['alsk1992/CloddsBot'](b); } },
+      latency:    { name: 'Latency Arbitrage', repo: 'alsk1992/CloddsBot', desc: 'Binance spot moves first; Polymarket crypto markets reprice with a lag. Both live feeds, side by side, with a repricing-window signal.', run: demoLatency },
+      copytrade:  { name: 'Smart-Money Copy Trading', repo: 'MrFadiAi/Polymarket-bot', desc: 'Rank live wallets from the tape by deployed capital and activity, then mirror the survivors.', run: function(b) { TOOL_DEMOS['MrFadiAi/Polymarket-bot'](b); } },
+      reverse:    { name: 'Trader Reverse-Engineering', repo: 'ent0n29/polybot', desc: 'Decode any wallet\'s real trading patterns straight from the public data API.', run: function(b) { TOOL_DEMOS['ent0n29/polybot'](b); } },
+      mm:         { name: 'Market Making & Penny Clipping', repo: 'HarrierOnChain/Prediction-Markets-Trading-Bot-Toolkits', desc: 'The real CLOB order book with the exact quotes a clipper would post and the capture per round trip.', run: demoPennyClip },
+      lp:         { name: 'Liquidity Reward Farming', repo: 'lihanyu81/polymarket_lp_tool', desc: 'The reward programs paying right now — real daily rates from the Gamma API.', run: function(b) { TOOL_DEMOS['lihanyu81/polymarket_lp_tool'](b); } },
+      spreadfarm: { name: 'Spread Farming', repo: 'HarrierOnChain/Prediction-Markets-Trading-Bot-Toolkits', desc: 'Live scan for the widest quoted spreads with enough liquidity to farm.', run: demoSpreadFarm },
+      whale:      { name: 'Whale Alerts', repo: 'HarrierOnChain/Prediction-Markets-Trading-Bot-Toolkits', desc: 'Every Polymarket trade over $10,000, live off the public tape, auto-refreshing.', run: function(b) { TOOL_DEMOS['HarrierOnChain/Prediction-Markets-Trading-Bot-Toolkits'](b); } },
+      meanrev:    { name: 'Mean Reversion', repo: 'alsk1992/CloddsBot', desc: 'The markets that moved hardest in 24h, with the explicit fade for each and a trend filter.', run: demoMeanRev },
+      weather:    { name: 'Model-Based Weather Trading', repo: 'nicolastinkl/hermes_weatherbot', desc: 'A live multi-source forecast next to the live weather markets it would price.', run: function(b) { TOOL_DEMOS['nicolastinkl/hermes_weatherbot'](b); } },
+      intel:      { name: 'Pre-Trade Intelligence', repo: 'mvanhorn/last30days-skill', desc: 'A 30-day narrative scan on any topic before you take the position.', run: function(b) { TOOL_DEMOS['mvanhorn/last30days-skill'](b); } },
+      backtest:   { name: 'Backtest Before Deploying', repo: 'evan-kolberg/prediction-market-backtesting', desc: 'Run a strategy on real CLOB price history before risking a dollar.', run: function(b) { TOOL_DEMOS['evan-kolberg/prediction-market-backtesting'](b); } }
+    };
+    function openStrategy(id) {
+      var s = STRATEGIES[id];
+      if (s) openTool(s.repo, s);
+    }
+
     function tdChip(label, value, color) {
       return '<span class="meta-chip"' + (color ? ' style="color:' + color + '"' : '') + '>' + label + ' ' + value + '</span>';
     }
-    function openTool(repo) {
+    function openTool(repo, strat) {
       var t = TOOLS.filter(function(x) { return x.repo === repo; })[0];
       if (!t) return;
       var cat = TOOL_CATS[t.cat];
       var catEl = document.getElementById('tdCat');
-      catEl.textContent = cat.label;
-      catEl.style.setProperty('--tc', cat.color);
-      document.getElementById('tdName').innerHTML = t.name + '<span class="by">by ' + t.by + '</span>';
-      document.getElementById('tdDesc').textContent = t.desc;
+      catEl.textContent = strat ? 'Live Strategy Run' : cat.label;
+      catEl.style.setProperty('--tc', strat ? 'var(--gold)' : cat.color);
+      document.getElementById('tdName').innerHTML = strat
+        ? strat.name + '<span class="by">powered by ' + t.name + '</span>'
+        : t.name + '<span class="by">by ' + t.by + '</span>';
+      document.getElementById('tdDesc').textContent = strat ? strat.desc : t.desc;
       document.getElementById('tdGithub').href = 'https://github.com/' + t.repo;
       document.getElementById('tdClone').textContent = 'git clone https://github.com/' + t.repo + '.git';
       document.getElementById('tdStats').innerHTML =
@@ -1617,7 +1833,8 @@ body::before {
       document.getElementById('tdReadmeWrap').style.display = 'none';
       demoBox.innerHTML = '';
       try {
-        if (TOOL_DEMOS[repo]) TOOL_DEMOS[repo](demoBox);
+        var runDemo = (strat && strat.run) || TOOL_DEMOS[repo];
+        if (runDemo) runDemo(demoBox);
         else demoBox.innerHTML = dNote('No live demo wired for this tool yet — see the README tab.');
       } catch (err) {
         demoBox.innerHTML = dNote('Demo error: ' + escapeHtml(err.message));
@@ -1692,8 +1909,8 @@ body::before {
         setTimeout(function() { btn.textContent = 'COPY'; }, 1500);
       });
     });
-    document.querySelectorAll('.strategy-cell[data-repo]').forEach(function(cell) {
-      cell.addEventListener('click', function() { openTool(cell.dataset.repo); });
+    document.querySelectorAll('.strategy-cell[data-strategy]').forEach(function(cell) {
+      cell.addEventListener('click', function() { openStrategy(cell.dataset.strategy); });
     });
     document.querySelectorAll('.chip[data-tcat]').forEach(function(chip) {
       chip.addEventListener('click', function() {
