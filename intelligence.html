@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intelligence &amp; Risk Engine — Escalation Index, Regime, CVaR, Trade Sizing | Nexxore</title>
+
+  <!-- GA -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6QGB2RQVP0"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-6QGB2RQVP0');</script>
+
+  <meta name="description" content="Nexxore Intelligence & Risk Engine: a live agent loop that turns geopolitical and on-chain triggers into an Escalation Index, market regime, CVaR circuit breaker, and Kelly-sized trades on real prediction markets.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://nexxore.xyz/intelligence">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%2305050D' stroke='%2300C8FF' stroke-width='4'/%3E%3Ctext x='50' y='62' text-anchor='middle' font-size='36' font-weight='800' font-family='system-ui' fill='%2300C8FF'%3ENX%3C/text%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ====================================================
+   NEXXORE INTELLIGENCE & RISK ENGINE
+   Escalation Index → Regime → CVaR → Kelly → Execution
+   ==================================================== */
+:root {
+  --bg: #060B12;
+  --bg2: #0B1220;
+  --surface: #0E1626;
+  --surface2: #121D30;
+  --border: rgba(138,180,255,0.12);
+  --border-hi: rgba(57,213,255,0.30);
+  --cyan: #39D5FF;
+  --green: #19E6C5;
+  --violet: #4F7CFF;
+  --gold: #F7B955;
+  --red: #FF5C5C;
+  --text: #F4F8FF;
+  --text-muted: #9FB0C7;
+  --text-dim: #6B7A93;
+  --display: 'Space Grotesk', sans-serif;
+  --body: 'Inter', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --radius: 3px;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { -webkit-font-smoothing:antialiased; }
+body { background:var(--bg); color:var(--text); font-family:var(--body); font-size:14px; line-height:1.6; overflow-x:hidden; }
+::selection { background:rgba(0,200,255,0.15); }
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border-hi); border-radius:3px; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+@keyframes nodeGlow { 0%{box-shadow:0 0 0 rgba(57,213,255,0)} 50%{box-shadow:0 0 18px rgba(57,213,255,0.35)} 100%{box-shadow:0 0 0 rgba(57,213,255,0)} }
+
+.header {
+  position:fixed; top:0; left:0; right:0; z-index:500; height:52px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 24px; background:rgba(5,5,13,0.85); backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.header-left { display:flex; align-items:center; gap:14px; }
+.logo { display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--text); font-family:var(--display); font-weight:700; font-size:1rem; }
+.logo svg { width:28px; height:28px; }
+.product-tag {
+  padding:3px 8px; border-radius:var(--radius); background:rgba(0,200,255,0.08);
+  border:1px solid rgba(0,200,255,0.15); font-family:var(--mono); font-size:0.6rem;
+  color:var(--cyan); letter-spacing:0.5px; text-transform:uppercase;
+}
+.header-right { display:flex; align-items:center; gap:8px; }
+.header-btn {
+  display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:var(--radius);
+  background:var(--surface); border:1px solid var(--border); color:var(--text-muted);
+  font-size:0.7rem; font-weight:500; font-family:var(--body); cursor:pointer;
+  text-decoration:none; transition:all 0.15s;
+}
+.header-btn:hover { border-color:var(--border-hi); color:var(--text); }
+.header-btn.on { color:var(--green); border-color:rgba(25,230,197,0.3); }
+.header-btn .dot { width:6px; height:6px; border-radius:50%; background:var(--text-dim); }
+.header-btn.on .dot { background:var(--green); animation:pulse 2s infinite; }
+
+.main { padding:68px 0 60px; }
+.container { max-width:1400px; margin:0 auto; padding:0 24px; }
+
+/* status bar */
+.status-bar {
+  display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+  padding:12px 16px; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); margin-bottom:14px;
+}
+.status-item { display:flex; align-items:center; gap:8px; }
+.status-item .lbl { font-family:var(--mono); font-size:0.55rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; }
+.status-item .val { font-family:var(--mono); font-size:0.95rem; font-weight:700; }
+.regime-badge {
+  font-family:var(--mono); font-size:0.6rem; font-weight:700; padding:3px 10px;
+  border-radius:2px; text-transform:uppercase; letter-spacing:0.5px;
+}
+.regime-badge.riskon { background:rgba(25,230,197,0.1); color:var(--green); border:1px solid rgba(25,230,197,0.25); }
+.regime-badge.transition { background:rgba(247,185,85,0.1); color:var(--gold); border:1px solid rgba(247,185,85,0.25); }
+.regime-badge.riskoff { background:rgba(255,92,92,0.1); color:var(--red); border:1px solid rgba(255,92,92,0.25); }
+.cycle-count { margin-left:auto; font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); }
+.cycle-count b { color:var(--cyan); }
+
+/* animated agent pipeline */
+.pipeline {
+  position:relative; display:flex; align-items:stretch; gap:0;
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:16px 18px 18px; margin-bottom:14px; overflow-x:auto;
+}
+.pipe-node { flex:1; min-width:120px; position:relative; text-align:center; padding:10px 8px; z-index:2; }
+.pipe-node .pn-icon {
+  width:34px; height:34px; margin:0 auto 7px; border-radius:50%;
+  background:var(--surface2); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center; font-size:0.85rem;
+  transition:all 0.25s; position:relative; z-index:2;
+}
+.pipe-node.active .pn-icon { border-color:var(--cyan); background:rgba(57,213,255,0.12); animation:nodeGlow 0.9s ease; }
+.pipe-node.done .pn-icon { border-color:rgba(25,230,197,0.4); }
+.pipe-node .pn-name { font-family:var(--display); font-size:0.66rem; font-weight:600; color:var(--text); }
+.pipe-node .pn-sub { font-family:var(--mono); font-size:0.52rem; color:var(--text-dim); margin-top:1px; min-height:14px; }
+.pipe-node.active .pn-name { color:var(--cyan); }
+.pipe-track {
+  position:absolute; top:33px; left:70px; right:70px; height:2px;
+  background:var(--border); z-index:1; border-radius:1px;
+}
+.pipe-packet {
+  position:absolute; top:-3px; width:8px; height:8px; border-radius:50%;
+  background:var(--cyan); box-shadow:0 0 10px var(--cyan);
+  left:0; transition:left 0.55s cubic-bezier(0.4,0,0.2,1); opacity:0;
+}
+.pipe-packet.show { opacity:1; }
+
+/* cards */
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.card-head { padding:12px 14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+.card-title { font-family:var(--display); font-size:0.78rem; font-weight:600; display:flex; align-items:center; gap:8px; }
+.badge { font-family:var(--mono); font-size:0.5rem; padding:2px 6px; border-radius:2px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; }
+.badge.live { background:rgba(25,230,197,0.1); color:var(--green); border:1px solid rgba(25,230,197,0.15); }
+.badge.sim { background:rgba(79,124,255,0.1); color:var(--violet); border:1px solid rgba(79,124,255,0.2); }
+.badge.gold { background:rgba(247,185,85,0.1); color:var(--gold); border:1px solid rgba(247,185,85,0.2); }
+.card-body { padding:14px; }
+.head-note { font-family:var(--mono); font-size:0.55rem; color:var(--text-dim); }
+
+/* escalation */
+.esc-top { display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+.esc-gauge { flex:0 0 220px; text-align:center; }
+.esc-gauge .gauge-note { font-family:var(--mono); font-size:0.52rem; color:var(--text-dim); margin-top:2px; }
+.esc-trend { flex:1; min-width:200px; }
+.trigger-item {
+  display:flex; align-items:center; gap:9px; padding:7px 10px; margin-bottom:5px;
+  background:var(--bg2); border-radius:var(--radius); border-left:2px solid var(--border);
+  cursor:default; transition:all 0.12s;
+}
+.trigger-item.simmable { cursor:pointer; }
+.trigger-item.simmable:hover { background:var(--surface2); }
+.trigger-item.off { opacity:0.45; }
+.trig-cat { font-family:var(--mono); font-size:0.48rem; font-weight:700; padding:2px 6px; border-radius:2px; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; }
+.trig-desc { flex:1; font-size:0.66rem; color:var(--text); line-height:1.35; }
+.trig-w { font-family:var(--mono); font-size:0.66rem; font-weight:700; }
+.trig-src { font-family:var(--mono); font-size:0.48rem; color:var(--text-dim); }
+
+/* controls */
+.ctl-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.ctl { flex:1; min-width:120px; }
+.ctl label { display:block; font-family:var(--mono); font-size:0.52rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:3px; }
+.ctl select, .ctl input {
+  width:100%; padding:7px 9px; background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--radius); color:var(--text); font-family:var(--mono); font-size:0.7rem; outline:none;
+}
+.ctl select:focus, .ctl input:focus { border-color:var(--cyan); }
+.ctl select option { background:var(--surface); }
+
+.stat-cells { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px; }
+.scell { padding:9px 11px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); }
+.scell .sl { font-family:var(--mono); font-size:0.5rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; }
+.scell .sv { font-family:var(--mono); font-size:0.95rem; font-weight:700; margin-top:1px; }
+.scell .ss { font-family:var(--mono); font-size:0.52rem; color:var(--text-dim); margin-top:1px; }
+.eq-canvas { width:100%; height:190px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); display:block; }
+
+/* signals */
+.signal-row { background:var(--bg2); border-radius:var(--radius); border-left:2px solid var(--border); padding:9px 12px; margin-bottom:6px; }
+.signal-row.hot { border-left-color:var(--green); }
+.sig-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+.sig-title { font-size:0.7rem; font-weight:500; color:var(--text); flex:1; min-width:180px; line-height:1.3; }
+.sig-cols { display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end; }
+.sig-col .k { font-family:var(--mono); font-size:0.48rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.3px; }
+.sig-col .v { font-family:var(--mono); font-size:0.72rem; font-weight:600; }
+.take-btn {
+  margin-left:auto; padding:5px 12px; border:none; border-radius:var(--radius);
+  background:var(--green); color:#000; font-size:0.62rem; font-weight:700;
+  font-family:var(--body); cursor:pointer; transition:filter 0.12s;
+}
+.take-btn:hover { filter:brightness(1.12); }
+.take-btn.held { background:var(--surface2); color:var(--text-dim); border:1px solid var(--border); cursor:default; }
+.side-pill { font-family:var(--mono); font-size:0.55rem; font-weight:700; padding:2px 7px; border-radius:2px; }
+.side-pill.yes { background:rgba(25,230,197,0.12); color:var(--green); }
+.side-pill.no { background:rgba(255,92,92,0.12); color:var(--red); }
+
+/* agent log + ledger */
+.agent-log {
+  background:var(--bg2); border-radius:var(--radius); font-family:var(--mono);
+  font-size:0.62rem; line-height:1.75; padding:12px; height:230px; overflow-y:auto; color:var(--text-muted);
+}
+.agent-log .ts { color:var(--text-dim); }
+.agent-log .st { font-weight:700; }
+.agent-log .st.sense { color:var(--cyan); } .agent-log .st.index { color:var(--gold); }
+.agent-log .st.regime { color:var(--violet); } .agent-log .st.guard { color:var(--red); }
+.agent-log .st.size { color:var(--green); } .agent-log .st.exec { color:var(--text); }
+.agent-log .hl { color:var(--green); font-weight:600; }
+.ledger-row { display:flex; align-items:center; gap:10px; padding:7px 10px; background:var(--bg2); border-radius:var(--radius); margin-bottom:5px; }
+.ledger-title { flex:1; font-size:0.65rem; color:var(--text); min-width:140px; line-height:1.3; }
+.ledger-meta { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); }
+.ledger-pnl { font-family:var(--mono); font-size:0.7rem; font-weight:700; }
+.close-btn { background:none; border:1px solid var(--border); border-radius:2px; color:var(--text-dim); font-size:0.6rem; padding:2px 7px; cursor:pointer; }
+.close-btn:hover { border-color:var(--red); color:var(--red); }
+
+.section-note { font-size:0.62rem; color:var(--text-dim); line-height:1.6; margin-top:10px; }
+.section-note b { color:var(--text-muted); }
+
+.page-footer { padding:20px 0; border-top:1px solid var(--border); margin-top:26px; display:flex; justify-content:space-between; font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); }
+.page-footer a { color:var(--text-muted); text-decoration:none; }
+.page-footer a:hover { color:var(--cyan); }
+
+@media (max-width:1100px) {
+  .grid-2 { grid-template-columns:1fr; }
+  .stat-cells { grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:768px) {
+  .container { padding:0 12px; }
+  .header { padding:0 12px; }
+  .pipe-node { min-width:96px; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <a href="index.html" class="logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 90">
+        <defs><linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#00C8FF"/><stop offset="1" stop-color="#6B4FE8"/></linearGradient></defs>
+        <circle cx="38" cy="30" r="22" stroke="url(#lg)" stroke-width="4" fill="none" opacity="0.95"/>
+        <circle cx="62" cy="30" r="22" stroke="url(#lg)" stroke-width="4" fill="none" opacity="0.85"/>
+        <circle cx="50" cy="52" r="22" stroke="url(#lg)" stroke-width="4" fill="none" opacity="0.85"/>
+      </svg>
+      <span>nexxore</span>
+    </a>
+    <div class="product-tag">Intelligence &amp; Risk Engine</div>
+  </div>
+  <div class="header-right">
+    <a class="header-btn" href="predictions.html">Predictions</a>
+    <a class="header-btn" href="strategy-builder.html">Strategy Builder</a>
+    <button class="header-btn" id="autopilotBtn"><span class="dot"></span> Autopilot: OFF</button>
+    <button class="header-btn on" id="loopBtn"><span class="dot"></span> Loop: RUNNING</button>
+  </div>
+</header>
+
+<main class="main">
+  <div class="container">
+
+    <!-- always-visible status -->
+    <div class="status-bar">
+      <div class="status-item"><span class="lbl">Escalation Index</span><span class="val" id="sbIndex">—</span></div>
+      <span class="regime-badge riskon" id="sbRegime">—</span>
+      <div class="status-item"><span class="lbl">Exposure cap</span><span class="val" id="sbCap" style="font-size:0.8rem">—</span></div>
+      <div class="status-item"><span class="lbl">CVaR guard</span><span class="val" id="sbGuard" style="font-size:0.8rem;color:var(--green)">—</span></div>
+      <div class="status-item"><span class="lbl">Paper P&amp;L</span><span class="val" id="sbPnl" style="font-size:0.8rem">$0</span></div>
+      <span class="cycle-count" id="sbCycle">cycle <b>0</b> · next in <b>—</b></span>
+    </div>
+
+    <!-- animated agent pipeline -->
+    <div class="pipeline" id="pipeline">
+      <div class="pipe-track"><div class="pipe-packet" id="pipePacket"></div></div>
+      <div class="pipe-node" data-step="sense"><div class="pn-icon">&#9678;</div><div class="pn-name">Sense</div><div class="pn-sub" id="pnSense">—</div></div>
+      <div class="pipe-node" data-step="index"><div class="pn-icon">&#9650;</div><div class="pn-name">Escalation Index</div><div class="pn-sub" id="pnIndex">—</div></div>
+      <div class="pipe-node" data-step="regime"><div class="pn-icon">&#9672;</div><div class="pn-name">Regime</div><div class="pn-sub" id="pnRegime">—</div></div>
+      <div class="pipe-node" data-step="guard"><div class="pn-icon">&#9888;</div><div class="pn-name">CVaR Guard</div><div class="pn-sub" id="pnGuard">—</div></div>
+      <div class="pipe-node" data-step="size"><div class="pn-icon">&#931;</div><div class="pn-name">Kelly Sizing</div><div class="pn-sub" id="pnSize">—</div></div>
+      <div class="pipe-node" data-step="exec"><div class="pn-icon">&#9889;</div><div class="pn-name">Execute</div><div class="pn-sub" id="pnExec">—</div></div>
+    </div>
+
+    <div class="grid-2">
+      <!-- ESCALATION INDEX -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Escalation Index <span class="badge live">Live Triggers</span></div>
+          <span class="head-note">base 12 + weighted active triggers · 0 calm — 100 max</span>
+        </div>
+        <div class="card-body">
+          <div class="esc-top">
+            <div class="esc-gauge">
+              <div id="gaugeWrap"></div>
+              <div class="gauge-note">0 = calm &middot; 100 = maximum escalation</div>
+            </div>
+            <div class="esc-trend">
+              <div style="font-family:var(--mono);font-size:0.52rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">Index history — this session &amp; prior visits</div>
+              <div id="sparkWrap"></div>
+              <div class="section-note" style="margin-top:8px;">Live triggers are detected each cycle from real feeds: Polymarket repricings, Binance spot &amp; stablecoin pegs, and the whale tape. SIM triggers let you stress the pipeline by hand — flip one and watch regime, guard and sizing react.</div>
+            </div>
+          </div>
+          <div style="font-family:var(--mono);font-size:0.52rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">Active trigger sources</div>
+          <div id="triggerList"></div>
+        </div>
+      </div>
+
+      <!-- REGIME & CVAR -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Regime &amp; CVaR Circuit Breaker <span class="badge live">Real 180d History</span></div>
+          <span class="head-note" id="cvarSrc">Binance daily closes</span>
+        </div>
+        <div class="card-body">
+          <div class="ctl-row">
+            <div class="ctl"><label>Asset / strategy</label>
+              <select id="cvarAsset">
+                <option value="BTCUSDT">BTC</option>
+                <option value="ETHUSDT">ETH</option>
+                <option value="SOLUSDT">SOL</option>
+              </select>
+            </div>
+            <div class="ctl"><label>Confidence level</label>
+              <select id="cvarConf"><option value="90">90%</option><option value="95" selected>95%</option><option value="99">99%</option></select>
+            </div>
+            <div class="ctl"><label>Portfolio value ($)</label>
+              <input type="number" id="cvarPort" value="250000" min="1000" step="1000">
+            </div>
+          </div>
+          <div class="stat-cells">
+            <div class="scell"><div class="sl">VaR (<span id="confLbl">95</span>%)</div><div class="sv" style="color:var(--gold)" id="varVal">—</div><div class="ss" id="varUsd">—</div></div>
+            <div class="scell"><div class="sl">CVaR (tail avg)</div><div class="sv" style="color:var(--red)" id="cvarVal">—</div><div class="ss" id="cvarUsd">—</div></div>
+            <div class="scell"><div class="sl">Max drawdown 180d</div><div class="sv" id="ddVal">—</div><div class="ss">real, not simulated</div></div>
+            <div class="scell" id="breakerCell"><div class="sl">Circuit breaker 15% NAV</div><div class="sv" style="font-size:0.7rem;color:var(--green)" id="breakerVal">—</div><div class="ss" id="breakerSub">—</div></div>
+          </div>
+          <canvas class="eq-canvas" id="eqCanvas"></canvas>
+          <div class="section-note" id="regimeNote">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- SIGNAL SIZING -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Signal &rarr; Trade Sizing <span class="badge live">Real Markets</span></div>
+          <span class="head-note">min(Kelly, cap) &times; regime multiplier</span>
+        </div>
+        <div class="card-body">
+          <div class="ctl-row">
+            <div class="ctl"><label>Bankroll ($)</label><input type="number" id="szBankroll" value="25000" min="100" step="100"></div>
+            <div class="ctl"><label>Risk tolerance (Kelly cap)</label>
+              <select id="szTolerance">
+                <option value="0.10">Conservative (10%)</option>
+                <option value="0.25" selected>Moderate (25%)</option>
+                <option value="0.50">Aggressive (50%)</option>
+              </select>
+            </div>
+            <div class="ctl"><label>Regime multiplier</label><input id="szMult" value="—" disabled style="color:var(--cyan)"></div>
+          </div>
+          <div id="signalList"><div class="section-note">Loading live markets&hellip;</div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border-radius:var(--radius);padding:9px 13px;margin-top:10px;">
+            <span style="font-size:0.66rem;color:var(--text-muted)">Total recommended deployed capital</span>
+            <span style="font-family:var(--mono);font-size:0.85rem;font-weight:700" id="szTotal">—</span>
+          </div>
+          <div class="section-note">Model prob = market price tilted by 7-day momentum (a deliberately simple demo model — swap in your own). Sizing = min(full Kelly, tolerance cap) &times; regime exposure multiplier, with a boost when an active geopolitical trigger matches the market's category. The Escalation Index doesn't just display — it <b>mechanically shrinks or grows every stake below</b>.</div>
+        </div>
+      </div>
+
+      <!-- AGENT -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Agent Console <span class="badge sim">Paper Execution</span></div>
+          <span class="head-note">autopilot takes the top signal each cycle</span>
+        </div>
+        <div class="card-body">
+          <div style="font-family:var(--mono);font-size:0.52rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">Loop log</div>
+          <div class="agent-log" id="agentLog"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 6px;">
+            <span style="font-family:var(--mono);font-size:0.52rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.4px;">Paper ledger — marked to live odds</span>
+            <span style="font-family:var(--mono);font-size:0.62rem;" id="ledgerTotals">—</span>
+          </div>
+          <div id="ledgerList"><div class="section-note" style="margin-top:4px;">No paper positions yet — take a trade from the signals panel or enable Autopilot.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <div><a href="index.html">&larr; Home</a> &middot; Intelligence &amp; Risk Engine</div>
+      <div>Escalation &rarr; Regime &rarr; CVaR &rarr; Kelly &rarr; Execution &middot; &copy; 2026</div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  NEXXORE INTELLIGENCE & RISK ENGINE
+//  One connected pipeline: live triggers → Escalation Index →
+//  regime → CVaR circuit breaker → Kelly sizing → execution.
+// ═══════════════════════════════════════════════════════════
+var GAMMA = 'https://gamma-api.polymarket.com';
+var DATA_API = 'https://data-api.polymarket.com';
+var BINANCE = 'https://api.binance.com/api/v3';
+var BASE_INDEX = 12;
+var CYCLE_SECS = 45;
+
+var S = {
+  markets: [], returns: {}, btc24h: 0, whaleCount: 0, whaleUsd: 0, usdcDev: 0,
+  liveTriggers: [], index: BASE_INDEX, regime: null,
+  cvar: null, signals: [],
+  cycleN: 0, countdown: CYCLE_SECS, running: true, autopilot: false,
+  history: [], ledger: []
+};
+
+var SIM_EVENTS = [
+  { id: 's1', cat: 'GEOPOLITICAL', desc: 'Naval incident reported near Strait of Hormuz', weight: 14, active: false },
+  { id: 's2', cat: 'GEOPOLITICAL', desc: 'US–China chip export talks stall', weight: 11, active: false },
+  { id: 's3', cat: 'MACRO_INDICATOR', desc: 'FOMC holds rates, hawkish dot plot revision', weight: 7, active: false },
+  { id: 's4', cat: 'GEOPOLITICAL', desc: 'NATO statement on Baltic military exercises', weight: 6, active: false },
+  { id: 's5', cat: 'MACRO_INDICATOR', desc: 'Shipping congestion index (Baltic Dry) +12%', weight: 5, active: false },
+  { id: 's6', cat: 'ON_CHAIN_ANOMALY', desc: 'Whale wallet moves 40K ETH to a centralized exchange', weight: 6, active: false }
+];
+
+var CAT_COLOR = {
+  GEOPOLITICAL: 'var(--red)',
+  MACRO_INDICATOR: 'var(--gold)',
+  ON_CHAIN_ANOMALY: 'var(--cyan)',
+  PREDICTION_MARKET_EDGE: 'var(--violet)'
+};
+var MKT_CAT_MAP = { politics: 'GEOPOLITICAL', economy: 'MACRO_INDICATOR', crypto: 'ON_CHAIN_ANOMALY' };
+
+function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmt$(v, d) {
+  d = d || 0;
+  return (v < 0 ? '−$' : '$') + Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: d, minimumFractionDigits: d });
+}
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function nowTs() { var d = new Date(); return [d.getHours(), d.getMinutes(), d.getSeconds()].map(function(x){ return String(x).padStart(2,'0'); }).join(':'); }
+
+function categorize(t) {
+  var l = t.toLowerCase();
+  if (/president|election|congress|senate|tariff|war\b|ceasefire|nato|invasion|sanctions|geopolit|treaty|missile|nuclear|strait|military/.test(l)) return 'politics';
+  if (/fed\b|rate.cut|rate.hike|gdp|inflation|recession|cpi|jobs|payroll|treasury|oil|opec|debt.ceiling/.test(l)) return 'economy';
+  if (/bitcoin|btc|ethereum|eth|solana|sol|crypto|defi|stablecoin|etf/.test(l)) return 'crypto';
+  return 'other';
+}
+
+// ── data fetchers (all real, all CORS-open) ──
+function fetchMarkets() {
+  var urls = [
+    GAMMA + '/markets?active=true&closed=false&limit=100&order=volume24hr&ascending=false',
+    GAMMA + '/markets?active=true&closed=false&limit=100&order=liquidity&ascending=false'
+  ];
+  return Promise.allSettled(urls.map(function(u) { return fetch(u).then(function(r) { return r.json(); }); }))
+    .then(function(res) {
+      var seen = {}, out = [];
+      res.forEach(function(r) {
+        if (r.status !== 'fulfilled' || !Array.isArray(r.value)) return;
+        r.value.forEach(function(m) {
+          if (!m.id || seen[m.id] || !m.question) return;
+          seen[m.id] = 1;
+          var yp = 0.5;
+          try { yp = parseFloat(JSON.parse(m.outcomePrices)[0]) || 0.5; } catch (e) { if (m.lastTradePrice != null) yp = parseFloat(m.lastTradePrice); }
+          if (yp <= 0.02 || yp >= 0.98) return;
+          out.push({
+            id: m.id, title: m.question, cat: categorize(m.question),
+            p: yp, chg1d: m.oneDayPriceChange != null ? parseFloat(m.oneDayPriceChange) : null,
+            chg7d: m.oneWeekPriceChange != null ? parseFloat(m.oneWeekPriceChange) : null,
+            vol: parseFloat(m.volume || 0), vol24: parseFloat(m.volume24hr || 0),
+            liq: parseFloat(m.liquidityClob || m.liquidity || 0),
+            slug: m.slug || '', url: m.slug ? 'https://polymarket.com/market/' + m.slug : 'https://polymarket.com'
+          });
+        });
+      });
+      S.markets = out;
+      return out;
+    });
+}
+function fetchMacro() {
+  return Promise.allSettled([
+    fetch(BINANCE + '/ticker/24hr?symbol=BTCUSDT').then(function(r) { return r.json(); }),
+    fetch(BINANCE + '/ticker/price?symbol=USDCUSDT').then(function(r) { return r.json(); }),
+    fetch(DATA_API + '/trades?limit=100&takerOnly=true&filterType=CASH&filterAmount=50000').then(function(r) { return r.json(); })
+  ]).then(function(res) {
+    if (res[0].status === 'fulfilled') S.btc24h = parseFloat(res[0].value.priceChangePercent) || 0;
+    if (res[1].status === 'fulfilled') S.usdcDev = Math.abs(parseFloat(res[1].value.price) - 1);
+    if (res[2].status === 'fulfilled' && Array.isArray(res[2].value)) {
+      var hourAgo = Date.now() / 1000 - 3600;
+      var recent = res[2].value.filter(function(t) { return t.timestamp >= hourAgo; });
+      S.whaleCount = recent.length;
+      S.whaleUsd = recent.reduce(function(s, t) { return s + t.size * t.price; }, 0);
+    }
+  });
+}
+function fetchReturns(sym) {
+  if (S.returns[sym]) return Promise.resolve(S.returns[sym]);
+  return fetch(BINANCE + '/klines?symbol=' + sym + '&interval=1d&limit=181')
+    .then(function(r) { return r.json(); })
+    .then(function(kl) {
+      var closes = kl.map(function(k) { return parseFloat(k[4]); });
+      var rets = [];
+      for (var i = 1; i < closes.length; i++) rets.push(closes[i] / closes[i - 1] - 1);
+      S.returns[sym] = rets;
+      return rets;
+    });
+}
+
+// ── live trigger detection ──
+function detectTriggers() {
+  var trig = [];
+  var edge = S.markets.filter(function(m) { return m.chg1d != null && Math.abs(m.chg1d) >= 0.15 && m.vol > 50000; });
+  if (edge.length) trig.push({
+    cat: 'PREDICTION_MARKET_EDGE', weight: Math.min(4 + edge.length, 10), src: 'Polymarket',
+    desc: edge.length + ' market' + (edge.length > 1 ? 's' : '') + ' repriced ≥15pts in 24h — sharpest: “' + edge[0].title.slice(0, 44) + '…”'
+  });
+  var geo = S.markets.filter(function(m) { return m.cat === 'politics' && m.chg1d != null && Math.abs(m.chg1d) >= 0.08 && m.vol > 100000; });
+  if (geo.length) trig.push({
+    cat: 'GEOPOLITICAL', weight: Math.min(6 + geo.length * 2, 16), src: 'Polymarket',
+    desc: geo.length + ' geopolitical market' + (geo.length > 1 ? 's' : '') + ' moved ≥8pts — “' + geo[0].title.slice(0, 44) + '…”'
+  });
+  if (Math.abs(S.btc24h) >= 3) trig.push({
+    cat: 'MACRO_INDICATOR', weight: clamp(Math.round(Math.abs(S.btc24h) * 2), 4, 14), src: 'Binance',
+    desc: 'BTC spot ' + (S.btc24h >= 0 ? '+' : '') + S.btc24h.toFixed(1) + '% in 24h — volatility elevated'
+  });
+  if (S.whaleCount >= 3) trig.push({
+    cat: 'ON_CHAIN_ANOMALY', weight: clamp(2 + Math.round(S.whaleCount / 2), 3, 10), src: 'Polymarket tape',
+    desc: S.whaleCount + ' trades ≥$50K in the last hour (' + fmt$(S.whaleUsd) + ' total flow)'
+  });
+  if (S.usdcDev >= 0.003) trig.push({
+    cat: 'ON_CHAIN_ANOMALY', weight: clamp(Math.round(S.usdcDev * 3000), 8, 20), src: 'Binance',
+    desc: 'USDC peg deviation ' + (S.usdcDev * 100).toFixed(2) + '% — stablecoin stress'
+  });
+  S.liveTriggers = trig;
+  return trig;
+}
+
+function computeIndex() {
+  var live = S.liveTriggers.reduce(function(s, t) { return s + t.weight; }, 0);
+  var sim = SIM_EVENTS.filter(function(e) { return e.active; }).reduce(function(s, e) { return s + e.weight; }, 0);
+  S.index = clamp(BASE_INDEX + live + sim, 0, 100);
+  S.regime = S.index < 34
+    ? { label: 'Risk-On', cls: 'riskon', color: 'var(--green)', mult: 1.0 }
+    : S.index < 67
+      ? { label: 'Transition', cls: 'transition', color: 'var(--gold)', mult: 0.75 }
+      : { label: 'Risk-Off / Escalated', cls: 'riskoff', color: 'var(--red)', mult: 0.5 };
+}
+
+// ── escalation UI ──
+function renderGauge() {
+  var v = S.index, cx = 110, cy = 110, r = 90;
+  function xy(val) { var a = (-180 + (val / 100) * 180) * Math.PI / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; }
+  var segs = [[0, 34, 'var(--green)'], [34, 67, 'var(--gold)'], [67, 100, 'var(--red)']];
+  var needle = (-90 + (v / 100) * 180) * Math.PI / 180;
+  var nx = cx + (r - 8) * Math.sin(needle), ny = cy - (r - 8) * Math.cos(needle);
+  document.getElementById('gaugeWrap').innerHTML =
+    '<svg viewBox="0 0 220 130" width="100%" style="max-width:230px">' +
+    segs.map(function(s) {
+      var a = xy(s[0]), b = xy(s[1]);
+      return '<path d="M ' + a[0].toFixed(1) + ' ' + a[1].toFixed(1) + ' A ' + r + ' ' + r + ' 0 0 1 ' + b[0].toFixed(1) + ' ' + b[1].toFixed(1) + '" stroke="' + s[2] + '" stroke-width="13" fill="none" opacity="0.75"/>';
+    }).join('') +
+    '<line x1="' + cx + '" y1="' + cy + '" x2="' + nx.toFixed(1) + '" y2="' + ny.toFixed(1) + '" stroke="#F4F8FF" stroke-width="3" stroke-linecap="round" style="transition:all 0.6s"/>' +
+    '<circle cx="' + cx + '" cy="' + cy + '" r="6" fill="#F4F8FF"/>' +
+    '<text x="' + cx + '" y="' + (cy + 18) + '" text-anchor="middle" font-size="26" font-weight="700" font-family="IBM Plex Mono" fill="' + S.regime.color + '">' + v.toFixed(0) + '</text>' +
+    '</svg>';
+}
+function renderSpark() {
+  var data = S.history.map(function(h) { return h.v; });
+  if (data.length < 2) { document.getElementById('sparkWrap').innerHTML = '<div class="section-note">History builds as the loop runs.</div>'; return; }
+  var w = 300, h = 44;
+  var min = Math.min.apply(null, data), max = Math.max.apply(null, data);
+  var rng = Math.max(max - min, 4);
+  var pts = data.map(function(d, i) {
+    return ((i / (data.length - 1)) * w).toFixed(1) + ',' + (h - ((d - min) / rng) * (h - 4) - 2).toFixed(1);
+  }).join(' ');
+  document.getElementById('sparkWrap').innerHTML =
+    '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" height="' + h + '" preserveAspectRatio="none" style="background:var(--bg2);border:1px solid var(--border);border-radius:3px;">' +
+    '<polyline points="' + pts + '" fill="none" stroke="' + S.regime.color + '" stroke-width="1.75"/></svg>';
+}
+function renderTriggers() {
+  var el = document.getElementById('triggerList');
+  var html = S.liveTriggers.map(function(t) {
+    return '<div class="trigger-item" style="border-left-color:' + CAT_COLOR[t.cat] + '">' +
+      '<span class="trig-cat" style="background:color-mix(in srgb,' + CAT_COLOR[t.cat] + ' 12%, transparent);color:' + CAT_COLOR[t.cat] + '">' + t.cat.replace(/_/g, ' ') + '</span>' +
+      '<span class="trig-desc">' + esc(t.desc) + ' <span class="trig-src">&middot; live: ' + t.src + '</span></span>' +
+      '<span class="trig-w" style="color:' + CAT_COLOR[t.cat] + '">+' + t.weight + '</span></div>';
+  }).join('');
+  html += SIM_EVENTS.map(function(e) {
+    return '<div class="trigger-item simmable ' + (e.active ? '' : 'off') + '" data-sim="' + e.id + '" style="border-left-color:' + (e.active ? CAT_COLOR[e.cat] : 'var(--border)') + '">' +
+      '<input type="checkbox" ' + (e.active ? 'checked' : '') + ' style="accent-color:var(--violet)">' +
+      '<span class="trig-cat" style="background:rgba(79,124,255,0.1);color:var(--violet)">SIM &middot; ' + e.cat.replace(/_/g, ' ') + '</span>' +
+      '<span class="trig-desc">' + esc(e.desc) + '</span>' +
+      '<span class="trig-w" style="color:' + (e.active ? CAT_COLOR[e.cat] : 'var(--text-dim)') + '">+' + e.weight + '</span></div>';
+  }).join('');
+  el.innerHTML = html;
+  el.querySelectorAll('[data-sim]').forEach(function(row) {
+    row.addEventListener('click', function() {
+      var ev = SIM_EVENTS.filter(function(x) { return x.id === row.dataset.sim; })[0];
+      ev.active = !ev.active;
+      logLine('sense', 'SIM trigger ' + (ev.active ? '<span class="hl">armed</span>' : 'cleared') + ': ' + esc(ev.desc.slice(0, 48)));
+      recomputeAll();
+    });
+  });
+}
+
+// ── CVaR engine on real returns ──
+function computeCvar() {
+  var sym = document.getElementById('cvarAsset').value;
+  var conf = +document.getElementById('cvarConf').value;
+  var port = +document.getElementById('cvarPort').value || 250000;
+  return fetchReturns(sym).then(function(rets) {
+    var sorted = rets.slice().sort(function(a, b) { return a - b; });
+    var tailN = Math.max(1, Math.floor((1 - conf / 100) * sorted.length));
+    var VaR = -sorted[tailN - 1];
+    var CVaR = -(sorted.slice(0, tailN).reduce(function(s, v) { return s + v; }, 0) / tailN);
+    var nav = 100, peak = 100, maxDD = 0, breach = null, curve = [];
+    rets.forEach(function(r, i) {
+      nav *= 1 + r;
+      peak = Math.max(peak, nav);
+      var dd = (nav - peak) / peak;
+      if (dd < maxDD) maxDD = dd;
+      if (dd <= -0.15 && breach === null) breach = i + 1;
+      curve.push(nav);
+    });
+    S.cvar = { VaR: VaR, CVaR: CVaR, maxDD: maxDD, breach: breach, curve: curve, conf: conf, port: port, sym: sym };
+    renderCvar();
+  });
+}
+function renderCvar() {
+  var c = S.cvar;
+  if (!c) return;
+  document.getElementById('confLbl').textContent = c.conf;
+  document.getElementById('varVal').textContent = (c.VaR * 100).toFixed(2) + '%';
+  document.getElementById('varUsd').textContent = '≈ ' + fmt$(c.VaR * c.port) + ' / day';
+  document.getElementById('cvarVal').textContent = (c.CVaR * 100).toFixed(2) + '%';
+  document.getElementById('cvarUsd').textContent = '≈ ' + fmt$(c.CVaR * c.port) + ' tail day';
+  document.getElementById('ddVal').textContent = (c.maxDD * 100).toFixed(1) + '%';
+  var bv = document.getElementById('breakerVal'), bs = document.getElementById('breakerSub');
+  if (c.breach) {
+    bv.textContent = 'TRIPPED day ' + c.breach;
+    bv.style.color = 'var(--red)';
+    bs.textContent = 'deposits/withdrawals would pause';
+  } else {
+    bv.textContent = 'ACTIVE — no trip';
+    bv.style.color = 'var(--green)';
+    bs.textContent = 'no 15% NAV breach in 180d';
+  }
+  document.getElementById('sbGuard').textContent = c.breach ? 'TRIPPED' : 'CLEAR';
+  document.getElementById('sbGuard').style.color = c.breach ? 'var(--red)' : 'var(--green)';
+  document.getElementById('cvarSrc').textContent = c.sym.replace('USDT', '') + ' · 181 real Binance daily closes';
+  document.getElementById('regimeNote').innerHTML =
+    'Regime is currently <b>' + S.regime.label + '</b> (Escalation Index ' + S.index.toFixed(0) + '), capping recommended exposure at <b>' +
+    (S.regime.mult * 100).toFixed(0) + '%</b> of normal sizing. The curve above is <b>real ' + c.sym.replace('USDT', '') +
+    ' NAV over the last 180 days</b> — VaR and CVaR come from its actual return distribution, not a simulation.';
+  drawCurve();
+}
+function drawCurve() {
+  var canvas = document.getElementById('eqCanvas');
+  var dpr = window.devicePixelRatio || 1;
+  var W = canvas.clientWidth, H = 190;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  var data = S.cvar.curve;
+  var min = Math.min.apply(null, data), max = Math.max.apply(null, data);
+  var pad = { t: 10, b: 18, l: 40, r: 8 };
+  var X = function(i) { return pad.l + (W - pad.l - pad.r) * i / (data.length - 1); };
+  var Y = function(v) { return pad.t + (1 - (v - min) / (max - min || 1)) * (H - pad.t - pad.b); };
+  ctx.clearRect(0, 0, W, H);
+  ctx.font = '9px IBM Plex Mono';
+  for (var g = 0; g <= 3; g++) {
+    var v = min + (max - min) * g / 3;
+    ctx.strokeStyle = 'rgba(138,180,255,0.08)';
+    ctx.beginPath(); ctx.moveTo(pad.l, Y(v)); ctx.lineTo(W - pad.r, Y(v)); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.textAlign = 'right';
+    ctx.fillText(v.toFixed(0), pad.l - 5, Y(v) + 3);
+  }
+  ctx.strokeStyle = 'rgba(159,176,199,0.4)'; ctx.setLineDash([2, 3]);
+  ctx.beginPath(); ctx.moveTo(pad.l, Y(100)); ctx.lineTo(W - pad.r, Y(100)); ctx.stroke();
+  ctx.setLineDash([]);
+  if (S.cvar.breach) {
+    var bx = X(S.cvar.breach - 1);
+    ctx.strokeStyle = 'var(--red)';
+    ctx.strokeStyle = '#FF5C5C'; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(bx, pad.t); ctx.lineTo(bx, H - pad.b); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#FF5C5C'; ctx.textAlign = 'left';
+    ctx.fillText('breaker', bx + 4, pad.t + 9);
+  }
+  var col = S.regime.color === 'var(--green)' ? '#19E6C5' : S.regime.color === 'var(--gold)' ? '#F7B955' : '#FF5C5C';
+  ctx.strokeStyle = col; ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  data.forEach(function(v, i) { i ? ctx.lineTo(X(i), Y(v)) : ctx.moveTo(X(i), Y(v)); });
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.textAlign = 'center';
+  ctx.fillText('180 days ago', pad.l + 34, H - 5);
+  ctx.fillText('today', W - pad.r - 18, H - 5);
+}
+
+// ── Kelly sizing on real markets ──
+function computeSignals() {
+  var bankroll = +document.getElementById('szBankroll').value || 25000;
+  var cap = +document.getElementById('szTolerance').value;
+  var cands = S.markets
+    .filter(function(m) { return m.chg7d != null && m.vol24 > 20000 && m.p > 0.05 && m.p < 0.95; })
+    .sort(function(a, b) { return b.vol24 - a.vol24; })
+    .slice(0, 24);
+  var sigs = cands.map(function(m) {
+    var modelProb = clamp(m.p + (m.chg7d || 0) * 0.5, 0.02, 0.98);
+    var side = modelProb > m.p ? 'YES' : 'NO';
+    var q = side === 'YES' ? modelProb : 1 - modelProb;
+    var price = side === 'YES' ? m.p : 1 - m.p;
+    var b = (1 - price) / price;
+    var kelly = Math.max(0, (q * (b + 1) - 1) / b);
+    var trigCat = MKT_CAT_MAP[m.cat] || 'PREDICTION_MARKET_EDGE';
+    var boost = trigCat === 'GEOPOLITICAL' && S.index > 50 &&
+      (S.liveTriggers.some(function(t) { return t.cat === 'GEOPOLITICAL'; }) || SIM_EVENTS.some(function(e) { return e.active && e.cat === 'GEOPOLITICAL'; })) ? 1.1 : 1.0;
+    var frac = Math.min(kelly, cap) * S.regime.mult * boost;
+    return {
+      m: m, side: side, price: price, modelProb: modelProb,
+      edge: (q - price) * 100, kelly: kelly, frac: frac, boost: boost,
+      stake: bankroll * frac, trigCat: trigCat
+    };
+  }).filter(function(s) { return s.edge > 1; })
+    .sort(function(a, b) { return b.edge - a.edge; })
+    .slice(0, 6);
+  S.signals = sigs;
+  renderSignals();
+}
+function renderSignals() {
+  var el = document.getElementById('signalList');
+  document.getElementById('szMult').value = S.regime.mult.toFixed(2) + '× (' + S.regime.label + ')';
+  if (!S.signals.length) { el.innerHTML = '<div class="section-note">No signals clear the edge filter right now — the loop rescans every cycle.</div>'; document.getElementById('szTotal').textContent = '$0'; return; }
+  var held = {};
+  S.ledger.forEach(function(l) { if (!l.closed) held[l.id] = 1; });
+  el.innerHTML = S.signals.map(function(s, i) {
+    return '<div class="signal-row ' + (i === 0 ? 'hot' : '') + '">' +
+      '<div class="sig-top"><span class="sig-title">' + esc(s.m.title.slice(0, 78)) + '</span>' +
+      '<span class="trig-cat" style="background:color-mix(in srgb,' + CAT_COLOR[s.trigCat] + ' 12%, transparent);color:' + CAT_COLOR[s.trigCat] + '">' + s.trigCat.replace(/_/g, ' ') + '</span>' +
+      '<span class="side-pill ' + s.side.toLowerCase() + '">' + s.side + ' @ ' + Math.round(s.price * 100) + 'c</span></div>' +
+      '<div class="sig-cols">' +
+      '<div class="sig-col"><div class="k">Edge</div><div class="v" style="color:var(--green)">+' + s.edge.toFixed(1) + 'c</div></div>' +
+      '<div class="sig-col"><div class="k">Model prob</div><div class="v">' + (s.modelProb * 100).toFixed(0) + '%</div></div>' +
+      '<div class="sig-col"><div class="k">Full Kelly</div><div class="v">' + (s.kelly * 100).toFixed(1) + '%</div></div>' +
+      '<div class="sig-col"><div class="k">Capped &times; regime' + (s.boost > 1 ? ' &times; geo' : '') + '</div><div class="v" style="color:var(--cyan)">' + (s.frac * 100).toFixed(1) + '%</div></div>' +
+      '<div class="sig-col"><div class="k">Stake</div><div class="v" style="color:var(--violet);font-size:0.8rem">' + fmt$(s.stake) + '</div></div>' +
+      '<button class="take-btn ' + (held[s.m.id] ? 'held' : '') + '" data-i="' + i + '"' + (held[s.m.id] ? ' disabled' : '') + '>' + (held[s.m.id] ? 'HELD' : 'Take trade') + '</button>' +
+      '</div></div>';
+  }).join('');
+  document.getElementById('szTotal').textContent =
+    fmt$(S.signals.reduce(function(a, s) { return a + s.stake; }, 0)) +
+    ' / ' + fmt$(+document.getElementById('szBankroll').value || 25000);
+  el.querySelectorAll('.take-btn:not(.held)').forEach(function(btn) {
+    btn.addEventListener('click', function() { takeTrade(S.signals[+btn.dataset.i], false); });
+  });
+}
+
+// ── paper ledger ──
+function loadLedger() { try { S.ledger = JSON.parse(localStorage.getItem('nx_intel_ledger') || '[]'); } catch (e) { S.ledger = []; } }
+function saveLedger() { try { localStorage.setItem('nx_intel_ledger', JSON.stringify(S.ledger)); } catch (e) {} }
+function takeTrade(sig, auto) {
+  if (!sig) return;
+  if (S.ledger.some(function(l) { return l.id === sig.m.id && !l.closed; })) return;
+  S.ledger.unshift({
+    id: sig.m.id, title: sig.m.title, side: sig.side, entry: sig.price,
+    stake: Math.round(sig.stake), t: Date.now(), url: sig.m.url, auto: !!auto, closed: false
+  });
+  saveLedger();
+  logLine('exec', (auto ? '<span class="hl">AUTOPILOT</span> took ' : 'Manual take: ') + sig.side + ' “' + esc(sig.m.title.slice(0, 42)) + '…” ' + fmt$(sig.stake) + ' @ ' + Math.round(sig.price * 100) + 'c');
+  renderLedger();
+  renderSignals();
+}
+function markPrice(l) {
+  var m = S.markets.filter(function(x) { return x.id === l.id; })[0];
+  if (!m) return l.entry;
+  return l.side === 'YES' ? m.p : 1 - m.p;
+}
+function renderLedger() {
+  var el = document.getElementById('ledgerList');
+  var open = S.ledger.filter(function(l) { return !l.closed; });
+  var totalPnl = 0, totalStake = 0;
+  S.ledger.forEach(function(l) {
+    var cur = l.closed ? l.exit : markPrice(l);
+    l._pnl = l.stake * (cur / l.entry - 1);
+    if (!l.closed) { totalPnl += l._pnl; totalStake += l.stake; }
+    else totalPnl += l._pnl;
+  });
+  document.getElementById('sbPnl').textContent = fmt$(totalPnl);
+  document.getElementById('sbPnl').style.color = totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('ledgerTotals').innerHTML =
+    open.length + ' open · ' + fmt$(totalStake) + ' deployed · P&amp;L <b style="color:' + (totalPnl >= 0 ? 'var(--green)' : 'var(--red)') + '">' + fmt$(totalPnl) + '</b>';
+  if (!S.ledger.length) { el.innerHTML = '<div class="section-note" style="margin-top:4px;">No paper positions yet — take a trade from the signals panel or enable Autopilot.</div>'; return; }
+  el.innerHTML = S.ledger.slice(0, 12).map(function(l, i) {
+    var cur = l.closed ? l.exit : markPrice(l);
+    return '<div class="ledger-row" style="opacity:' + (l.closed ? 0.55 : 1) + '">' +
+      '<span class="side-pill ' + l.side.toLowerCase() + '">' + l.side + '</span>' +
+      '<a class="ledger-title" href="' + esc(l.url) + '" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text)">' + esc(l.title.slice(0, 52)) + '</a>' +
+      '<span class="ledger-meta">' + fmt$(l.stake) + ' @ ' + Math.round(l.entry * 100) + 'c → ' + Math.round(cur * 100) + 'c' + (l.auto ? ' · auto' : '') + (l.closed ? ' · closed' : '') + '</span>' +
+      '<span class="ledger-pnl" style="color:' + (l._pnl >= 0 ? 'var(--green)' : 'var(--red)') + '">' + fmt$(l._pnl) + '</span>' +
+      (l.closed ? '' : '<button class="close-btn" data-i="' + i + '">close</button>') +
+      '</div>';
+  }).join('');
+  el.querySelectorAll('.close-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var l = S.ledger[+btn.dataset.i];
+      l.closed = true; l.exit = markPrice(l);
+      saveLedger();
+      logLine('exec', 'Closed “' + esc(l.title.slice(0, 38)) + '…” at ' + Math.round(l.exit * 100) + 'c, P&amp;L <span class="hl">' + fmt$(l._pnl) + '</span>');
+      renderLedger();
+      renderSignals();
+    });
+  });
+}
+
+// ── log ──
+function logLine(stage, html) {
+  var log = document.getElementById('agentLog');
+  var div = document.createElement('div');
+  div.innerHTML = '<span class="ts">[' + nowTs() + ']</span> <span class="st ' + stage + '">[' + stage.toUpperCase() + ']</span> ' + html;
+  log.appendChild(div);
+  while (log.children.length > 120) log.removeChild(log.firstChild);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ── status + history ──
+function renderStatus() {
+  document.getElementById('sbIndex').textContent = S.index.toFixed(0);
+  document.getElementById('sbIndex').style.color = S.regime.color;
+  var rb = document.getElementById('sbRegime');
+  rb.textContent = S.regime.label;
+  rb.className = 'regime-badge ' + S.regime.cls;
+  document.getElementById('sbCap').textContent = (S.regime.mult * 100).toFixed(0) + '%';
+}
+function pushHistory() {
+  S.history.push({ t: Date.now(), v: S.index });
+  if (S.history.length > 200) S.history = S.history.slice(-200);
+  try { localStorage.setItem('nx_esc_history', JSON.stringify(S.history)); } catch (e) {}
+}
+function loadHistory() { try { S.history = JSON.parse(localStorage.getItem('nx_esc_history') || '[]'); } catch (e) { S.history = []; } }
+
+function recomputeAll() {
+  computeIndex();
+  renderStatus();
+  renderGauge();
+  renderSpark();
+  renderTriggers();
+  computeSignals();
+  if (S.cvar) renderCvar();
+  renderLedger();
+}
+
+// ── animated agent loop ──
+var STEPS = ['sense', 'index', 'regime', 'guard', 'size', 'exec'];
+function setNode(step, sub) {
+  var nodes = document.querySelectorAll('.pipe-node');
+  var idx = STEPS.indexOf(step);
+  nodes.forEach(function(n, i) {
+    n.classList.toggle('active', i === idx);
+    n.classList.toggle('done', i < idx);
+  });
+  var packet = document.getElementById('pipePacket');
+  packet.classList.add('show');
+  packet.style.left = (idx / (STEPS.length - 1) * 100) + '%';
+  if (sub != null) document.getElementById('pn' + step.charAt(0).toUpperCase() + step.slice(1)).textContent = sub;
+}
+function wait(ms) { return new Promise(function(res) { setTimeout(res, ms); }); }
+
+function runCycle() {
+  S.cycleN++;
+  var cyc = S.cycleN;
+  setNode('sense', 'scanning…');
+  logLine('sense', 'Cycle ' + cyc + ': scanning Polymarket, Binance, whale tape…');
+  return Promise.allSettled([fetchMarkets(), fetchMacro()]).then(function() {
+    detectTriggers();
+    setNode('sense', S.liveTriggers.length + ' live + ' + SIM_EVENTS.filter(function(e) { return e.active; }).length + ' sim');
+    logLine('sense', '<span class="hl">' + S.markets.length + ' markets</span> · ' + S.liveTriggers.length + ' live triggers · BTC 24h ' + (S.btc24h >= 0 ? '+' : '') + S.btc24h.toFixed(1) + '% · ' + S.whaleCount + ' whale trades/h');
+    return wait(650);
+  }).then(function() {
+    computeIndex();
+    pushHistory();
+    setNode('index', S.index.toFixed(0) + ' / 100');
+    logLine('index', 'Escalation Index → <span class="hl">' + S.index.toFixed(0) + '</span> (base ' + BASE_INDEX + ' + triggers)');
+    renderStatus(); renderGauge(); renderSpark(); renderTriggers();
+    return wait(650);
+  }).then(function() {
+    setNode('regime', S.regime.label);
+    logLine('regime', 'Regime: <span class="hl">' + S.regime.label + '</span> → exposure cap ' + (S.regime.mult * 100).toFixed(0) + '%');
+    return wait(650);
+  }).then(function() {
+    return computeCvar().then(function() {
+      var c = S.cvar;
+      setNode('guard', c.breach ? 'TRIPPED' : 'CVaR ' + (c.CVaR * 100).toFixed(1) + '%');
+      logLine('guard', c.sym.replace('USDT', '') + ' CVaR' + c.conf + ' <span class="hl">' + (c.CVaR * 100).toFixed(2) + '%</span> · maxDD ' + (c.maxDD * 100).toFixed(1) + '% · breaker ' + (c.breach ? '<b style="color:var(--red)">TRIPPED d' + c.breach + '</b>' : 'clear'));
+      return wait(650);
+    });
+  }).then(function() {
+    computeSignals();
+    var tot = S.signals.reduce(function(a, s) { return a + s.stake; }, 0);
+    setNode('size', S.signals.length + ' signals');
+    logLine('size', S.signals.length + ' signals clear the edge filter → <span class="hl">' + fmt$(tot) + '</span> recommended' + (S.signals.length ? ' · top: +' + S.signals[0].edge.toFixed(1) + 'c edge' : ''));
+    return wait(650);
+  }).then(function() {
+    var acted = false;
+    if (S.autopilot && S.signals.length && !(S.cvar && S.cvar.breach)) {
+      var top = S.signals.filter(function(s) { return s.stake >= 50 && !S.ledger.some(function(l) { return l.id === s.m.id && !l.closed; }); })[0];
+      if (top) { takeTrade(top, true); acted = true; }
+    }
+    setNode('exec', S.autopilot ? (acted ? 'trade taken' : 'holding') : 'manual mode');
+    if (!acted) logLine('exec', S.autopilot ? (S.cvar && S.cvar.breach ? 'Breaker tripped — <b style="color:var(--red)">standing down</b>' : 'No new position this cycle — holding') : 'Autopilot off — signals await manual take');
+    renderLedger();
+    document.querySelectorAll('.pipe-node').forEach(function(n) { n.classList.remove('active'); n.classList.add('done'); });
+    document.getElementById('pipePacket').classList.remove('show');
+  });
+}
+
+function tick() {
+  if (!S.running) return;
+  S.countdown--;
+  document.getElementById('sbCycle').innerHTML = 'cycle <b>' + S.cycleN + '</b> · next in <b>' + Math.max(S.countdown, 0) + 's</b>';
+  if (S.countdown <= 0) {
+    S.countdown = CYCLE_SECS;
+    runCycle();
+  }
+}
+
+// ── boot ──
+document.getElementById('autopilotBtn').addEventListener('click', function() {
+  S.autopilot = !S.autopilot;
+  this.classList.toggle('on', S.autopilot);
+  this.innerHTML = '<span class="dot"></span> Autopilot: ' + (S.autopilot ? 'ON' : 'OFF');
+  logLine('exec', 'Autopilot ' + (S.autopilot ? '<span class="hl">ENGAGED</span> — paper trades only, top signal per cycle' : 'disengaged'));
+});
+document.getElementById('loopBtn').addEventListener('click', function() {
+  S.running = !S.running;
+  this.classList.toggle('on', S.running);
+  this.innerHTML = '<span class="dot"></span> Loop: ' + (S.running ? 'RUNNING' : 'PAUSED');
+  logLine('sense', 'Loop ' + (S.running ? '<span class="hl">resumed</span>' : 'paused'));
+});
+['cvarAsset', 'cvarConf', 'cvarPort'].forEach(function(id) {
+  document.getElementById(id).addEventListener('change', function() { computeCvar(); });
+});
+['szBankroll', 'szTolerance'].forEach(function(id) {
+  document.getElementById(id).addEventListener('change', function() { computeSignals(); renderLedger(); });
+});
+window.addEventListener('resize', function() { if (S.cvar) drawCurve(); });
+
+loadHistory();
+loadLedger();
+logLine('sense', 'Intelligence &amp; Risk Engine online. Paper execution only — no real orders are sent from this page.');
+runCycle();
+setInterval(tick, 1000);
+</script>
+<script>
+document.querySelectorAll('a[href$=".html"]').forEach(function(link) {
+  var href = link.getAttribute('href');
+  if (!href) return;
+  var parts = href.split('#');
+  var cleaned = parts[0].replace(/\.html$/, '');
+  link.setAttribute('href', parts[1] ? cleaned + '#' + parts[1] : cleaned);
+});
+</script>
+</body>
+</html>
