@@ -18,7 +18,7 @@
   <meta name="twitter:site" content="@nexxore">
   <meta name="twitter:title" content="DeFi Strategy Analytics | Nexxore">
   <meta name="twitter:image" content="https://nexxore.xyz/assets/icons/og-image.png">
-  <meta name="theme-color" content="#05050D">
+  <meta name="theme-color" content="#060B12">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":["SoftwareApplication","WebApplication"],"name":"Nexxore Strategy Builder","url":"https://nexxore.xyz/strategy-builder","applicationCategory":"FinanceApplication","applicationSubCategory":"DeFi Strategy Analytics","operatingSystem":"Web Browser","description":"DeFi strategy analytics — model perpetual and options strategies with interactive payoff diagrams, real-time greeks, and risk analysis.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Perps + Options Strategy Modeling","Interactive Payoff Diagrams","Real-Time Greeks Calculator","Risk Analysis Dashboard","BTC/ETH/SOL Strategy Builder","One-Click Execution","Scenario Analysis","P&L Simulation"]}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Nexxore","item":"https://nexxore.xyz/"},{"@type":"ListItem","position":2,"name":"Strategy Builder","item":"https://nexxore.xyz/strategy-builder"}]}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://nexxore.xyz/#organization","name":"Nexxore","alternateName":["Nexxore DeFi","Nexxore Analytics","NEXXORE","nexxore","nexxore.xyz"],"url":"https://nexxore.xyz","logo":{"@type":"ImageObject","url":"https://nexxore.xyz/assets/icons/og-image.png","width":1200,"height":630},"image":"https://nexxore.xyz/assets/icons/og-image.png","description":"Nexxore is the institutional-grade DeFi risk analytics platform for crypto traders and funds.","foundingDate":"2025","sameAs":["https://x.com/nexxore","https://github.com/ayush101098/nexxore-"],"knowsAbout":["DeFi Risk Analytics","Perpetual Futures Funding Rates","Crypto Trading Risk Tools","Delta-Neutral Trading","On-Chain Analytics","Market Regime Detection"]}</script>
@@ -40,12 +40,12 @@
        VARIABLES & RESETS
        ═══════════════════════════════════ */
     :root {
-      --bg: #05050D; --bg-panel: #080812; --bg-card: #0C0C1A;
-      --bg-hover: #10102A; --bg-input: #0A0A18;
-      --border: rgba(255,255,255,0.06); --border-h: rgba(255,255,255,0.12);
-      --cyan: #00C8FF; --green: #00E87A; --red: #FF3D5A;
-      --violet: #6B4FE8; --gold: #E8A020; --orange: #FF8C00;
-      --t1: rgba(255,255,255,0.92); --t2: rgba(255,255,255,0.60); --t3: rgba(255,255,255,0.35);
+      --bg: #060B12; --bg-panel: #0B1220; --bg-card: #0E1626;
+      --bg-hover: #121D30; --bg-input: #09101D;
+      --border: rgba(138,180,255,0.12); --border-h: rgba(57,213,255,0.30);
+      --cyan: #39D5FF; --green: #19E6C5; --red: #FF5C5C;
+      --violet: #4F7CFF; --gold: #F7B955; --orange: #F7931A;
+      --t1: #F4F8FF; --t2: #9FB0C7; --t3: #6B7A93;
       --mono: 'JetBrains Mono', monospace; --sans: 'Inter', -apple-system, sans-serif;
       --display: 'Space Grotesk', sans-serif;
     }
@@ -179,6 +179,65 @@
       position:absolute; top:8px; left:10px; font-size:0.6rem; font-family:var(--mono);
       color:var(--t3); text-transform:uppercase; letter-spacing:1px;
     }
+    .payoff-legend { display:flex; gap:12px; font-family:var(--mono); font-size:0.58rem; font-weight:400; text-transform:none; letter-spacing:0; }
+    .payoff-legend .lg-exp { color:var(--t1); }
+    .payoff-legend .lg-now { color:var(--cyan); }
+
+    /* ═══════════ STRATEGY SANDBOX ═══════════ */
+    .sb-leg {
+      background:var(--bg-card); border:1px solid var(--border); border-radius:6px;
+      padding:8px 10px; margin-bottom:6px;
+    }
+    .sb-leg-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:7px; }
+    .sb-leg-id { display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:0.7rem; color:var(--t1); }
+    .sb-side-btn {
+      background:transparent; border:1px solid var(--green); color:var(--green);
+      border-radius:4px; font-size:0.58rem; font-weight:700; padding:2px 8px;
+      cursor:pointer; font-family:var(--sans); letter-spacing:0.05em;
+    }
+    .sb-side-btn.short { border-color:var(--red); color:var(--red); }
+    .sb-leg-fields { display:flex; gap:6px; flex-wrap:wrap; }
+    .sb-field { flex:1; min-width:56px; }
+    .sb-field label { display:block; font-size:0.5rem; color:var(--t3); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:2px; }
+    .sb-field input {
+      width:100%; background:var(--bg-input); border:1px solid var(--border); border-radius:4px;
+      color:var(--t1); font-family:var(--mono); font-size:0.66rem; padding:4px 6px; outline:none;
+    }
+    .sb-field input:focus { border-color:var(--cyan); }
+    .sb-field .sb-ro { font-family:var(--mono); font-size:0.66rem; color:var(--t2); padding:4px 0; }
+    .sb-mini-btns { display:flex; gap:4px; }
+    .sb-mini-btn {
+      background:transparent; border:1px solid var(--violet); color:var(--violet);
+      border-radius:4px; font-size:0.58rem; padding:2px 7px; cursor:pointer; font-family:var(--mono);
+    }
+    .sb-mini-btn:hover { background:rgba(79,124,255,0.1); }
+
+    .scenario-panel { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:12px; }
+    .scenario-row { display:flex; gap:20px; flex-wrap:wrap; }
+    .scn-slider { flex:1; min-width:170px; }
+    .scn-slider-head { display:flex; justify-content:space-between; margin-bottom:4px; }
+    .scn-slider-head .lbl { font-size:0.56rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); font-weight:600; }
+    .scn-slider-head .val { font-family:var(--mono); font-size:0.66rem; color:var(--cyan); }
+    .scn-slider input[type=range] { width:100%; accent-color:var(--violet); height:4px; }
+    .scenario-note { margin-top:9px; font-size:0.6rem; color:var(--t3); line-height:1.5; }
+
+    .sb-metric { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); }
+    .sb-metric:last-of-type { border-bottom:none; }
+    .sb-metric .m-lbl { font-size:0.66rem; color:var(--t2); }
+    .sb-metric .m-val { font-family:var(--mono); font-size:0.7rem; font-weight:600; color:var(--t1); }
+    .sb-panel-note { font-size:0.56rem; color:var(--t3); margin-top:8px; line-height:1.5; }
+    .sandbox-chip {
+      background:rgba(247,185,85,0.1); border:1px solid var(--gold); color:var(--gold);
+      font-size:0.52rem; font-weight:700; letter-spacing:0.08em; border-radius:4px;
+      padding:2px 7px; font-family:var(--mono);
+    }
+    .sb-exec-disabled {
+      width:100%; margin-top:10px; background:var(--bg-card); border:1px dashed var(--t3);
+      color:var(--t3); border-radius:6px; padding:9px 0; font-size:0.68rem;
+      font-family:var(--sans); font-weight:600; cursor:not-allowed;
+    }
+    .greek-item .value.pos { color:var(--green); }
+    .greek-item .value.neg { color:var(--red); }
 
     /* ═══════════ OPTIONS CHAIN ═══════════ */
     .chain-controls { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
@@ -418,16 +477,21 @@
       </div>
 
       <div class="panel-section">
-        <div class="section-head">Strategy Legs <span class="badge" id="legCount">0</span></div>
+        <div class="section-head">Strategy Legs <span class="badge" id="legCount">0</span>
+          <span class="sb-mini-btns">
+            <button class="sb-mini-btn" onclick="addOptionLeg('call')">+ Call</button>
+            <button class="sb-mini-btn" onclick="addOptionLeg('put')">+ Put</button>
+            <button class="sb-mini-btn" onclick="addPerpLeg()">+ Perp</button>
+          </span>
+        </div>
         <div id="legsContainer"></div>
-        <button class="add-leg-btn" onclick="addManualLeg()">+ Add Leg</button>
       </div>
 
       <div class="panel-section">
         <div class="section-head">Net Greeks</div>
         <div class="greeks-bar">
           <div class="greek-item"><div class="symbol">Δ Delta</div><div class="value" id="gDelta">0</div></div>
-          <div class="greek-item"><div class="symbol">Γ Gamma</div><div class="value" id="gGamma">0</div></div>
+          <div class="greek-item"><div class="symbol">Γ ×10³</div><div class="value" id="gGamma">0</div></div>
           <div class="greek-item"><div class="symbol">Θ Theta</div><div class="value" id="gTheta">0</div></div>
           <div class="greek-item"><div class="symbol">ν Vega</div><div class="value" id="gVega">0</div></div>
         </div>
@@ -437,10 +501,30 @@
     <!-- CENTER PANEL: Payoff + Chain + Orderbook -->
     <div class="panel" style="border-right:1px solid var(--border);">
       <div class="panel-section">
-        <div class="section-head">Payoff Diagram</div>
+        <div class="section-head">Combined Payoff — Options + Perp
+          <span class="payoff-legend"><span class="lg-exp">— at horizon (<span id="horizonLbl">30</span>d)</span><span class="lg-now">-- T+<span id="dayFwdLbl">0</span>d mark</span></span>
+        </div>
         <div class="payoff-container">
-          <span class="payoff-label">P&L at Expiry</span>
-          <canvas id="payoffCanvas" height="260"></canvas>
+          <canvas id="payoffCanvas" height="280"></canvas>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-head">Scenario Controls</div>
+        <div class="scenario-panel">
+          <div class="scenario-row">
+            <div class="scn-slider">
+              <div class="scn-slider-head"><span class="lbl">Time forward</span><span class="val" id="scnTimeVal">T+0d</span></div>
+              <input type="range" id="scnTime" min="0" max="30" step="1" value="0">
+            </div>
+            <div class="scn-slider">
+              <div class="scn-slider-head"><span class="lbl">IV shift</span><span class="val" id="scnIvVal">+0%</span></div>
+              <input type="range" id="scnIv" min="-0.4" max="0.4" step="0.01" value="0">
+            </div>
+          </div>
+          <div class="scenario-note">
+            The dashed curve reprices every option with Black-Scholes at the shifted IV and remaining time; perp legs accrue funding at the live 8h rate &times; 3/day. Move both sliders to stress theta decay and vol crush before you commit capital.
+          </div>
         </div>
       </div>
 
@@ -482,6 +566,20 @@
 
     <!-- RIGHT PANEL: Trade Execution + Positions -->
     <div class="panel panel-right">
+      <div class="panel-section">
+        <div class="section-head">Risk Engine <span class="sandbox-chip">4,000-PATH MC</span></div>
+        <div id="riskEngineBody">
+          <div class="empty-state" style="padding:10px;">Add legs to run the engine.</div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-head">Strategy Summary <span class="sandbox-chip">SANDBOX — NO ORDERS SENT</span></div>
+        <div id="stratSummaryBody">
+          <div class="empty-state" style="padding:10px;">Summary appears with your first leg.</div>
+        </div>
+      </div>
+
       <div class="exec-tabs">
         <button class="exec-tab perp active" onclick="switchExecTab('perp')">⚡ Perp Trade</button>
         <button class="exec-tab option" onclick="switchExecTab('option')">◎ Option Strategy</button>
@@ -588,6 +686,7 @@ const ST = {
   ticker: {}, orderbook: { bids: [], asks: [] },
   marketInfo: {},
   nextId: 1, synthetic: false,
+  ivShift: 0, dayFwd: 0,
   perpSide: 'buy', perpLeverage: 10,
   walletAddress: null, walletConnected: false,
   deribitConnected: false, deribitCredentialId: null,
@@ -746,6 +845,8 @@ async function loadTicker() {
   pEl.className = 'ticker-val ' + (d.premium >= 0 ? 'pos' : 'neg');
 
   updatePerpSummary();
+  // flow the fresh spot/funding through the sandbox
+  if (ST.legs.length) { updateGreeks(); drawPayoff(); renderRisk(); }
 }
 
 async function loadOrderbook() {
@@ -939,24 +1040,71 @@ function renderLegs() {
   }
 
   c.innerHTML = ST.legs.map(leg => {
-    const icon = leg.type === 'perp' ? '⚡' : leg.type === 'call' ? '📈' : '📉';
-    const detail = leg.type === 'perp'
-      ? `${leg.size} @ Mkt`
-      : `${leg.strike} ${leg.type.toUpperCase()} × ${leg.qty}`;
-    return `<div class="leg-card">
-      <div class="leg-info">
-        <span>${icon}</span>
-        <span class="leg-side ${leg.side}">${leg.side.toUpperCase()}</span>
-        <span class="leg-type">${leg.type.toUpperCase()}</span>
-        <span class="leg-detail">${detail}</span>
+    const isPerp = leg.type === 'perp';
+    const sideColor = leg.side === 'buy' ? 'var(--green)' : 'var(--red)';
+    const name = isPerp ? 'PERP' : leg.type.toUpperCase() + ' ' + (leg.strike >= 1000 ? (leg.strike / 1000) + 'k' : leg.strike);
+    const fields = isPerp
+      ? `<div class="sb-field"><label>Qty</label><input type="number" step="0.1" min="0" value="${leg.qty}" onchange="updateLegField(${leg.id},'qty',this.value)"></div>
+         <div class="sb-field"><label>Entry</label><input type="number" value="${Math.round((leg.entry || sbSpot()) * 100) / 100}" onchange="updateLegField(${leg.id},'entry',this.value)"></div>
+         <div class="sb-field"><label>Mark</label><div class="sb-ro">$${fmt(sbSpot())}</div></div>`
+      : `<div class="sb-field"><label>Qty</label><input type="number" step="0.1" min="0" value="${leg.qty}" onchange="updateLegField(${leg.id},'qty',this.value)"></div>
+         <div class="sb-field"><label>Strike</label><input type="number" value="${leg.strike}" onchange="updateLegField(${leg.id},'strike',this.value)"></div>
+         <div class="sb-field"><label>DTE</label><input type="number" min="1" value="${leg.dte || 30}" onchange="updateLegField(${leg.id},'dte',this.value)"></div>
+         <div class="sb-field"><label>IV %</label><input type="number" min="1" value="${Math.round(legIv(leg) * 100)}" onchange="updateLegField(${leg.id},'iv',this.value)"></div>
+         <div class="sb-field"><label>Premium</label><div class="sb-ro">$${fmt(leg.entryPrem || 0)}</div></div>`;
+    return `<div class="sb-leg" style="border-left:3px solid ${sideColor};">
+      <div class="sb-leg-top">
+        <div class="sb-leg-id">
+          <button class="sb-side-btn ${leg.side === 'sell' ? 'short' : ''}" onclick="toggleLegSide(${leg.id})">${leg.side === 'buy' ? 'LONG' : 'SHORT'}</button>
+          <span>${name}</span>
+          ${!isPerp ? `<span style="color:var(--t3);font-size:0.6rem;">${leg.dte || 30}d</span>` : ''}
+        </div>
+        <button class="leg-remove" onclick="removeLeg(${leg.id})">✕</button>
       </div>
-      <button class="leg-remove" onclick="removeLeg(${leg.id})">✕</button>
+      <div class="sb-leg-fields">${fields}</div>
     </div>`;
   }).join('');
 
+  syncScenarioBounds();
   updateGreeks();
   drawPayoff();
+  renderRisk();
   renderOptionSummary();
+}
+
+function toggleLegSide(id) {
+  const leg = ST.legs.find(l => l.id === id);
+  if (!leg) return;
+  leg.side = leg.side === 'buy' ? 'sell' : 'buy';
+  renderLegs();
+}
+
+function updateLegField(id, field, value) {
+  const leg = ST.legs.find(l => l.id === id);
+  if (!leg) return;
+  const v = parseFloat(value);
+  if (!isFinite(v)) { renderLegs(); return; }
+  if (field === 'qty') leg.qty = Math.max(v, 0);
+  else if (field === 'entry') leg.entry = v > 0 ? v : sbSpot();
+  else if (field === 'strike') leg.strike = v > 0 ? v : leg.strike;
+  else if (field === 'dte') leg.dte = Math.max(Math.round(v), 1);
+  else if (field === 'iv') leg.iv = Math.max(v, 1) / 100;
+  // manual edits re-price the leg with Black-Scholes at current spot
+  if (leg.type !== 'perp' && (field === 'strike' || field === 'dte' || field === 'iv')) {
+    leg.entryPrem = bsPrice(sbSpot(), leg.strike, (leg.dte || 30) / 365, 0, legIv(leg), leg.type === 'call');
+    leg.mark = leg.entryPrem;
+  }
+  renderLegs();
+}
+
+function syncScenarioBounds() {
+  const h = sbHorizon();
+  const t = document.getElementById('scnTime');
+  t.max = h;
+  if (ST.dayFwd > h) { ST.dayFwd = h; t.value = h; }
+  document.getElementById('horizonLbl').textContent = h;
+  document.getElementById('dayFwdLbl').textContent = ST.dayFwd;
+  document.getElementById('scnTimeVal').textContent = 'T+' + ST.dayFwd + 'd';
 }
 
 function renderOptionSummary() {
@@ -1003,27 +1151,15 @@ function renderOptionSummary() {
 }
 
 function computePayoffStats() {
-  const optLegs = ST.legs.filter(l => l.type !== 'perp');
-  if (optLegs.length === 0) return { maxProfit: 0, maxLoss: 0, breakevens: [] };
-
-  const lo = ST.spot * 0.5, hi = ST.spot * 1.5;
+  if (ST.legs.length === 0) return { maxProfit: 0, maxLoss: 0, breakevens: [] };
+  const spot = sbSpot(), horizon = sbHorizon();
+  const lo = spot * 0.5, hi = spot * 1.5;
   let maxProfit = -Infinity, maxLoss = -Infinity;
   const breakevens = [];
   let prevPnl = null;
-
-  for (let px = lo; px <= hi; px += (hi - lo) / 500) {
-    let pnl = 0;
-    for (const leg of optLegs) {
-      const price = leg.side === 'buy' ? (leg.ask || leg.mark || 0) : (leg.bid || leg.mark || 0);
-      let legPnl;
-      if (leg.type === 'call') {
-        legPnl = Math.max(0, px - leg.strike) - price;
-      } else {
-        legPnl = Math.max(0, leg.strike - px) - price;
-      }
-      if (leg.side === 'sell') legPnl = -legPnl;
-      pnl += legPnl * leg.qty;
-    }
+  for (let i = 0; i <= 500; i++) {
+    const px = lo + ((hi - lo) * i) / 500;
+    const pnl = stackPnl(px, horizon, ST.ivShift);
     if (pnl > maxProfit) maxProfit = pnl;
     if (-pnl > maxLoss) maxLoss = -pnl;
     if (prevPnl !== null && ((prevPnl < 0 && pnl >= 0) || (prevPnl >= 0 && pnl < 0))) {
@@ -1031,7 +1167,6 @@ function computePayoffStats() {
     }
     prevPnl = pnl;
   }
-
   return { maxProfit: Math.max(0, maxProfit), maxLoss: Math.max(0, maxLoss), breakevens };
 }
 
@@ -1074,12 +1209,16 @@ function addLegFromChain(type, side, strike) {
   const opt = row[type];
   if (!opt) return;
 
+  // entry premium from the real quote: pay the ask when buying, receive the bid when selling
+  const prem = parseFloat(side === 'buy' ? (opt.ask || opt.mark) : (opt.bid || opt.mark)) ||
+    bsPrice(sbSpot(), strike, (opt.dte || 30) / 365, 0, sbIvBase(), type === 'call');
+
   ST.legs.push({
     id: ST.nextId++, type, side, strike,
-    qty: 1, expiry: opt.expiry, dte: opt.dte,
+    qty: 1, expiry: opt.expiry, dte: opt.dte || 30,
+    entryPrem: prem,
     mark: opt.mark, bid: opt.bid, ask: opt.ask,
-    iv: opt.iv, delta: opt.delta, gamma: opt.gamma,
-    theta: opt.theta, vega: opt.vega,
+    iv: parseFloat(opt.iv) > 3 ? parseFloat(opt.iv) / 100 : (parseFloat(opt.iv) || sbIvBase()),
     instrument: opt.instrument
   });
 
@@ -1087,15 +1226,48 @@ function addLegFromChain(type, side, strike) {
   renderLegs();
 }
 
-function addManualLeg() {
-  // Add a perp leg at current market
-  ST.legs.push({
-    id: ST.nextId++, type: 'perp', side: 'buy',
-    strike: ST.spot, qty: 1, size: 0.01,
-    mark: ST.spot, bid: ST.spot, ask: ST.spot,
-    delta: 1, gamma: 0, theta: 0, vega: 0
-  });
-  toast('Added PERP leg', 'info', 2000);
+// snap an option leg to the live chain when it's loaded, else model it with BS
+function mkOptionLeg(type, side, strikeMult, ivMult) {
+  const S = sbSpot();
+  const target = S * strikeMult;
+  if (ST.chain && ST.chain.length) {
+    let best = null, dist = Infinity;
+    for (const r of ST.chain) {
+      if (!r[type]) continue;
+      const d = Math.abs(r.strike - target);
+      if (d < dist) { dist = d; best = r; }
+    }
+    if (best) {
+      const opt = best[type];
+      const prem = parseFloat(side === 'buy' ? (opt.ask || opt.mark) : (opt.bid || opt.mark));
+      const iv = parseFloat(opt.iv) > 3 ? parseFloat(opt.iv) / 100 : (parseFloat(opt.iv) || sbIvBase());
+      return {
+        id: ST.nextId++, type, side, strike: best.strike, qty: 1,
+        dte: opt.dte || 30, expiry: opt.expiry, iv,
+        entryPrem: isFinite(prem) && prem > 0 ? prem : bsPrice(S, best.strike, (opt.dte || 30) / 365, 0, iv, type === 'call'),
+        mark: opt.mark, bid: opt.bid, ask: opt.ask, instrument: opt.instrument
+      };
+    }
+  }
+  const strike = sbRoundStrike(target);
+  const iv = sbIvBase() * (ivMult || 1);
+  const prem = bsPrice(S, strike, 30 / 365, 0, iv, type === 'call');
+  return { id: ST.nextId++, type, side, strike, qty: 1, dte: 30, iv, entryPrem: prem, mark: prem };
+}
+
+function mkPerpLeg(side, qty) {
+  return { id: ST.nextId++, type: 'perp', side, qty: qty || 1, entry: sbSpot() };
+}
+
+function addOptionLeg(type) {
+  ST.legs.push(mkOptionLeg(type, 'buy', 1, 1));
+  toast('Added ' + type.toUpperCase() + ' leg', 'info', 1500);
+  renderLegs();
+}
+
+function addPerpLeg() {
+  ST.legs.push(mkPerpLeg('buy', 1));
+  toast('Added PERP leg', 'info', 1500);
   renderLegs();
 }
 
@@ -1115,19 +1287,27 @@ function clearLegs() {
 //  GREEKS CALCULATION
 // ═══════════════════════════════════════════════════
 function updateGreeks() {
+  // live net Greeks under the current scenario: repriced with BS at shifted IV / remaining time
+  const S = sbSpot();
   let d = 0, g = 0, t = 0, v = 0;
   for (const leg of ST.legs) {
-    const sign = leg.side === 'buy' ? 1 : -1;
-    const qty = leg.qty || 1;
-    d += (leg.delta || 0) * sign * qty;
-    g += (leg.gamma || 0) * sign * qty;
-    t += (leg.theta || 0) * sign * qty;
-    v += (leg.vega || 0) * sign * qty;
+    const sign = legSideSign(leg), qty = leg.qty || 1;
+    if (leg.type === 'perp') { d += sign * qty; continue; }
+    const gr = bsGreeks(S, leg.strike, Math.max((leg.dte || 30) - ST.dayFwd, 0.02) / 365, legIv(leg) * (1 + ST.ivShift), leg.type === 'call');
+    d += sign * qty * gr.delta;
+    g += sign * qty * gr.gamma;
+    t += sign * qty * gr.theta;
+    v += sign * qty * gr.vega;
   }
-  document.getElementById('gDelta').textContent = d.toFixed(4);
-  document.getElementById('gGamma').textContent = g.toFixed(6);
-  document.getElementById('gTheta').textContent = t.toFixed(2);
-  document.getElementById('gVega').textContent = v.toFixed(2);
+  const set = (id, val, dec) => {
+    const el = document.getElementById(id);
+    el.textContent = (val > 0 ? '+' : '') + val.toFixed(dec);
+    el.className = 'value ' + (Math.abs(val) < 1e-6 ? '' : val > 0 ? 'pos' : 'neg');
+  };
+  set('gDelta', d, 3);
+  set('gGamma', g * 1000, 3); // ×10³ for readability
+  set('gTheta', t, 1);
+  set('gVega', v, 1);
 }
 
 // ═══════════════════════════════════════════════════
@@ -1150,6 +1330,168 @@ function bsPrice(S,K,T,r,iv,isCall) {
 }
 
 // ═══════════════════════════════════════════════════
+//  STRATEGY SANDBOX CORE
+//  One leg stack → one payoff → one risk engine.
+//  Pricing: Black-76-style BS (r=0). Risk: 4,000-path GBM MC.
+// ═══════════════════════════════════════════════════
+const SB_DEFAULTS = {
+  BTC: { spot: 109400, iv: 0.52, funding: 0.000082, step: 2000 },
+  ETH: { spot: 3920,  iv: 0.61, funding: 0.000104, step: 100 },
+  SOL: { spot: 176.4, iv: 0.78, funding: 0.000151, step: 5 }
+};
+function sbSpot() { return ST.spot > 0 ? ST.spot : SB_DEFAULTS[ST.asset].spot; }
+function sbIvBase() {
+  // ATM IV from the live chain when available, else per-asset default
+  if (ST.chain && ST.chain.length) {
+    let best = null, dist = Infinity;
+    for (const r of ST.chain) {
+      const d = Math.abs(r.strike - sbSpot());
+      if (d < dist) { dist = d; best = r; }
+    }
+    const iv = best && (parseFloat((best.call || {}).iv) || parseFloat((best.put || {}).iv));
+    if (iv > 1) return iv / 100;
+  }
+  return SB_DEFAULTS[ST.asset].iv;
+}
+function sbFunding() {
+  // 8h funding as a decimal; ticker delivers it in percent
+  const f = parseFloat(ST.funding && ST.funding.rate);
+  return isFinite(f) && f !== 0 ? f / 100 : SB_DEFAULTS[ST.asset].funding;
+}
+function sbRoundStrike(v) {
+  const step = SB_DEFAULTS[ST.asset].step;
+  return Math.max(Math.round(v / step) * step, step);
+}
+function nPdf(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+function bsGreeks(S, K, T, iv, isCall) {
+  if (T <= 1e-8 || iv <= 0) {
+    const itm = isCall ? S > K : S < K;
+    return { delta: itm ? (isCall ? 1 : -1) : 0, gamma: 0, theta: 0, vega: 0 };
+  }
+  const sq = iv * Math.sqrt(T);
+  const d1 = (Math.log(S / K) + 0.5 * iv * iv * T) / sq;
+  return {
+    delta: isCall ? N(d1) : N(d1) - 1,
+    gamma: nPdf(d1) / (S * sq),
+    theta: (-(S * nPdf(d1) * iv) / (2 * Math.sqrt(T))) / 365,
+    vega: (S * nPdf(d1) * Math.sqrt(T)) / 100
+  };
+}
+// deterministic normals so MC metrics don't flicker between renders
+function sbMakeNormals(n, seed) {
+  let s = seed || 7;
+  const rnd = () => ((s = (s * 1103515245 + 12345) % 2147483648) / 2147483648);
+  const out = [];
+  for (let i = 0; i < n; i += 2) {
+    const u = Math.max(rnd(), 1e-9), v = rnd();
+    const r = Math.sqrt(-2 * Math.log(u));
+    out.push(r * Math.cos(2 * Math.PI * v), r * Math.sin(2 * Math.PI * v));
+  }
+  return out;
+}
+const SB_NORMALS = sbMakeNormals(4000);
+
+function legSideSign(leg) { return leg.side === 'buy' ? 1 : -1; }
+function legIv(leg) {
+  let iv = parseFloat(leg.iv);
+  if (!isFinite(iv) || iv <= 0) iv = sbIvBase() * 100;
+  return iv > 3 ? iv / 100 : iv; // accept percent or decimal
+}
+// P&L of the whole stack at spot S, dayFwd days from now
+function stackPnl(S, dayFwd, ivShift) {
+  const f8 = sbFunding();
+  let pnl = 0;
+  for (const l of ST.legs) {
+    const sign = legSideSign(l), qty = l.qty || 1;
+    if (l.type === 'perp') {
+      const entry = l.entry || sbSpot();
+      pnl += sign * qty * (S - entry);
+      pnl -= sign * qty * entry * f8 * 3 * dayFwd; // 3 funding periods/day
+    } else {
+      const Trem = Math.max((l.dte || 30) - dayFwd, 0) / 365;
+      const v = bsPrice(S, l.strike, Trem, 0, legIv(l) * (1 + ivShift), l.type === 'call');
+      pnl += sign * qty * (v - (l.entryPrem || 0));
+    }
+  }
+  return pnl;
+}
+function sbHorizon() {
+  const dtes = ST.legs.filter(l => l.type !== 'perp').map(l => l.dte || 30);
+  const hasPerp = ST.legs.some(l => l.type === 'perp');
+  return Math.max.apply(null, dtes.concat([hasPerp ? 30 : 1]));
+}
+function fmtSign$(v, d) {
+  d = d || 0;
+  return (v < 0 ? '−$' : '$') + Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: d, minimumFractionDigits: d });
+}
+
+// 4,000-path GBM Monte Carlo over the strategy horizon
+function sbRisk() {
+  if (!ST.legs.length) return null;
+  const spot = sbSpot(), horizon = sbHorizon(), ivShift = ST.ivShift, f8 = sbFunding();
+  const lo = spot * 0.6, hi = spot * 1.4, NPTS = 201;
+  const pay = [];
+  for (let i = 0; i < NPTS; i++) pay.push(stackPnl(lo + ((hi - lo) * i) / (NPTS - 1), horizon, ivShift));
+  const slopeR = pay[NPTS - 1] - pay[NPTS - 2], slopeL = pay[1] - pay[0];
+  const maxP = Math.max.apply(null, pay), minP = Math.min.apply(null, pay);
+  const maxProfit = slopeR > 1 || slopeL < -1 ? Infinity : maxP;
+  const maxLoss = slopeR < -1 || slopeL > 1 ? -Infinity : minP;
+
+  let debit = 0, perpNotional = 0;
+  for (const l of ST.legs) {
+    if (l.type === 'perp') perpNotional += (l.qty || 1) * (l.entry || spot);
+    else debit += legSideSign(l) * (l.qty || 1) * (l.entryPrem || 0);
+  }
+  const capital = Math.max(Math.abs(debit) + perpNotional * 0.1, isFinite(minP) ? Math.abs(minP) : 0, 100);
+
+  const tau = horizon / 365, sig = sbIvBase() * (1 + ivShift);
+  const drift = -0.5 * sig * sig * tau, volT = sig * Math.sqrt(tau);
+  const pnls = SB_NORMALS.map(z => stackPnl(spot * Math.exp(drift + volT * z), horizon, ivShift));
+  const mean = pnls.reduce((s, v) => s + v, 0) / pnls.length;
+  const sd = Math.sqrt(pnls.reduce((s, v) => s + (v - mean) ** 2, 0) / pnls.length) || 1e-9;
+  const sorted = [...pnls].sort((x, y) => x - y);
+  const tail = sorted.slice(0, Math.floor(sorted.length * 0.05));
+  const cvar = tail.reduce((s, v) => s + v, 0) / tail.length;
+  const pop = pnls.filter(v => v > 0).length / pnls.length;
+  const sharpe = ((mean / capital) / (sd / capital)) * Math.sqrt(365 / horizon);
+
+  const fundDrag = ST.legs
+    .filter(l => l.type === 'perp')
+    .reduce((s, l) => s - legSideSign(l) * (l.qty || 1) * (l.entry || spot) * f8 * 3 * horizon, 0);
+
+  return { debit, maxProfit, maxLoss, capital, mean, sharpe, cvar, pop, fundDrag, perpNotional, horizon };
+}
+
+function sbMetricRow(label, val, color) {
+  return '<div class="sb-metric"><span class="m-lbl">' + label + '</span><span class="m-val" style="color:' + (color || 'var(--t1)') + '">' + val + '</span></div>';
+}
+
+function renderRisk() {
+  const risk = sbRisk();
+  const engine = document.getElementById('riskEngineBody');
+  const summary = document.getElementById('stratSummaryBody');
+  if (!risk) {
+    engine.innerHTML = '<div class="empty-state" style="padding:10px;">Add legs to run the engine.</div>';
+    summary.innerHTML = '<div class="empty-state" style="padding:10px;">Summary appears with your first leg.</div>';
+    return;
+  }
+  engine.innerHTML =
+    sbMetricRow('Expected P&L', fmtSign$(risk.mean), risk.mean >= 0 ? 'var(--green)' : 'var(--red)') +
+    sbMetricRow('Sharpe (ann.)', (risk.sharpe >= 0 ? '+' : '') + risk.sharpe.toFixed(2), risk.sharpe >= 1 ? 'var(--green)' : risk.sharpe >= 0 ? 'var(--gold)' : 'var(--red)') +
+    sbMetricRow('CVaR 95%', fmtSign$(risk.cvar), 'var(--red)') +
+    sbMetricRow('Prob. of profit', (risk.pop * 100).toFixed(1) + '%', risk.pop >= 0.5 ? 'var(--green)' : 'var(--gold)') +
+    sbMetricRow('Funding drag / ' + risk.horizon + 'd', fmtSign$(risk.fundDrag), risk.fundDrag >= 0 ? 'var(--green)' : 'var(--red)') +
+    '<div class="sb-panel-note">GBM at strategy IV over the ' + risk.horizon + 'd horizon. CVaR 95% = mean loss in the worst 5% of paths — the number the vault circuit breaker keys off.</div>';
+  summary.innerHTML =
+    sbMetricRow('Net ' + (risk.debit >= 0 ? 'debit' : 'credit'), fmtSign$(Math.abs(risk.debit)), risk.debit >= 0 ? 'var(--red)' : 'var(--green)') +
+    sbMetricRow('Max profit', risk.maxProfit === Infinity ? 'Unlimited' : fmtSign$(risk.maxProfit), 'var(--green)') +
+    sbMetricRow('Max loss', risk.maxLoss === -Infinity ? 'Unlimited' : fmtSign$(risk.maxLoss), 'var(--red)') +
+    sbMetricRow('Perp notional', fmtSign$(risk.perpNotional), 'var(--t1)') +
+    sbMetricRow('Est. capital req.', fmtSign$(risk.capital), 'var(--t1)') +
+    '<button class="sb-exec-disabled" disabled>Model estimates — execute below via the live panels</button>';
+}
+
+// ═══════════════════════════════════════════════════
 //  PAYOFF DIAGRAM
 // ═══════════════════════════════════════════════════
 function drawPayoff() {
@@ -1158,10 +1500,10 @@ function drawPayoff() {
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.parentElement.getBoundingClientRect();
   canvas.width = rect.width * dpr;
-  canvas.height = 260 * dpr;
-  canvas.style.height = '260px';
+  canvas.height = 280 * dpr;
+  canvas.style.height = '280px';
   ctx.scale(dpr, dpr);
-  const W = rect.width, H = 260;
+  const W = rect.width, H = 280;
 
   ctx.fillStyle = '#0C0C1A';
   ctx.fillRect(0, 0, W, H);
@@ -1174,121 +1516,121 @@ function drawPayoff() {
     return;
   }
 
-  const spot = ST.spot || 69000;
-  const pad = { t: 30, b: 30, l: 50, r: 20 };
-  const lo = spot * 0.7, hi = spot * 1.3;
-  const steps = 400;
-  const dx = (hi - lo) / steps;
+  const spot = sbSpot();
+  const horizon = sbHorizon();
+  const pad = { t: 16, b: 26, l: 56, r: 16 };
+  const lo = spot * 0.62, hi = spot * 1.38, NPTS = 141;
+  const xs = [];
+  for (let i = 0; i < NPTS; i++) xs.push(lo + ((hi - lo) * i) / (NPTS - 1));
 
-  // Calculate combined P&L at each price point
-  const points = [];
-  for (let i = 0; i <= steps; i++) {
-    const px = lo + i * dx;
-    let pnl = 0;
-    for (const leg of ST.legs) {
-      const sign = leg.side === 'buy' ? 1 : -1;
-      const qty = leg.qty || 1;
-      if (leg.type === 'perp') {
-        const entry = leg.mark || spot;
-        pnl += (px - entry) * (leg.size || 0.01) * sign;
-      } else {
-        const premium = leg.side === 'buy' ? (leg.ask || leg.mark || 0) : (leg.bid || leg.mark || 0);
-        let intrinsic;
-        if (leg.type === 'call') intrinsic = Math.max(0, px - leg.strike);
-        else intrinsic = Math.max(0, leg.strike - px);
-        pnl += (intrinsic - premium) * sign * qty;
-      }
-    }
-    points.push({ px, pnl });
-  }
+  // two curves: the expiry payoff at horizon, and today's mark at T+dayFwd
+  const expiry = xs.map(S => stackPnl(S, horizon, ST.ivShift));
+  const now = xs.map(S => stackPnl(S, ST.dayFwd, ST.ivShift));
 
-  const pnls = points.map(p => p.pnl);
-  const maxPnl = Math.max(...pnls, 0.01);
-  const minPnl = Math.min(...pnls, -0.01);
-  const range = Math.max(Math.abs(maxPnl), Math.abs(minPnl)) * 1.2;
+  let yMin = Math.min.apply(null, expiry.concat(now, [0]));
+  let yMax = Math.max.apply(null, expiry.concat(now, [0]));
+  const span = Math.max(yMax - yMin, 1);
+  yMin -= span * 0.08; yMax += span * 0.08;
 
-  const toX = px => pad.l + (px - lo) / (hi - lo) * (W - pad.l - pad.r);
-  const toY = pnl => pad.t + (range - pnl) / (2 * range) * (H - pad.t - pad.b);
+  const toX = s => pad.l + ((s - lo) / (hi - lo)) * (W - pad.l - pad.r);
+  const toY = p => pad.t + (1 - (p - yMin) / (yMax - yMin)) * (H - pad.t - pad.b);
   const zeroY = toY(0);
 
-  // Zero line
-  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  // grid + y labels
+  ctx.font = '9px JetBrains Mono';
+  for (let i = 0; i <= 4; i++) {
+    const p = yMin + ((yMax - yMin) * i) / 4;
+    const y = toY(p);
+    ctx.strokeStyle = 'rgba(138,180,255,0.08)';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.abs(p) >= 1000 ? (p / 1000).toFixed(1) + 'k' : p.toFixed(0), pad.l - 6, y + 3);
+  }
+  // x labels
+  ctx.textAlign = 'center';
+  for (let i = 0; i <= 6; i++) {
+    const s = lo + ((hi - lo) * i) / 6;
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fillText(s >= 1000 ? (s / 1000).toFixed(0) + 'k' : s.toFixed(0), toX(s), H - 8);
+  }
+
+  // gradient fills for the expiry curve vs zero
+  const fillCurve = (clipAbove) => {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, clipAbove ? 0 : zeroY, W, clipAbove ? zeroY : H - zeroY);
+    ctx.clip();
+    ctx.beginPath();
+    ctx.moveTo(toX(xs[0]), zeroY);
+    for (let i = 0; i < NPTS; i++) ctx.lineTo(toX(xs[i]), toY(expiry[i]));
+    ctx.lineTo(toX(xs[NPTS - 1]), zeroY);
+    ctx.closePath();
+    const g = clipAbove
+      ? ctx.createLinearGradient(0, pad.t, 0, zeroY)
+      : ctx.createLinearGradient(0, H - pad.b, 0, zeroY);
+    g.addColorStop(0, clipAbove ? 'rgba(25,230,197,0.28)' : 'rgba(255,92,92,0.28)');
+    g.addColorStop(1, clipAbove ? 'rgba(25,230,197,0.02)' : 'rgba(255,92,92,0.02)');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.restore();
+  };
+  fillCurve(true);
+  fillCurve(false);
+
+  // zero line
+  ctx.strokeStyle = 'rgba(159,176,199,0.5)';
   ctx.lineWidth = 1;
-  ctx.setLineDash([4, 4]);
+  ctx.setLineDash([1, 3]);
   ctx.beginPath(); ctx.moveTo(pad.l, zeroY); ctx.lineTo(W - pad.r, zeroY); ctx.stroke();
   ctx.setLineDash([]);
 
-  // Spot line
+  // expiry curve (solid white)
+  ctx.beginPath();
+  for (let i = 0; i < NPTS; i++) i ? ctx.lineTo(toX(xs[i]), toY(expiry[i])) : ctx.moveTo(toX(xs[i]), toY(expiry[i]));
+  ctx.strokeStyle = '#F4F8FF';
+  ctx.lineWidth = 1.8;
+  ctx.stroke();
+
+  // T+N mark curve (dashed cyan)
+  ctx.beginPath();
+  for (let i = 0; i < NPTS; i++) i ? ctx.lineTo(toX(xs[i]), toY(now[i])) : ctx.moveTo(toX(xs[i]), toY(now[i]));
+  ctx.strokeStyle = '#39D5FF';
+  ctx.lineWidth = 1.4;
+  ctx.setLineDash([5, 4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // spot marker
   const spotX = toX(spot);
-  ctx.strokeStyle = 'rgba(0,200,255,0.3)';
+  ctx.strokeStyle = '#F7B955';
+  ctx.lineWidth = 1;
   ctx.setLineDash([2, 3]);
   ctx.beginPath(); ctx.moveTo(spotX, pad.t); ctx.lineTo(spotX, H - pad.b); ctx.stroke();
   ctx.setLineDash([]);
+  ctx.fillStyle = '#F7B955';
+  ctx.textAlign = 'left';
+  ctx.fillText('spot', spotX + 4, pad.t + 9);
 
-  // Fill areas
-  ctx.beginPath();
-  ctx.moveTo(toX(points[0].px), zeroY);
-  for (const p of points) {
-    if (p.pnl >= 0) ctx.lineTo(toX(p.px), toY(p.pnl));
-    else ctx.lineTo(toX(p.px), zeroY);
-  }
-  ctx.lineTo(toX(points[points.length - 1].px), zeroY);
-  ctx.closePath();
-  const gGreen = ctx.createLinearGradient(0, pad.t, 0, zeroY);
-  gGreen.addColorStop(0, 'rgba(0,232,122,0.25)');
-  gGreen.addColorStop(1, 'rgba(0,232,122,0.02)');
-  ctx.fillStyle = gGreen;
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(toX(points[0].px), zeroY);
-  for (const p of points) {
-    if (p.pnl < 0) ctx.lineTo(toX(p.px), toY(p.pnl));
-    else ctx.lineTo(toX(p.px), zeroY);
-  }
-  ctx.lineTo(toX(points[points.length - 1].px), zeroY);
-  ctx.closePath();
-  const gRed = ctx.createLinearGradient(0, zeroY, 0, H - pad.b);
-  gRed.addColorStop(0, 'rgba(255,61,90,0.02)');
-  gRed.addColorStop(1, 'rgba(255,61,90,0.25)');
-  ctx.fillStyle = gRed;
-  ctx.fill();
-
-  // Main P&L line
-  ctx.beginPath();
-  for (let i = 0; i < points.length; i++) {
-    const x = toX(points[i].px), y = toY(points[i].pnl);
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  }
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Breakeven dots
-  for (let i = 1; i < points.length; i++) {
-    if ((points[i - 1].pnl < 0 && points[i].pnl >= 0) || (points[i - 1].pnl >= 0 && points[i].pnl < 0)) {
-      const x = toX(points[i].px);
+  // breakevens on the expiry curve
+  for (let i = 1; i < NPTS; i++) {
+    if ((expiry[i - 1] < 0) !== (expiry[i] < 0)) {
+      const t = expiry[i - 1] / (expiry[i - 1] - expiry[i]);
+      const be = xs[i - 1] + t * (xs[i] - xs[i - 1]);
+      const x = toX(be);
       ctx.beginPath();
-      ctx.arc(x, zeroY, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#E8A020';
+      ctx.arc(x, zeroY, 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = '#0B1220';
       ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.7)';
-      ctx.font = '9px JetBrains Mono';
+      ctx.strokeStyle = '#4F7CFF';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+      ctx.fillStyle = '#4F7CFF';
       ctx.textAlign = 'center';
-      ctx.fillText('$' + Math.round(points[i].px).toLocaleString(), x, zeroY - 10);
+      ctx.fillText(be >= 1000 ? (be / 1000).toFixed(1) + 'k' : be.toFixed(1), x, zeroY - 8);
     }
   }
-
-  // Axis labels
-  ctx.fillStyle = 'rgba(255,255,255,0.3)';
-  ctx.font = '9px JetBrains Mono';
-  ctx.textAlign = 'left';
-  ctx.fillText('+$' + fmt(range), 4, pad.t + 8);
-  ctx.fillText('-$' + fmt(range), 4, H - pad.b - 4);
-  ctx.textAlign = 'center';
-  ctx.fillText('$' + Math.round(lo).toLocaleString(), pad.l, H - 8);
-  ctx.fillText('SPOT $' + fmt(spot), spotX, H - 8);
-  ctx.fillText('$' + Math.round(hi).toLocaleString(), W - pad.r, H - 8);
 }
 
 // ═══════════════════════════════════════════════════
@@ -1523,41 +1865,26 @@ function switchExecTab(tab) {
 // ═══════════════════════════════════════════════════
 //  STRATEGY TEMPLATES
 // ═══════════════════════════════════════════════════
+// Unified templates — perp and option legs combine into one payoff.
+// Option strikes snap to the live Deribit chain when it's loaded.
 const TEMPLATES = [
-  { name: 'Covered Call', desc: 'Long asset + sell OTM call', bias: 'neutral', legs: (s) => [
-    { type: 'perp', side: 'buy', size: 0.01 },
-    { type: 'call', side: 'sell', strikeOffset: 0.05 }
-  ]},
-  { name: 'Protective Put', desc: 'Long asset + buy OTM put', bias: 'hedge', legs: (s) => [
-    { type: 'perp', side: 'buy', size: 0.01 },
-    { type: 'put', side: 'buy', strikeOffset: -0.05 }
-  ]},
-  { name: 'Bull Call Spread', desc: 'Buy ATM call + sell OTM call', bias: 'bullish', legs: (s) => [
-    { type: 'call', side: 'buy', strikeOffset: 0 },
-    { type: 'call', side: 'sell', strikeOffset: 0.05 }
-  ]},
-  { name: 'Bear Put Spread', desc: 'Buy ATM put + sell OTM put', bias: 'bearish', legs: (s) => [
-    { type: 'put', side: 'buy', strikeOffset: 0 },
-    { type: 'put', side: 'sell', strikeOffset: -0.05 }
-  ]},
-  { name: 'Long Straddle', desc: 'Buy ATM call + ATM put', bias: 'neutral', legs: (s) => [
-    { type: 'call', side: 'buy', strikeOffset: 0 },
-    { type: 'put', side: 'buy', strikeOffset: 0 }
-  ]},
-  { name: 'Long Strangle', desc: 'Buy OTM call + OTM put', bias: 'neutral', legs: (s) => [
-    { type: 'call', side: 'buy', strikeOffset: 0.05 },
-    { type: 'put', side: 'buy', strikeOffset: -0.05 }
-  ]},
-  { name: 'Iron Condor', desc: 'Sell strangle + buy wings', bias: 'neutral', legs: (s) => [
-    { type: 'put', side: 'buy', strikeOffset: -0.10 },
-    { type: 'put', side: 'sell', strikeOffset: -0.05 },
-    { type: 'call', side: 'sell', strikeOffset: 0.05 },
-    { type: 'call', side: 'buy', strikeOffset: 0.10 }
-  ]},
-  { name: 'Basis Trade', desc: 'Perp short + spot long (funding)', bias: 'hedge', legs: (s) => [
-    { type: 'perp', side: 'sell', size: 0.01 },
-    { type: 'call', side: 'buy', strikeOffset: 0 }
-  ]}
+  { name: 'Long Straddle', desc: 'Buy ATM call + ATM put', tag: 'vol ↑', bias: 'neutral', make: () => [
+    mkOptionLeg('call', 'buy', 1, 1), mkOptionLeg('put', 'buy', 1, 1)] },
+  { name: 'Bull Call Spread', desc: 'Buy ATM call, sell +8% call', tag: 'mild ↑', bias: 'bullish', make: () => [
+    mkOptionLeg('call', 'buy', 1, 1), mkOptionLeg('call', 'sell', 1.08, 0.97)] },
+  { name: 'Iron Condor', desc: 'Sell strangle + buy wings', tag: 'range', bias: 'neutral', make: () => [
+    mkOptionLeg('put', 'buy', 0.85, 1.06), mkOptionLeg('put', 'sell', 0.92, 1.02),
+    mkOptionLeg('call', 'sell', 1.08, 0.97), mkOptionLeg('call', 'buy', 1.15, 0.95)] },
+  { name: 'Covered Perp Call', desc: 'Long perp + sell +8% call', tag: 'yield', bias: 'hedge', make: () => [
+    mkPerpLeg('buy', 1), mkOptionLeg('call', 'sell', 1.08, 0.97)] },
+  { name: 'Protected Long Perp', desc: 'Long perp + buy −8% put', tag: 'hedged ↑', bias: 'bullish', make: () => [
+    mkPerpLeg('buy', 1), mkOptionLeg('put', 'buy', 0.92, 1.02)] },
+  { name: 'Perp Collar', desc: 'Long perp + put floor + call cap', tag: 'carry', bias: 'hedge', make: () => [
+    mkPerpLeg('buy', 1), mkOptionLeg('put', 'buy', 0.9, 1.03), mkOptionLeg('call', 'sell', 1.1, 0.96)] },
+  { name: 'Short Strangle', desc: 'Sell +12% call + −12% put', tag: 'vol ↓', bias: 'neutral', make: () => [
+    mkOptionLeg('call', 'sell', 1.12, 0.96), mkOptionLeg('put', 'sell', 0.88, 1.04)] },
+  { name: 'Funding-Hedged Short', desc: 'Short perp + buy +6% call', tag: 'carry ↓', bias: 'bearish', make: () => [
+    mkPerpLeg('sell', 1), mkOptionLeg('call', 'buy', 1.06, 0.98)] }
 ];
 
 function initTemplates() {
@@ -1565,7 +1892,7 @@ function initTemplates() {
   document.getElementById('templateCount').textContent = TEMPLATES.length;
   grid.innerHTML = TEMPLATES.map((t, i) => `
     <button class="template-btn" onclick="applyTemplate(${i})" data-idx="${i}">
-      <span class="type-badge ${t.bias}">${t.bias.toUpperCase()}</span>
+      <span class="type-badge ${t.bias}">${t.tag}</span>
       <span class="name">${t.name}</span>
       <span class="desc">${t.desc}</span>
     </button>
@@ -1575,54 +1902,14 @@ function initTemplates() {
 function applyTemplate(idx) {
   const tmpl = TEMPLATES[idx];
   if (!tmpl) return;
-
-  // Clear existing legs
-  ST.legs = [];
   ST.activeTemplate = tmpl.name;
-
-  // Highlight template
+  ST.dayFwd = 0;
+  document.getElementById('scnTime').value = 0;
   document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
   document.querySelector(`.template-btn[data-idx="${idx}"]`).classList.add('active');
-
-  const spot = ST.spot || 69000;
-  const chain = ST.chain;
-
-  for (const legDef of tmpl.legs(spot)) {
-    if (legDef.type === 'perp') {
-      ST.legs.push({
-        id: ST.nextId++, type: 'perp', side: legDef.side,
-        strike: spot, qty: 1, size: legDef.size || 0.01,
-        mark: spot, bid: spot, ask: spot,
-        delta: legDef.side === 'buy' ? 1 : -1, gamma: 0, theta: 0, vega: 0
-      });
-    } else {
-      const targetStrike = spot * (1 + (legDef.strikeOffset || 0));
-      // Find nearest strike in chain
-      let best = chain[0];
-      let bestDist = Infinity;
-      for (const row of chain) {
-        const d = Math.abs(row.strike - targetStrike);
-        if (d < bestDist) { bestDist = d; best = row; }
-      }
-      if (best) {
-        const opt = best[legDef.type];
-        if (opt) {
-          ST.legs.push({
-            id: ST.nextId++, type: legDef.type, side: legDef.side,
-            strike: best.strike, qty: 1, expiry: opt.expiry, dte: opt.dte,
-            mark: opt.mark, bid: opt.bid, ask: opt.ask,
-            iv: opt.iv, delta: opt.delta, gamma: opt.gamma,
-            theta: opt.theta, vega: opt.vega, instrument: opt.instrument
-          });
-        }
-      }
-    }
-  }
-
+  ST.legs = tmpl.make();
   toast(`Applied: ${tmpl.name}`, 'info', 2000);
   renderLegs();
-
-  // Switch to option panel if has option legs
   if (ST.legs.some(l => l.type !== 'perp')) switchExecTab('option');
 }
 
@@ -1634,6 +1921,10 @@ function switchAsset(asset) {
   ST.legs = [];
   ST.chain = [];
   ST.activeTemplate = null;
+  ST.ivShift = 0; ST.dayFwd = 0;
+  document.getElementById('scnTime').value = 0;
+  document.getElementById('scnIv').value = 0;
+  document.getElementById('scnIvVal').textContent = '+0%';
 
   document.querySelectorAll('.asset-tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`.asset-tab[data-asset="${asset}"]`).classList.add('active');
@@ -1675,7 +1966,7 @@ function startRefresh() {
 // Boot
 document.addEventListener('DOMContentLoaded', () => {
   initTemplates();
-  initData();
+  initData().then(() => { if (!ST.legs.length) applyTemplate(4); }); // default: Protected Long Perp
   startRefresh();
 
   // Asset tab clicks
@@ -1685,6 +1976,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Order type toggle
   document.getElementById('perpOrderType').addEventListener('change', updatePerpSummary);
+
+  // Scenario sliders — stress theta decay and vol shifts
+  const scnRecalc = () => { updateGreeks(); drawPayoff(); renderRisk(); };
+  document.getElementById('scnTime').addEventListener('input', function() {
+    ST.dayFwd = parseInt(this.value) || 0;
+    document.getElementById('scnTimeVal').textContent = 'T+' + ST.dayFwd + 'd';
+    document.getElementById('dayFwdLbl').textContent = ST.dayFwd;
+    scnRecalc();
+  });
+  document.getElementById('scnIv').addEventListener('input', function() {
+    ST.ivShift = parseFloat(this.value) || 0;
+    document.getElementById('scnIvVal').textContent = (ST.ivShift >= 0 ? '+' : '') + Math.round(ST.ivShift * 100) + '%';
+    scnRecalc();
+  });
 
   // Window resize → redraw payoff
   window.addEventListener('resize', drawPayoff);
