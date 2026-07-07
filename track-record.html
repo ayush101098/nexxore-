@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXXORE Track Record - Live DeFi Signal Performance</title>
+  <meta name="description" content="Public NEXXORE track record with timestamped DeFi and prediction-market signals, win rate, return, drawdown, calibration, and verification links." />
+  <link rel="canonical" href="https://nexxore.xyz/track-record" />
+  <meta property="og:title" content="NEXXORE Track Record - Live DeFi Signal Performance" />
+  <meta property="og:description" content="Timestamped signal performance, public verification links, win rate, returns, drawdown, and model calibration." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://nexxore.xyz/track-record" />
+  <meta property="og:image" content="https://nexxore.xyz/assets/logo.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <style>
+    body {
+      background:
+        linear-gradient(180deg, rgba(57, 213, 255, 0.045) 0%, rgba(6, 11, 18, 0) 360px),
+        linear-gradient(90deg, rgba(138, 180, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(138, 180, 255, 0.028) 1px, transparent 1px),
+        var(--bg-base);
+      background-size: auto, 48px 48px, 48px 48px, auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(6, 11, 18, 0.88);
+      backdrop-filter: blur(14px);
+    }
+
+    .topbar__inner {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-5);
+    }
+
+    .brand {
+      font-family: var(--font-family-mono);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .brand span {
+      color: var(--accent-primary);
+    }
+
+    .topbar nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-5);
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .track-hero {
+      padding: 72px 0 28px;
+    }
+
+    .eyebrow {
+      font-family: var(--font-family-mono);
+      color: var(--accent-primary);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: var(--space-4);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: var(--space-8);
+      align-items: end;
+    }
+
+    .hero-copy {
+      max-width: 780px;
+    }
+
+    .hero-copy h1 {
+      margin-bottom: var(--space-4);
+    }
+
+    .hero-copy p {
+      max-width: 680px;
+      font-size: 16px;
+    }
+
+    .meta-panel {
+      min-width: 260px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      background: rgba(11, 18, 32, 0.76);
+      padding: var(--space-5);
+    }
+
+    .meta-panel span,
+    .meta-panel strong {
+      display: block;
+    }
+
+    .meta-panel span {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-bottom: var(--space-2);
+    }
+
+    .meta-panel strong {
+      color: var(--text-primary);
+      font-family: var(--font-family-mono);
+      font-size: 13px;
+    }
+
+    .range-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+      margin: var(--space-8) 0 var(--space-5);
+      flex-wrap: wrap;
+    }
+
+    .range-tabs {
+      display: flex;
+      gap: var(--space-2);
+      padding: var(--space-1);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      background: rgba(11, 18, 32, 0.92);
+    }
+
+    .range-tabs button,
+    .pager button {
+      min-height: 44px;
+      border: 0;
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      background: transparent;
+      padding: 0 var(--space-4);
+      cursor: pointer;
+    }
+
+    .range-tabs button.is-active {
+      background: var(--accent-primary);
+      color: #041019;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: var(--space-4);
+      margin-bottom: var(--space-5);
+    }
+
+    .stat-card {
+      min-height: 116px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      background: rgba(11, 18, 32, 0.82);
+      padding: var(--space-5);
+    }
+
+    .stat-card span {
+      display: block;
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-bottom: var(--space-3);
+    }
+
+    .stat-card strong {
+      display: block;
+      font-family: var(--font-family-mono);
+      font-size: clamp(20px, 3vw, 28px);
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.8fr);
+      gap: var(--space-5);
+      margin-bottom: var(--space-5);
+    }
+
+    .panel {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      background: rgba(11, 18, 32, 0.88);
+      padding: var(--space-6);
+    }
+
+    .panel__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+      margin-bottom: var(--space-5);
+    }
+
+    .panel__head h2 {
+      font-size: 18px;
+    }
+
+    .panel__head span {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .chart-box {
+      min-height: 280px;
+      position: relative;
+    }
+
+    .chart-box svg {
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    .chart-axis {
+      stroke: var(--border-default);
+      stroke-width: 1;
+    }
+
+    .chart-fill {
+      fill: rgba(57, 213, 255, 0.12);
+    }
+
+    .chart-line {
+      fill: none;
+      stroke: var(--accent-primary);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .chart-caption {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: var(--space-3);
+      color: var(--text-secondary);
+    }
+
+    .chart-caption strong {
+      color: var(--accent-secondary);
+      font-family: var(--font-family-mono);
+    }
+
+    .chart-empty {
+      min-height: 240px;
+      display: grid;
+      place-items: center;
+      color: var(--text-muted);
+      border: 1px dashed var(--border-default);
+      border-radius: var(--radius-lg);
+    }
+
+    .calibration-row {
+      display: grid;
+      grid-template-columns: 82px 1fr 120px;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-4) 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .calibration-row:last-child {
+      border-bottom: 0;
+    }
+
+    .calibration-row strong,
+    .calibration-row span {
+      display: block;
+    }
+
+    .calibration-row span {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .calibration-bars {
+      position: relative;
+      height: 10px;
+      border-radius: var(--radius-full);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+
+    .calibration-bars span,
+    .calibration-bars b {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      border-radius: inherit;
+    }
+
+    .calibration-bars span {
+      background: rgba(79, 124, 255, 0.34);
+    }
+
+    .calibration-bars b {
+      background: var(--accent-primary);
+      height: 4px;
+      top: 3px;
+    }
+
+    .calibration-values {
+      text-align: right;
+      font-family: var(--font-family-mono);
+      font-size: 12px;
+    }
+
+    .table-panel {
+      margin-bottom: var(--space-12);
+      overflow: hidden;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 860px;
+    }
+
+    th,
+    td {
+      padding: var(--space-4);
+      text-align: left;
+      border-bottom: 1px solid var(--border-subtle);
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-family: var(--font-family-mono);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    td {
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    td strong,
+    td span {
+      display: block;
+    }
+
+    td strong {
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    td a {
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+
+    .positive {
+      color: var(--semantic-success);
+    }
+
+    .negative {
+      color: var(--semantic-error);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 26px;
+      min-width: 74px;
+      padding: 0 var(--space-3);
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-default);
+      color: var(--text-secondary);
+      font-family: var(--font-family-mono);
+      font-size: 11px;
+    }
+
+    .status-pill--win {
+      color: var(--semantic-success);
+      border-color: var(--semantic-success-border);
+      background: var(--semantic-success-dim);
+    }
+
+    .status-pill--loss {
+      color: var(--semantic-error);
+      border-color: var(--semantic-error-border);
+      background: var(--semantic-error-dim);
+    }
+
+    .status-pill--open {
+      color: var(--semantic-warning);
+      border-color: var(--semantic-warning-border);
+      background: var(--semantic-warning-dim);
+    }
+
+    .pager {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: var(--space-3);
+      padding-top: var(--space-5);
+    }
+
+    .pager span {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .pager button {
+      border: 1px solid var(--border-default);
+      background: var(--bg-card);
+    }
+
+    .pager button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .empty-state {
+      padding: var(--space-6);
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 680px) {
+      .topbar nav {
+        display: none;
+      }
+
+      .track-hero {
+        padding-top: 44px;
+      }
+
+      .stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .panel {
+        padding: var(--space-4);
+      }
+
+      .calibration-row {
+        grid-template-columns: 1fr;
+      }
+
+      .calibration-values {
+        text-align: left;
+      }
+
+      .range-tabs {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .range-tabs button {
+        padding: 0 var(--space-2);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar__inner">
+      <a class="brand" href="/">NEX<span>X</span>ORE</a>
+      <nav aria-label="Primary">
+        <a href="/terminal">Terminal</a>
+        <a href="/vaults">Vaults</a>
+        <a href="/predictions">Predictions</a>
+      </nav>
+      <a class="btn btn-secondary" href="/terminal">Open Terminal</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="track-hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <div class="eyebrow">Public Performance Ledger</div>
+            <h1>NEXXORE Track Record</h1>
+            <p>Timestamped signals, resolved outcomes, model calibration, and verification links for NEXXORE prediction-market and DeFi execution intelligence.</p>
+          </div>
+          <aside class="meta-panel" aria-label="Data source">
+            <span data-updated-at>Loading track record</span>
+            <strong data-source>Connecting to public API</strong>
+          </aside>
+        </div>
+
+        <div class="range-row">
+          <div class="range-tabs" aria-label="Time range">
+            <button type="button" data-range="7d">7d</button>
+            <button class="is-active" type="button" data-range="30d">30d</button>
+            <button type="button" data-range="90d">90d</button>
+            <button type="button" data-range="all">All</button>
+          </div>
+          <a class="btn btn-secondary" href="/api/track-record?range=30d&format=csv" data-export-csv>Export CSV</a>
+        </div>
+
+        <div class="stat-grid" aria-label="Track record summary">
+          <div class="stat-card"><span>Total Signals</span><strong data-stat="totalSignals">--</strong></div>
+          <div class="stat-card"><span>Win Rate</span><strong data-stat="winRate">--</strong></div>
+          <div class="stat-card"><span>Avg Return</span><strong data-stat="avgReturnBps">--</strong></div>
+          <div class="stat-card"><span>Sharpe</span><strong data-stat="sharpe">--</strong></div>
+          <div class="stat-card"><span>Max Drawdown</span><strong data-stat="maxDrawdownPct">--</strong></div>
+          <div class="stat-card"><span>Total P&L</span><strong data-stat="totalPnlPct">--</strong></div>
+        </div>
+
+        <div class="content-grid">
+          <section class="panel">
+            <div class="panel__head">
+              <h2>Equity Curve</h2>
+              <span>Cumulative resolved P&L</span>
+            </div>
+            <div class="chart-box" data-equity-curve></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel__head">
+              <h2>Calibration</h2>
+              <span>Predicted vs actual</span>
+            </div>
+            <div data-calibration></div>
+          </section>
+        </div>
+
+        <section class="panel table-panel">
+          <div class="panel__head">
+            <h2>Signal Log</h2>
+            <span>Sorted by newest first</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Market / Asset</th>
+                  <th>Edge</th>
+                  <th>Confidence</th>
+                  <th>Outcome</th>
+                  <th>P&L</th>
+                  <th>Audit</th>
+                </tr>
+              </thead>
+              <tbody data-signal-rows></tbody>
+            </table>
+          </div>
+          <div class="empty-state" data-empty-state hidden>No signals found for this range.</div>
+          <div class="pager">
+            <button type="button" data-page-prev>Previous</button>
+            <span data-page-label>Page 1 of 1</span>
+            <button type="button" data-page-next>Next</button>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/track-record.js"></script>
+</body>
+</html>

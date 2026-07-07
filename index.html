@@ -1147,6 +1147,7 @@ canvas#heroCanvas {
         <a href="#architecture">Architecture</a>
         <a href="#products">Products</a>
         <a href="#intelligence">Intelligence</a>
+        <a href="/track-record">Track Record</a>
       </div>
       <a href="#early-access" class="btn btn-primary">Get early access →</a>
       <div class="nav__hamburger" id="hamburger">
@@ -1161,6 +1162,7 @@ canvas#heroCanvas {
   <a href="#architecture">Architecture</a>
   <a href="#products">Products</a>
   <a href="#intelligence">Intelligence</a>
+  <a href="/track-record">Track Record</a>
   <a href="#early-access" class="btn btn-primary btn-hero">Get early access</a>
 </div>
 
@@ -1481,7 +1483,7 @@ const observer = new IntersectionObserver((entries) => {
 }, {threshold:.12});
 aosEls.forEach(el => observer.observe(el));
 
-document.getElementById('ctaSubmit').addEventListener('click', () => {
+document.getElementById('ctaSubmit').addEventListener('click', async () => {
   const input = document.getElementById('ctaEmail');
   if(!input.value || !input.value.includes('@')) {
     input.style.borderColor = '#FF5C5C';
@@ -1489,8 +1491,36 @@ document.getElementById('ctaSubmit').addEventListener('click', () => {
     setTimeout(() => { input.style.borderColor = ''; input.style.boxShadow = ''; }, 2000);
     return;
   }
-  document.getElementById('ctaForm').style.display = 'none';
-  document.getElementById('ctaSuccess').style.display = 'block';
+  
+  // Send to waitlist API
+  const btn = document.getElementById('ctaSubmit');
+  const originalText = btn.textContent;
+  btn.textContent = 'Adding...';
+  btn.disabled = true;
+  
+  try {
+    const response = await fetch('/api/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: input.value })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      document.getElementById('ctaForm').style.display = 'none';
+      document.getElementById('ctaSuccess').style.display = 'block';
+    } else {
+      throw new Error(data.error || 'Failed to add to waitlist');
+    }
+  } catch (error) {
+    console.error('Waitlist error:', error);
+    input.style.borderColor = '#FF5C5C';
+    input.style.boxShadow = '0 0 0 3px rgba(255,92,92,.15)';
+    setTimeout(() => { input.style.borderColor = ''; input.style.boxShadow = ''; }, 3000);
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
 });
 
 (function(){
