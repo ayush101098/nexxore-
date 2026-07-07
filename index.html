@@ -1134,6 +1134,48 @@ canvas#heroCanvas {
   .footer__links { flex-direction: column; gap: 18px; }
   .nav__drawer a { font-size: 24px; }
 }
+
+/* ── PRO TERMINAL BAND ─────────────────────────────────── */
+.pro-band { padding: 24px 0 72px; position: relative; z-index: 1; }
+.pro-band__card { display: grid; grid-template-columns: 1fr 1.1fr; gap: 44px; align-items: center; background: var(--bg-elevated); border: 1px solid rgba(57,213,255,0.22); border-radius: var(--radius-xl); padding: 44px 48px; position: relative; overflow: hidden; box-shadow: 0 0 0 1px rgba(57,213,255,0.08), 0 30px 70px rgba(0,0,0,0.4); }
+.pro-band__card::before { content:''; position:absolute; inset:0; background: radial-gradient(60% 90% at 78% 20%, rgba(57,213,255,0.09) 0%, transparent 60%); pointer-events:none; }
+.pro-band__tag { display:inline-flex; align-items:center; gap:7px; font-family:var(--font-mono, 'IBM Plex Mono', monospace); font-size:11px; letter-spacing:1px; color:var(--accent-cyan); border:1px solid rgba(57,213,255,0.3); background:rgba(57,213,255,0.07); border-radius:4px; padding:4px 10px; margin-bottom:16px; }
+.pro-band__tag .dot { width:6px; height:6px; border-radius:50%; background:var(--accent-cyan); animation:pulse 2s infinite; }
+.pro-band h2 { font-size: clamp(26px, 3.2vw, 38px); margin-bottom: 12px; }
+.pro-band h2 span { color: var(--accent-cyan); }
+.pro-band__copy { color: var(--text-secondary); font-size: 15px; line-height: 1.65; margin-bottom: 26px; max-width: 460px; }
+.pro-band__cta { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.pro-band__price { font-size: 13px; color: var(--text-muted); }
+.pro-band__price b { color: var(--text-primary); font-size: 15px; }
+/* mock terminal */
+.pro-mock { display:block; background:#060B12; border:1px solid rgba(138,180,255,0.16); border-radius:10px; overflow:hidden; text-decoration:none; transition: transform .3s, border-color .3s; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+.pro-mock:hover { transform: translateY(-4px); border-color: rgba(57,213,255,0.45); }
+.pro-mock__bar { display:flex; align-items:center; gap:6px; padding:9px 12px; background:#0B1220; border-bottom:1px solid rgba(138,180,255,0.12); }
+.pro-mock__bar i { width:8px; height:8px; border-radius:50%; background:#3D4A60; }
+.pro-mock__bar i:first-child { background:#FF5C5C; } .pro-mock__bar i:nth-child(2) { background:#F7B955; } .pro-mock__bar i:nth-child(3) { background:#39E58C; }
+.pro-mock__bar span { margin-left:8px; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:1px; color:#6B7A93; }
+.pro-mock__panes { display:grid; grid-template-columns: 0.8fr 1.6fr 1.1fr; gap:1px; background:rgba(138,180,255,0.1); min-height:210px; }
+.pro-mock__pane { background:#060B12; padding:12px 12px; }
+.pm-label { font-family:'IBM Plex Mono',monospace; font-size:7.5px; letter-spacing:1.2px; color:#6B7A93; margin-bottom:10px; }
+.pm-skel { height:6px; border-radius:3px; background:#121D30; margin-bottom:8px; }
+.pm-bar { height:7px; border-radius:4px; margin:0 0 10px; background:#121D30; position:relative; overflow:hidden; }
+.pm-bar i { position:absolute; left:0; top:0; bottom:0; border-radius:4px; animation: proGrow 6s ease-in-out infinite; }
+.pm-chat { font-family:'IBM Plex Mono',monospace; font-size:8.5px; line-height:1.5; color:#9FB0C7; }
+.pm-msg { background:#0E1626; border:1px solid rgba(138,180,255,0.12); border-radius:4px; padding:6px 8px; margin-bottom:7px; opacity:0; animation: proSeq 9s infinite; }
+.pm-msg.m2 { animation-delay: 1.2s; border-color: rgba(57,213,255,0.3); }
+.pm-msg.m3 { animation-delay: 2.6s; border-color: rgba(57,229,140,0.35); color:#39E58C; }
+.pm-type { display:flex; align-items:center; margin-top:9px; color:#39D5FF; }
+.pm-type .txt { overflow:hidden; white-space:nowrap; animation: proType 9s steps(16) infinite; }
+.pm-type .caret { width:6px; height:11px; background:#39D5FF; margin-left:2px; animation: proBlink 0.9s step-end infinite; }
+@keyframes proGrow { 0% { width:0 } 30%,80% { width:var(--w) } 100% { width:0 } }
+@keyframes proSeq { 0%,8% { opacity:0; transform:translateY(4px) } 14%,88% { opacity:1; transform:none } 96%,100% { opacity:0 } }
+@keyframes proType { 0%,40% { width:0 } 62%,90% { width:100px } 100% { width:0 } }
+@keyframes proBlink { 50% { opacity:0 } }
+@keyframes proDash { to { stroke-dashoffset:-60 } }
+@media (max-width: 900px) {
+  .pro-band__card { grid-template-columns: 1fr; padding: 32px 24px; gap: 28px; }
+  .pro-band__copy { max-width: none; }
+}
 </style>
 </head>
 <body>
@@ -1148,6 +1190,7 @@ canvas#heroCanvas {
         <a href="#products">Products</a>
         <a href="#intelligence">Intelligence</a>
         <a href="/track-record">Track Record</a>
+        <a href="/terminal-pro" style="color:var(--accent-cyan);font-weight:600">Pro Terminal</a>
       </div>
       <a href="#early-access" class="btn btn-primary">Get early access →</a>
       <div class="nav__hamburger" id="hamburger">
@@ -1163,6 +1206,7 @@ canvas#heroCanvas {
   <a href="#products">Products</a>
   <a href="#intelligence">Intelligence</a>
   <a href="/track-record">Track Record</a>
+  <a href="/terminal-pro" style="color:var(--accent-cyan)">Pro Terminal</a>
   <a href="#early-access" class="btn btn-primary btn-hero">Get early access</a>
 </div>
 
@@ -1241,6 +1285,59 @@ canvas#heroCanvas {
     </div>
   </div>
 </div>
+
+<!-- PRO TERMINAL -->
+<section class="pro-band" id="pro">
+  <div class="container">
+    <div class="pro-band__card aos">
+      <div>
+        <span class="pro-band__tag"><span class="dot"></span>NEW · PRO TERMINAL</span>
+        <h2>Research-to-execution, <span>one desk.</span></h2>
+        <p class="pro-band__copy">Capital rotation, narrative momentum and a live risk engine on one canvas — with an execution agent that Kelly-sizes every trade inside your risk boundaries and shows you the receipt before it moves.</p>
+        <div class="pro-band__cta">
+          <a href="/terminal-pro" class="btn btn-primary">Launch Pro Terminal →</a>
+          <span class="pro-band__price"><b>$49/mo</b> founding rate · $0 today, join the waitlist</span>
+        </div>
+      </div>
+      <a class="pro-mock" href="/terminal-pro" aria-label="Open the Pro Terminal">
+        <div class="pro-mock__bar"><i></i><i></i><i></i><span>NEXXORE · PRO TERMINAL</span></div>
+        <div class="pro-mock__panes">
+          <div class="pro-mock__pane">
+            <div class="pm-label">NAV</div>
+            <svg width="100%" height="54" viewBox="0 0 90 54" style="margin-bottom:10px">
+              <path d="M13,46 A32,32 0 0 1 77,46" fill="none" stroke="#121D30" stroke-width="6" stroke-linecap="round"/>
+              <path d="M13,46 A32,32 0 0 1 62,20" fill="none" stroke="#F7B955" stroke-width="6" stroke-linecap="round" stroke-dasharray="4 5" style="animation:proDash 3s linear infinite"/>
+              <text x="45" y="46" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" font-weight="600" fill="#F7B955">55</text>
+            </svg>
+            <div class="pm-skel" style="width:85%"></div>
+            <div class="pm-skel" style="width:65%"></div>
+            <div class="pm-skel" style="width:75%"></div>
+          </div>
+          <div class="pro-mock__pane">
+            <div class="pm-label">SIGNAL CANVAS</div>
+            <svg width="100%" height="64" viewBox="0 0 200 64" preserveAspectRatio="none" style="margin-bottom:10px">
+              <path d="M6,10 C100,10 100,26 194,26" fill="none" stroke="#1E9AC4" stroke-width="7" opacity="0.55" stroke-dasharray="10 6" style="animation:proDash 2.6s linear infinite"/>
+              <path d="M6,32 C100,32 100,50 194,50" fill="none" stroke="#5C86FF" stroke-width="5" opacity="0.5" stroke-dasharray="10 6" style="animation:proDash 3.4s linear infinite"/>
+              <path d="M6,52 C100,52 100,8 194,8" fill="none" stroke="#0FA98F" stroke-width="4" opacity="0.5" stroke-dasharray="10 6" style="animation:proDash 4.2s linear infinite"/>
+            </svg>
+            <div class="pm-bar"><i style="--w:87%;background:#1E9AC4"></i></div>
+            <div class="pm-bar"><i style="--w:74%;background:#5C86FF;animation-delay:.5s"></i></div>
+            <div class="pm-bar"><i style="--w:61%;background:#0FA98F;animation-delay:1s"></i></div>
+          </div>
+          <div class="pro-mock__pane">
+            <div class="pm-label">AGENT COMMAND</div>
+            <div class="pm-chat">
+              <div class="pm-msg">Regime TRANSITION · sizing ×0.75</div>
+              <div class="pm-msg m2">Strongest rotation: L2s → RWA</div>
+              <div class="pm-msg m3">✓ Receipt · slip 21bps · APPROVE</div>
+              <div class="pm-type"><span class="txt">/rotate 40% → RWA</span><span class="caret"></span></div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
 
 <!-- ARCHITECTURE -->
 <section class="arch" id="architecture">
