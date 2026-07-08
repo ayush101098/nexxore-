@@ -382,7 +382,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
           <button class="chip on" data-min="10000">≥$10K</button>
           <button class="chip" data-min="50000">≥$50K</button>
         </div>
-        <span class="rnote" id="whaleStamp">auto 30s</span>
+        <span class="rnote" id="whaleStamp">auto 20s</span>
       </div>
       <div id="whaleFeed"><div class="loading">Listening for prints…</div></div>
     </div>
@@ -641,8 +641,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
   }
 
   /* ── market detail ────────────────────────────────────── */
-  function selectMarket(m) {
-    state.selected = m;
+  function updateDetailFields(m) {
     $('dCat').textContent = m.category === 'All' ? 'Market' : m.category;
     $('dTitle').textContent = m.title;
     $('dYes').textContent = cents(m.yes);
@@ -658,26 +657,36 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     $('dEnds').textContent = fmtEnds(m.ends);
     var link = $('dLink');
     link.href = m.url; link.style.display = 'inline';
-    renderTable();
-    loadHistory();
-    loadBook();
-    $('detailPanel').scrollIntoView({ behavior:'smooth', block:'nearest' });
   }
 
-  function loadHistory() {
+  function selectMarket(m, quiet) {
+    state.selected = m;
+    updateDetailFields(m);
+    renderTable();
+    loadHistory(quiet);
+    loadBook();
+    if (!quiet) $('detailPanel').scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+
+  function loadHistory(quiet) {
     var m = state.selected;
     if (!m || !m.tokenId) { state.history = null; drawChart(); return; }
     var fid = { '1d':5, '1w':30, '1m':180, 'max':720 }[state.range] || 30;
-    $('chartEmpty').style.display = 'block';
-    $('chartEmpty').textContent = 'Loading price history…';
+    if (!quiet) {
+      /* quiet refreshes keep the previous frame; only a fresh selection shows a loading state */
+      $('chartEmpty').style.display = 'block';
+      $('chartEmpty').textContent = 'Loading price history…';
+    }
     fetch(CLOB + '/prices-history?market=' + m.tokenId + '&interval=' + state.range + '&fidelity=' + fid)
       .then(function(r) { return r.json(); })
       .then(function(d) {
+        if (!state.selected || state.selected.id !== m.id) return; /* stale response for a deselected market */
         var pts = (d.history || []).map(function(p) { return { t: p.t, p: parseFloat(p.p) }; }).filter(function(p) { return !isNaN(p.p); });
+        if (quiet && pts.length < 2) return; /* quiet refresh keeps the previous frame on a bad response */
         state.history = pts.length > 1 ? pts : null;
         drawChart();
       })
-      .catch(function() { state.history = null; drawChart(); });
+      .catch(function() { if (!quiet) { state.history = null; drawChart(); } });
   }
 
   function loadBook() {
@@ -687,6 +696,18 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     fetch(CLOB + '/book?token_id=' + m.tokenId)
       .then(function(r) { return r.json(); })
       .then(function(d) {
+        var sel = state.selected;
+        if (!sel || sel.id !== m.id) return; /* user moved on while this was in flight */
+        /* live odds from the book midpoint — fresher than the gamma snapshot */
+        var bb = (d.bids || []).reduce(function(a, l) { return Math.max(a, parseFloat(l.price) || 0); }, 0);
+        var ba = (d.asks || []).reduce(function(a, l) { var p = parseFloat(l.price); return p > 0 ? Math.min(a, p) : a; }, 1);
+        if (bb > 0 && ba < 1 && ba >= bb) {
+          var mid = (bb + ba) / 2;
+          sel.yes = mid; sel.bestBid = bb; sel.bestAsk = ba; sel.spread = ba - bb;
+          $('dYes').textContent = cents(mid);
+          $('dNo').textContent = cents(1 - mid);
+          $('dBidAsk').textContent = cents(bb) + ' / ' + cents(ba);
+        }
         function side(levels, host, cls, desc) {
           var rows = (levels || []).map(function(l) { return { p: parseFloat(l.price), s: parseFloat(l.size) }; });
           rows.sort(function(a, b) { return desc ? b.p - a.p : a.p - b.p; });
@@ -827,8 +848,8 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
       hoverOuter.setAttribute('visibility', 'hidden');
       $('chartTip').style.display = 'none';
     }
-    hit.addEventListener('pointermove', onMove);
-    hit.addEventListener('pointerleave', onLeave);
+    hit.addEventListener('pointermove', function(ev) { state.chartHover = true; onMove(ev); });
+    hit.addEventListener('pointerleave', function() { state.chartHover = false; onLeave(); });
 
     wrap.insertBefore(svg, empty);
   }
@@ -1060,9 +1081,16 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     fetchMarkets().then(function(all) {
       state.markets = all;
       setLive(true);
+      /* re-bind the selected market to its fresh snapshot before rendering */
+      if (state.selected) {
+        for (var i = 0; i < all.length; i++) {
+          if (all[i].id === state.selected.id) { state.selected = all[i]; break; }
+        }
+        updateDetailFields(state.selected);
+      }
       renderCats(); renderMovers(); renderPulse(); renderTable();
       $('refreshStamp').textContent = all.length + ' markets · ' + new Date().toLocaleTimeString('en-US', { hour12:false });
-      if (!state.selected && state.filtered.length) selectMarket(state.filtered[0]);
+      if (!state.selected && state.filtered.length) selectMarket(state.filtered[0], true);
     }).catch(function() {
       setLive(false);
       $('refreshStamp').textContent = 'API unreachable — retrying';
@@ -1072,9 +1100,15 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
   refreshMarkets();
   fetchWhales();
   fetchLeaders();
-  setInterval(refreshMarkets, 120000);
-  setInterval(function() { fetchWhales(); }, 30000);
-  setInterval(fetchLeaders, 300000);
+  setInterval(refreshMarkets, 60000);                       /* scanner + tiles + detail fields */
+  setInterval(function() { fetchWhales(); }, 20000);        /* whale prints */
+  setInterval(fetchLeaders, 180000);                        /* leaderboard */
+  setInterval(function() {                                  /* selected market: live book + odds */
+    if (state.selected) loadBook();
+  }, 20000);
+  setInterval(function() {                                  /* selected market: chart refresh, keeps frame */
+    if (state.selected && !state.chartHover) loadHistory(true);
+  }, 60000);
 })();
 </script>
 </body>
