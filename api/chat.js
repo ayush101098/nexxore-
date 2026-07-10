@@ -1,18 +1,14 @@
 /**
- * Nexxore AI — crypto & DeFi research assistant (Claude-powered)
- * ═══════════════════════════════════════════════════════════════
+ * AI Chat API — Context-Aware DeFi Intelligence Engine
+ * ═══════════════════════════════════════════════════════
+ * 
+ * Queries live data from DeFi Llama, CoinGecko, and other real sources
+ * to give data-backed answers about protocols, yields, markets, stablecoins.
  *
- * A real LLM (Claude Opus 4.8) that answers anything crypto: protocol research
- * end-to-end, trade relations & macro, token/market questions, yields, risk.
- * Grounded with live DeFiLlama / CoinGecko data and Claude's web-search tool so
- * answers reflect current on-chain state, not stale training data.
- *
- * POST /api/chat  { message: "...", history?: [{role, content}, ...] }
+ * POST /api/chat  { message: "..." }
+ * GET  /api/chat?q=...  (for testing)
  */
 
-const Anthropic = require('@anthropic-ai/sdk');
-
-const MODEL = 'claude-opus-4-8'; // swap to claude-haiku-4-5 / claude-sonnet-5 for a cheaper public endpoint
 const DEFILLAMA_BASE = 'https://api.llama.fi';
 const YIELDS_BASE = 'https://yields.llama.fi';
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
@@ -52,105 +48,175 @@ function formatUSD(val) {
   return `$${val.toFixed(2)}`;
 }
 
-// ── intent detection: decides which live data to attach as grounding ──
+// ═══════════════════════════════════════════════════════════
+//  INTENT DETECTION
+// ═══════════════════════════════════════════════════════════
+
 function detectIntent(message) {
   const lower = message.toLowerCase();
-  const intents = new Set();
+  const intents = [];
   const protocolNames = ['aave','compound','uniswap','curve','lido','maker','morpho','pendle',
     'eigenlayer','ethena','convex','yearn','sushi','balancer','gmx','dydx','synthetix',
     'pancakeswap','raydium','jupiter','marinade','jito','rocket pool','beefy','sommelier',
-    'gearbox','instadapp','spark','venus','benqi','trader joe','camelot','hyperliquid'];
+    'gearbox','instadapp','spark','venus','benqi','trader joe','camelot'];
   const mentioned = protocolNames.filter(p => lower.includes(p));
-  if (mentioned.length) intents.add('protocol:' + mentioned.slice(0, 4).join(','));
-  if (/yield|apy|apr|earn|farm|best.*return|highest.*rate/.test(lower)) intents.add('yield');
-  if (/market|overview|tvl|total.*locked|defi.*state|bull|bear|sentiment|fear|greed/.test(lower)) intents.add('market');
-  if (/stablecoin|usdc|usdt|dai|frax|peg|depeg|tether/.test(lower)) intents.add('stablecoin');
-  if (/price|bitcoin|\bbtc\b|\beth\b|ethereum|\bsol\b|solana|worth/.test(lower)) intents.add('price');
-  if (/\bchain\b|arbitrum|optimism|polygon|base|avalanche|\bbsc\b|layer.*2|\bl2\b/.test(lower)) intents.add('chain');
+  if (mentioned.length > 0) intents.push({ type: 'protocol', protocols: mentioned });
+  if (/yield|apy|apr|earn|farm|best.*return|highest.*rate|where.*earn/i.test(lower)) intents.push({ type: 'yield' });
+  if (/market|overview|tvl|total.*locked|defi.*state|how.*market|bull|bear|sentiment/i.test(lower)) intents.push({ type: 'market' });
+  if (/stablecoin|stable.*coin|usdc|usdt|dai|frax|peg|depeg|tether/i.test(lower)) intents.push({ type: 'stablecoin' });
+  if (/price|bitcoin|btc|eth|ethereum|sol|solana|worth|cost/i.test(lower)) intents.push({ type: 'price' });
+  if (/strateg|allocat|portfolio|invest|where.*put|what.*buy|risk|conservative|aggressive/i.test(lower)) intents.push({ type: 'strategy' });
+  if (/chain|arbitrum|optimism|polygon|base|avalanche|bsc|layer.*2|l2/i.test(lower)) intents.push({ type: 'chain' });
+  if (/vault|deposit|withdraw|safe.*yield|advanced.*realloc/i.test(lower)) intents.push({ type: 'vault' });
+  if (/perp|perpetual|leverage|long|short|fund.*rate|liquidat/i.test(lower)) intents.push({ type: 'perps' });
+  if (intents.length === 0) intents.push({ type: 'general' });
   return intents;
 }
+
+// ═══════════════════════════════════════════════════════════
+//  DATA FETCHERS
+// ═══════════════════════════════════════════════════════════
 
 async function getProtocolInfo(names) {
   const protocols = await fetchJSON(`${DEFILLAMA_BASE}/protocols`, 'chat_protocols');
   if (!protocols) return null;
   return names.map(name => {
     const nl = name.toLowerCase();
+    // Try exact match first, then slug, then partial name/slug match
     const p = protocols.find(pr => pr.name.toLowerCase() === nl || (pr.slug || '').toLowerCase() === nl)
            || protocols.find(pr => pr.name.toLowerCase().includes(nl) || (pr.slug || '').toLowerCase().includes(nl));
-    if (!p) return `${name}: not found on DeFiLlama`;
-    return `${p.name}: TVL ${formatUSD(p.tvl)} (${(p.change_1d || 0) > 0 ? '+' : ''}${(p.change_1d || 0).toFixed(1)}% 24h, ${(p.change_7d || 0).toFixed(1)}% 7d), category ${p.category}, chains ${(p.chains || []).slice(0, 6).join('/')}${p.mcap ? `, mcap ${formatUSD(p.mcap)}` : ''}`;
-  }).join('\n');
+    if (!p) return { name, found: false };
+    return { name: p.name, found: true, tvl: p.tvl, tvlF: formatUSD(p.tvl), d1: p.change_1d, d7: p.change_7d, chains: p.chains || [], category: p.category, mcap: p.mcap };
+  });
 }
 
-async function buildGrounding(message) {
-  const intents = detectIntent(message);
-  const blocks = [];
-  const sources = new Set();
-  const jobs = [];
+async function getYieldInfo() {
+  const pools = await fetchJSON(`${YIELDS_BASE}/pools`, 'chat_pools');
+  if (!pools?.data) return null;
+  const topStable = pools.data.filter(p => p.stablecoin && p.tvlUsd > 10_000_000 && p.apy > 0).sort((a, b) => b.apy - a.apy).slice(0, 5);
+  const topAll = pools.data.filter(p => p.tvlUsd > 5_000_000 && p.apy > 0 && p.apy < 100).sort((a, b) => b.apy - a.apy).slice(0, 5);
+  return { topStable, topAll };
+}
+
+async function getMarketInfo() {
+  const [fng, prices] = await Promise.all([
+    fetchJSON('https://api.alternative.me/fng/?limit=1', 'chat_fng'),
+    fetchJSON(`${COINGECKO_BASE}/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`, 'chat_prices')
+  ]);
+  return { fng: fng?.data?.[0] || { value: 50, value_classification: 'Neutral' }, prices: prices || {} };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RESPONSE BUILDER
+// ═══════════════════════════════════════════════════════════
+
+async function buildResponse(intents, message) {
+  const sections = [];
+  const dataSources = [];
 
   for (const intent of intents) {
-    if (intent.startsWith('protocol:')) {
-      const names = intent.slice(9).split(',');
-      jobs.push(getProtocolInfo(names).then(t => { if (t) { blocks.push('PROTOCOLS (DeFiLlama):\n' + t); sources.add('DeFiLlama'); } }));
-    } else if (intent === 'yield') {
-      jobs.push(fetchJSON(`${YIELDS_BASE}/pools`, 'chat_pools').then(pools => {
-        if (!pools?.data) return;
-        const stable = pools.data.filter(p => p.stablecoin && p.tvlUsd > 10e6 && p.apy > 0).sort((a, b) => b.apy - a.apy).slice(0, 6);
-        const all = pools.data.filter(p => p.tvlUsd > 5e6 && p.apy > 0 && p.apy < 100).sort((a, b) => b.apy - a.apy).slice(0, 6);
-        blocks.push('TOP STABLE YIELDS:\n' + stable.map(p => `${p.symbol} on ${p.project} (${p.chain}): ${p.apy.toFixed(2)}% APY, ${formatUSD(p.tvlUsd)} TVL`).join('\n') +
-          '\nTOP OVERALL YIELDS:\n' + all.map(p => `${p.symbol} on ${p.project} (${p.chain}): ${p.apy.toFixed(2)}% APY`).join('\n'));
-        sources.add('DeFiLlama Yields');
-      }));
-    } else if (intent === 'market' || intent === 'price') {
-      jobs.push(Promise.all([
-        fetchJSON('https://api.alternative.me/fng/?limit=1', 'chat_fng'),
-        fetchJSON(`${COINGECKO_BASE}/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`, 'chat_prices')
-      ]).then(([fng, prices]) => {
-        const f = fng?.data?.[0];
-        const p = prices || {};
-        const line = [];
-        if (f) line.push(`Fear & Greed: ${f.value}/100 (${f.value_classification})`);
-        if (p.bitcoin?.usd) line.push(`BTC $${p.bitcoin.usd.toLocaleString()} (${(p.bitcoin.usd_24h_change || 0).toFixed(1)}% 24h)`);
-        if (p.ethereum?.usd) line.push(`ETH $${p.ethereum.usd.toLocaleString()} (${(p.ethereum.usd_24h_change || 0).toFixed(1)}% 24h)`);
-        if (p.solana?.usd) line.push(`SOL $${p.solana.usd.toLocaleString()} (${(p.solana.usd_24h_change || 0).toFixed(1)}% 24h)`);
-        if (line.length) { blocks.push('MARKET SNAPSHOT:\n' + line.join('\n')); sources.add('CoinGecko'); sources.add('Alternative.me'); }
-      }));
-    } else if (intent === 'stablecoin') {
-      jobs.push(fetchJSON(`${STABLECOINS_BASE}/stablecoins?includePrices=true`, 'chat_stables').then(s => {
-        if (!s?.peggedAssets) return;
-        const top = s.peggedAssets.filter(a => (a.circulating?.peggedUSD || 0) > 100e6).sort((a, b) => (b.circulating?.peggedUSD || 0) - (a.circulating?.peggedUSD || 0)).slice(0, 8);
-        blocks.push('STABLECOINS:\n' + top.map(a => `${a.symbol}: ${formatUSD(a.circulating?.peggedUSD || 0)} cap, $${(a.price || 1).toFixed(4)} (${(Math.abs((a.price || 1) - 1) * 100).toFixed(3)}% off peg)`).join('\n'));
-        sources.add('DeFiLlama Stablecoins');
-      }));
-    } else if (intent === 'chain') {
-      jobs.push(fetchJSON(`${DEFILLAMA_BASE}/v2/chains`, 'chat_chains').then(chains => {
-        if (!chains) return;
-        const top = chains.sort((a, b) => (b.tvl || 0) - (a.tvl || 0)).slice(0, 8);
-        blocks.push('TOP CHAINS BY TVL:\n' + top.map(c => `${c.name}: ${formatUSD(c.tvl)}`).join('\n'));
-        sources.add('DeFiLlama');
-      }));
+    switch (intent.type) {
+      case 'protocol': {
+        const data = await getProtocolInfo(intent.protocols);
+        if (data) {
+          data.forEach(p => {
+            if (p.found) sections.push(`**${p.name}**: TVL ${p.tvlF} (${(p.d1||0)>0?'+':''}${(p.d1||0).toFixed(1)}% 24h). Category: ${p.category}. Chains: ${p.chains.slice(0,5).join(', ')}.${p.mcap ? ` MCap: ${formatUSD(p.mcap)}` : ''}`);
+            else sections.push(`Couldn't find data for "${p.name}".`);
+          });
+          dataSources.push('DeFi Llama');
+        }
+        break;
+      }
+      case 'yield': {
+        const data = await getYieldInfo();
+        if (data) {
+          sections.push('**🔥 Top Stablecoin Yields:**');
+          data.topStable.forEach((p,i) => sections.push(`${i+1}. **${p.symbol}** on ${p.project} (${p.chain}): ${p.apy.toFixed(2)}% APY — ${formatUSD(p.tvlUsd)} TVL`));
+          sections.push('\n**💎 Top Overall Yields:**');
+          data.topAll.forEach((p,i) => sections.push(`${i+1}. **${p.symbol}** on ${p.project} (${p.chain}): ${p.apy.toFixed(2)}% APY`));
+          dataSources.push('DeFi Llama yields');
+        }
+        break;
+      }
+      case 'market': {
+        const data = await getMarketInfo();
+        if (data) {
+          const fv = data.fng.value;
+          const sent = fv<25?'🔴 Extreme Fear':fv<45?'🟠 Fear':fv<55?'⚪ Neutral':fv<75?'🟢 Greed':'🟢 Extreme Greed';
+          sections.push(`**📊 Market Overview:**\nFear & Greed: **${fv}/100** (${sent})`);
+          if (data.prices.bitcoin?.usd) sections.push(`BTC: **$${data.prices.bitcoin.usd.toLocaleString()}** (${(data.prices.bitcoin.usd_24h_change||0).toFixed(1)}% 24h)`);
+          if (data.prices.ethereum?.usd) sections.push(`ETH: **$${data.prices.ethereum.usd.toLocaleString()}** (${(data.prices.ethereum.usd_24h_change||0).toFixed(1)}% 24h)`);
+          if (data.prices.solana?.usd) sections.push(`SOL: **$${data.prices.solana.usd.toLocaleString()}** (${(data.prices.solana.usd_24h_change||0).toFixed(1)}% 24h)`);
+          dataSources.push('CoinGecko', 'Alternative.me');
+        }
+        break;
+      }
+      case 'stablecoin': {
+        const stables = await fetchJSON(`${STABLECOINS_BASE}/stablecoins?includePrices=true`, 'chat_stables');
+        if (stables?.peggedAssets) {
+          const top = stables.peggedAssets.filter(a=>(a.circulating?.peggedUSD||0)>100_000_000).sort((a,b)=>(b.circulating?.peggedUSD||0)-(a.circulating?.peggedUSD||0)).slice(0,8);
+          sections.push('**🏦 Stablecoin Market:**');
+          top.forEach(s => {
+            const mcap = s.circulating?.peggedUSD||0;
+            const dev = Math.abs((s.price||1)-1)*100;
+            sections.push(`${dev<0.1?'✅':dev<0.5?'⚠️':'🔴'} **${s.symbol}**: ${formatUSD(mcap)} — $${(s.price||1).toFixed(4)} (${dev<0.01?'on peg':dev.toFixed(3)+'% dev'})`);
+          });
+          dataSources.push('DeFi Llama stablecoins');
+        }
+        break;
+      }
+      case 'price': {
+        const tokenMap = {'btc':'bitcoin','bitcoin':'bitcoin','eth':'ethereum','ethereum':'ethereum','sol':'solana','solana':'solana','bnb':'binancecoin','avax':'avalanche-2','link':'chainlink','uni':'uniswap','aave':'aave','mkr':'maker','crv':'curve-dao-token','ldo':'lido-dao','pendle':'pendle'};
+        const refs = message.toLowerCase().match(/\b(btc|bitcoin|eth|ethereum|sol|solana|bnb|avax|link|uni|aave|mkr|crv|ldo|pendle)\b/g) || ['bitcoin','ethereum'];
+        const ids = [...new Set(refs)].map(t => tokenMap[t]||t).join(',');
+        const data = await fetchJSON(`${COINGECKO_BASE}/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`, `chat_p_${ids}`);
+        if (data) {
+          sections.push('**💰 Prices:**');
+          Object.entries(data).forEach(([id,d]) => sections.push(`**${id}**: $${d.usd?.toLocaleString()} (${(d.usd_24h_change||0)>0?'+':''}${(d.usd_24h_change||0).toFixed(2)}% 24h)`));
+          dataSources.push('CoinGecko');
+        }
+        break;
+      }
+      case 'strategy': {
+        const [market, yields] = await Promise.all([getMarketInfo(), getYieldInfo()]);
+        if (market && yields) {
+          const fv = market.fng.value;
+          const profile = fv<30 ? {n:'Conservative (Fear)',s:'60-70%',e:'20-25%',y:'10-15%'} : fv>70 ? {n:'Cautious (Greed)',s:'40-50%',e:'30-35%',y:'20-25%'} : {n:'Balanced',s:'40-50%',e:'25-30%',y:'20-30%'};
+          sections.push(`**📋 Suggested Strategy (FnG: ${fv}):**\nProfile: **${profile.n}**`);
+          sections.push(`• Stablecoins: ${profile.s} — Top: ${yields.topStable[0]?.apy.toFixed(1)}% on ${yields.topStable[0]?.project}`);
+          sections.push(`• ETH/BTC: ${profile.e}\n• Active Yield: ${profile.y}`);
+          sections.push(`*Data-informed, not financial advice.*`);
+          dataSources.push('DeFi Llama', 'Alternative.me');
+        }
+        break;
+      }
+      case 'vault':
+        sections.push(`**🏛 Nexxore Vaults:**\n• **Safe Yield** — Low risk, stablecoin strategies. Target 5-12% APY.\n• **Advanced Realloc** — Active optimization. Target 12-25% APY.\nVisit the Vaults page for live data.`);
+        break;
+      case 'perps':
+        sections.push(`**📈 Perps Trading:**\nReal-time HyperLiquid integration with orderbook, candles, funding rates, and position tracking. Visit the Perps page.`);
+        break;
+      case 'chain': {
+        const chains = await fetchJSON(`${DEFILLAMA_BASE}/v2/chains`, 'chat_chains');
+        if (chains) {
+          const top = chains.sort((a,b)=>(b.tvl||0)-(a.tvl||0)).slice(0,8);
+          sections.push('**🔗 Top Chains by TVL:**');
+          top.forEach((c,i) => sections.push(`${i+1}. **${c.name}**: ${formatUSD(c.tvl)}`));
+          dataSources.push('DeFi Llama');
+        }
+        break;
+      }
+      default:
+        sections.push(`I'm Nexxore's DeFi assistant. Ask me about:\n• **Protocols** — "Tell me about Aave"\n• **Yields** — "Best stablecoin yields"\n• **Market** — "How's the market?"\n• **Stablecoins** — "Are stablecoins pegged?"\n• **Prices** — "ETH price"\n• **Strategy** — "What should I invest in?"\n\nAll answers use live data from DeFi Llama + CoinGecko.`);
     }
   }
 
-  await Promise.allSettled(jobs);
-  return { context: blocks.join('\n\n'), sources: [...sources] };
+  return { response: sections.join('\n'), dataSources: [...new Set(dataSources)], intents: intents.map(i=>i.type), timestamp: Date.now() };
 }
 
-const SYSTEM = `You are Nexxore AI, an expert crypto and DeFi research analyst embedded in the Nexxore intelligence terminal.
-
-You help traders and analysts with:
-- Protocol research end-to-end: mechanism design, tokenomics, TVL, revenue, risks, competitive position, recent developments.
-- Trade relations & macro: how geopolitics, rates, regulation, and cross-market flows affect crypto.
-- Markets & tokens: prices, market structure, on-chain metrics, narratives, catalysts.
-- Yields, stablecoins, chains, perps, and risk (liquidation, protocol, smart-contract, depeg).
-
-Guidance:
-- When a LIVE DATA block is provided, treat it as ground truth for current numbers and cite it.
-- Use web search for anything time-sensitive, recent, or that you're unsure about — never guess at current prices, TVL, or events.
-- Be precise and analytical. Lead with the answer, then the reasoning. Use short markdown (bold for key terms, bullet lists) — keep it scannable.
-- Give balanced analysis with concrete numbers. Flag risks explicitly.
-- You provide research and analysis, not personalized financial advice. Add a one-line "Not financial advice" only when a question asks what to buy/allocate.
-- If a question is outside crypto/markets/macro, answer briefly and steer back.`;
+// ═══════════════════════════════════════════════════════════
+//  MAIN HANDLER
+// ═══════════════════════════════════════════════════════════
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -158,79 +224,22 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  let message, history;
+  let message;
   if (req.method === 'GET') {
     const url = new URL(req.url, `http://${req.headers.host}`);
     message = url.searchParams.get('message') || url.searchParams.get('q');
   } else {
     message = req.body?.message;
-    history = req.body?.history;
   }
 
-  if (!message || typeof message !== 'string') return res.status(400).json({ error: 'Message is required' });
-  message = message.slice(0, 2000);
-  if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'AI is not configured', response: 'The assistant is not configured yet — ANTHROPIC_API_KEY is missing.' });
+  if (!message) return res.status(400).json({ error: 'Message is required' });
 
   try {
-    const client = new Anthropic();
-    const { context, sources } = await buildGrounding(message);
-
-    // Prior turns (trimmed) + the current question with live grounding.
-    const messages = [];
-    if (Array.isArray(history)) {
-      history.slice(-6).forEach(m => {
-        if (m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string') {
-          messages.push({ role: m.role, content: m.content.slice(0, 4000) });
-        }
-      });
-    }
-    const userContent = context
-      ? `LIVE DATA (fetched now, use for current numbers):\n${context}\n\n---\nQuestion: ${message}`
-      : message;
-    messages.push({ role: 'user', content: userContent });
-
-    // Server-side web search lets the model research anything current.
-    const tools = [{ type: 'web_search_20260209', name: 'web_search', max_uses: 4 }];
-
-    let response, guard = 0;
-    do {
-      response = await client.messages.create({
-        model: MODEL,
-        max_tokens: 2048,
-        thinking: { type: 'adaptive' },
-        output_config: { effort: 'medium' },
-        system: SYSTEM,
-        tools,
-        messages,
-      });
-      if (response.stop_reason === 'pause_turn') {
-        messages.push({ role: 'assistant', content: response.content });
-      }
-    } while (response.stop_reason === 'pause_turn' && ++guard < 3);
-
-    const searched = response.content.some(b => b.type === 'server_tool_use' || b.type === 'web_search_tool_result');
-    const text = response.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
-    const allSources = [...sources];
-    if (searched) allSources.push('Web search');
-
-    if (response.stop_reason === 'refusal') {
-      return res.status(200).json({ response: "I can't help with that one — try a different crypto or markets question.", dataSources: [] });
-    }
-
-    res.status(200).json({
-      response: text || "I couldn't produce an answer for that — try rephrasing.",
-      dataSources: [...new Set(allSources)],
-      model: MODEL,
-      timestamp: Date.now(),
-    });
+    const intents = detectIntent(message);
+    const result = await buildResponse(intents, message);
+    res.status(200).json(result);
   } catch (err) {
     console.error('Chat API error:', err);
-    const status = err?.status === 429 ? 429 : 500;
-    res.status(status).json({
-      error: err.message,
-      response: status === 429
-        ? 'The assistant is busy right now — please try again in a moment.'
-        : 'Sorry, I hit an error answering that. Please try again.',
-    });
+    res.status(500).json({ error: err.message, response: 'Sorry, I had trouble fetching live data. Please try again.' });
   }
 };
