@@ -85,7 +85,10 @@ body { background:var(--bg); color:var(--text); font-family:var(--body); font-si
 .mover:hover { background:var(--surface); border-color:var(--border); }
 .mover-title { font-size:0.66rem; color:var(--text-muted); line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 .mover:hover .mover-title { color:var(--text); }
-.mover-row { display:flex; justify-content:space-between; margin-top:3px; font-family:var(--mono); font-size:0.62rem; }
+.mover-row { display:flex; align-items:center; justify-content:space-between; margin-top:3px; font-family:var(--mono); font-size:0.62rem; }
+.mover-odds { display:flex; align-items:baseline; gap:8px; }
+.mover-trade { padding:2px 8px; border-radius:2px; background:rgba(57,213,255,0.08); border:1px solid rgba(57,213,255,0.22); color:var(--cyan); font-family:var(--mono); font-size:0.56rem; transition:all .15s; }
+.mover-trade:hover { background:rgba(57,213,255,0.18); border-color:rgba(57,213,255,0.4); }
 .pulse-card { padding:11px 10px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); }
 .pulse-row { display:flex; justify-content:space-between; align-items:baseline; padding:4px 0; font-size:0.66rem; color:var(--text-muted); border-bottom:1px solid rgba(138,180,255,0.05); }
 .pulse-row:last-child { border-bottom:none; }
@@ -136,6 +139,39 @@ body { background:var(--bg); color:var(--text); font-family:var(--body); font-si
 .dm .v { font-family:var(--mono); font-size:0.72rem; color:var(--text); margin-top:2px; }
 .detail-link { font-family:var(--mono); font-size:0.62rem; color:var(--cyan); text-decoration:none; }
 .detail-link:hover { text-decoration:underline; }
+
+/* trade ticket */
+.ticket { margin-top:14px; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); }
+.ticket-head { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:9px; }
+.ticket-title { font-family:var(--mono); font-size:0.58rem; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); }
+.ticket-mkt { font-family:var(--mono); font-size:0.56rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:55%; }
+.side-toggle { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px; }
+.side-btn { display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 8px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--border); color:var(--text-muted); font-family:var(--body); font-weight:600; font-size:0.72rem; cursor:pointer; transition:all .15s; }
+.side-btn span { font-family:var(--mono); font-size:0.62rem; font-weight:500; color:var(--text-dim); }
+.side-btn.yes.on { background:rgba(57,229,140,0.10); border-color:rgba(57,229,140,0.45); color:var(--green); }
+.side-btn.yes.on span { color:var(--green); }
+.side-btn.no.on { background:rgba(255,92,92,0.10); border-color:rgba(255,92,92,0.45); color:var(--red); }
+.side-btn.no.on span { color:var(--red); }
+.amt-row { display:flex; align-items:center; gap:8px; margin-bottom:9px; }
+.amt-field { display:flex; align-items:center; flex:1; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:0 10px; transition:border .15s; }
+.amt-field:focus-within { border-color:var(--border-hi); }
+.amt-cur { font-family:var(--mono); font-size:0.8rem; color:var(--text-dim); }
+.amt-input { flex:1; background:none; border:none; outline:none; color:var(--text); font-family:var(--mono); font-size:0.9rem; padding:8px 4px; width:100%; }
+.amt-input::-webkit-outer-spin-button, .amt-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.amt-quick { display:flex; gap:4px; }
+.amt-quick button { padding:5px 8px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--border); color:var(--text-dim); font-family:var(--mono); font-size:0.6rem; cursor:pointer; transition:all .15s; }
+.amt-quick button:hover { color:var(--text); border-color:var(--border-hi); }
+.ticket-calc { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:9px; }
+.tc { display:flex; align-items:baseline; justify-content:space-between; gap:6px; padding:6px 9px; background:var(--surface); border:1px solid rgba(138,180,255,0.07); border-radius:var(--radius); }
+.tc span { font-size:0.58rem; color:var(--text-dim); }
+.tc b { font-family:var(--mono); font-size:0.74rem; font-weight:600; color:var(--text); }
+.ticket-note { font-family:var(--mono); font-size:0.56rem; color:var(--gold); margin-bottom:9px; min-height:0; }
+.ticket-note:empty { display:none; }
+.ticket-cta { display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:10px; border-radius:var(--radius); background:linear-gradient(180deg, rgba(57,213,255,0.16), rgba(57,213,255,0.08)); border:1px solid rgba(57,213,255,0.4); color:var(--cyan); font-family:var(--body); font-weight:600; font-size:0.76rem; text-decoration:none; cursor:pointer; transition:all .15s; }
+.ticket-cta:hover { background:linear-gradient(180deg, rgba(57,213,255,0.26), rgba(57,213,255,0.14)); border-color:rgba(57,213,255,0.6); }
+.ticket-cta.disabled { opacity:0.4; pointer-events:none; }
+.row-trade { padding:3px 9px; border-radius:2px; background:rgba(57,213,255,0.08); border:1px solid rgba(57,213,255,0.22); color:var(--cyan); font-family:var(--mono); font-size:0.58rem; cursor:pointer; transition:all .15s; white-space:nowrap; }
+.row-trade:hover { background:rgba(57,213,255,0.18); border-color:rgba(57,213,255,0.4); }
 
 /* chart */
 .chart-wrap { position:relative; margin-top:12px; }
@@ -336,7 +372,34 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
           <div><h4>Bids</h4><div id="bookBids"><div class="chart-empty" style="padding:12px 0">—</div></div></div>
           <div><h4>Asks</h4><div id="bookAsks"><div class="chart-empty" style="padding:12px 0">—</div></div></div>
         </div>
-        <div style="margin-top:12px"><a class="detail-link" id="dLink" href="#" target="_blank" rel="noopener" style="display:none">View on Polymarket →</a></div>
+        <div class="ticket" id="ticket" style="display:none">
+          <div class="ticket-head">
+            <span class="ticket-title">Trade ticket</span>
+            <span class="ticket-mkt" id="tkMkt"></span>
+          </div>
+          <div class="side-toggle">
+            <button class="side-btn yes on" id="sideYes" data-side="yes">Buy YES <span id="sideYesPx">—</span></button>
+            <button class="side-btn no" id="sideNo" data-side="no">Buy NO <span id="sideNoPx">—</span></button>
+          </div>
+          <div class="amt-row">
+            <div class="amt-field">
+              <span class="amt-cur">$</span>
+              <input type="number" id="tkAmt" class="amt-input" value="100" min="1" step="10" inputmode="decimal" aria-label="Amount in USDC">
+            </div>
+            <div class="amt-quick" id="tkQuick">
+              <button data-amt="25">25</button><button data-amt="100">100</button><button data-amt="500">500</button><button data-amt="1000">1K</button>
+            </div>
+          </div>
+          <div class="ticket-calc">
+            <div class="tc"><span>Est. shares</span><b id="tkShares">—</b></div>
+            <div class="tc"><span>Avg price</span><b id="tkAvg">—</b></div>
+            <div class="tc"><span>Max payout</span><b id="tkPayout">—</b></div>
+            <div class="tc"><span>You risk</span><b id="tkRisk">—</b></div>
+          </div>
+          <div class="ticket-note" id="tkNote"></div>
+          <a class="ticket-cta" id="tkCta" href="#" target="_blank" rel="noopener">Trade on Polymarket →</a>
+          <div style="margin-top:9px; text-align:center"><a class="detail-link" id="dLink" href="#" target="_blank" rel="noopener" style="display:none">View full market on Polymarket →</a></div>
+        </div>
       </div>
     </section>
 
@@ -357,10 +420,11 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
               <th data-k="liq">Liquidity</th>
               <th data-k="spread">Spread</th>
               <th data-k="ends">Ends</th>
+              <th>Trade</th>
             </tr>
           </thead>
           <tbody id="mktBody">
-            <tr><td colspan="7"><div class="loading">Scanning Polymarket…</div></td></tr>
+            <tr><td colspan="8"><div class="loading">Scanning Polymarket…</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -435,7 +499,9 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     whaleMin: 10000,
     whaleSeen: {},
     lbWindow: '1d',
-    history: null
+    history: null,
+    ticket: { side: 'yes', amt: 100 },
+    books: {}
   };
 
   /* ── helpers ──────────────────────────────────────────── */
@@ -528,8 +594,8 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
             }
             if (yp == null || isNaN(yp)) yp = m.lastTradePrice != null ? parseFloat(m.lastTradePrice) : null;
             if (yp == null || isNaN(yp) || yp <= 0.01 || yp >= 0.99) return;
-            var tokenId = null;
-            try { var tk = m.clobTokenIds ? JSON.parse(m.clobTokenIds) : null; tokenId = tk && tk[0] ? String(tk[0]) : null; } catch(e) {}
+            var tokenId = null, noTokenId = null;
+            try { var tk = m.clobTokenIds ? JSON.parse(m.clobTokenIds) : null; tokenId = tk && tk[0] ? String(tk[0]) : null; noTokenId = tk && tk[1] ? String(tk[1]) : null; } catch(e) {}
             all.push({
               id: id, title: title,
               category: categorize(title),
@@ -543,6 +609,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
               spread: m.spread != null ? parseFloat(m.spread) : null,
               ends: m.endDate || item.endDate || null,
               tokenId: tokenId,
+              noTokenId: noTokenId,
               url: 'https://polymarket.com/event/' + (item.slug || m.slug || '')
             });
           });
@@ -574,7 +641,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     applyFilters();
     var tb = $('mktBody');
     var rows = state.filtered.slice(0, 120);
-    if (!rows.length) { tb.innerHTML = '<tr><td colspan="7"><div class="empty">No markets match</div></td></tr>'; $('scanCount').textContent = '0 markets'; return; }
+    if (!rows.length) { tb.innerHTML = '<tr><td colspan="8"><div class="empty">No markets match</div></td></tr>'; $('scanCount').textContent = '0 markets'; return; }
     var html = '';
     rows.forEach(function(m, i) {
       var chg = m.chg || 0;
@@ -587,12 +654,22 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
         '<td>' + fmtUsd(m.vol24) + '</td>' +
         '<td>' + fmtUsd(m.liq) + '</td>' +
         '<td>' + (m.spread != null ? (m.spread * 100).toFixed(1) + '¢' : '—') + '</td>' +
-        '<td>' + fmtEnds(m.ends) + '</td></tr>';
+        '<td>' + fmtEnds(m.ends) + '</td>' +
+        '<td><button class="row-trade" data-trade="' + i + '">Trade</button></td></tr>';
     });
     tb.innerHTML = html;
     $('scanCount').textContent = state.filtered.length + ' markets · sorted by ' + state.sortKey;
     Array.prototype.forEach.call(tb.querySelectorAll('tr.mkt-row'), function(tr) {
       tr.addEventListener('click', function() { selectMarket(rows[parseInt(tr.getAttribute('data-i'), 10)]); });
+    });
+    Array.prototype.forEach.call(tb.querySelectorAll('.row-trade'), function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var m = rows[parseInt(btn.getAttribute('data-trade'), 10)];
+        state.ticket.side = 'yes';
+        selectMarket(m);
+        $('tkAmt').focus();
+      });
     });
   }
 
@@ -623,9 +700,16 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
       b.className = 'mover';
       var up = m.chg > 0;
       b.innerHTML = '<span class="mover-title">' + esc(m.title) + '</span>' +
-        '<span class="mover-row"><span style="color:var(--text)">' + cents(m.yes) + '</span>' +
-        '<span class="' + (up ? 'chg-up' : 'chg-dn') + '">' + (up ? '+' : '') + (m.chg * 100).toFixed(1) + '¢</span></span>';
+        '<span class="mover-row"><span class="mover-odds"><span style="color:var(--text)">' + cents(m.yes) + '</span>' +
+        '<span class="' + (up ? 'chg-up' : 'chg-dn') + '">' + (up ? '+' : '') + (m.chg * 100).toFixed(1) + '¢</span></span>' +
+        '<span class="mover-trade">Trade →</span></span>';
       b.addEventListener('click', function() { selectMarket(m); });
+      b.querySelector('.mover-trade').addEventListener('click', function(e) {
+        e.stopPropagation();
+        state.ticket.side = 'yes';
+        selectMarket(m);
+        $('tkAmt').focus();
+      });
       host.appendChild(b);
     });
   }
@@ -662,10 +746,81 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
   function selectMarket(m, quiet) {
     state.selected = m;
     updateDetailFields(m);
+    $('ticket').style.display = 'block';
+    $('tkMkt').textContent = m.title;
+    renderTicket();
     renderTable();
     loadHistory(quiet);
     loadBook();
     if (!quiet) $('detailPanel').scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+
+  /* ── trade ticket ─────────────────────────────────────── */
+  /* Buy quote walked against the live CLOB book: fills `amt` USDC from the
+     ascending asks of the chosen outcome token, giving true shares + avg price.
+     Falls back to the best-ask/mid snapshot when the book isn't cached yet. */
+  function quoteBuy(m, side, amt) {
+    var token = side === 'yes' ? m.tokenId : m.noTokenId;
+    var book = token ? state.books[token] : null;
+    var flat = side === 'yes'
+      ? (m.bestAsk != null ? m.bestAsk : m.yes)
+      : (m.bestBid != null ? 1 - m.bestBid : 1 - m.yes);
+    var asks = book && book.asks ? book.asks
+      .map(function(l) { return { p: parseFloat(l.price), s: parseFloat(l.size) }; })
+      .filter(function(l) { return l.p > 0 && l.p < 1 && l.s > 0; })
+      .sort(function(a, b) { return a.p - b.p; }) : [];
+
+    if (!asks.length) {
+      if (flat == null || isNaN(flat) || flat <= 0 || flat >= 1) return null;
+      return { shares: amt / flat, avg: flat, spent: amt, filled: amt, estimate: true };
+    }
+    var budget = amt, shares = 0;
+    for (var i = 0; i < asks.length && budget > 1e-6; i++) {
+      var costLevel = asks[i].s * asks[i].p;
+      if (budget >= costLevel) { shares += asks[i].s; budget -= costLevel; }
+      else { shares += budget / asks[i].p; budget = 0; }
+    }
+    var spent = amt - budget;
+    if (shares <= 0) return null;
+    return { shares: shares, avg: spent / shares, spent: spent, filled: spent, estimate: false, short: budget > 1e-6 };
+  }
+
+  function renderTicket() {
+    var m = state.selected;
+    if (!m) return;
+    var side = state.ticket.side;
+    $('sideYes').classList.toggle('on', side === 'yes');
+    $('sideNo').classList.toggle('on', side === 'no');
+    $('sideYesPx').textContent = cents(m.yes);
+    $('sideNoPx').textContent = cents(1 - m.yes);
+
+    var amt = state.ticket.amt;
+    var cta = $('tkCta'), note = $('tkNote');
+    cta.href = m.url;
+    cta.textContent = 'Buy ' + side.toUpperCase() + (amt > 0 ? ' · $' + fmtNum(amt) : '') + ' on Polymarket →';
+
+    if (!amt || amt <= 0 || isNaN(amt)) {
+      $('tkShares').textContent = $('tkAvg').textContent = $('tkPayout').textContent = $('tkRisk').textContent = '—';
+      note.textContent = 'Enter an amount to size the trade';
+      cta.classList.add('disabled');
+      return;
+    }
+    cta.classList.remove('disabled');
+
+    var q = quoteBuy(m, side, amt);
+    if (!q) {
+      $('tkShares').textContent = $('tkAvg').textContent = $('tkPayout').textContent = '—';
+      $('tkRisk').textContent = '$' + fmtNum(amt);
+      note.textContent = 'Live quote unavailable — trade at market on Polymarket';
+      return;
+    }
+    $('tkShares').textContent = fmtNum(Math.round(q.shares));
+    $('tkAvg').textContent = (q.avg * 100).toFixed(1) + '¢';
+    $('tkPayout').textContent = '$' + fmtNum(Math.round(q.shares));
+    $('tkRisk').textContent = '$' + fmtNum(Math.round(q.filled));
+    note.textContent = q.short
+      ? 'Only ~$' + fmtNum(Math.round(q.filled)) + ' fills at current book depth'
+      : (q.estimate ? 'Estimated from last price — book warming up' : '');
   }
 
   function loadHistory(quiet) {
@@ -696,8 +851,10 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     fetch(CLOB + '/book?token_id=' + m.tokenId)
       .then(function(r) { return r.json(); })
       .then(function(d) {
+        state.books[m.tokenId] = { bids: d.bids || [], asks: d.asks || [] };
         var sel = state.selected;
         if (!sel || sel.id !== m.id) return; /* user moved on while this was in flight */
+        renderTicket(); /* refresh YES quote against the fresh book */
         /* live odds from the book midpoint — fresher than the gamma snapshot */
         var bb = (d.bids || []).reduce(function(a, l) { return Math.max(a, parseFloat(l.price) || 0); }, 0);
         var ba = (d.asks || []).reduce(function(a, l) { var p = parseFloat(l.price); return p > 0 ? Math.min(a, p) : a; }, 1);
@@ -866,6 +1023,34 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
       c.classList.add('on');
       state.range = c.getAttribute('data-range');
       loadHistory();
+    });
+  });
+
+  /* ── trade ticket wiring ──────────────────────────────── */
+  function ensureBook(token) {
+    if (!token || state.books[token]) { renderTicket(); return; }
+    fetch(CLOB + '/book?token_id=' + token)
+      .then(function(r) { return r.json(); })
+      .then(function(d) { state.books[token] = { bids: d.bids || [], asks: d.asks || [] }; renderTicket(); })
+      .catch(function() { renderTicket(); });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.side-btn'), function(b) {
+    b.addEventListener('click', function() {
+      state.ticket.side = b.getAttribute('data-side');
+      if (state.selected) ensureBook(state.ticket.side === 'yes' ? state.selected.tokenId : state.selected.noTokenId);
+      else renderTicket();
+    });
+  });
+  $('tkAmt').addEventListener('input', function() {
+    var v = parseFloat(this.value);
+    state.ticket.amt = isNaN(v) ? 0 : v;
+    renderTicket();
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#tkQuick button'), function(b) {
+    b.addEventListener('click', function() {
+      state.ticket.amt = parseFloat(b.getAttribute('data-amt'));
+      $('tkAmt').value = state.ticket.amt;
+      renderTicket();
     });
   });
 
@@ -1063,6 +1248,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
   document.querySelectorAll('#mktTable th').forEach(function(th) {
     th.addEventListener('click', function() {
       var k = th.getAttribute('data-k');
+      if (!k) return; /* non-sortable columns (Trade) */
       if (state.sortKey === k) state.sortDir *= -1;
       else { state.sortKey = k; state.sortDir = k === 'title' ? 1 : -1; }
       document.querySelectorAll('#mktTable th').forEach(function(x) { x.classList.remove('sorted'); });
