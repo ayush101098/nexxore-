@@ -239,6 +239,10 @@ body::after {
 .leaflet-popup-tip { background:var(--bg2)!important; }
 .leaflet-popup-close-button { color:var(--t4)!important; }
 .leaflet-control-attribution { display:none!important; }
+/* 3D globe tooltip overrides */
+#worldMap .scene-tooltip { pointer-events:none; }
+#worldMap canvas { outline:none; }
+.nx-globe-pop { background:var(--bg2); color:var(--t1); border:1px solid var(--border); border-radius:3px; font-family:var(--mono); font-size:9px; line-height:1.5; padding:6px 8px; max-width:230px; box-shadow:0 4px 20px rgba(0,0,0,.6); }
 
 /* ══ MAP VISUAL EFFECTS ══ */
 .map-wrap::after {
@@ -397,7 +401,7 @@ body::after {
     <a href="/" class="tb-logo"><span class="tb-dot"></span><span class="tb-brand">NEXXORE TERMINAL</span></a>
     <span class="tb-ver">v5.1</span>
     <div class="tb-nav">
-      <a href="/">Home</a><a href="research.html">Analyst</a><a href="strategy-builder.html">Strategy</a><a href="perps.html">Perps</a><a href="terminal-pro.html" style="color:var(--cyan);font-weight:700">Pro ⚡</a>
+      <a href="research.html">Analyst</a><a href="terminal-pro.html" style="color:var(--cyan);font-weight:700">Pro ⚡</a>
     </div>
   </div>
   <div class="topbar-c">
@@ -581,6 +585,18 @@ body::after {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="js/data-cache.js"></script>
 <script src="js/map-engine.js"></script>
+<script src="https://unpkg.com/globe.gl@2.34.0/dist/globe.gl.min.js"></script>
+<script src="js/globe-engine.js"></script>
+<script>
+  /* Choose the map engine once: 3D globe when WebGL/globe.gl is available, else the
+     flat Leaflet map. `MapEngine` (a top-level const in map-engine.js) is the fallback;
+     `GlobeEngine` (window global from globe-engine.js) is the globe. The terminal reads
+     window.__nxEngine everywhere so a bare-identifier const can't shadow the choice. */
+  (function(){
+    try { window.__nxEngine = (window.GlobeEngine && GlobeEngine.supported()) ? GlobeEngine : MapEngine; }
+    catch(e){ window.__nxEngine = (typeof MapEngine !== 'undefined') ? MapEngine : null; }
+  })();
+</script>
 
 <script>
 /* ═══════════════════════════════════════════════════════════
@@ -1005,7 +1021,7 @@ document.getElementById('regionTabs').addEventListener('click',e=>{
   const b=e.target.closest('.rtab');if(!b)return;
   document.querySelectorAll('.rtab').forEach(t=>t.classList.remove('active'));
   b.classList.add('active');S.region=b.dataset.r;renderNews();
-  if(window.MapEngine && MapEngine.map) MapEngine.flyTo(S.region);
+  if(window.__nxEngine && window.__nxEngine.map) window.__nxEngine.flyTo(S.region);
 });
 
 document.getElementById('newsFilters').addEventListener('click',e=>{
@@ -1359,15 +1375,16 @@ function renderFNG(el){
 
 // ══ MAP — LAZY LOADED via MapEngine ══
 function initMap(){
-  if (typeof MapEngine === 'undefined') {
-    console.warn('[Map] MapEngine not loaded, retrying...');
+  const ENG = window.__nxEngine;
+  if (!ENG) {
+    console.warn('[Map] engine not loaded, retrying...');
     setTimeout(initMap, 500);
     return;
   }
-  S.map = MapEngine.init('worldMap');
+  S.map = ENG.init('worldMap');
   // Update stats immediately — all layers loaded synchronously now
   requestAnimationFrame(() => {
-    const stats = MapEngine.getStats();
+    const stats = ENG.getStats();
     document.getElementById('statConflicts').textContent = stats.conflicts;
     document.getElementById('statShipping').textContent = stats.shipping;
     document.getElementById('statQuakes').textContent = stats.quakes;
@@ -1381,8 +1398,8 @@ function initMap(){
 }
 
 function togLayer(name, btn) {
-  if (typeof MapEngine !== 'undefined') {
-    MapEngine.toggleLayer(name, btn);
+  if (window.__nxEngine) {
+    window.__nxEngine.toggleLayer(name, btn);
   }
 }
 

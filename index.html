@@ -245,6 +245,27 @@
   .product-desc{font-size:13px;color:var(--ink-dim);line-height:1.6;flex-grow:1;}
   .product-link{font-family:var(--mono);font-size:12px;color:var(--ink);border-top:1px solid var(--line);padding-top:12px;margin-top:4px;display:flex;justify-content:space-between;align-items:center;}
 
+  /* ---------- Products: intro rail + side-column tool list ---------- */
+  .products-layout{display:grid;grid-template-columns:0.82fr 1.18fr;gap:52px;align-items:start;}
+  @media (max-width:860px){.products-layout{grid-template-columns:1fr;gap:28px;}}
+  .products-intro{position:sticky;top:96px;}
+  @media (max-width:860px){.products-intro{position:static;}}
+  .products-intro .section-eyebrow{margin-bottom:14px;}
+  .tool-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .tool-row{display:grid;grid-template-columns:26px 1fr auto;gap:16px;align-items:center;padding:17px 20px;background:var(--bg-panel);border-bottom:1px solid var(--line);text-decoration:none;transition:background .15s;}
+  .tool-row:last-child{border-bottom:none;}
+  .tool-row:hover{background:var(--bg-panel-raised);}
+  .tool-ico{font-size:19px;text-align:center;line-height:1;}
+  .tool-main{min-width:0;}
+  .tool-name{font-size:15px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+  .tool-desc{font-size:12.5px;color:var(--ink-dim);line-height:1.5;margin-top:4px;}
+  .tool-badge{font-family:var(--mono);font-size:9px;letter-spacing:0.03em;padding:2px 8px;border-radius:20px;white-space:nowrap;font-weight:500;}
+  .tool-badge.live{color:var(--teal);border:1px solid rgba(111,201,186,0.32);}
+  .tool-badge.pro{color:var(--amber);border:1px solid rgba(232,163,61,0.32);}
+  .tool-badge.building{color:var(--amber);border:1px solid rgba(232,163,61,0.32);opacity:0.85;}
+  .tool-arrow{font-family:var(--mono);font-size:15px;color:var(--ink-faint);transition:color .15s,transform .15s;}
+  .tool-row:hover .tool-arrow{color:var(--teal);transform:translateX(3px);}
+
   /* ---------- Prediction spotlight ---------- */
   .spotlight{
     background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;
@@ -257,8 +278,36 @@
   .sp-stat .l{font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.03em;margin-top:2px;}
 
   /* ---------- Product mockups ---------- */
-  .mockups-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;}
-  @media (max-width:900px){.mockups-grid{grid-template-columns:1fr;}}
+  .mockups-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  @media (max-width:1080px){.mockups-grid{grid-template-columns:1fr 1fr;}}
+  @media (max-width:720px){.mockups-grid{grid-template-columns:1fr;}}
+  .mockup-live{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--teal);letter-spacing:0.05em;text-transform:uppercase;}
+  .mockup-live .lp{width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 6px var(--teal);animation:ping 1.6s ease-in-out infinite;}
+  .term-row .flash{animation:rowFlash .6s ease-out;}
+  @keyframes rowFlash{0%{background:rgba(111,201,186,0.14);}100%{background:transparent;}}
+  .term-mkt{color:var(--ink-dim);font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .term-yes{color:var(--teal);font-weight:600;}
+  /* classier live windows */
+  .tstat{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:9px;color:var(--ink-faint);letter-spacing:0.04em;padding:2px 2px 12px;border-bottom:1px solid var(--line);margin-bottom:12px;}
+  .tstat .sep{opacity:0.4;}
+  .tstat .clock{margin-left:auto;color:var(--teal);display:inline-flex;align-items:center;gap:5px;}
+  .tstat .clock .lp{width:5px;height:5px;border-radius:50%;background:var(--teal);box-shadow:0 0 6px var(--teal);animation:ping 1.6s ease-in-out infinite;}
+  .mkt-row{display:grid;grid-template-columns:32px 1fr auto 46px;gap:7px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;font-variant-numeric:tabular-nums;}
+  .mkt-row:last-child{border-bottom:none;}
+  .mkt-row .sym{color:var(--ink);font-weight:600;}
+  .mkt-row .spark{width:100%;height:16px;display:block;}
+  .mkt-row .px{color:var(--ink);text-align:right;}
+  .mkt-row .chg{text-align:right;font-size:10px;}
+  .mkt-row .chg.up{color:var(--teal);} .mkt-row .chg.down{color:var(--red);}
+  .mkt-row.flash{animation:rowFlash .6s ease-out;}
+  .pred-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10.5px;font-variant-numeric:tabular-nums;}
+  .pred-row:last-child{border-bottom:none;}
+  .pred-row .pq{color:var(--ink-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .pred-row .pv{color:var(--ink-faint);font-size:9px;}
+  .pred-row .py{color:var(--teal);font-weight:600;min-width:32px;text-align:right;}
+  .whale-tag{display:inline-block;font-size:8px;color:var(--amber);border:1px solid rgba(232,163,61,0.3);border-radius:20px;padding:1px 7px;margin-bottom:8px;font-family:var(--mono);}
+  .mockup-window{transition:transform .2s,border-color .2s,box-shadow .2s;}
+  .mockup-window:hover{box-shadow:0 10px 40px rgba(0,0,0,0.35);}
   .mockup-col-label{font-family:var(--mono);font-size:11px;color:var(--teal);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;display:flex;justify-content:space-between;align-items:baseline;}
   .mockup-col-label .price{color:var(--amber);}
   .mockup-window{
@@ -445,44 +494,80 @@
   <div class="wrap">
     <div class="section-head">
       <div class="section-eyebrow">Inside the desk</div>
-      <h2 class="section-title">The Terminal and Pro Terminal, as they run today.</h2>
-      <p class="section-desc">Illustrative interface previews — the same layout and data structure live in product now, with the Escalation Index and geopolitical feed running in real time. Click either window to open it.</p>
+      <h2 class="section-title">The desk, live.</h2>
+      <p class="section-desc">Real prices and real prediction-market odds, streaming on this page right now. The same feeds run inside each product — click any window to open it.</p>
     </div>
     <div class="mockups-grid">
       <div>
-        <div class="mockup-col-label"><span>Terminal — free, self-serve</span></div>
+        <div class="mockup-col-label"><span>Terminal — free, self-serve</span><span class="mockup-live"><span class="lp"></span>Live</span></div>
         <a class="mockup-window" href="/terminal" aria-label="Open the Terminal">
           <div class="mockup-titlebar">
             <span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span>
             <span class="mt-label">nexxore.xyz/terminal</span>
           </div>
           <div class="mockup-body">
-            <div class="term-layout">
-              <div class="term-block">
-                <div class="term-block-label">Markets</div>
-                <div class="term-row"><span class="term-sym">ETH</span><span>$3,412</span><span class="term-chg up">+2.1%</span></div>
-                <div class="term-row"><span class="term-sym">ARB</span><span>$1.02</span><span class="term-chg down">−0.4%</span></div>
-                <div class="term-row"><span class="term-sym">BASE</span><span>$0.87</span><span class="term-chg up">+1.6%</span></div>
-                <div class="term-row"><span class="term-sym">SOL</span><span>$168</span><span class="term-chg up">+3.8%</span></div>
+            <div class="tstat">
+              <span>52 streams</span><span class="sep">·</span><span>4 chains</span>
+              <span class="clock"><span class="lp"></span>UTC <span id="homeClock">—</span></span>
+            </div>
+            <div class="term-block" style="margin-bottom:12px;">
+              <div class="term-block-label">Markets · live · 24h spark</div>
+              <div id="liveMarkets">
+                <div class="mkt-row"><span class="sym">BTC</span><svg class="spark"></svg><span class="px">—</span><span class="chg">—</span></div>
+                <div class="mkt-row"><span class="sym">ETH</span><svg class="spark"></svg><span class="px">—</span><span class="chg">—</span></div>
+                <div class="mkt-row"><span class="sym">SOL</span><svg class="spark"></svg><span class="px">—</span><span class="chg">—</span></div>
+                <div class="mkt-row"><span class="sym">ARB</span><svg class="spark"></svg><span class="px">—</span><span class="chg">—</span></div>
               </div>
-              <div class="term-block">
-                <div class="term-block-label">Escalation Index · Geopolitical feed</div>
-                <div class="mini-gauge-row">
-                  <span class="mini-gauge-val">42</span>
-                  <span class="mini-gauge-lbl">Transition regime</span>
-                </div>
-                <div class="alert-line hot">⚠ Shipping-lane disruption flagged — Red Sea corridor</div>
-                <div class="alert-line">Fed statement parsed — rate-path unchanged</div>
-                <div class="alert-line">Energy volatility rising — Layer 1 stream #31</div>
+            </div>
+            <div class="term-block">
+              <div class="term-block-label">Escalation Index · Geopolitical feed</div>
+              <div class="mini-gauge-row">
+                <span class="mini-gauge-val">42</span>
+                <span class="mini-gauge-lbl">Transition regime</span>
               </div>
+              <div class="alert-line hot">⚠ Shipping-lane disruption — Red Sea corridor</div>
+              <div class="alert-line">Fed statement parsed — rate-path unchanged</div>
+              <div class="alert-line">Energy volatility rising — L1 stream #31</div>
             </div>
           </div>
         </a>
-        <div class="mockup-caption">52 streams, one canvas — no wallet required to view.</div>
+        <div class="mockup-caption">Live prices, streaming now — no wallet required.</div>
       </div>
 
       <div>
-        <div class="mockup-col-label"><span>Pro Terminal · Agent Builder</span><span class="price">$49/mo founding rate</span></div>
+        <div class="mockup-col-label"><span>Prediction Terminal</span><span class="mockup-live"><span class="lp"></span>Live</span></div>
+        <a class="mockup-window" href="/prediction-terminal" aria-label="Open the Prediction Terminal">
+          <div class="mockup-titlebar">
+            <span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span>
+            <span class="mt-label">nexxore.xyz/prediction-terminal</span>
+          </div>
+          <div class="mockup-body">
+            <div class="tstat">
+              <span>750+ markets</span><span class="sep">·</span><span id="predCount">scanning…</span>
+              <span class="clock"><span class="lp"></span>LIVE</span>
+            </div>
+            <div class="term-block" style="margin-bottom:12px;">
+              <div class="term-block-label">Top markets · vol · YES</div>
+              <div id="livePreds">
+                <div class="pred-row"><span class="pq">Loading live markets…</span><span class="pv">—</span><span class="py">—</span></div>
+                <div class="pred-row"><span class="pq">&nbsp;</span><span class="pv">—</span><span class="py">—</span></div>
+                <div class="pred-row"><span class="pq">&nbsp;</span><span class="pv">—</span><span class="py">—</span></div>
+                <div class="pred-row"><span class="pq">&nbsp;</span><span class="pv">—</span><span class="py">—</span></div>
+              </div>
+            </div>
+            <div class="term-block">
+              <div class="term-block-label">Smart-money flow · 24h</div>
+              <span class="whale-tag">⚡ WHALE FEED</span>
+              <div class="alert-line hot" id="predVol">Scanning smart-money flow…</div>
+              <div class="alert-line">750+ markets scored for mispricing</div>
+            </div>
+          </div>
+        </a>
+        <div class="mockup-caption">Live odds &amp; whale flow — trade straight through.</div>
+      </div>
+
+      <div>
+        <div class="mockup-col-label"><span>Pro Terminal · Agent Builder</span><span class="price">$49/mo</span></div>
         <a class="mockup-window" href="/terminal-pro" aria-label="Open the Pro Terminal">
           <div class="mockup-titlebar">
             <span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span>
@@ -490,7 +575,7 @@
           </div>
           <div class="mockup-body">
             <div class="pro-panel">
-              <span class="regime-badge">REGIME: TRANSITION · ×0.75</span>
+              <span class="regime-badge">TRANSITION · ×0.75</span>
               <div class="pro-panel-label">Signal canvas</div>
               <svg viewBox="0 0 300 70" preserveAspectRatio="none" style="width:100%;height:60px;">
                 <polyline points="0,55 30,48 60,50 90,32 120,38 150,20 180,28 210,14 240,24 270,10 300,18" fill="none" stroke="#6FC9BA" stroke-width="2"/>
@@ -506,7 +591,7 @@
             </div>
           </div>
         </a>
-        <div class="mockup-caption">Kelly-sized execution, receipt shown before it moves.</div>
+        <div class="mockup-caption">Kelly-sized execution, receipt before it moves.</div>
       </div>
     </div>
   </div>
@@ -608,69 +693,78 @@
 
 <section id="products">
   <div class="wrap">
-    <div class="section-head">
-      <div class="section-eyebrow">Live tools</div>
-      <h2 class="section-title">Open access, self-serve, today.</h2>
-      <p class="section-desc">Analytics, strategy design, and yield comparison — no wallet, no deposit. Vault deposits open once the audit is complete.</p>
-    </div>
-    <div class="products-grid">
-      <a class="product-card" href="/terminal">
-        <div class="product-icon">⌨️</div>
-        <div class="product-name">Trading Terminal</div>
-        <div class="product-status live">● Live today</div>
-        <div class="product-desc">The full intelligence desk: 52 live streams, the geopolitical map, and the Escalation Index in one canvas.</div>
-        <div class="product-link">Open Terminal <span>→</span></div>
-      </a>
-      <a class="product-card" href="/terminal-pro">
-        <div class="product-icon">◈</div>
-        <div class="product-name">Agent Builder — Pro</div>
-        <div class="product-status pro">◆ Pro · $49/mo founding rate</div>
-        <div class="product-desc">The Pro Terminal: signal canvas, risk engine, and an execution agent that Kelly-sizes every trade inside your boundaries.</div>
-        <div class="product-link">Open Pro Terminal <span>→</span></div>
-      </a>
-      <a class="product-card" href="/strategy-builder">
-        <div class="product-icon">🏗️</div>
-        <div class="product-name">Strategy Builder</div>
-        <div class="product-status live">● Live today</div>
-        <div class="product-desc">Design regime-aware allocation logic with live Greeks and risk constraints.</div>
-        <div class="product-link">Build strategy <span>→</span></div>
-      </a>
-      <a class="product-card" href="/prediction-terminal">
-        <div class="product-icon">🎯</div>
-        <div class="product-name">Prediction Terminal</div>
-        <div class="product-status live">● Live today</div>
-        <div class="product-desc">Three-pane market desk: live scanner with charts and order books, whale trade feed, trader P&amp;L leaderboard, and wallet-level position intel.</div>
-        <div class="product-link">Open Prediction Terminal <span>→</span></div>
-      </a>
-      <a class="product-card" href="/intelligence">
-        <div class="product-icon">🌍</div>
-        <div class="product-name">Geopolitical Intelligence</div>
-        <div class="product-status live">● Live today</div>
-        <div class="product-desc">The Escalation Index and regime engine: geopolitical triggers turned into CVaR circuit breakers and Kelly-sized stakes.</div>
-        <div class="product-link">Open Intelligence <span>→</span></div>
-      </a>
-      <a class="product-card" href="/predictions">
-        <div class="product-icon">🤖</div>
-        <div class="product-name">Prediction Agent</div>
-        <div class="product-status live">● Live today</div>
-        <div class="product-desc">Real-time edge detection across 750+ prediction markets on Polymarket and Manifold.</div>
-        <div class="product-link">View predictions <span>→</span></div>
-      </a>
-      <a class="product-card" href="/stablecoin-hub">
-        <div class="product-icon">💵</div>
-        <div class="product-name">Stablecoin Hub</div>
-        <div class="product-status live">● Live today</div>
-        <div class="product-desc">Compare yield across venues, ranked by depth and protocol maturity.</div>
-        <div class="product-link">Compare yields <span>→</span></div>
-      </a>
-      <a class="product-card" href="/vaults">
-        <div class="product-icon">🏦</div>
-        <div class="product-name">Vaults</div>
-        <div class="product-status" style="color:var(--amber);">◐ Building</div>
-        <div class="product-desc">Browse allocation logic and CVaR risk metrics. Deposits open once audited.</div>
-        <div class="product-link">Preview vaults <span>→</span></div>
-      </a>
-      <div class="product-card ghost" aria-hidden="true"></div>
+    <div class="products-layout">
+      <div class="products-intro">
+        <div class="section-eyebrow">Live tools</div>
+        <h2 class="section-title">Open access, self-serve, today.</h2>
+        <p class="section-desc">Analytics, strategy design, and yield comparison — no wallet, no deposit. Vault deposits open once the audit is complete.</p>
+      </div>
+      <div class="tool-list">
+        <a class="tool-row" href="/terminal">
+          <span class="tool-ico">⌨️</span>
+          <span class="tool-main">
+            <span class="tool-name">Trading Terminal <span class="tool-badge live">Live</span></span>
+            <span class="tool-desc">52 live streams, the geopolitical map, and the Escalation Index in one canvas.</span>
+          </span>
+          <span class="tool-arrow">→</span>
+        </a>
+        <a class="tool-row" href="/terminal-pro">
+          <span class="tool-ico">◈</span>
+          <span class="tool-main">
+            <span class="tool-name">Agent Builder — Pro <span class="tool-badge pro">Pro · $49/mo</span></span>
+            <span class="tool-desc">Signal canvas, risk engine, and an execution agent that Kelly-sizes every trade inside your boundaries.</span>
+          </span>
+          <span class="tool-arrow">→</span>
+        </a>
+        <a class="tool-row" href="/strategy-builder">
+          <span class="tool-ico">🏗️</span>
+          <span class="tool-main">
+            <span class="tool-name">Strategy Builder <span class="tool-badge live">Live</span></span>
+            <span class="tool-desc">Design regime-aware allocation logic with live Greeks and risk constraints.</span>
+          </span>
+          <span class="tool-arrow">→</span>
+        </a>
+        <a class="tool-row" href="/prediction-terminal">
+          <span class="tool-ico">🎯</span>
+          <span class="tool-main">
+            <span class="tool-name">Prediction Terminal <span class="tool-badge live">Live</span></span>
+            <span class="tool-desc">Live scanner with charts and order books, whale feed, P&amp;L leaderboard, and wallet intel.</span>
+          </span>
+          <span class="tool-arrow">→</span>
+        </a>
+        <a class="tool-row" href="/intelligence">
+          <span class="tool-ico">🌍</span>
+          <span class="tool-main">
+            <span class="tool-name">Geopolitical Intelligence <span class="tool-badge live">Live</span></span>
+            <span class="tool-desc">Escalation Index and regime engine — triggers turned into CVaR circuit breakers.</span>
+          </span>
+          <span class="tool-arrow">→</span>
+        </a>
+        <a class="tool-row" href="/predictions">
+          <span class="tool-ico">🤖</span>
+          <span class="tool-main">
+            <span class="tool-name">Prediction Agent <span class="tool-badge live">Live</span></span>
+            <span class="tool-desc">Real-time edge detection across 750+ markets on Polymarket and Manifold.</span>
+          </span>
+          <span class="tool-arrow">→</span>
+        </a>
+        <a class="tool-row" href="/stablecoin-hub">
+          <span class="tool-ico">💵</span>
+          <span class="tool-main">
+            <span class="tool-name">Stablecoin Hub <span class="tool-badge live">Live</span></span>
+            <span class="tool-desc">Compare yield across venues, ranked by depth and protocol maturity.</span>
+          </span>
+          <span class="tool-arrow">→</span>
+        </a>
+        <a class="tool-row" href="/vaults">
+          <span class="tool-ico">🏦</span>
+          <span class="tool-main">
+            <span class="tool-name">Vaults <span class="tool-badge building">Building</span></span>
+            <span class="tool-desc">Browse allocation logic and CVaR risk metrics. Deposits open once audited.</span>
+          </span>
+          <span class="tool-arrow">→</span>
+        </a>
+      </div>
     </div>
   </div>
 </section>
@@ -749,6 +843,120 @@
   }
   stepDial();
   if(!prefersReduced){ setInterval(stepDial, 4200); }
+
+  /* ── UTC clock in the live windows ── */
+  (function clock(){
+    var el = document.getElementById('homeClock'); if(!el) return;
+    function t(){ var d = new Date(); el.textContent = [d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds()].map(function(x){ return String(x).padStart(2,'0'); }).join(':'); }
+    t(); if(!prefersReduced) setInterval(t, 1000);
+  })();
+
+  /* ── Live market feed (Binance) — prices + 24h sparklines ── */
+  (function liveMarkets(){
+    var host = document.getElementById('liveMarkets');
+    if(!host) return;
+    var SYMS = [
+      { s:'BTCUSDT', l:'BTC' }, { s:'ETHUSDT', l:'ETH' },
+      { s:'SOLUSDT', l:'SOL' }, { s:'ARBUSDT', l:'ARB' }
+    ];
+    var last = {};
+    var fmt = function(n){
+      n = parseFloat(n);
+      if(n >= 1000) return '$' + n.toLocaleString('en-US', { maximumFractionDigits:0 });
+      if(n >= 1)    return '$' + n.toLocaleString('en-US', { maximumFractionDigits:2 });
+      return '$' + n.toLocaleString('en-US', { maximumFractionDigits:4 });
+    };
+    var rows = function(){ return host.querySelectorAll('.mkt-row'); };
+    function sparkPath(closes, up){
+      if(!closes || closes.length < 2) return '';
+      var lo = Math.min.apply(null, closes), hi = Math.max.apply(null, closes), span = (hi - lo) || 1;
+      var n = closes.length, W = 100, H = 16, pad = 2;
+      var pts = closes.map(function(c, i){
+        var x = (i / (n - 1)) * W, y = H - pad - ((c - lo) / span) * (H - 2 * pad);
+        return x.toFixed(1) + ',' + y.toFixed(1);
+      }).join(' ');
+      return '<polyline points="' + pts + '" fill="none" stroke="' + (up ? 'var(--teal)' : 'var(--red)') +
+        '" stroke-width="1.2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+    }
+    var tickerUrl = 'https://api.binance.com/api/v3/ticker/24hr?symbols=' +
+      encodeURIComponent(JSON.stringify(SYMS.map(function(x){ return x.s; })));
+    function prices(){
+      fetch(tickerUrl).then(function(r){ return r.json(); }).then(function(list){
+        if(!Array.isArray(list)) return;
+        var by = {}; list.forEach(function(r){ by[r.symbol] = r; });
+        var rs = rows();
+        SYMS.forEach(function(x, idx){
+          var d = by[x.s], row = rs[idx]; if(!d || !row) return;
+          var px = parseFloat(d.lastPrice), chg = parseFloat(d.priceChangePercent), up = chg >= 0;
+          if(last[x.s] != null && last[x.s] !== px){ row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash'); }
+          last[x.s] = px;
+          row.querySelector('.px').textContent = fmt(px);
+          var chgEl = row.querySelector('.chg');
+          chgEl.textContent = (up ? '+' : '') + chg.toFixed(1) + '%';
+          chgEl.className = 'chg ' + (up ? 'up' : 'down');
+        });
+      }).catch(function(){});
+    }
+    function sparks(){
+      SYMS.forEach(function(x, idx){
+        fetch('https://api.binance.com/api/v3/klines?symbol=' + x.s + '&interval=1h&limit=24')
+          .then(function(r){ return r.json(); }).then(function(k){
+            if(!Array.isArray(k) || !k.length) return;
+            var closes = k.map(function(c){ return parseFloat(c[4]); });
+            var row = rows()[idx]; if(!row) return;
+            var svg = row.querySelector('.spark'); if(!svg) return;
+            svg.setAttribute('viewBox', '0 0 100 16'); svg.setAttribute('preserveAspectRatio', 'none');
+            svg.innerHTML = sparkPath(closes, closes[closes.length - 1] >= closes[0]);
+          }).catch(function(){});
+      });
+    }
+    prices(); sparks();
+    if(!prefersReduced){ setInterval(prices, 5000); setInterval(sparks, 60000); }
+  })();
+
+  /* ── Live prediction markets (Polymarket) — odds, volume, whale flow ── */
+  (function livePreds(){
+    var host = document.getElementById('livePreds');
+    if(!host) return;
+    var esc = function(s){ var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; };
+    var fmtV = function(n){ n = parseFloat(n) || 0; if(n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M'; if(n >= 1e3) return '$' + Math.round(n/1e3) + 'K'; return '$' + Math.round(n); };
+    function tick(){
+      fetch('https://gamma-api.polymarket.com/markets?active=true&closed=false&order=volume24hr&ascending=false&limit=20')
+        .then(function(r){ return r.json(); })
+        .then(function(rows){
+          if(!Array.isArray(rows)) return;
+          var out = [];
+          for(var i=0;i<rows.length && out.length<4;i++){
+            var m = rows[i];
+            var q = m.question || m.title; if(!q) continue;
+            var yp = null;
+            if(m.outcomePrices){ try { yp = parseFloat(JSON.parse(m.outcomePrices)[0]); } catch(e){} }
+            if(yp == null || isNaN(yp)) yp = m.lastTradePrice != null ? parseFloat(m.lastTradePrice) : null;
+            if(yp == null || isNaN(yp) || yp <= 0.02 || yp >= 0.98) continue;
+            out.push({ q:q, yes:Math.round(yp*100), vol:parseFloat(m.volume24hr || m.volume || 0) });
+          }
+          if(!out.length) return;
+          host.innerHTML = out.map(function(m){
+            return '<div class="pred-row"><span class="pq" title="' + esc(m.q) + '">' + esc(m.q) + '</span>' +
+              '<span class="pv">' + fmtV(m.vol) + '</span><span class="py">' + m.yes + '¢</span></div>';
+          }).join('');
+          var cnt = document.getElementById('predCount'); if(cnt) cnt.textContent = 'top by 24h vol';
+        }).catch(function(){});
+    }
+    function whale(){
+      fetch('https://data-api.polymarket.com/trades?limit=1&takerOnly=true&filterType=CASH&filterAmount=10000')
+        .then(function(r){ return r.json(); })
+        .then(function(t){
+          var el = document.getElementById('predVol');
+          if(el && Array.isArray(t) && t[0]){
+            var usd = Math.round((t[0].size||0) * (t[0].price||0));
+            if(usd > 0) el.textContent = '⚡ Whale print · $' + usd.toLocaleString('en-US') + ' just filled';
+          }
+        }).catch(function(){});
+    }
+    tick(); whale();
+    if(!prefersReduced){ setInterval(tick, 12000); setInterval(whale, 15000); }
+  })();
 
   // Early access — every signup goes to the waitlist
   document.getElementById('waitlistForm').addEventListener('submit', async e => {
