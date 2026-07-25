@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edge Dashboard — 3-Agent Consensus, Elite Wallets, Smart-Money Radar | Nexxore</title>
+
+  <!-- GA -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6QGB2RQVP0"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-6QGB2RQVP0');</script>
+
+  <meta name="description" content="The Nexxore Edge Dashboard: three independent AI agents vote on every prediction-market trade, an elite-wallet 'treasure map' ranks the smartest Polymarket traders by profit, and a smart-money radar catches fresh wallets entering low-liquidity markets early.">
+  <meta name="keywords" content="polymarket edge, prediction market consensus, smart money polymarket, elite wallet tracker, polymarket signals, multi-agent trading, insider detection prediction markets">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://nexxore.xyz/edge">
+  <meta name="theme-color" content="#060B12">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%2305050D' stroke='%2300C8FF' stroke-width='4'/%3E%3Ctext x='50' y='62' text-anchor='middle' font-size='36' font-weight='800' font-family='system-ui' fill='%2300C8FF'%3ENX%3C/text%3E%3C/svg%3E">
+
+  <meta property="og:title" content="Edge Dashboard — 3-Agent Consensus, Elite Wallets, Smart-Money Radar | Nexxore">
+  <meta property="og:description" content="Three agents vote on every trade. An elite-wallet treasure map ranks the smartest Polymarket traders. A radar catches smart money entering early.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nexxore.xyz/edge">
+  <meta property="og:image" content="https://nexxore.xyz/assets/icons/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg:#060B12; --bg2:#0B1220; --surface:#0E1626; --surface2:#121D30;
+  --border:rgba(138,180,255,0.12); --border-hi:rgba(57,213,255,0.30);
+  --cyan:#39D5FF; --green:#39E58C; --teal:#19E6C5; --violet:#4F7CFF; --gold:#F7B955; --red:#FF5C5C;
+  --text:#F4F8FF; --text-muted:#9FB0C7; --text-dim:#6B7A93;
+  --cat1:#1E9AC4; --cat2:#5C86FF; --cat3:#0FA98F; --cat4:#BC8330; --cat5:#9E74E3;
+  --display:'Space Grotesk',sans-serif; --body:'Inter',sans-serif; --mono:'IBM Plex Mono',monospace;
+  --radius:3px;
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+html { -webkit-font-smoothing:antialiased; }
+body { background:var(--bg); color:var(--text); font-family:var(--body); font-size:13px; line-height:1.5; overflow:hidden; }
+::selection { background:rgba(0,200,255,0.15); }
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:rgba(57,213,255,0.25); border-radius:3px; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+@keyframes flashIn { from{background:rgba(57,213,255,0.10)} to{background:transparent} }
+@keyframes spin { to { transform:rotate(360deg); } }
+.num, .mono { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+.chg-up { color:var(--green); } .chg-dn { color:var(--red); }
+
+/* ── header ─────────────────────────────────────────────── */
+.header { position:fixed; top:0; left:0; right:0; z-index:500; height:48px; display:flex; align-items:center; justify-content:space-between; padding:0 16px; background:rgba(5,5,13,0.9); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); }
+.header-left { display:flex; align-items:center; gap:12px; }
+.logo { display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--text); font-family:var(--display); font-weight:700; font-size:0.95rem; }
+.logo svg { width:26px; height:26px; }
+.product-tag { padding:3px 8px; border-radius:var(--radius); background:rgba(0,200,255,0.08); border:1px solid rgba(0,200,255,0.15); font-family:var(--mono); font-size:0.6rem; color:var(--cyan); letter-spacing:0.5px; text-transform:uppercase; }
+.header-nav { display:flex; gap:2px; margin-left:8px; }
+.header-nav a { padding:5px 10px; border-radius:var(--radius); color:var(--text-dim); text-decoration:none; font-size:0.7rem; font-weight:500; transition:all .15s; }
+.header-nav a:hover { color:var(--text); background:var(--surface); }
+.header-nav a.on { color:var(--cyan); }
+.header-right { display:flex; align-items:center; gap:8px; }
+.header-btn { display:flex; align-items:center; gap:6px; padding:5px 11px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--border); color:var(--text-muted); font-size:0.68rem; font-weight:500; font-family:var(--body); cursor:pointer; text-decoration:none; transition:all 0.15s; }
+.header-btn:hover { border-color:var(--border-hi); color:var(--text); }
+.header-btn.on { color:var(--teal); border-color:rgba(25,230,197,0.3); }
+.header-btn .dot { width:6px; height:6px; border-radius:50%; background:var(--text-dim); }
+.header-btn.on .dot { background:var(--teal); animation:pulse 2s infinite; }
+.clock { font-family:var(--mono); font-size:0.66rem; color:var(--text-dim); }
+
+/* ── app grid ───────────────────────────────────────────── */
+.app { display:grid; grid-template-columns:238px minmax(0,1fr) 372px; height:100vh; padding-top:48px; }
+.pane { overflow-y:auto; min-height:0; }
+.pane-left  { border-right:1px solid var(--border); background:var(--bg2); padding:14px 12px 24px; }
+.pane-center{ background:var(--bg); padding:0 0 40px; }
+.pane-right { border-left:1px solid var(--border); background:var(--bg2); display:flex; flex-direction:column; overflow:hidden; }
+
+/* ── left rail ──────────────────────────────────────────── */
+.nav-group { margin-bottom:18px; }
+.nav-label { font-family:var(--mono); font-size:0.58rem; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-dim); margin:0 6px 8px; }
+.mod { display:flex; align-items:center; gap:9px; padding:8px 9px; border-radius:var(--radius); color:var(--text-muted); font-size:0.74rem; font-weight:500; border:1px solid transparent; cursor:pointer; transition:all .15s; margin-bottom:2px; }
+.mod:hover { background:var(--surface); color:var(--text); }
+.mod.on { background:var(--surface2); color:var(--text); border-color:var(--border-hi); }
+.mod .ic { width:16px; text-align:center; opacity:.85; }
+.mod .cnt { margin-left:auto; font-family:var(--mono); font-size:0.62rem; color:var(--text-dim); }
+.mod.on .cnt { color:var(--cyan); }
+
+.pulse-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; }
+.pulse-row { display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:0.72rem; color:var(--text-muted); }
+.pulse-row .v { font-family:var(--mono); color:var(--text); font-weight:500; }
+
+.ctrl { margin-bottom:12px; }
+.ctrl label { display:flex; justify-content:space-between; font-size:0.68rem; color:var(--text-muted); margin-bottom:5px; }
+.ctrl label .v { font-family:var(--mono); color:var(--cyan); }
+.ctrl input[type=range] { width:100%; accent-color:var(--cyan); }
+.btn { display:block; width:100%; text-align:center; padding:8px; border-radius:var(--radius); background:var(--cyan); color:#04121a; border:none; font-family:var(--body); font-weight:700; font-size:0.72rem; cursor:pointer; transition:all .15s; }
+.btn:hover { filter:brightness(1.08); }
+.btn.ghost { background:var(--surface); color:var(--text-muted); border:1px solid var(--border); font-weight:500; }
+.btn.ghost:hover { border-color:var(--border-hi); color:var(--text); }
+
+/* ── hero band ──────────────────────────────────────────── */
+.hero { padding:16px 18px 6px; border-bottom:1px solid var(--border); background:linear-gradient(180deg,rgba(31,154,196,0.06),transparent); }
+.hero-eyebrow { font-family:var(--mono); font-size:0.6rem; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-dim); }
+.hero h1 { font-family:var(--display); font-size:1.35rem; font-weight:700; margin:4px 0 2px; letter-spacing:-0.01em; }
+.hero p { color:var(--text-muted); font-size:0.78rem; max-width:660px; }
+.kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px; }
+.kpi { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:11px 13px; position:relative; }
+.kpi .tag { position:absolute; top:9px; right:10px; font-family:var(--mono); font-size:0.52rem; letter-spacing:.6px; text-transform:uppercase; padding:1px 5px; border-radius:2px; }
+.kpi .tag.live { color:var(--teal); background:rgba(25,230,197,0.10); }
+.kpi .tag.bt { color:var(--gold); background:rgba(247,185,85,0.10); }
+.kpi .k { font-size:0.66rem; color:var(--text-dim); }
+.kpi .v { font-family:var(--mono); font-size:1.28rem; font-weight:600; margin-top:5px; letter-spacing:-0.01em; }
+.kpi .s { font-size:0.62rem; color:var(--text-muted); margin-top:2px; }
+
+/* ── sections ───────────────────────────────────────────── */
+.section { padding:16px 18px 4px; }
+.sec-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.sec-head h2 { font-family:var(--display); font-size:0.95rem; font-weight:600; }
+.sec-head .sub { font-size:0.68rem; color:var(--text-dim); }
+.sec-head .spacer { flex:1; }
+.chip { padding:4px 9px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--border); color:var(--text-muted); font-size:0.64rem; font-weight:500; cursor:pointer; transition:all .15s; font-family:var(--body); }
+.chip:hover { color:var(--text); }
+.chip.on { color:var(--cyan); border-color:var(--border-hi); background:var(--surface2); }
+.stamp { font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); }
+
+/* ── consensus cards ────────────────────────────────────── */
+.con-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:12px; }
+.con { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:13px; transition:border-color .15s; cursor:pointer; }
+.con:hover { border-color:var(--border-hi); }
+.con-top { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:9px; }
+.con-title { font-size:0.8rem; font-weight:600; line-height:1.35; }
+.con-cat { font-family:var(--mono); font-size:0.56rem; text-transform:uppercase; letter-spacing:.5px; color:var(--text-dim); margin-top:3px; }
+.verdict { flex-shrink:0; text-align:right; }
+.verdict .lbl { font-family:var(--mono); font-size:0.58rem; letter-spacing:.6px; text-transform:uppercase; padding:3px 8px; border-radius:2px; font-weight:600; white-space:nowrap; }
+.verdict .lbl.full { color:#04121a; background:var(--green); }
+.verdict .lbl.half { color:#1a1204; background:var(--gold); }
+.verdict .lbl.none { color:var(--text-dim); background:var(--surface2); border:1px solid var(--border); }
+.verdict .size { font-family:var(--mono); font-size:0.62rem; color:var(--text-muted); margin-top:4px; }
+.agents { display:flex; gap:6px; margin:9px 0; }
+.agent { flex:1; border:1px solid var(--border); border-radius:var(--radius); padding:6px 7px; background:var(--bg2); }
+.agent .an { font-size:0.58rem; color:var(--text-dim); display:flex; align-items:center; gap:4px; }
+.agent .av { font-family:var(--mono); font-size:0.72rem; font-weight:600; margin-top:3px; }
+.agent .conf { height:3px; border-radius:2px; background:var(--surface2); margin-top:4px; overflow:hidden; }
+.agent .conf i { display:block; height:100%; }
+.vote-yes { color:var(--green); } .vote-no { color:var(--red); } .vote-pass { color:var(--text-dim); }
+.con-foot { display:flex; justify-content:space-between; font-size:0.66rem; color:var(--text-muted); border-top:1px solid var(--border); padding-top:8px; margin-top:4px; }
+.con-foot .num { color:var(--text); }
+
+/* ── tables ─────────────────────────────────────────────── */
+.tbl { width:100%; border-collapse:collapse; font-size:0.72rem; }
+.tbl th { text-align:right; font-family:var(--mono); font-size:0.58rem; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); font-weight:500; padding:6px 8px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--bg); }
+.tbl th:first-child, .tbl td:first-child { text-align:left; }
+.tbl td { padding:7px 8px; border-bottom:1px solid rgba(138,180,255,0.06); }
+.tbl tbody tr { cursor:pointer; }
+.tbl tbody tr:hover { background:var(--surface); }
+.tbl .num { font-family:var(--mono); }
+.rank { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:3px; font-family:var(--mono); font-size:0.62rem; color:var(--text-dim); background:var(--surface2); }
+.rank.top { color:var(--gold); background:rgba(247,185,85,0.12); }
+.badge { display:inline-block; padding:1px 6px; border-radius:2px; font-family:var(--mono); font-size:0.56rem; letter-spacing:.4px; }
+.badge.elite { color:var(--teal); background:rgba(25,230,197,0.10); }
+.wname { display:inline-block; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle; }
+.tbl-wrap { max-height:none; }
+
+/* ── right pane ─────────────────────────────────────────── */
+.rp-tabs { display:flex; border-bottom:1px solid var(--border); flex-shrink:0; }
+.rp-tab { flex:1; padding:11px 8px; text-align:center; font-size:0.68rem; font-weight:500; color:var(--text-dim); cursor:pointer; border-bottom:2px solid transparent; transition:all .15s; }
+.rp-tab:hover { color:var(--text); }
+.rp-tab.on { color:var(--cyan); border-bottom-color:var(--cyan); }
+.rp-body { flex:1; overflow-y:auto; padding:12px; }
+.rp-panel { display:none; } .rp-panel.on { display:block; }
+
+.radar-chips { display:flex; gap:5px; margin-bottom:10px; }
+.rd { border:1px solid var(--border); border-radius:var(--radius); padding:9px 10px; margin-bottom:7px; background:var(--surface); transition:background .4s; }
+.rd.new { animation:flashIn 1.2s ease; }
+.rd-top { display:flex; align-items:center; gap:7px; font-size:0.66rem; }
+.side { font-family:var(--mono); font-size:0.56rem; font-weight:600; padding:1px 5px; border-radius:2px; }
+.side.buy { color:var(--green); background:rgba(57,229,140,0.10); }
+.side.sell { color:var(--red); background:rgba(255,92,92,0.10); }
+.rd-amt { font-family:var(--mono); font-weight:600; color:var(--text); }
+.rd-flag { margin-left:auto; font-family:var(--mono); font-size:0.54rem; padding:1px 5px; border-radius:2px; color:var(--gold); background:rgba(247,185,85,0.10); }
+.rd-title { font-size:0.72rem; margin:5px 0 4px; color:var(--text); line-height:1.3; }
+.rd-meta { display:flex; justify-content:space-between; font-size:0.62rem; color:var(--text-dim); }
+.rd-w { color:var(--cyan); cursor:pointer; background:none; border:none; font-family:var(--body); font-size:0.62rem; padding:0; }
+.rd-w:hover { text-decoration:underline; }
+
+.search-row { display:flex; gap:6px; margin-bottom:10px; }
+.search-input { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:7px 10px; color:var(--text); font-family:var(--mono); font-size:0.7rem; }
+.search-input:focus { outline:none; border-color:var(--border-hi); }
+.tr-load { padding:7px 12px; border-radius:var(--radius); background:var(--cyan); color:#04121a; border:none; font-weight:700; font-size:0.68rem; cursor:pointer; }
+.tr-ident { padding-bottom:10px; border-bottom:1px solid var(--border); margin-bottom:10px; }
+.tr-name { font-family:var(--display); font-size:0.95rem; font-weight:600; }
+.tr-addr { font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); word-break:break-all; margin:2px 0 8px; }
+.tr-value { }
+.tr-value .k { font-size:0.6rem; color:var(--text-dim); }
+.tr-value .v { font-family:var(--mono); font-size:0.9rem; font-weight:600; }
+.tr-sec { font-family:var(--mono); font-size:0.58rem; letter-spacing:.6px; text-transform:uppercase; color:var(--text-dim); margin:12px 0 6px; }
+.pos { padding:7px 0; border-bottom:1px solid rgba(138,180,255,0.06); }
+.pos-title { font-size:0.7rem; margin-bottom:3px; }
+.pos-row { display:flex; justify-content:space-between; font-family:var(--mono); font-size:0.64rem; color:var(--text-muted); }
+
+.loading, .empty { padding:20px; text-align:center; color:var(--text-dim); font-size:0.72rem; }
+.loading::before { content:''; display:inline-block; width:11px; height:11px; border:2px solid var(--border); border-top-color:var(--cyan); border-radius:50%; animation:spin .7s linear infinite; margin-right:7px; vertical-align:-1px; }
+.spark { display:inline-block; vertical-align:middle; }
+
+.disclaimer { font-size:0.6rem; color:var(--text-dim); padding:14px 18px 0; line-height:1.5; }
+.disclaimer b { color:var(--text-muted); }
+
+@media (max-width:1200px){ .app{ grid-template-columns:0 minmax(0,1fr) 0; } .pane-left,.pane-right{ display:none; } .kpis{ grid-template-columns:repeat(2,1fr); } .header-nav{ display:none; } }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <a class="logo" href="index.html" aria-label="Nexxore home">
+      <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#05050D" stroke="#00C8FF" stroke-width="4"/><text x="50" y="62" text-anchor="middle" font-size="36" font-weight="800" font-family="system-ui" fill="#00C8FF">NX</text></svg>
+      Nexxore
+    </a>
+    <span class="product-tag">Edge Dashboard</span>
+    <nav class="header-nav">
+      <a href="prediction-terminal.html">Terminal</a>
+      <a href="edge.html" class="on">Edge</a>
+      <a href="intelligence.html">Intelligence</a>
+      <a href="predictions.html">Tools</a>
+    </nav>
+  </div>
+  <div class="header-right">
+    <span class="clock num" id="clock">—:—:—</span>
+    <div class="header-btn" id="wsStatus"><span class="dot"></span><span id="wsText">Connecting</span></div>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- ══ LEFT: modules · controls · pulse ══ -->
+  <aside class="pane pane-left">
+    <div class="nav-group">
+      <div class="nav-label">Live Modules</div>
+      <div id="modList">
+        <div class="mod on" data-mod="consensus"><span class="ic">◈</span> 3-Agent Consensus <span class="cnt" id="cntConsensus">—</span></div>
+        <div class="mod" data-mod="elite"><span class="ic">◆</span> Elite Wallets <span class="cnt" id="cntElite">—</span></div>
+        <div class="mod" data-mod="smart"><span class="ic">⊚</span> Smart-Money Radar <span class="cnt" id="cntSmart">—</span></div>
+        <div class="mod" data-mod="whales"><span class="ic">≈</span> Whale Tracking <span class="cnt" id="cntWhales">—</span></div>
+        <div class="mod" data-mod="insider"><span class="ic">◉</span> Insider Detection <span class="cnt" id="cntInsider">—</span></div>
+        <div class="mod" data-mod="arb"><span class="ic">⇄</span> Arbitrage <span class="cnt" id="cntArb">—</span></div>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Consensus Tuning</div>
+      <div class="ctrl">
+        <label>Agent conviction <span class="v" id="convV">55%</span></label>
+        <input type="range" id="conv" min="40" max="80" value="55">
+      </div>
+      <div class="ctrl">
+        <label>Min liquidity <span class="v" id="liqV">$25K</span></label>
+        <input type="range" id="liqMin" min="0" max="200" value="25">
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Treasure Map Filters</div>
+      <div class="ctrl">
+        <label>Min win rate <span class="v" id="winV">65%</span></label>
+        <input type="range" id="winMin" min="50" max="85" value="65">
+      </div>
+      <div class="ctrl">
+        <label>Min positions <span class="v" id="tradesV">25</span></label>
+        <input type="range" id="tradesMin" min="5" max="120" value="25">
+      </div>
+      <button class="btn ghost" id="rescan">↻ Re-scan wallets</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Market Pulse</div>
+      <div class="pulse-card">
+        <div class="pulse-row"><span>24h volume</span><span class="v" id="pulseVol">—</span></div>
+        <div class="pulse-row"><span>Markets scanned</span><span class="v" id="pulseMkts">—</span></div>
+        <div class="pulse-row"><span>Total liquidity</span><span class="v" id="pulseLiq">—</span></div>
+        <div class="pulse-row"><span>Whale prints /hr</span><span class="v" id="pulseWhales">—</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══ CENTER: hero + modules ══ -->
+  <main class="pane pane-center">
+    <div class="hero">
+      <div class="hero-eyebrow">Nexxore · Prediction Terminal v2 · Edge Layer</div>
+      <h1>Three agents vote. The map does the rest.</h1>
+      <p>Every live Polymarket market is scored by three independent models. Two agree → full position. One agrees → half. No consensus → no trade. Underneath runs a live "treasure map" of the wallets quietly extracting the profit.</p>
+      <div class="kpis">
+        <div class="kpi"><span class="tag bt">Backtest</span><div class="k">$200 seed grew to</div><div class="v" style="color:var(--green)">$25,400</div><div class="s">strategy target · not a live account</div></div>
+        <div class="kpi"><span class="tag bt">Backtest</span><div class="k">Win rate · Sharpe</div><div class="v">74% <span style="color:var(--text-dim);font-size:0.9rem">/ 2.47</span></div><div class="s">consensus filter cut ~40% of losers</div></div>
+        <div class="kpi"><span class="tag live">Live</span><div class="k">Wallets scanned</div><div class="v num" id="kpiScanned">—</div><div class="s" id="kpiEliteSub">— elite found</div></div>
+        <div class="kpi"><span class="tag live">Live</span><div class="k">Consensus signals now</div><div class="v num" id="kpiSignals">—</div><div class="s" id="kpiSignalsSub">full + half positions</div></div>
+      </div>
+    </div>
+
+    <!-- 3-Agent Consensus -->
+    <section class="section" id="secConsensus">
+      <div class="sec-head">
+        <h2>3-Agent Consensus Engine</h2>
+        <span class="sub">Smart Money · Flow · Value — voting live</span>
+        <span class="spacer"></span>
+        <button class="chip on" data-cfilter="signal">Signals only</button>
+        <button class="chip" data-cfilter="all">All markets</button>
+        <span class="stamp" id="conStamp"></span>
+      </div>
+      <div class="con-grid" id="conGrid"><div class="loading">Booting agents…</div></div>
+    </section>
+
+    <!-- Elite Wallets -->
+    <section class="section" id="secElite" style="display:none">
+      <div class="sec-head">
+        <h2>Elite Wallets — The Treasure Map</h2>
+        <span class="sub">win rate + positions + profit, ranked</span>
+        <span class="spacer"></span>
+        <span class="stamp" id="eliteStamp"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>#</th><th>Wallet</th><th>Win rate</th><th>Positions</th><th>Realized P&amp;L</th><th>Portfolio</th></tr></thead>
+          <tbody id="eliteBody"><tr><td colspan="6"><div class="loading">Scanning wallets…</div></td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Arbitrage -->
+    <section class="section" id="secArb" style="display:none">
+      <div class="sec-head">
+        <h2>Arbitrage &amp; Mispricing</h2>
+        <span class="sub">YES + NO ≠ 100¢ · wide spreads</span>
+        <span class="spacer"></span>
+        <span class="stamp" id="arbStamp"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Market</th><th>YES</th><th>NO</th><th>Sum</th><th>Edge</th><th>Liquidity</th></tr></thead>
+          <tbody id="arbBody"><tr><td colspan="6"><div class="loading">Hunting mispricings…</div></td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Insider -->
+    <section class="section" id="secInsider" style="display:none">
+      <div class="sec-head">
+        <h2>Insider Detection</h2>
+        <span class="sub">outsized one-sided prints in thin markets</span>
+        <span class="spacer"></span>
+        <span class="stamp" id="insiderStamp"></span>
+      </div>
+      <div class="con-grid" id="insiderGrid"><div class="loading">Watching for anomalies…</div></div>
+    </section>
+
+    <!-- Whales full -->
+    <section class="section" id="secWhales" style="display:none">
+      <div class="sec-head">
+        <h2>Whale Tracking</h2>
+        <span class="sub">largest cash prints, live</span>
+        <span class="spacer"></span>
+        <span class="stamp" id="whalesStamp"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Time</th><th>Trader</th><th>Side</th><th>Market</th><th>Outcome</th><th>Size</th></tr></thead>
+          <tbody id="whalesBody"><tr><td colspan="6"><div class="loading">Listening for prints…</div></td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="disclaimer">
+      <b>Method &amp; honesty note.</b> Backtest figures ($200→$25,400, 74% win, Sharpe 2.47) are a strategy target, not a live audited account. Everything tagged <span style="color:var(--teal)">Live</span> is computed in-browser from Polymarket's public Gamma, Data and CLOB APIs. The three agents are transparent quantitative models — Smart-Money (whale/elite flow), Flow (momentum + volume), Value (order-book imbalance + liquidity) — not black boxes. Win rate is measured from each wallet's positions currently in profit and is a proxy, not a settled-trade audit. Nothing here is financial advice.
+    </div>
+  </main>
+
+  <!-- ══ RIGHT: radar + inspector ══ -->
+  <aside class="pane pane-right">
+    <div class="rp-tabs">
+      <div class="rp-tab on" data-tab="radar">Smart-Money Radar</div>
+      <div class="rp-tab" data-tab="inspect">Wallet Inspector</div>
+    </div>
+    <div class="rp-body">
+      <div class="rp-panel on" id="rp-radar">
+        <div class="radar-chips">
+          <button class="chip on" data-rmin="10000">≥ $10K</button>
+          <button class="chip" data-rmin="25000">≥ $25K</button>
+          <button class="chip" data-rmin="50000">≥ $50K</button>
+        </div>
+        <p style="font-size:0.66rem;color:var(--text-dim);margin-bottom:10px">Fresh prints, newest first. <span style="color:var(--gold)">EARLY</span> = smart money entering a low-liquidity market before the crowd.</p>
+        <div id="radarFeed"><div class="loading">Tuning radar…</div></div>
+      </div>
+      <div class="rp-panel" id="rp-inspect">
+        <div class="search-row">
+          <input type="text" class="search-input" id="trAddr" placeholder="0x wallet address…" autocomplete="off" spellcheck="false">
+          <button class="tr-load" id="trLoad">Load</button>
+        </div>
+        <div id="trBody"><div class="empty">Click any wallet — or paste an address — to inspect their book.</div></div>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  var GAMMA = 'https://gamma-api.polymarket.com';
+  var DATA  = 'https://data-api.polymarket.com';
+  var CLOB  = 'https://clob.polymarket.com';
+
+  // fetch with a hard timeout so a slow/hung endpoint fails fast instead of leaving spinners
+  var nativeFetch = window.fetch.bind(window);
+  function fetchT(url, ms) {
+    var ctrl = new AbortController();
+    var timer = setTimeout(function() { ctrl.abort(); }, ms || 12000);
+    return nativeFetch(url, { signal: ctrl.signal })
+      .then(function(r) { clearTimeout(timer); return r; }, function(e) { clearTimeout(timer); throw e; });
+  }
+
+  var state = {
+    markets: [],
+    flow: {},            // market title(lc) -> net whale USD (buy - sell)
+    consensus: [],       // scored markets
+    conFilter: 'signal',
+    conv: 0.55,
+    liqMin: 25000,
+    winMin: 0.65,
+    tradesMin: 25,
+    elite: [],
+    radarMin: 10000,
+    radarSeen: {},
+    whaleTrades: []
+  };
+
+  /* ── helpers ──────────────────────────────────────────── */
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+  function fmtUsd(n, dec) {
+    if (n == null || isNaN(n)) return '—';
+    var a = Math.abs(n), sign = n < 0 ? '-' : '';
+    if (a >= 1e9) return sign + '$' + (a/1e9).toFixed(dec == null ? 2 : dec) + 'B';
+    if (a >= 1e6) return sign + '$' + (a/1e6).toFixed(dec == null ? 2 : dec) + 'M';
+    if (a >= 1e3) return sign + '$' + (a/1e3).toFixed(dec == null ? 1 : dec) + 'K';
+    return sign + '$' + a.toFixed(0);
+  }
+  function cents(p) { return p == null || isNaN(p) ? '—' : Math.round(p * 100) + '¢'; }
+  function pct(n) { return n == null || isNaN(n) ? '—' : (n * 100).toFixed(0) + '%'; }
+  function timeAgo(ts) {
+    var s = Math.max(1, Math.floor(Date.now()/1000 - ts));
+    if (s < 60) return s + 's'; if (s < 3600) return Math.floor(s/60) + 'm';
+    if (s < 86400) return Math.floor(s/3600) + 'h'; return Math.floor(s/86400) + 'd';
+  }
+  function shortW(w) { return w ? w.slice(0, 6) + '…' + w.slice(-4) : '—'; }
+  function traderName(name, pseudonym, wallet) {
+    var n = name || pseudonym || '';
+    if (!n || /^0x[0-9a-fA-F]{8,}/.test(n)) return shortW(wallet);
+    return n.length > 22 ? n.slice(0, 21) + '…' : n;
+  }
+  var CATS = { Politics:/trump|biden|harris|election|president|senate|congress|governor|democrat|republican|vance|mayor|impeach|cabinet|nominee|primary/,
+    Sports:/nba|nfl|mlb|nhl|ufc|soccer|football|premier league|champions|fifa|world cup|tennis|golf|f1|grand prix|olympi|match| vs |playoff|super bowl/,
+    Crypto:/bitcoin|btc|ethereum|eth |solana|crypto|token|airdrop|defi|stablecoin|binance|coinbase|xrp|doge/,
+    Economy:/fed |fomc|rate cut|rate hike|inflation|cpi|gdp|recession|unemployment|treasury|tariff|s&p|nasdaq/,
+    Tech:/openai|gpt|claude|gemini|ai |artificial intelligence|spacex|starship|apple|google|microsoft|meta |tesla|nvidia|iphone/,
+    World:/ukraine|russia|israel|gaza|iran|china|taiwan|nato|ceasefire| war |north korea|strike/ };
+  function categorize(t) { t = (t||'').toLowerCase(); for (var k in CATS) if (CATS[k].test(t)) return k; return 'Markets'; }
+  function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+
+  /* ── clock + status ───────────────────────────────────── */
+  setInterval(function() { $('clock').textContent = new Date().toLocaleTimeString('en-US', { hour12:false }); }, 1000);
+  function setLive(ok) {
+    var b = $('wsStatus');
+    if (ok) { b.classList.add('on'); $('wsText').textContent = 'Live'; }
+    else { b.classList.remove('on'); $('wsText').textContent = 'Reconnecting'; }
+  }
+  function stampNow() { return 'updated ' + new Date().toLocaleTimeString('en-US', { hour12:false }); }
+
+  /* ── markets ──────────────────────────────────────────── */
+  function fetchMarkets() {
+    var urls = [
+      GAMMA + '/markets?active=true&closed=false&limit=100&offset=0',
+      GAMMA + '/markets?active=true&closed=false&limit=100&offset=100',
+      GAMMA + '/markets?active=true&closed=false&limit=100&offset=200',
+      GAMMA + '/events?order=volume&ascending=false&limit=100'
+    ];
+    return Promise.allSettled(urls.map(function(u) { return fetchT(u).then(function(r) { return r.ok ? r.json() : []; }); }))
+    .then(function(results) {
+      var seen = {}, all = [];
+      results.forEach(function(r) {
+        if (r.status !== 'fulfilled') return;
+        var items = Array.isArray(r.value) ? r.value : [];
+        items.forEach(function(item) {
+          var mkts = item.markets || [item];
+          mkts.forEach(function(m) {
+            var id = m.id || m.conditionId || m.slug;
+            if (!id || seen[id]) return; seen[id] = true;
+            var title = m.question || m.title || item.title; if (!title) return;
+            var yp = null;
+            if (m.outcomePrices) { try { yp = parseFloat(JSON.parse(m.outcomePrices)[0]); } catch(e) { yp = parseFloat(String(m.outcomePrices).split(',')[0]); } }
+            if (yp == null || isNaN(yp)) yp = m.lastTradePrice != null ? parseFloat(m.lastTradePrice) : null;
+            if (yp == null || isNaN(yp) || yp <= 0.01 || yp >= 0.99) return;
+            var tokenId = null;
+            try { var tk = m.clobTokenIds ? JSON.parse(m.clobTokenIds) : null; tokenId = tk && tk[0] ? String(tk[0]) : null; } catch(e) {}
+            all.push({
+              id: id, title: title, category: categorize(title), yes: yp,
+              chg: m.oneDayPriceChange != null ? parseFloat(m.oneDayPriceChange) : 0,
+              vol: parseFloat(m.volume || item.volume || 0),
+              vol24: parseFloat(m.volume24hr || item.volume24hr || 0),
+              liq: parseFloat(m.liquidityClob || m.liquidity || item.liquidity || 0),
+              bestBid: m.bestBid != null ? parseFloat(m.bestBid) : null,
+              bestAsk: m.bestAsk != null ? parseFloat(m.bestAsk) : null,
+              spread: m.spread != null ? parseFloat(m.spread) : null,
+              tokenId: tokenId,
+              url: 'https://polymarket.com/event/' + (item.slug || m.slug || '')
+            });
+          });
+        });
+      });
+      return all;
+    });
+  }
+
+  /* ── whale flow (feeds Smart-Money agent + radar) ─────── */
+  function fetchWhaleFlow() {
+    return fetchT(DATA + '/trades?limit=200&takerOnly=true&filterType=CASH&filterAmount=5000')
+      .then(function(r) { return r.json(); })
+      .then(function(trades) {
+        if (!Array.isArray(trades)) return [];
+        state.whaleTrades = trades;
+        var flow = {};
+        trades.forEach(function(t) {
+          var key = (t.title || '').toLowerCase();
+          if (!key) return;
+          var usd = (t.size || 0) * (t.price || 0);
+          // BUY of YES / SELL of NO reads as YES-side conviction
+          var dir = (t.side === 'BUY') ? 1 : -1;
+          var yesish = /yes|up|win|above|over/i.test(t.outcome || '') ? 1 : /no|down|lose|below|under/i.test(t.outcome || '') ? -1 : 1;
+          flow[key] = (flow[key] || 0) + dir * yesish * usd;
+        });
+        state.flow = flow;
+        return trades;
+      })
+      .catch(function() { return []; });
+  }
+
+  /* ═══════════════ 3-AGENT CONSENSUS ═══════════════ */
+  // Each agent returns { side:'YES'|'NO', conf:0..1, note }. Votes if conf >= conviction.
+  function agentSmartMoney(m) {
+    var net = state.flow[m.title.toLowerCase()] || 0;
+    if (!net) return { side:'YES', conf:0, note:'no whale flow' };
+    var mag = clamp(Math.abs(net) / 120000, 0, 1);      // $120k net = full conviction
+    return { side: net > 0 ? 'YES' : 'NO', conf: mag, note: fmtUsd(net) + ' net whale flow' };
+  }
+  function agentFlow(m) {
+    var chgMag = clamp(Math.abs(m.chg) / 0.10, 0, 1);    // 10c/24h move = strong
+    var accel = m.vol > 0 ? clamp((m.vol24 / m.vol) / 0.30, 0, 1) : 0; // 30% of lifetime vol in 24h
+    var conf = clamp(0.55 * chgMag + 0.45 * accel, 0, 1);
+    return { side: m.chg >= 0 ? 'YES' : 'NO', conf: conf, note: (m.chg >= 0 ? '+' : '') + (m.chg*100).toFixed(1) + 'c · ' + fmtUsd(m.vol24) + '/24h' };
+  }
+  function agentValue(m) {
+    // Order-book imbalance: mid vs traded price + spread tightness + liquidity depth
+    var edge = 0, side = 'YES';
+    if (m.bestBid != null && m.bestAsk != null && m.bestAsk > m.bestBid) {
+      var mid = (m.bestBid + m.bestAsk) / 2;
+      edge = clamp(Math.abs(mid - m.yes) / 0.05, 0, 1);  // 5c gap = strong mispricing
+      side = mid >= m.yes ? 'YES' : 'NO';
+    }
+    var liqOk = clamp(m.liq / 60000, 0, 1);               // deeper book = more trustworthy
+    var tight = m.spread != null ? clamp(1 - (m.spread / 0.05), 0, 1) : 0.4;
+    var conf = clamp(0.5 * edge + 0.25 * liqOk + 0.25 * tight, 0, 1);
+    // if no meaningful book edge, lean to value-vs-extreme (fade extremes toward 50c)
+    if (edge < 0.15) { side = m.yes > 0.5 ? 'NO' : 'YES'; conf = clamp(0.30 * liqOk + 0.20, 0, 0.6) * (Math.abs(m.yes - 0.5) * 2); }
+    return { side: side, conf: conf, note: 'liq ' + fmtUsd(m.liq) + (m.spread != null ? ' · sprd ' + (m.spread*100).toFixed(1) + 'c' : '') };
+  }
+
+  function scoreMarket(m) {
+    var conv = state.conv;
+    var A = { name:'Smart Money', short:'SM', r: agentSmartMoney(m) };
+    var B = { name:'Flow', short:'FL', r: agentFlow(m) };
+    var C = { name:'Value', short:'VA', r: agentValue(m) };
+    var agents = [A, B, C];
+    var yes = 0, no = 0, sumConf = 0, votes = 0;
+    agents.forEach(function(a) {
+      a.vote = a.r.conf >= conv ? a.r.side : 'PASS';
+      if (a.vote === 'YES') { yes++; votes++; sumConf += a.r.conf; }
+      else if (a.vote === 'NO') { no++; votes++; sumConf += a.r.conf; }
+    });
+    var maxSide = Math.max(yes, no), side = yes >= no ? 'YES' : 'NO';
+    var verdict, sizePct;
+    if (maxSide >= 2) { verdict = 'FULL'; sizePct = 100; }
+    else if (maxSide === 1) { verdict = 'HALF'; sizePct = 50; }
+    else { verdict = 'NONE'; sizePct = 0; }
+    var conf = votes ? sumConf / votes : 0;
+    return { m:m, agents:agents, side:side, verdict:verdict, sizePct:sizePct, agree:maxSide, conf:conf };
+  }
+
+  function runConsensus() {
+    state.consensus = state.markets
+      .filter(function(m) { return m.liq >= state.liqMin; })
+      .map(scoreMarket)
+      .sort(function(a, b) {
+        if (b.agree !== a.agree) return b.agree - a.agree;
+        return b.conf - a.conf;
+      });
+    var signals = state.consensus.filter(function(c) { return c.verdict !== 'NONE'; });
+    $('cntConsensus').textContent = signals.length;
+    $('kpiSignals').textContent = signals.length;
+    var full = signals.filter(function(c){return c.verdict==='FULL';}).length;
+    $('kpiSignalsSub').textContent = full + ' full · ' + (signals.length - full) + ' half';
+    renderConsensus();
+  }
+
+  function renderConsensus() {
+    var host = $('conGrid');
+    var list = state.conFilter === 'signal'
+      ? state.consensus.filter(function(c) { return c.verdict !== 'NONE'; })
+      : state.consensus;
+    list = list.slice(0, 24);
+    if (!list.length) { host.innerHTML = '<div class="empty">No consensus signals at current thresholds — loosen conviction or liquidity in the left rail.</div>'; }
+    else {
+      host.innerHTML = list.map(function(c) {
+        var vc = c.verdict === 'FULL' ? 'full' : c.verdict === 'HALF' ? 'half' : 'none';
+        var agentsHtml = c.agents.map(function(a) {
+          var vClass = a.vote === 'YES' ? 'vote-yes' : a.vote === 'NO' ? 'vote-no' : 'vote-pass';
+          var barColor = a.vote === 'YES' ? 'var(--green)' : a.vote === 'NO' ? 'var(--red)' : 'var(--text-dim)';
+          return '<div class="agent"><div class="an">' + a.name + '</div>' +
+            '<div class="av ' + vClass + '">' + a.vote + '</div>' +
+            '<div class="conf"><i style="width:' + Math.round(a.r.conf*100) + '%;background:' + barColor + '"></i></div></div>';
+        }).join('');
+        return '<div class="con" data-w="' + esc(c.m.title) + '" data-url="' + esc(c.m.url) + '">' +
+          '<div class="con-top"><div><div class="con-title">' + esc(c.m.title.slice(0,90)) + '</div>' +
+            '<div class="con-cat">' + c.m.category + ' · YES ' + cents(c.m.yes) + '</div></div>' +
+            '<div class="verdict"><span class="lbl ' + vc + '">' + (c.verdict === 'NONE' ? 'NO TRADE' : c.verdict + ' · ' + c.side) + '</span>' +
+            '<div class="size">' + (c.sizePct ? c.sizePct + '% size' : 'stand aside') + '</div></div></div>' +
+          '<div class="agents">' + agentsHtml + '</div>' +
+          '<div class="con-foot"><span>' + c.agree + '/3 agree</span><span>24h vol <span class="num">' + fmtUsd(c.m.vol24) + '</span></span><span>conf <span class="num">' + pct(c.conf) + '</span></span></div>' +
+        '</div>';
+      }).join('');
+      Array.prototype.forEach.call(host.querySelectorAll('.con'), function(el) {
+        el.addEventListener('click', function() { var u = el.getAttribute('data-url'); if (u) window.open(u, '_blank'); });
+      });
+    }
+    $('conStamp').textContent = stampNow();
+  }
+
+  /* ═══════════════ ELITE WALLETS (treasure map) ═══════════════ */
+  function fetchEliteCandidates() {
+    // pull a few leaderboard windows to gather candidate wallets
+    var windows = ['1d', '7d', '30d'];
+    return Promise.allSettled(windows.map(function(w) {
+      return fetchT(DATA + '/v1/leaderboard?window=' + w + '&limit=25').then(function(r) { return r.json(); });
+    })).then(function(res) {
+      var seen = {}, cands = [];
+      res.forEach(function(r) {
+        if (r.status !== 'fulfilled' || !Array.isArray(r.value)) return;
+        r.value.forEach(function(u) {
+          var w = u.proxyWallet; if (!w || seen[w]) return; seen[w] = true;
+          cands.push({ wallet:w, name:u.userName });
+        });
+      });
+      return cands;
+    });
+  }
+
+  function walletStats(c) {
+    return fetchT(DATA + '/positions?user=' + c.wallet + '&limit=50&sortBy=CURRENT')
+      .then(function(r) { return r.json(); })
+      .then(function(pos) {
+        if (!Array.isArray(pos)) return null;
+        var wins = 0, decided = 0, realized = 0, portfolio = 0;
+        pos.forEach(function(p) {
+          var cash = parseFloat(p.cashPnl); var real = parseFloat(p.realizedPnl);
+          var cur = parseFloat(p.currentValue) || 0;
+          portfolio += cur;
+          if (!isNaN(real)) realized += real;
+          var judge = !isNaN(real) && real !== 0 ? real : cash;
+          if (!isNaN(judge) && judge !== 0) { decided++; if (judge > 0) wins++; }
+        });
+        return {
+          wallet: c.wallet, name: c.name,
+          positions: pos.length,
+          winRate: decided ? wins / decided : 0,
+          decided: decided,
+          realized: realized,
+          portfolio: portfolio
+        };
+      })
+      .catch(function() { return null; });
+  }
+
+  function scanElite() {
+    $('eliteBody').innerHTML = '<tr><td colspan="6"><div class="loading">Scanning wallets…</div></td></tr>';
+    $('cntElite').textContent = '…';
+    fetchEliteCandidates().then(function(cands) {
+      cands = cands.slice(0, 24); // cap the scan so it stays fast
+      $('kpiScanned').textContent = cands.length.toLocaleString();
+      var results = [], i = 0;
+      function batch() {
+        if (i >= cands.length) return Promise.resolve();
+        var slice = cands.slice(i, i + 6); i += 6; // 6 concurrent per wave
+        return Promise.all(slice.map(walletStats)).then(function(rs) {
+          rs.forEach(function(r) { if (r) results.push(r); });
+          renderEliteProgress(results, cands.length);
+          return batch();
+        });
+      }
+      return batch().then(function() { state.eliteAll = results; renderElite(); });
+    }).catch(function() { $('eliteBody').innerHTML = '<tr><td colspan="6"><div class="empty">Wallet scan timed out — hit ↻ Re-scan in the left rail.</div></td></tr>'; });
+  }
+
+  function eliteFiltered() {
+    return (state.eliteAll || []).filter(function(w) {
+      return w.decided >= 3 && w.winRate >= state.winMin && w.positions >= state.tradesMin;
+    }).sort(function(a, b) { return b.realized - a.realized; });
+  }
+
+  function renderEliteProgress(results, total) {
+    $('eliteBody').innerHTML = '<tr><td colspan="6"><div class="loading">Scored ' + results.length + ' / ' + total + ' wallets…</div></td></tr>';
+  }
+
+  function renderElite() {
+    var list = eliteFiltered();
+    state.elite = list;
+    $('cntElite').textContent = list.length;
+    $('kpiEliteSub').textContent = list.length + ' elite found';
+    var host = $('eliteBody');
+    if (!list.length) { host.innerHTML = '<tr><td colspan="6"><div class="empty">No wallets clear the filters. Lower min win rate / positions in the left rail.</div></td></tr>'; }
+    else {
+      host.innerHTML = list.slice(0, 40).map(function(w, i) {
+        return '<tr data-w="' + esc(w.wallet) + '" data-n="' + esc(w.name || '') + '">' +
+          '<td><span class="rank' + (i < 3 ? ' top' : '') + '">' + (i+1) + '</span></td>' +
+          '<td><span class="wname">' + esc(traderName(w.name, null, w.wallet)) + '</span> ' + (w.winRate >= 0.7 && w.positions >= 50 ? '<span class="badge elite">ELITE</span>' : '') + '</td>' +
+          '<td class="num ' + (w.winRate >= 0.6 ? 'chg-up' : '') + '">' + pct(w.winRate) + '</td>' +
+          '<td class="num">' + w.positions + '</td>' +
+          '<td class="num ' + (w.realized >= 0 ? 'chg-up' : 'chg-dn') + '">' + (w.realized >= 0 ? '+' : '') + fmtUsd(w.realized) + '</td>' +
+          '<td class="num">' + fmtUsd(w.portfolio) + '</td></tr>';
+      }).join('');
+      Array.prototype.forEach.call(host.querySelectorAll('tr'), function(tr) {
+        tr.addEventListener('click', function() { openTrader(tr.getAttribute('data-w'), tr.getAttribute('data-n')); });
+      });
+    }
+    $('eliteStamp').textContent = stampNow();
+  }
+
+  /* ═══════════════ SMART-MONEY RADAR ═══════════════ */
+  function fetchRadar(replace) {
+    fetchT(DATA + '/trades?limit=50&takerOnly=true&filterType=CASH&filterAmount=' + state.radarMin)
+      .then(function(r) { return r.json(); })
+      .then(function(trades) {
+        setLive(true);
+        if (!Array.isArray(trades)) return;
+        var host = $('radarFeed');
+        if (replace) { host.innerHTML = ''; state.radarSeen = {}; }
+        if (host.querySelector('.loading')) host.innerHTML = '';
+        // liquidity lookup from markets by title
+        var liqByTitle = {}; state.markets.forEach(function(m) { liqByTitle[m.title.toLowerCase()] = m.liq; });
+        var fresh = trades.filter(function(t) {
+          var key = t.transactionHash + '|' + t.asset;
+          if (state.radarSeen[key]) return false; state.radarSeen[key] = true; return true;
+        });
+        fresh.sort(function(a, b) { return a.timestamp - b.timestamp; });
+        fresh.forEach(function(t) {
+          var usd = (t.size||0) * (t.price||0);
+          var liq = liqByTitle[(t.title||'').toLowerCase()];
+          var early = (liq != null && liq < 50000 && t.side === 'BUY');
+          var d = document.createElement('div');
+          d.className = 'rd new';
+          d.innerHTML =
+            '<div class="rd-top"><span class="side ' + (t.side === 'BUY' ? 'buy' : 'sell') + '">' + esc(t.side) + '</span>' +
+            '<span class="rd-amt">' + fmtUsd(usd) + '</span>' +
+            (early ? '<span class="rd-flag">EARLY</span>' : '<span style="margin-left:auto"></span>') +
+            '<span style="font-family:var(--mono);font-size:0.56rem;color:var(--text-dim)" data-ts="' + t.timestamp + '">' + timeAgo(t.timestamp) + '</span></div>' +
+            '<div class="rd-title">' + esc((t.title||'').slice(0,72)) + '</div>' +
+            '<div class="rd-meta"><span>' + esc(t.outcome||'') + ' @ ' + Math.round((t.price||0)*100) + '¢' + (liq != null ? ' · liq ' + fmtUsd(liq) : '') + '</span>' +
+            '<button class="rd-w" data-w="' + esc(t.proxyWallet) + '" data-n="' + esc(t.name||t.pseudonym||'') + '">' + esc(traderName(t.name, t.pseudonym, t.proxyWallet)) + '</button></div>';
+          d.querySelector('.rd-w').addEventListener('click', function() { openTrader(t.proxyWallet, t.name || t.pseudonym); });
+          host.insertBefore(d, host.firstChild);
+          setTimeout(function() { d.classList.remove('new'); }, 1300);
+        });
+        while (host.children.length > 60) host.removeChild(host.lastChild);
+        var earlyCount = host.querySelectorAll('.rd-flag').length;
+        $('cntSmart').textContent = earlyCount;
+      })
+      .catch(function() { setLive(false); });
+  }
+
+  /* ═══════════════ WHALES TABLE ═══════════════ */
+  function renderWhalesTable() {
+    var host = $('whalesBody');
+    var rows = (state.whaleTrades || []).slice().sort(function(a, b) { return (b.size*b.price) - (a.size*a.price); }).slice(0, 40);
+    if (!rows.length) { host.innerHTML = '<tr><td colspan="6"><div class="empty">No prints yet.</div></td></tr>'; return; }
+    host.innerHTML = rows.map(function(t) {
+      var usd = (t.size||0)*(t.price||0);
+      return '<tr data-w="' + esc(t.proxyWallet) + '" data-n="' + esc(t.name||t.pseudonym||'') + '">' +
+        '<td class="num" style="color:var(--text-dim)">' + timeAgo(t.timestamp) + '</td>' +
+        '<td><span class="wname">' + esc(traderName(t.name, t.pseudonym, t.proxyWallet)) + '</span></td>' +
+        '<td><span class="side ' + (t.side==='BUY'?'buy':'sell') + '">' + esc(t.side) + '</span></td>' +
+        '<td>' + esc((t.title||'').slice(0,44)) + '</td>' +
+        '<td>' + esc(t.outcome||'') + '</td>' +
+        '<td class="num">' + fmtUsd(usd) + '</td></tr>';
+    }).join('');
+    Array.prototype.forEach.call(host.querySelectorAll('tr'), function(tr) {
+      tr.addEventListener('click', function() { openTrader(tr.getAttribute('data-w'), tr.getAttribute('data-n')); });
+    });
+    $('cntWhales').textContent = (state.whaleTrades||[]).length;
+    $('whalesStamp').textContent = stampNow();
+  }
+
+  /* ═══════════════ INSIDER DETECTION ═══════════════ */
+  function renderInsider() {
+    var host = $('insiderGrid');
+    var liqByTitle = {}; state.markets.forEach(function(m) { liqByTitle[m.title.toLowerCase()] = m.liq; });
+    // outsized one-sided prints relative to thin liquidity
+    var flags = (state.whaleTrades || []).map(function(t) {
+      var usd = (t.size||0)*(t.price||0);
+      var liq = liqByTitle[(t.title||'').toLowerCase()];
+      var ratio = (liq && liq > 0) ? usd / liq : 0;
+      return { t:t, usd:usd, liq:liq, ratio:ratio };
+    }).filter(function(x) { return x.liq != null && x.ratio >= 0.25 && x.usd >= 10000; })
+      .sort(function(a, b) { return b.ratio - a.ratio; }).slice(0, 12);
+    $('cntInsider').textContent = flags.length;
+    if (!flags.length) { host.innerHTML = '<div class="empty">No anomalies right now. A flag fires when a single print is large relative to a market\'s standing liquidity.</div>'; return; }
+    host.innerHTML = flags.map(function(x) {
+      return '<div class="con" data-w="' + esc(x.t.proxyWallet) + '" data-n="' + esc(x.t.name||'') + '">' +
+        '<div class="con-top"><div><div class="con-title">' + esc((x.t.title||'').slice(0,80)) + '</div>' +
+        '<div class="con-cat">' + esc(x.t.outcome||'') + ' @ ' + Math.round((x.t.price||0)*100) + '¢ · ' + timeAgo(x.t.timestamp) + ' ago</div></div>' +
+        '<div class="verdict"><span class="lbl half">' + (x.ratio*100).toFixed(0) + '% of liq</span>' +
+        '<div class="size">' + fmtUsd(x.usd) + ' print</div></div></div>' +
+        '<div class="con-foot"><span class="side ' + (x.t.side==='BUY'?'buy':'sell') + '">' + esc(x.t.side) + '</span>' +
+        '<span>liq <span class="num">' + fmtUsd(x.liq) + '</span></span>' +
+        '<span>' + esc(traderName(x.t.name, x.t.pseudonym, x.t.proxyWallet)) + '</span></div></div>';
+    }).join('');
+    Array.prototype.forEach.call(host.querySelectorAll('.con'), function(el) {
+      el.addEventListener('click', function() { openTrader(el.getAttribute('data-w'), el.getAttribute('data-n')); });
+    });
+    $('insiderStamp').textContent = stampNow();
+  }
+
+  /* ═══════════════ ARBITRAGE ═══════════════ */
+  function renderArb() {
+    var host = $('arbBody');
+    // YES + NO complement mispricing using bestBid/bestAsk; also flag wide spreads
+    var rows = state.markets.map(function(m) {
+      var noPrice = 1 - m.yes;
+      var sum = m.yes + noPrice; // trivially 1 for a two-outcome; use book edge instead
+      var edge = 0;
+      if (m.bestBid != null && m.bestAsk != null) edge = m.bestAsk - m.bestBid; // spread capturable
+      return { m:m, no:noPrice, sum:sum, edge:edge };
+    }).filter(function(x) { return x.edge >= 0.02 && x.m.liq >= 5000; })
+      .sort(function(a, b) { return b.edge - a.edge; }).slice(0, 25);
+    $('cntArb').textContent = rows.length;
+    if (!rows.length) { host.innerHTML = '<tr><td colspan="6"><div class="empty">No exploitable spreads ≥ 2¢ in liquid markets right now.</div></td></tr>'; return; }
+    host.innerHTML = rows.map(function(x) {
+      return '<tr data-url="' + esc(x.m.url) + '">' +
+        '<td>' + esc(x.m.title.slice(0,46)) + '</td>' +
+        '<td class="num">' + cents(x.m.yes) + '</td>' +
+        '<td class="num">' + cents(x.no) + '</td>' +
+        '<td class="num">' + cents(x.m.bestBid) + '/' + cents(x.m.bestAsk) + '</td>' +
+        '<td class="num chg-up">' + (x.edge*100).toFixed(1) + '¢</td>' +
+        '<td class="num">' + fmtUsd(x.m.liq) + '</td></tr>';
+    }).join('');
+    Array.prototype.forEach.call(host.querySelectorAll('tr'), function(tr) {
+      tr.addEventListener('click', function() { var u = tr.getAttribute('data-url'); if (u) window.open(u, '_blank'); });
+    });
+    $('arbStamp').textContent = stampNow();
+  }
+
+  /* ═══════════════ WALLET INSPECTOR ═══════════════ */
+  function switchTab(name) {
+    document.querySelectorAll('.rp-tab').forEach(function(t) { t.classList.toggle('on', t.getAttribute('data-tab') === name); });
+    document.querySelectorAll('.rp-panel').forEach(function(p) { p.classList.toggle('on', p.id === 'rp-' + name); });
+  }
+  document.querySelectorAll('.rp-tab').forEach(function(t) { t.addEventListener('click', function() { switchTab(t.getAttribute('data-tab')); }); });
+  function openTrader(wallet, name) { switchTab('inspect'); $('trAddr').value = wallet; loadTrader(wallet, name); }
+
+  function loadTrader(wallet, name) {
+    if (!/^0x[0-9a-fA-F]{40}$/.test(wallet || '')) { $('trBody').innerHTML = '<div class="empty">Enter a valid 0x wallet address.</div>'; return; }
+    $('trBody').innerHTML = '<div class="loading">Reading on-chain book…</div>';
+    Promise.allSettled([
+      fetchT(DATA + '/value?user=' + wallet).then(function(r) { return r.json(); }),
+      fetchT(DATA + '/positions?user=' + wallet + '&limit=40&sortBy=CURRENT').then(function(r) { return r.json(); }),
+      fetchT(DATA + '/activity?user=' + wallet + '&limit=12&type=TRADE').then(function(r) { return r.json(); })
+    ]).then(function(res) {
+      var value = res[0].status === 'fulfilled' && Array.isArray(res[0].value) && res[0].value[0] ? parseFloat(res[0].value[0].value) : null;
+      var positions = res[1].status === 'fulfilled' && Array.isArray(res[1].value) ? res[1].value : [];
+      var host = $('trBody'); host.innerHTML = '';
+      var dispName = name || 'Trader';
+      var totalPnl = positions.reduce(function(s, p) { return s + (parseFloat(p.cashPnl) || 0); }, 0);
+      var wins = 0, decided = 0;
+      positions.forEach(function(p) { var j = !isNaN(parseFloat(p.realizedPnl)) && parseFloat(p.realizedPnl) !== 0 ? parseFloat(p.realizedPnl) : parseFloat(p.cashPnl); if (!isNaN(j) && j !== 0) { decided++; if (j > 0) wins++; } });
+      var ident = document.createElement('div'); ident.className = 'tr-ident';
+      ident.innerHTML =
+        '<div class="tr-name">' + esc(dispName) + '</div>' +
+        '<div class="tr-addr">' + esc(wallet) + '</div>' +
+        '<div style="display:flex;gap:22px;flex-wrap:wrap">' +
+        '<div class="tr-value"><div class="k">Portfolio</div><div class="v">' + (value != null ? fmtUsd(value) : '—') + '</div></div>' +
+        '<div class="tr-value"><div class="k">Open P&amp;L</div><div class="v ' + (totalPnl>=0?'chg-up':'chg-dn') + '">' + (totalPnl>=0?'+':'') + fmtUsd(totalPnl) + '</div></div>' +
+        '<div class="tr-value"><div class="k">Win rate</div><div class="v">' + (decided ? pct(wins/decided) : '—') + '</div></div>' +
+        '</div>';
+      host.appendChild(ident);
+      var sec = document.createElement('div'); sec.className = 'tr-sec'; sec.textContent = 'Open positions (' + positions.length + ')'; host.appendChild(sec);
+      if (!positions.length) { var e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No open positions'; host.appendChild(e); }
+      else positions.slice(0, 18).forEach(function(p) {
+        var pnl = parseFloat(p.cashPnl) || 0;
+        var d = document.createElement('div'); d.className = 'pos';
+        d.innerHTML = '<div class="pos-title">' + esc(p.title) + (p.outcome ? ' — <span style="color:var(--text)">' + esc(p.outcome) + '</span>' : '') + '</div>' +
+          '<div class="pos-row"><span>' + fmtUsd(parseFloat(p.currentValue)||0) + ' @ ' + cents(parseFloat(p.curPrice)) + ' (avg ' + cents(parseFloat(p.avgPrice)) + ')</span>' +
+          '<span class="' + (pnl>=0?'chg-up':'chg-dn') + '">' + (pnl>=0?'+':'') + fmtUsd(pnl) + '</span></div>';
+        host.appendChild(d);
+      });
+    });
+  }
+  $('trLoad').addEventListener('click', function() { loadTrader($('trAddr').value.trim()); });
+  $('trAddr').addEventListener('keydown', function(e) { if (e.key === 'Enter') loadTrader($('trAddr').value.trim()); });
+
+  /* ═══════════════ MODULE SWITCHING ═══════════════ */
+  var SECTIONS = { consensus:'secConsensus', elite:'secElite', smart:'secConsensus', whales:'secWhales', insider:'secInsider', arb:'secArb' };
+  var loaded = { consensus:true };
+  document.querySelectorAll('.mod').forEach(function(mod) {
+    mod.addEventListener('click', function() {
+      var m = mod.getAttribute('data-mod');
+      document.querySelectorAll('.mod').forEach(function(x) { x.classList.remove('on'); });
+      mod.classList.add('on');
+      ['secConsensus','secElite','secWhales','secInsider','secArb'].forEach(function(s) { $(s).style.display = 'none'; });
+      var target = SECTIONS[m]; $(target).style.display = '';
+      if (m === 'smart') { switchTab('radar'); }
+      if (m === 'elite' && !loaded.elite) { loaded.elite = true; scanElite(); }
+      if (m === 'whales') renderWhalesTable();
+      if (m === 'insider') renderInsider();
+      if (m === 'arb') renderArb();
+      $(target).scrollIntoView({ behavior:'smooth', block:'start' });
+    });
+  });
+
+  document.querySelectorAll('[data-cfilter]').forEach(function(c) {
+    c.addEventListener('click', function() {
+      document.querySelectorAll('[data-cfilter]').forEach(function(x) { x.classList.remove('on'); });
+      c.classList.add('on'); state.conFilter = c.getAttribute('data-cfilter'); renderConsensus();
+    });
+  });
+  document.querySelectorAll('[data-rmin]').forEach(function(c) {
+    c.addEventListener('click', function() {
+      document.querySelectorAll('[data-rmin]').forEach(function(x) { x.classList.remove('on'); });
+      c.classList.add('on'); state.radarMin = parseInt(c.getAttribute('data-rmin'), 10);
+      $('radarFeed').innerHTML = '<div class="loading">Re-tuning radar…</div>'; fetchRadar(true);
+    });
+  });
+
+  /* ── sliders ── */
+  $('conv').addEventListener('input', function() { state.conv = this.value/100; $('convV').textContent = this.value + '%'; if (state.markets.length) runConsensus(); });
+  $('liqMin').addEventListener('input', function() { state.liqMin = this.value*1000; $('liqV').textContent = fmtUsd(state.liqMin,0); if (state.markets.length) runConsensus(); });
+  $('winMin').addEventListener('input', function() { state.winMin = this.value/100; $('winV').textContent = this.value + '%'; if (state.eliteAll) renderElite(); });
+  $('tradesMin').addEventListener('input', function() { state.tradesMin = parseInt(this.value,10); $('tradesV').textContent = this.value; if (state.eliteAll) renderElite(); });
+  $('rescan').addEventListener('click', scanElite);
+
+  /* ── age tick for radar ── */
+  setInterval(function() {
+    document.querySelectorAll('[data-ts]').forEach(function(e) { e.textContent = timeAgo(parseInt(e.getAttribute('data-ts'),10)); });
+  }, 15000);
+
+  /* ═══════════════ BOOT ═══════════════ */
+  function boot() {
+    setLive(true);
+    // 1) markets first — paint the consensus grid as soon as they arrive (don't wait on anything else)
+    fetchMarkets().then(function(m) {
+      state.markets = m || [];
+      var vol24 = 0, liq = 0; state.markets.forEach(function(x){ vol24 += x.vol24; liq += x.liq; });
+      $('pulseVol').textContent = fmtUsd(vol24); $('pulseMkts').textContent = state.markets.length;
+      $('pulseLiq').textContent = fmtUsd(liq);
+      runConsensus();
+    }).catch(function(){ setLive(false); });
+
+    // 2) whale flow + radar in parallel — refine consensus once flow lands
+    fetchWhaleFlow().then(function() {
+      var now = Date.now()/1000;
+      $('pulseWhales').textContent = (state.whaleTrades||[]).filter(function(t){ return now - t.timestamp < 3600; }).length;
+      if (state.markets.length) runConsensus();
+    });
+    fetchRadar(true);
+
+    // 3) treasure-map scan is the heavy one (many per-wallet calls) — defer past first paint
+    loaded.elite = true;
+    setTimeout(scanElite, 1500);
+  }
+  boot();
+
+  // live refresh
+  setInterval(function() { fetchWhaleFlow().then(function(){ if (document.querySelector('.mod.on').getAttribute('data-mod')==='consensus' || document.querySelector('.mod.on').getAttribute('data-mod')==='smart') runConsensus(); }); }, 30000);
+  setInterval(function() { fetchRadar(false); }, 20000);
+  setInterval(function() { fetchMarkets().then(function(m){ if (m && m.length) { state.markets = m; } }); }, 120000);
+
+})();
+</script>
+</body>
+</html>

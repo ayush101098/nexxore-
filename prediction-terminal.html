@@ -83,7 +83,7 @@ body { background:var(--bg); color:var(--text); font-family:var(--body); font-si
 .nav-item.active .nav-count { color:var(--cyan); border-color:rgba(57,213,255,0.22); }
 .mover { display:block; width:100%; text-align:left; background:transparent; border:1px solid transparent; border-radius:var(--radius); padding:6px 8px; cursor:pointer; transition:all .15s; font-family:var(--body); }
 .mover:hover { background:var(--surface); border-color:var(--border); }
-.mover-title { font-size:0.66rem; color:var(--text-muted); line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.mover-title { font-size:0.66rem; color:var(--text-muted); line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 .mover:hover .mover-title { color:var(--text); }
 .mover-row { display:flex; align-items:center; justify-content:space-between; margin-top:3px; font-family:var(--mono); font-size:0.62rem; }
 .mover-odds { display:flex; align-items:baseline; gap:8px; }
@@ -282,6 +282,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     </a>
     <span class="product-tag">Prediction Terminal</span>
     <nav class="header-nav">
+      <a href="edge.html">Edge</a>
       <a href="predictions.html">Tools</a>
       <a href="terminal-pro.html">Pro</a>
       <a href="intelligence.html">Intelligence</a>
@@ -482,10 +483,34 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
 (function() {
   'use strict';
 
-  var GAMMA = 'https://gamma-api.polymarket.com';
-  var DATA  = 'https://data-api.polymarket.com';
-  var CLOB  = 'https://clob.polymarket.com';
   var CHART_HUE = '#1E9AC4'; /* --cat1: validated for dark surfaces */
+
+  /* ── API access ───────────────────────────────────────────
+     Direct-first with server proxy fallback: some ISPs (e.g. India) block
+     *.polymarket.com at DNS/SNI level, so when a direct call fails we flip
+     to /api/pm/* on the Nexxore backend and remember it for the session. */
+  var DIRECT = {
+    gamma: 'https://gamma-api.polymarket.com',
+    data:  'https://data-api.polymarket.com',
+    clob:  'https://clob.polymarket.com'
+  };
+  var PROXY = /^https?:$/.test(location.protocol) && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1'
+    ? '/api/pm' : 'https://nexxore.xyz/api/pm';
+  var useProxy = false;
+  try { useProxy = sessionStorage.getItem('pmProxy') === '1'; } catch (e) {}
+  function fetchT(url, ms) {
+    var ctl = new AbortController();
+    var t = setTimeout(function() { ctl.abort(); }, ms);
+    return fetch(url, { signal: ctl.signal }).finally(function() { clearTimeout(t); });
+  }
+  function pm(host, path) {
+    if (useProxy) return fetch(PROXY + '/' + host + path);
+    return fetchT(DIRECT[host] + path, 6000).catch(function() {
+      useProxy = true;
+      try { sessionStorage.setItem('pmProxy', '1'); } catch (e) {}
+      return fetch(PROXY + '/' + host + path);
+    });
+  }
 
   var state = {
     markets: [],
@@ -568,13 +593,13 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
   /* ── markets scanner ──────────────────────────────────── */
   function fetchMarkets() {
     var urls = [
-      GAMMA + '/markets?active=true&closed=false&limit=100&offset=0',
-      GAMMA + '/markets?active=true&closed=false&limit=100&offset=100',
-      GAMMA + '/markets?active=true&closed=false&limit=100&offset=200',
-      GAMMA + '/events?order=volume&ascending=false&limit=100',
-      GAMMA + '/events?order=liquidity&ascending=false&limit=100'
+      '/markets?active=true&closed=false&limit=100&offset=0',
+      '/markets?active=true&closed=false&limit=100&offset=100',
+      '/markets?active=true&closed=false&limit=100&offset=200',
+      '/events?order=volume&ascending=false&limit=100',
+      '/events?order=liquidity&ascending=false&limit=100'
     ];
-    return Promise.allSettled(urls.map(function(u) { return fetch(u).then(function(r) { return r.ok ? r.json() : []; }); }))
+    return Promise.allSettled(urls.map(function(u) { return pm('gamma', u).then(function(r) { return r.ok ? r.json() : []; }); }))
     .then(function(results) {
       var seen = {}, all = [];
       results.forEach(function(r) {
@@ -832,7 +857,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
       $('chartEmpty').style.display = 'block';
       $('chartEmpty').textContent = 'Loading price history…';
     }
-    fetch(CLOB + '/prices-history?market=' + m.tokenId + '&interval=' + state.range + '&fidelity=' + fid)
+    pm('clob', '/prices-history?market=' + m.tokenId + '&interval=' + state.range + '&fidelity=' + fid)
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (!state.selected || state.selected.id !== m.id) return; /* stale response for a deselected market */
@@ -848,7 +873,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     var m = state.selected;
     var bidsHost = $('bookBids'), asksHost = $('bookAsks');
     if (!m || !m.tokenId) { bidsHost.innerHTML = asksHost.innerHTML = '<div class="chart-empty" style="padding:12px 0">—</div>'; return; }
-    fetch(CLOB + '/book?token_id=' + m.tokenId)
+    pm('clob', '/book?token_id=' + m.tokenId)
       .then(function(r) { return r.json(); })
       .then(function(d) {
         state.books[m.tokenId] = { bids: d.bids || [], asks: d.asks || [] };
@@ -1029,7 +1054,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
   /* ── trade ticket wiring ──────────────────────────────── */
   function ensureBook(token) {
     if (!token || state.books[token]) { renderTicket(); return; }
-    fetch(CLOB + '/book?token_id=' + token)
+    pm('clob', '/book?token_id=' + token)
       .then(function(r) { return r.json(); })
       .then(function(d) { state.books[token] = { bids: d.bids || [], asks: d.asks || [] }; renderTicket(); })
       .catch(function() { renderTicket(); });
@@ -1056,7 +1081,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
 
   /* ── whale feed ───────────────────────────────────────── */
   function fetchWhales(replace) {
-    fetch(DATA + '/trades?limit=50&takerOnly=true&filterType=CASH&filterAmount=' + state.whaleMin)
+    pm('data', '/trades?limit=50&takerOnly=true&filterType=CASH&filterAmount=' + state.whaleMin)
       .then(function(r) { return r.json(); })
       .then(function(trades) {
         setLive(true);
@@ -1123,7 +1148,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
   /* ── leaderboard ──────────────────────────────────────── */
   function fetchLeaders() {
     $('lbList').innerHTML = '<div class="loading">Ranking traders…</div>';
-    fetch(DATA + '/v1/leaderboard?window=' + state.lbWindow + '&limit=25')
+    pm('data', '/v1/leaderboard?window=' + state.lbWindow + '&limit=25')
       .then(function(r) { return r.json(); })
       .then(function(rows) {
         var host = $('lbList'); host.innerHTML = '';
@@ -1178,9 +1203,9 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     }
     $('trBody').innerHTML = '<div class="loading">Reading on-chain book…</div>';
     Promise.allSettled([
-      fetch(DATA + '/value?user=' + wallet).then(function(r) { return r.json(); }),
-      fetch(DATA + '/positions?user=' + wallet + '&limit=40&sortBy=CURRENT').then(function(r) { return r.json(); }),
-      fetch(DATA + '/activity?user=' + wallet + '&limit=12&type=TRADE').then(function(r) { return r.json(); })
+      pm('data', '/value?user=' + wallet).then(function(r) { return r.json(); }),
+      pm('data', '/positions?user=' + wallet + '&limit=40&sortBy=CURRENT').then(function(r) { return r.json(); }),
+      pm('data', '/activity?user=' + wallet + '&limit=12&type=TRADE').then(function(r) { return r.json(); })
     ]).then(function(res) {
       var value = res[0].status === 'fulfilled' && Array.isArray(res[0].value) && res[0].value[0] ? parseFloat(res[0].value[0].value) : null;
       var positions = res[1].status === 'fulfilled' && Array.isArray(res[1].value) ? res[1].value : [];
