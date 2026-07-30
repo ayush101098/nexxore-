@@ -62,30 +62,36 @@ class ResearchBot:
         self._running = False
         self._symbols: List[str] = []
         
-        # Collection intervals (in seconds)
+        # Collection intervals (in seconds) - configurable via environment
         self.intervals = {
-            'market_data': 60,      # 1 minute
-            'derivatives': 300,     # 5 minutes
-            'onchain': 3600,        # 1 hour
-            'social': 1800,         # 30 minutes
-            'news': 900,            # 15 minutes
-            'features': 300,        # 5 minutes
-            'signals': 300,         # 5 minutes
+            'market_data': int(os.getenv('INTERVAL_MARKET_DATA', '60')),
+            'derivatives': int(os.getenv('INTERVAL_DERIVATIVES', '300')),
+            'onchain': int(os.getenv('INTERVAL_ONCHAIN', '3600')),
+            'social': int(os.getenv('INTERVAL_SOCIAL', '1800')),
+            'news': int(os.getenv('INTERVAL_NEWS', '900')),
+            'features': int(os.getenv('INTERVAL_FEATURES', '300')),
+            'signals': int(os.getenv('INTERVAL_SIGNALS', '300')),
         }
     
     async def initialize(self):
         """Initialize all components"""
         logger.info("Initializing Research Bot...")
         
+        # Validate required environment variables
+        db_password = os.getenv('DB_PASSWORD')
+        if not db_password:
+            raise ValueError("DB_PASSWORD environment variable is required")
+        
         # Create database pool
         self.db_pool = await asyncpg.create_pool(
             host=os.getenv('DB_HOST', 'localhost'),
             port=int(os.getenv('DB_PORT', 5432)),
             user=os.getenv('DB_USER', 'research_bot'),
-            password=os.getenv('DB_PASSWORD', 'research_bot_password'),
+            password=db_password,
             database=os.getenv('DB_NAME', 'research_bot'),
             min_size=5,
-            max_size=20
+            max_size=20,
+            command_timeout=60
         )
         logger.info("Database pool created")
         

@@ -4,6 +4,7 @@ Signal Generator - Generates trade setups from ML predictions and features
 
 import asyncio
 import logging
+import os
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
@@ -81,9 +82,17 @@ class SignalGenerator:
     - Risk management rules
     """
     
-    # Minimum thresholds for setup generation
-    MIN_CONFIDENCE = 0.55
-    MIN_RR_RATIO = 1.5
+    def __init__(self, db_pool, feature_engineer, ensemble_predictor, config: Dict = None):
+        self.db_pool = db_pool
+        self.feature_engineer = feature_engineer
+        self.ensemble_predictor = ensemble_predictor
+        self.config = config or {}
+        
+        # Configurable thresholds via environment or config
+        self.MIN_CONFIDENCE = float(os.getenv('MIN_CONFIDENCE', 
+            self.config.get('min_confidence', '0.55')))
+        self.MIN_RR_RATIO = float(os.getenv('MIN_RR_RATIO', 
+            self.config.get('min_rr_ratio', '1.5')))
     
     # Setup-specific parameters
     SETUP_CONFIGS = {
