@@ -35,6 +35,7 @@ const AlertSystem = require('./shared/alertSystem');
 const { createTelegramHandler } = require('./shared/telegramHandler');
 const XAutomationHandler = require('./shared/xAutomation');
 const Web3TokenHub = require('./web3-intelligence/tokenHub');
+const trackRecordHandler = require('../api/track-record');
 
 // Initialize On-Chain Analyst modules
 const ecosystemIntel = new EcosystemIntelligence();
@@ -133,6 +134,10 @@ async function handleRequest(req, res) {
     // Health check
     if (pathname === '/api/health' && method === 'GET') {
       return healthCheck(req, res);
+    }
+    if (pathname === '/api/track-record' && method === 'GET') {
+      req.query = Object.fromEntries(reqUrl.searchParams.entries());
+      return runVercelFunction(trackRecordHandler, req, res);
     }
     
     // Research agent
@@ -260,7 +265,7 @@ async function serveResearchPage(req, res) {
 // Serve static files (CSS, JS, images)
 async function serveStaticFile(req, res, pathname) {
   const rootDir = path.join(__dirname, '..');
-  const filePath = path.join(rootDir, pathname);
+  let filePath = path.join(rootDir, pathname);
   
   // Security check - prevent directory traversal
   if (!filePath.startsWith(rootDir)) {
@@ -268,6 +273,10 @@ async function serveStaticFile(req, res, pathname) {
     return res.end('Forbidden');
   }
   
+  if (!fs.existsSync(filePath) && !path.extname(filePath)) {
+    filePath = `${filePath}.html`;
+  }
+
   // Check if file exists
   if (!fs.existsSync(filePath)) {
     res.writeHead(404);
@@ -297,6 +306,34 @@ async function serveStaticFile(req, res, pathname) {
     res.writeHead(500);
     res.end('Error loading file');
   }
+}
+
+function runVercelFunction(handler, req, res) {
+  const adapter = {
+    statusCode: 200,
+    headers: {},
+    setHeader(key, value) {
+      this.headers[key] = value;
+    },
+    status(code) {
+      this.statusCode = code;
+      return this;
+    },
+    json(payload) {
+      res.writeHead(this.statusCode, { ...this.headers, 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(payload));
+    },
+    send(payload) {
+      res.writeHead(this.statusCode, this.headers);
+      res.end(payload);
+    },
+    end(payload) {
+      res.writeHead(this.statusCode, this.headers);
+      res.end(payload);
+    }
+  };
+
+  return handler(req, adapter);
 }
 
 async function getNews(req, res) {
@@ -979,4 +1016,3 @@ process.on('SIGINT', () => {
 });
 
 module.exports = { handleRequest };
-

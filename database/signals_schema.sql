@@ -63,6 +63,46 @@ CREATE INDEX idx_signals_status ON alpha_signals(status);
 CREATE INDEX idx_signals_generated ON alpha_signals(generated_at DESC);
 
 -- ============================================================================
+-- Public Track Record Alerts
+-- PRD-aligned signal ledger for /track-record and Telegram resolution posts.
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS alerts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- Public verification
+    market_url TEXT NOT NULL,
+    market_name TEXT NOT NULL,
+    signal_type VARCHAR(60) DEFAULT 'PREDICTION_MARKET_EDGE',
+
+    -- Signal scoring
+    edge_score NUMERIC(8, 2) NOT NULL,
+    confidence NUMERIC(5, 2) NOT NULL,
+
+    -- Lifecycle
+    flagged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    resolved_at TIMESTAMPTZ,
+    outcome VARCHAR(20) DEFAULT 'OPEN',
+    pnl_bps NUMERIC(12, 2) DEFAULT 0,
+
+    -- Attribution hooks for Prompt 2
+    trigger_source VARCHAR(60),
+    trigger_event_description TEXT,
+    escalation_index_at_trigger NUMERIC(8, 2),
+    macro_regime_at_trigger VARCHAR(60),
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+    CONSTRAINT valid_alert_outcome CHECK (outcome IN ('OPEN', 'WIN', 'LOSS', 'BREAKEVEN', 'CANCELLED')),
+    CONSTRAINT valid_alert_confidence CHECK (confidence >= 0 AND confidence <= 100)
+);
+
+CREATE INDEX IF NOT EXISTS idx_alerts_flagged_at ON alerts(flagged_at DESC);
+CREATE INDEX IF NOT EXISTS idx_alerts_outcome ON alerts(outcome);
+CREATE INDEX IF NOT EXISTS idx_alerts_open_resolution ON alerts(flagged_at DESC) WHERE outcome = 'OPEN';
+
+-- ============================================================================
 -- Mock Trading Positions
 -- Paper trade positions based on signals
 -- ============================================================================

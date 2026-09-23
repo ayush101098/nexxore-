@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXXORE Swarm | Self-Tuning Multi-Agent Trading Intelligence</title>
+
+<!-- GA -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6QGB2RQVP0"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-6QGB2RQVP0');</script>
+
+<link rel="shortcut icon" href="https://nexxore.xyz/assets/icons/favicon.ico" type="image/x-icon">
+<link rel="icon" type="image/svg+xml" href="https://nexxore.xyz/assets/logo.svg">
+<meta name="theme-color" content="#0A0E17">
+
+<meta name="description" content="The NEXXORE Swarm: a self-tuning multi-agent decision system. 8-source signal fusion, Bull/Bear/Judge debate, a Risk Sizer kept separate from direction, adaptive source weights, and a public Brier calibration log. Paper-only by design.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://nexxore.xyz/swarm">
+<meta property="og:title" content="NEXXORE Swarm | Multi-Agent Trading Intelligence">
+<meta property="og:description" content="8-source signal fusion · adversarial debate · adaptive weights · Brier-scored calibration log. Running live in your browser.">
+<meta property="og:url" content="https://nexxore.xyz/swarm">
+<meta property="og:image" content="https://nexxore.xyz/assets/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#0A0E17;
+    --bg-panel:#111826;
+    --bg-panel-raised:#161F32;
+    --ink:#EAE5D6;
+    --ink-dim:rgba(234,229,214,0.62);
+    --ink-faint:rgba(234,229,214,0.34);
+    --amber:#E8A33D;
+    --amber-dim:rgba(232,163,61,0.14);
+    --teal:#6FC9BA;
+    --teal-dim:rgba(111,201,186,0.14);
+    --red:#D9584B;
+    --red-dim:rgba(217,88,75,0.14);
+    --line:rgba(234,229,214,0.09);
+    --line-strong:rgba(234,229,214,0.16);
+    --mono:'JetBrains Mono',monospace;
+    --display:'Instrument Serif',serif;
+    --body:'Inter',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg-deep);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+  a{color:inherit;text-decoration:none;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 32px;}
+
+  nav{display:flex;align-items:center;justify-content:space-between;padding:22px 32px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(10,14,23,0.88);backdrop-filter:blur(10px);z-index:50;}
+  .logo{font-family:var(--mono);font-weight:600;font-size:15px;letter-spacing:0.12em;color:var(--ink);display:flex;align-items:center;gap:8px;}
+  .logo .dot{width:6px;height:6px;background:var(--teal);border-radius:50%;box-shadow:0 0 8px var(--teal);}
+  .nav-links{display:flex;gap:28px;align-items:center;}
+  .nav-links a{font-size:13px;color:var(--ink-dim);transition:color .15s;}
+  .nav-links a:hover{color:var(--ink);}
+  .nav-links a.pro{color:var(--teal);font-weight:600;}
+  @media (max-width:820px){.nav-links{display:none;}}
+  .nav-cta{font-family:var(--mono);font-size:12.5px;font-weight:500;background:var(--ink);color:var(--bg-deep);padding:9px 18px;border-radius:3px;letter-spacing:0.02em;transition:opacity .15s;}
+  .nav-cta:hover{opacity:0.85;}
+
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:0.14em;color:var(--amber);display:flex;align-items:center;gap:10px;margin-bottom:22px;text-transform:uppercase;}
+  .eyebrow::before{content:"";width:16px;height:1px;background:var(--amber);}
+  h1{font-family:var(--display);font-size:50px;line-height:1.1;font-weight:400;color:var(--ink);margin-bottom:20px;letter-spacing:-0.01em;}
+  h1 em{font-style:italic;color:var(--teal);}
+  @media (max-width:640px){h1{font-size:36px;}}
+  .hero{padding:72px 0 56px;display:grid;grid-template-columns:1fr 0.95fr;gap:52px;align-items:start;}
+  @media (max-width:980px){.hero{grid-template-columns:1fr;gap:40px;padding:48px 0 36px;}}
+  .hero-sub{font-size:16px;line-height:1.65;color:var(--ink-dim);max-width:520px;margin-bottom:26px;}
+  .cta-row{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:22px;}
+  .btn-primary{font-family:var(--mono);font-size:13px;font-weight:500;background:var(--teal);color:var(--bg-deep);padding:13px 22px;border-radius:3px;display:inline-flex;align-items:center;gap:8px;transition:transform .15s,box-shadow .15s;border:none;cursor:pointer;}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(111,201,186,0.25);}
+  .btn-secondary{font-family:var(--mono);font-size:13px;padding:13px 20px;border-radius:3px;border:1px solid var(--line-strong);color:var(--ink-dim);transition:border-color .15s,color .15s;cursor:pointer;background:none;}
+  .btn-secondary:hover{border-color:var(--ink-faint);color:var(--ink);}
+  .hero-note{font-size:12px;color:var(--ink-faint);font-family:var(--mono);line-height:1.7;}
+
+  section{padding:76px 0;border-top:1px solid var(--line);}
+  .section-head{max-width:680px;margin-bottom:44px;}
+  .section-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.12em;color:var(--teal);text-transform:uppercase;margin-bottom:14px;}
+  .section-title{font-family:var(--display);font-size:32px;font-weight:400;line-height:1.2;margin-bottom:14px;}
+  .section-desc{font-size:15px;color:var(--ink-dim);line-height:1.65;}
+
+  /* Decision card (hero right) */
+  .decision-card{background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;box-shadow:0 24px 60px -20px rgba(0,0,0,0.5);}
+  .dc-titlebar{display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--bg-panel-raised);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);letter-spacing:0.05em;}
+  .live-pill{font-family:var(--mono);font-size:10px;letter-spacing:0.05em;background:var(--teal-dim);color:var(--teal);border:1px solid rgba(111,201,186,0.3);padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:6px;}
+  .live-pill .ping{width:5px;height:5px;background:var(--teal);border-radius:50%;animation:ping 1.6s ease-in-out infinite;}
+  @keyframes ping{0%,100%{opacity:1;}50%{opacity:0.3;}}
+  @media (prefers-reduced-motion:reduce){.live-pill .ping{animation:none;}}
+  .dc-body{padding:20px 22px 22px;}
+  .asset-tabs{display:flex;gap:8px;margin-bottom:18px;}
+  .asset-tab{font-family:var(--mono);font-size:11.5px;padding:6px 14px;border-radius:3px;border:1px solid var(--line-strong);color:var(--ink-dim);cursor:pointer;background:none;transition:all .15s;}
+  .asset-tab.active{background:var(--teal);color:var(--bg-deep);border-color:var(--teal);font-weight:600;}
+  .dc-verdict-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;}
+  .dc-verdict{font-family:var(--mono);font-size:30px;font-weight:600;letter-spacing:0.02em;}
+  .dc-verdict.buy{color:var(--teal);} .dc-verdict.sell{color:var(--red);} .dc-verdict.hold{color:var(--amber);}
+  .dc-price{font-family:var(--mono);font-size:15px;color:var(--ink);}
+  .dc-conf{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);margin-bottom:16px;}
+  .prob-bars{display:flex;flex-direction:column;gap:7px;margin-bottom:18px;}
+  .prob-row{display:grid;grid-template-columns:52px 1fr 44px;gap:10px;align-items:center;font-family:var(--mono);font-size:10.5px;color:var(--ink-dim);}
+  .prob-track{height:7px;background:rgba(234,229,214,0.07);border-radius:4px;overflow:hidden;}
+  .prob-fill{height:100%;border-radius:4px;transition:width .8s cubic-bezier(.4,0,.2,1);}
+  .prob-fill.up{background:var(--teal);} .prob-fill.flat{background:var(--amber);} .prob-fill.down{background:var(--red);}
+  .prob-val{text-align:right;color:var(--ink);}
+  .risk-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:14px;}
+  .risk-cell{background:var(--bg-deep);padding:11px 10px;}
+  .risk-cell .l{font-size:9px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;}
+  .risk-cell .v{font-family:var(--mono);font-size:12.5px;color:var(--ink);}
+  .dc-foot{font-family:var(--mono);font-size:10px;color:var(--ink-faint);line-height:1.7;border-top:1px solid var(--line);padding-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .kill-switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;}
+  .kill-switch .track{width:30px;height:16px;border-radius:10px;background:rgba(234,229,214,0.15);position:relative;transition:background .2s;}
+  .kill-switch .knob{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--ink-dim);transition:transform .2s,background .2s;}
+  .kill-switch.armed .track{background:var(--red-dim);}
+  .kill-switch.armed .knob{transform:translateX(14px);background:var(--red);}
+  .kill-switch .ks-label{font-family:var(--mono);font-size:10px;color:var(--ink-faint);}
+  .kill-switch.armed .ks-label{color:var(--red);}
+
+  /* Pipeline rail */
+  .pipe-rail{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:8px;}
+  .pipe-node{min-width:150px;flex:1;background:var(--bg-panel);border:1px solid var(--line);border-radius:6px;padding:16px 14px;position:relative;}
+  .pipe-node.active{border-color:rgba(111,201,186,0.4);background:var(--bg-panel-raised);}
+  .pipe-node .pn-stage{font-family:var(--mono);font-size:9px;color:var(--teal);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
+  .pipe-node .pn-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:5px;}
+  .pipe-node .pn-desc{font-size:10.5px;color:var(--ink-faint);line-height:1.5;}
+  .pipe-sep{display:flex;align-items:center;padding:0 8px;color:var(--amber);font-family:var(--mono);font-size:16px;flex-shrink:0;}
+  @keyframes flowPulse{0%,100%{opacity:0.5;}50%{opacity:1;}}
+  .pipe-sep span{animation:flowPulse 2s ease-in-out infinite;}
+  @media (prefers-reduced-motion:reduce){.pipe-sep span{animation:none;}}
+
+  /* Fusion board */
+  .fusion-layout{display:grid;grid-template-columns:1.25fr 0.75fr;gap:22px;align-items:start;}
+  @media (max-width:900px){.fusion-layout{grid-template-columns:1fr;}}
+  .fusion-table{background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .fusion-head,.fusion-row{display:grid;grid-template-columns:1.5fr 64px 1fr 72px 64px;gap:12px;align-items:center;padding:11px 18px;}
+  @media (max-width:640px){.fusion-head,.fusion-row{grid-template-columns:1.2fr 52px 1fr 60px;} .fusion-head .fh-w,.fusion-row .fr-w{display:none;}}
+  .fusion-head{background:var(--bg-panel-raised);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:9.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;}
+  .fusion-row{border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11.5px;}
+  .fusion-row:last-child{border-bottom:none;}
+  .fr-name{color:var(--ink);font-size:12px;}
+  .fr-name .sub{display:block;font-size:9.5px;color:var(--ink-faint);margin-top:2px;font-family:var(--body);}
+  .fr-vote{font-weight:600;}
+  .fr-vote.up{color:var(--teal);} .fr-vote.down{color:var(--red);} .fr-vote.flat{color:var(--amber);}
+  .fr-bar{height:6px;background:rgba(234,229,214,0.07);border-radius:3px;overflow:hidden;position:relative;}
+  .fr-bar i{position:absolute;top:0;bottom:0;border-radius:3px;transition:all .7s;}
+  .fr-acc{color:var(--ink-dim);text-align:right;}
+  .fr-w{color:var(--ink);text-align:right;}
+  .fusion-note{font-size:11.5px;color:var(--ink-faint);padding:12px 18px;border-top:1px solid var(--line);line-height:1.6;}
+
+  /* Swarm canvas + judge */
+  .swarm-panel{background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;padding:18px;}
+  .swarm-panel .sp-label{font-family:var(--mono);font-size:10px;color:var(--teal);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;display:flex;justify-content:space-between;}
+  #swarmCanvas{width:100%;height:170px;display:block;background:var(--bg-deep);border:1px solid var(--line);border-radius:5px;}
+  .swarm-consensus{font-family:var(--mono);font-size:11px;color:var(--ink-dim);margin-top:10px;line-height:1.6;}
+
+  /* Debate */
+  .debate-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:22px;}
+  @media (max-width:760px){.debate-grid{grid-template-columns:1fr;}}
+  .debate-col{background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;padding:22px;}
+  .debate-col.bull{border-top:2px solid var(--teal);}
+  .debate-col.bear{border-top:2px solid var(--red);}
+  .debate-role{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .debate-col.bull .debate-role{color:var(--teal);}
+  .debate-col.bear .debate-role{color:var(--red);}
+  .debate-pt{font-size:13px;color:var(--ink-dim);line-height:1.65;padding:8px 0 8px 14px;border-left:2px solid var(--line-strong);margin-bottom:8px;font-family:var(--mono);}
+  .debate-col.bull .debate-pt{border-left-color:rgba(111,201,186,0.4);}
+  .debate-col.bear .debate-pt{border-left-color:rgba(217,88,75,0.4);}
+  .judge-box{background:var(--bg-panel-raised);border:1px solid var(--line-strong);border-radius:8px;padding:26px 28px;display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:start;}
+  @media (max-width:640px){.judge-box{grid-template-columns:1fr;}}
+  .judge-seal{font-family:var(--display);font-style:italic;font-size:30px;color:var(--amber);line-height:1;}
+  .judge-text{font-size:14.5px;color:var(--ink);line-height:1.7;font-family:var(--mono);}
+  .judge-meta{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:12px;}
+
+  /* Calibration */
+  .cal-layout{display:grid;grid-template-columns:0.9fr 1.1fr;gap:22px;align-items:start;}
+  @media (max-width:880px){.cal-layout{grid-template-columns:1fr;}}
+  .cal-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .cal-stat{background:var(--bg-panel);padding:22px;}
+  .cal-stat .n{font-family:var(--mono);font-size:26px;color:var(--ink);}
+  .cal-stat .n.good{color:var(--teal);}
+  .cal-stat .l{font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.04em;margin-top:4px;}
+  .cal-explain{font-size:12.5px;color:var(--ink-faint);line-height:1.7;margin-top:16px;}
+  .cal-log{background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .cal-log-head,.cal-log-row{display:grid;grid-template-columns:76px 52px 1fr 62px 62px 62px;gap:10px;padding:10px 16px;font-family:var(--mono);font-size:10.5px;align-items:center;}
+  .cal-log-head{background:var(--bg-panel-raised);border-bottom:1px solid var(--line);color:var(--ink-faint);text-transform:uppercase;font-size:9px;letter-spacing:0.05em;}
+  .cal-log-row{border-bottom:1px solid var(--line);color:var(--ink-dim);}
+  .cal-log-row:last-child{border-bottom:none;}
+  .cal-log-row .hit{color:var(--teal);} .cal-log-row .miss{color:var(--red);} .cal-log-row .pend{color:var(--amber);}
+  .cal-empty{padding:22px 18px;font-size:12.5px;color:var(--ink-faint);line-height:1.7;}
+
+  /* Modules */
+  .module-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  @media (max-width:760px){.module-grid{grid-template-columns:1fr;}}
+  .module-card{background:var(--bg-panel);padding:28px;display:flex;flex-direction:column;gap:10px;transition:background .15s;}
+  .module-card:hover{background:var(--bg-panel-raised);}
+  .module-role{font-family:var(--mono);font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:0.06em;}
+  .module-name{font-size:17px;font-weight:600;color:var(--ink);}
+  .module-desc{font-size:13px;color:var(--ink-dim);line-height:1.65;flex-grow:1;}
+  .module-link{font-family:var(--mono);font-size:12px;color:var(--ink);border-top:1px solid var(--line);padding-top:12px;display:flex;justify-content:space-between;transition:color .15s;}
+  .module-card:hover .module-link{color:var(--teal);}
+
+  .honesty{background:var(--amber-dim);border:1px solid rgba(232,163,61,0.3);border-radius:6px;padding:16px 20px;font-size:12.5px;color:var(--ink-dim);line-height:1.7;font-family:var(--mono);margin-top:28px;}
+  .honesty b{color:var(--amber);}
+
+  footer{border-top:1px solid var(--line);padding:36px 0;}
+  .footer-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+  .footer-links{display:flex;gap:24px;}
+  .footer-links a{font-size:12.5px;color:var(--ink-faint);}
+  .footer-links a:hover{color:var(--ink-dim);}
+  .footer-brand{font-family:var(--mono);font-size:12px;color:var(--ink-faint);}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span class="dot"></span>NEXXORE · SWARM</div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="#fusion">Signal fusion</a>
+    <a href="#debate">Debate</a>
+    <a href="#calibration">Calibration</a>
+    <a href="#modules">Modules</a>
+    <a href="/terminal-pro" class="pro">Pro Terminal</a>
+  </div>
+  <a href="/#early-access" class="nav-cta">Get early access</a>
+</nav>
+
+<div class="wrap">
+  <section class="hero" style="border-top:none;">
+    <div>
+      <div class="eyebrow">Agentic swarm · live in your browser</div>
+      <h1>Not one model. A <em>desk of agents</em> that argue, vote, and keep score.</h1>
+      <p class="hero-sub">Eight signal sources vote on live market data. A Bull and a Bear argue the evidence; a Judge weighs it with weights earned from each source's own track record. A separate Risk Sizer sets the stake — direction never sizes its own position. Every call lands in a Brier-scored calibration log.</p>
+      <div class="cta-row">
+        <button class="btn-primary" id="rerunBtn">Re-run analysis ↻</button>
+        <a href="#calibration" class="btn-secondary">See the calibration log</a>
+      </div>
+      <div class="hero-note">Paper-only. Deterministic engine, real live data, zero LLM cost.<br>The Claude-powered debate tier runs in the <a href="/terminal-pro" style="color:var(--teal);">Pro Terminal</a>.</div>
+    </div>
+
+    <div class="decision-card">
+      <div class="dc-titlebar">
+        <span>nexxore.xyz/swarm — decision engine</span>
+        <span style="margin-left:auto;"><span class="live-pill"><span class="ping"></span>LIVE DATA</span></span>
+      </div>
+      <div class="dc-body">
+        <div class="asset-tabs" id="assetTabs">
+          <button class="asset-tab active" data-sym="BTCUSDT">BTC</button>
+          <button class="asset-tab" data-sym="ETHUSDT">ETH</button>
+          <button class="asset-tab" data-sym="SOLUSDT">SOL</button>
+        </div>
+        <div class="dc-verdict-row">
+          <span class="dc-verdict hold" id="verdict">…</span>
+          <span class="dc-price" id="dcPrice">—</span>
+        </div>
+        <div class="dc-conf" id="dcConf">Fusing 8 sources…</div>
+        <div class="prob-bars">
+          <div class="prob-row"><span>UP</span><div class="prob-track"><div class="prob-fill up" id="pUp" style="width:33%"></div></div><span class="prob-val" id="pUpV">—</span></div>
+          <div class="prob-row"><span>NEUTRAL</span><div class="prob-track"><div class="prob-fill flat" id="pFlat" style="width:33%"></div></div><span class="prob-val" id="pFlatV">—</span></div>
+          <div class="prob-row"><span>DOWN</span><div class="prob-track"><div class="prob-fill down" id="pDown" style="width:33%"></div></div><span class="prob-val" id="pDownV">—</span></div>
+        </div>
+        <div class="risk-grid">
+          <div class="risk-cell"><div class="l">Entry</div><div class="v" id="rEntry">—</div></div>
+          <div class="risk-cell"><div class="l">Stop</div><div class="v" id="rStop">—</div></div>
+          <div class="risk-cell"><div class="l">Target</div><div class="v" id="rTarget">—</div></div>
+          <div class="risk-cell"><div class="l">Size</div><div class="v" id="rSize">—</div></div>
+        </div>
+        <div class="dc-foot">
+          <span id="riskNote">Risk Sizer: vol-target Kelly, 5% hard cap</span>
+          <span class="kill-switch" id="killSwitch" role="switch" aria-checked="false" tabindex="0">
+            <span class="track"><span class="knob"></span></span>
+            <span class="ks-label">KILL SWITCH</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<section id="pipeline">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">The pipeline</div>
+      <h2 class="section-title">Every stage separate. Every stage observable.</h2>
+      <p class="section-desc">Direction, sizing, and approval live on different agents on purpose — the agent that wants the trade never decides how big it is, and the sizer never overrides the gate.</p>
+    </div>
+    <div class="pipe-rail">
+      <div class="pipe-node active"><div class="pn-stage">Ingest</div><div class="pn-name">Market data</div><div class="pn-desc">Binance klines + funding, Polymarket odds — live, in this page.</div></div>
+      <div class="pipe-sep"><span>→</span></div>
+      <div class="pipe-node active"><div class="pn-stage">Vote</div><div class="pn-name">8-source fusion</div><div class="pn-desc">Trend, momentum, RSI, MACD, vol regime, volume, funding, prediction markets.</div></div>
+      <div class="pipe-sep"><span>→</span></div>
+      <div class="pipe-node active"><div class="pn-stage">Argue</div><div class="pn-name">Bull / Bear / Judge</div><div class="pn-desc">Adversarial debate over the evidence; Judge rules with adaptive weights.</div></div>
+      <div class="pipe-sep"><span>→</span></div>
+      <div class="pipe-node active"><div class="pn-stage">Size</div><div class="pn-name">Risk Sizer</div><div class="pn-desc">Separate agent: vol-target Kelly fraction, ATR stops, 5% hard cap.</div></div>
+      <div class="pipe-sep"><span>→</span></div>
+      <div class="pipe-node active"><div class="pn-stage">Gate</div><div class="pn-name">Kill switch</div><div class="pn-desc">One switch zeroes all sizing. Paper-only until the Brier log earns real money.</div></div>
+      <div class="pipe-sep"><span>→</span></div>
+      <div class="pipe-node active"><div class="pn-stage">Score</div><div class="pn-name">Calibration log</div><div class="pn-desc">Every probability call resolved and Brier-scored. Weights adapt from it.</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="fusion">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">Signal fusion</div>
+      <h2 class="section-title">Eight sources vote. Accuracy decides whose vote counts.</h2>
+      <p class="section-desc">Each source's rolling hit-rate is tracked in the calibration log below. Sources that earn their seat get amplified; sources that don't get muted. The weights you see here adapt from resolved calls in <i>your</i> browser's log.</p>
+    </div>
+    <div class="fusion-layout">
+      <div class="fusion-table">
+        <div class="fusion-head"><span>Source</span><span>Vote</span><span>Conviction</span><span style="text-align:right;">Hit rate</span><span class="fh-w" style="text-align:right;">Weight</span></div>
+        <div id="fusionRows"></div>
+        <div class="fusion-note">Votes recompute from live data on each run. Hit rate = resolved calls from this browser's calibration log (Laplace-smoothed). Weight = normalized smoothed accuracy.</div>
+      </div>
+      <div class="swarm-panel">
+        <div class="sp-label"><span>20-agent micro swarm</span><span id="swarmState">converging…</span></div>
+        <canvas id="swarmCanvas"></canvas>
+        <div class="swarm-consensus" id="swarmConsensus">20 rule-based agents Monte-Carlo toward consensus around the fused signal — a cheap visual check on how contested the call is.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="debate">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">Adversarial debate</div>
+      <h2 class="section-title">The Bull argues. The Bear argues. The Judge keeps score.</h2>
+      <p class="section-desc">Not "BUY 73%" from a black box — a structured argument built from the same evidence the sources voted on, with the losing case preserved in full.</p>
+    </div>
+    <div class="debate-grid">
+      <div class="debate-col bull">
+        <div class="debate-role">▲ Bull case</div>
+        <div id="bullCase"><div class="debate-pt">Assembling evidence…</div></div>
+      </div>
+      <div class="debate-col bear">
+        <div class="debate-role">▼ Bear case</div>
+        <div id="bearCase"><div class="debate-pt">Assembling evidence…</div></div>
+      </div>
+    </div>
+    <div class="judge-box">
+      <div class="judge-seal">Verdict</div>
+      <div>
+        <div class="judge-text" id="judgeText">Weighing the evidence…</div>
+        <div class="judge-meta" id="judgeMeta"></div>
+      </div>
+    </div>
+    <div class="honesty"><b>What's deterministic and what isn't:</b> this page runs the swarm's rule-based tier — real indicator math over real live data, no LLM, $0 per run. The Claude-powered debate (analyst personas, free-text argument, what-if scenarios) is the Pro tier. Nothing on this page is financial advice; it's a decision <i>process</i>, shown working.</div>
+  </div>
+</section>
+
+<section id="calibration">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">Calibration</div>
+      <h2 class="section-title">The log the swarm answers to.</h2>
+      <p class="section-desc">Every run files a probability call. One hour later it resolves against the actual price and is Brier-scored — 0.0 is prophecy, 0.25 is a coin flip. Per-source hits and misses feed straight back into the fusion weights. Real money stays gated behind a written Brier improvement, not vibes.</p>
+    </div>
+    <div class="cal-layout">
+      <div>
+        <div class="cal-stat-grid">
+          <div class="cal-stat"><div class="n" id="calBrier">—</div><div class="l">Rolling Brier score</div></div>
+          <div class="cal-stat"><div class="n" id="calResolved">0</div><div class="l">Calls resolved</div></div>
+          <div class="cal-stat"><div class="n" id="calHitRate">—</div><div class="l">Directional hit rate</div></div>
+          <div class="cal-stat"><div class="n" id="calPending">0</div><div class="l">Pending resolution</div></div>
+        </div>
+        <div class="cal-explain">This log lives in your browser (localStorage) and builds as you visit — a personal, tamper-proof-to-us record of what the engine told <i>you</i>. The hosted swarm's shared log publishes with the public track record. <a href="/track-record" style="color:var(--teal);">Track record →</a></div>
+      </div>
+      <div class="cal-log">
+        <div class="cal-log-head"><span>Time</span><span>Asset</span><span>Call</span><span>P(up)</span><span>Result</span><span>Brier</span></div>
+        <div id="calRows"><div class="cal-empty">No calls logged yet in this browser. Every analysis run above files one automatically — check back in an hour and it will have resolved against the real price.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="modules">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">The swarm's senses & hands</div>
+      <h2 class="section-title">Every NEXXORE product is an organ of the same organism.</h2>
+      <p class="section-desc">The terminal is how the swarm sees markets. The intelligence layer is how it reads the world. The strategy builder is how it encodes a thesis. The prediction terminal is how it checks its beliefs against people betting real money.</p>
+    </div>
+    <div class="module-grid">
+      <a class="module-card" href="/terminal">
+        <div class="module-role">Sensor · market microstructure</div>
+        <div class="module-name">⌨️ Trading Terminal</div>
+        <div class="module-desc">52 normalized streams — funding, depth, TVL, volatility. The raw feed every swarm source votes on.</div>
+        <div class="module-link">Open Terminal <span>→</span></div>
+      </a>
+      <a class="module-card" href="/intelligence">
+        <div class="module-role">Sensor · world state</div>
+        <div class="module-name">🌍 Geopolitical Intelligence</div>
+        <div class="module-desc">The Escalation Index turns headlines into a regime signal — the swarm's volatility source reads the same regime to scale conviction and size.</div>
+        <div class="module-link">Open Intelligence <span>→</span></div>
+      </a>
+      <a class="module-card" href="/prediction-terminal">
+        <div class="module-role">Sensor · crowd belief</div>
+        <div class="module-name">🎯 Prediction Terminal</div>
+        <div class="module-desc">1,400+ Polymarket books and the whale feed. Prediction markets hold a voting seat in the fusion above — people risking money beat people posting takes.</div>
+        <div class="module-link">Open Prediction Terminal <span>→</span></div>
+      </a>
+      <a class="module-card" href="/strategy-builder">
+        <div class="module-role">Effector · thesis encoding</div>
+        <div class="module-name">🏗️ Strategy Builder</div>
+        <div class="module-desc">Turn a swarm verdict into a standing rule: regime-aware allocation logic with live Greeks and the same hard risk constraints the sizer obeys.</div>
+        <div class="module-link">Open Strategy Builder <span>→</span></div>
+      </a>
+      <a class="module-card" href="/terminal-pro">
+        <div class="module-role">Effector · execution</div>
+        <div class="module-name">◈ Agent Builder — Pro</div>
+        <div class="module-desc">The swarm's hands: Kelly-sized routing across Ethereum, Arbitrum, Base, and Solana, with a pre-trade receipt you approve before anything moves. Claude debate tier lives here.</div>
+        <div class="module-link">Open Pro Terminal <span>→</span></div>
+      </a>
+      <a class="module-card" href="/track-record">
+        <div class="module-role">Conscience · public memory</div>
+        <div class="module-name">📜 Track Record</div>
+        <div class="module-desc">The published log of hosted-swarm calls. Real-money execution unlocks only when this log shows written Brier improvement — the gate is the product.</div>
+        <div class="module-link">Open Track Record <span>→</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footer-row">
+    <div class="footer-brand">© 2026 NEXXORE. Paper-only. Not financial advice.</div>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/docs">Docs</a>
+      <a href="/track-record">Track Record</a>
+      <a href="/api/swarm">Swarm API</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* ───────────────────────── data layer ───────────────────────── */
+  var SYM = 'BTCUSDT';
+  var PM_BASES = ['https://gamma-api.polymarket.com', '/api/pm/gamma'];
+
+  function fetchJSON(url){
+    return fetch(url).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); });
+  }
+  // Polymarket with ISP-block fallback (some ISPs block *.polymarket.com)
+  function fetchPM(path){
+    return fetchJSON(PM_BASES[0] + path).catch(function(){ return fetchJSON(PM_BASES[1] + path); });
+  }
+
+  /* ───────────────────────── indicator math ───────────────────────── */
+  function sma(a, n){ if(a.length < n) return null; var s = 0; for(var i = a.length - n; i < a.length; i++) s += a[i]; return s / n; }
+  function ema(a, n){
+    if(a.length < n) return null;
+    var k = 2 / (n + 1), e = sma(a.slice(0, n), n);
+    for(var i = n; i < a.length; i++) e = a[i] * k + e * (1 - k);
+    return e;
+  }
+  function emaSeries(a, n){
+    var out = [], k = 2 / (n + 1), e = null;
+    for(var i = 0; i < a.length; i++){
+      e = (e === null) ? a[i] : a[i] * k + e * (1 - k);
+      out.push(e);
+    }
+    return out;
+  }
+  function rsi(a, n){
+    if(a.length < n + 1) return null;
+    var g = 0, l = 0, i, d;
+    for(i = 1; i <= n; i++){ d = a[i] - a[i-1]; if(d > 0) g += d; else l -= d; }
+    g /= n; l /= n;
+    for(i = n + 1; i < a.length; i++){
+      d = a[i] - a[i-1];
+      g = (g * (n-1) + (d > 0 ? d : 0)) / n;
+      l = (l * (n-1) + (d < 0 ? -d : 0)) / n;
+    }
+    if(l === 0) return 100;
+    return 100 - 100 / (1 + g / l);
+  }
+  function macd(a){
+    var f = emaSeries(a, 12), s = emaSeries(a, 26);
+    var line = a.map(function(_, i){ return f[i] - s[i]; });
+    var sig = emaSeries(line, 9);
+    var n = a.length - 1;
+    return { hist: line[n] - sig[n], prev: line[n-1] - sig[n-1], line: line[n] };
+  }
+  function atr(h, l, c, n){
+    var trs = [];
+    for(var i = 1; i < c.length; i++){
+      trs.push(Math.max(h[i] - l[i], Math.abs(h[i] - c[i-1]), Math.abs(l[i] - c[i-1])));
+    }
+    return sma(trs, Math.min(n, trs.length));
+  }
+  function realizedVol(closes, n){ // annualized, from hourly log returns
+    var rets = [];
+    for(var i = Math.max(1, closes.length - n); i < closes.length; i++) rets.push(Math.log(closes[i] / closes[i-1]));
+    if(rets.length < 2) return null;
+    var m = rets.reduce(function(a,b){ return a+b; }, 0) / rets.length;
+    var v = rets.reduce(function(a,b){ return a + (b-m)*(b-m); }, 0) / (rets.length - 1);
+    return Math.sqrt(v) * Math.sqrt(24 * 365);
+  }
+
+  /* ───────────────────────── persistence: weights + calibration ───────────────────────── */
+  var LS_ACC = 'nx_swarm_acc_v1';    // { source: {hit, total} }
+  var LS_CAL = 'nx_swarm_cal_v1';    // [ {ts, sym, pUp, price, votes:{src:vote}, resolved, outcome, brier} ]
+  var LS_KILL = 'nx_swarm_kill';
+
+  function loadJSON(k, fb){ try { return JSON.parse(localStorage.getItem(k)) || fb; } catch(e){ return fb; } }
+  function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+
+  var acc = loadJSON(LS_ACC, {});
+  var cal = loadJSON(LS_CAL, []);
+
+  function hitRate(src){ // Laplace-smoothed
+    var a = acc[src] || { hit: 0, total: 0 };
+    return (a.hit + 1) / (a.total + 2);
+  }
+
+  // Resolve pending calls older than 1h against live prices
+  function resolvePending(prices){
+    var now = Date.now(), changed = false;
+    cal.forEach(function(c){
+      if(c.resolved || now - c.ts < 3600e3) return;
+      var px = prices[c.sym];
+      if(px == null) return;
+      var up = px > c.price ? 1 : 0;
+      c.resolved = true;
+      c.outcome = up;
+      c.exitPrice = px;
+      c.brier = Math.pow(c.pUp - up, 2);
+      Object.keys(c.votes || {}).forEach(function(src){
+        var v = c.votes[src];
+        if(Math.abs(v) < 0.1) return; // abstained
+        acc[src] = acc[src] || { hit: 0, total: 0 };
+        acc[src].total++;
+        if((v > 0 && up === 1) || (v < 0 && up === 0)) acc[src].hit++;
+      });
+      changed = true;
+    });
+    if(cal.length > 200) cal = cal.slice(-200);
+    if(changed){ saveJSON(LS_ACC, acc); }
+    saveJSON(LS_CAL, cal);
+  }
+
+  function fileCall(sym, pUp, price, votes){
+    var last = cal[cal.length - 1];
+    if(last && !last.resolved && last.sym === sym && Date.now() - last.ts < 15 * 60e3) return; // one call per asset per 15m
+    cal.push({ ts: Date.now(), sym: sym, pUp: pUp, price: price, votes: votes, resolved: false });
+    if(cal.length > 200) cal = cal.slice(-200);
+    saveJSON(LS_CAL, cal);
+  }
+
+  /* ───────────────────────── the 8 sources ───────────────────────── */
+  // Each returns { key, name, sub, vote: -1..1, conf: 0..1, bull, bear }
+  function buildSources(k, funding, pm){
+    var closes = k.c, highs = k.h, lows = k.l, vols = k.v;
+    var px = closes[closes.length - 1];
+    var out = [];
+
+    var ma20 = sma(closes, 20), ma50 = sma(closes, 50);
+    var trendUp = ma20 > ma50 && px > ma20;
+    var trendDown = ma20 < ma50 && px < ma20;
+    out.push({
+      key: 'trend', name: 'Trend', sub: 'MA20 / MA50 alignment',
+      vote: trendUp ? 1 : (trendDown ? -1 : (ma20 > ma50 ? 0.4 : -0.4)),
+      conf: Math.min(1, Math.abs(ma20 - ma50) / ma50 * 60),
+      bull: 'Price above MA20 > MA50 — bullish alignment',
+      bear: 'Price below MA20 < MA50 — bearish alignment'
+    });
+
+    var roc = (px / closes[closes.length - 25] - 1) * 100; // 24h rate of change
+    out.push({
+      key: 'momentum', name: 'Momentum', sub: '24h rate of change',
+      vote: Math.max(-1, Math.min(1, roc / 4)),
+      conf: Math.min(1, Math.abs(roc) / 5),
+      bull: '24h momentum +' + roc.toFixed(1) + '% and carrying',
+      bear: '24h momentum ' + roc.toFixed(1) + '% — sellers in control'
+    });
+
+    var r = rsi(closes, 14);
+    var rVote = r > 70 ? -((r - 70) / 30) : (r < 30 ? (30 - r) / 30 : (r - 50) / 40);
+    out.push({
+      key: 'rsi', name: 'RSI reversal', sub: 'RSI(14) mean-reversion, contrarian at extremes',
+      vote: Math.max(-1, Math.min(1, rVote)),
+      conf: Math.min(1, Math.abs(r - 50) / 35),
+      bull: 'RSI at ' + r.toFixed(0) + ' — ' + (r < 30 ? 'washed out, reversal zone' : 'momentum without froth'),
+      bear: 'RSI at ' + r.toFixed(0) + ' — ' + (r > 70 ? 'overbought, exhaustion risk' : 'no bid strength')
+    });
+
+    var m = macd(closes);
+    out.push({
+      key: 'macd', name: 'MACD', sub: '12/26/9 histogram + slope',
+      vote: Math.max(-1, Math.min(1, (m.hist > 0 ? 0.6 : -0.6) + (m.hist > m.prev ? 0.4 : -0.4))),
+      conf: Math.min(1, Math.abs(m.hist) / px * 800),
+      bull: 'MACD histogram positive' + (m.hist > m.prev ? ' and expanding' : ''),
+      bear: 'MACD histogram negative' + (m.hist < m.prev ? ' and deepening' : ' — fading')
+    });
+
+    var rv = realizedVol(closes, 24), rvLong = realizedVol(closes, 168);
+    var volRatio = rvLong ? rv / rvLong : 1;
+    out.push({
+      key: 'volregime', name: 'Vol regime', sub: '24h vs 7d realized vol',
+      vote: volRatio > 1.4 ? -0.6 : (volRatio < 0.8 ? 0.3 : 0),
+      conf: Math.min(1, Math.abs(volRatio - 1)),
+      bull: 'Volatility compressed (' + (rv*100).toFixed(0) + '% ann.) — coiled regime',
+      bear: 'Volatility expanding ' + volRatio.toFixed(2) + '× baseline — risk regime'
+    });
+
+    var vNow = sma(vols.slice(-24), 24), vBase = sma(vols, Math.min(120, vols.length));
+    var vr = vBase ? vNow / vBase : 1;
+    var lastUp = px >= closes[closes.length - 7];
+    out.push({
+      key: 'volume', name: 'Volume', sub: '24h volume vs 5d baseline, signed by drift',
+      vote: Math.max(-1, Math.min(1, (vr - 1) * 1.5)) * (lastUp ? 1 : -1),
+      conf: Math.min(1, Math.abs(vr - 1) * 1.2),
+      bull: 'Volume ' + vr.toFixed(1) + '× baseline behind the move — participation is real',
+      bear: 'Volume ' + vr.toFixed(1) + '× baseline on weakness — distribution risk'
+    });
+
+    var fVote = 0, fConf = 0.15, fRate = null;
+    if(funding && isFinite(funding)){
+      fRate = funding * 100;
+      fVote = Math.max(-1, Math.min(1, -funding * 8000)); // crowded longs (high +funding) = contrarian bearish
+      fConf = Math.min(1, Math.abs(funding) * 6000);
+    }
+    out.push({
+      key: 'funding', name: 'Funding', sub: 'Perp funding rate, contrarian at extremes',
+      vote: fVote, conf: fConf,
+      bull: fRate === null ? 'Funding unavailable — abstained' : 'Funding ' + fRate.toFixed(3) + '% — longs not crowded',
+      bear: fRate === null ? 'Funding unavailable — abstained' : 'Funding ' + fRate.toFixed(3) + '% — leveraged longs crowded, squeeze fuel'
+    });
+
+    var pmVote = 0, pmConf = 0.1, pmDetail = 'No matching market — abstained';
+    if(pm && pm.prob != null){
+      pmVote = (pm.prob - 0.5) * 2;
+      pmConf = Math.min(1, Math.abs(pm.prob - 0.5) * 2.5 + 0.2);
+      pmDetail = '"' + pm.q.slice(0, 60) + '" — ' + Math.round(pm.prob * 100) + '¢ YES';
+    }
+    out.push({
+      key: 'predmkt', name: 'Prediction mkts', sub: 'Polymarket crowd, money-weighted',
+      vote: pmVote, conf: pmConf,
+      bull: 'Crowd money leans up: ' + pmDetail,
+      bear: 'Crowd money leans down: ' + pmDetail
+    });
+
+    return out;
+  }
+
+  /* ───────────────────────── fusion + judge ───────────────────────── */
+  function fuse(sources){
+    var wsum = 0, score = 0, weights = {};
+    sources.forEach(function(s){ var w = hitRate(s.key); weights[s.key] = w; wsum += w; });
+    sources.forEach(function(s){ score += (weights[s.key] / wsum) * s.vote * s.conf; });
+    var pUp = 1 / (1 + Math.exp(-3.4 * score));         // squash weighted score
+    var pFlat = 0.18 + 0.22 * (1 - Math.abs(2 * pUp - 1)); // contested calls → more neutral mass
+    var up = pUp * (1 - pFlat), down = (1 - pUp) * (1 - pFlat);
+    return { score: score, weights: weights, wsum: wsum, pUp: pUp, up: up, flat: pFlat, down: down };
+  }
+
+  function riskPlan(k, fusion, killed){
+    var closes = k.c, px = closes[closes.length - 1];
+    var a = atr(k.h, k.l, closes, 14);
+    var rv = realizedVol(closes, 24) || 0.5;
+    var dir = fusion.pUp >= 0.5 ? 1 : -1;
+    var edge = Math.abs(2 * fusion.pUp - 1);            // Kelly on a 1:1 book
+    var volScale = Math.min(1, 0.40 / rv);              // 40% annualized vol target
+    var size = Math.min(0.05, edge * 0.5 * volScale);   // half-Kelly, 5% hard cap
+    if(killed) size = 0;
+    return {
+      entry: px,
+      stop: px - dir * 1.5 * a,
+      target: px + dir * 2.5 * a,
+      size: size, rv: rv, atr: a, dir: dir
+    };
+  }
+
+  /* ───────────────────────── rendering ───────────────────────── */
+  function fmtPx(n){
+    if(n >= 1000) return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    if(n >= 1) return '$' + n.toFixed(2);
+    return '$' + n.toFixed(4);
+  }
+
+  function render(k, sources, fusion, plan, pmMeta){
+    var px = k.c[k.c.length - 1];
+    var verdict = fusion.pUp > 0.58 ? 'BUY' : (fusion.pUp < 0.42 ? 'SELL' : 'HOLD');
+    var vEl = $('verdict');
+    vEl.textContent = verdict;
+    vEl.className = 'dc-verdict ' + verdict.toLowerCase();
+    $('dcPrice').textContent = fmtPx(px);
+    $('dcConf').textContent = 'Confidence ' + Math.round(Math.abs(2 * fusion.pUp - 1) * 100) + '% · fused score ' + (fusion.score >= 0 ? '+' : '') + fusion.score.toFixed(3) + ' · ' + SYM.replace('USDT','') + '/USDT 1h';
+
+    $('pUp').style.width = (fusion.up * 100) + '%';   $('pUpV').textContent = Math.round(fusion.up * 100) + '%';
+    $('pFlat').style.width = (fusion.flat * 100) + '%'; $('pFlatV').textContent = Math.round(fusion.flat * 100) + '%';
+    $('pDown').style.width = (fusion.down * 100) + '%'; $('pDownV').textContent = Math.round(fusion.down * 100) + '%';
+
+    $('rEntry').textContent = fmtPx(plan.entry);
+    $('rStop').textContent = fmtPx(plan.stop);
+    $('rTarget').textContent = fmtPx(plan.target);
+    $('rSize').textContent = plan.size === 0 ? 'FLAT' : (plan.size * 100).toFixed(1) + '%';
+    $('riskNote').textContent = plan.size === 0
+      ? 'KILL SWITCH ARMED — sizing zeroed, direction still published'
+      : 'Half-Kelly × vol-target (' + (plan.rv * 100).toFixed(0) + '% ann. realized) · 5% cap';
+
+    // fusion table
+    var rows = sources.map(function(s){
+      var w = fusion.weights[s.key] / fusion.wsum;
+      var v = s.vote * s.conf;
+      var cls = v > 0.08 ? 'up' : (v < -0.08 ? 'down' : 'flat');
+      var lbl = v > 0.08 ? 'UP' : (v < -0.08 ? 'DOWN' : 'FLAT');
+      var half = Math.min(50, Math.abs(v) * 50);
+      var bar = v >= 0
+        ? '<i style="left:50%;width:' + half + '%;background:var(--teal);"></i>'
+        : '<i style="right:50%;width:' + half + '%;background:var(--red);"></i>';
+      var a = acc[s.key] || { hit: 0, total: 0 };
+      var hr = a.total ? Math.round(a.hit / a.total * 100) + '%' : '—';
+      return '<div class="fusion-row">' +
+        '<span class="fr-name">' + s.name + '<span class="sub">' + s.sub + '</span></span>' +
+        '<span class="fr-vote ' + cls + '">' + lbl + '</span>' +
+        '<span class="fr-bar">' + bar + '</span>' +
+        '<span class="fr-acc">' + hr + (a.total ? ' <span style="opacity:.5">(' + a.total + ')</span>' : '') + '</span>' +
+        '<span class="fr-w">' + (w * 100).toFixed(1) + '%</span>' +
+        '</div>';
+    }).join('');
+    $('fusionRows').innerHTML = rows;
+
+    // debate
+    var byStrength = sources.slice().sort(function(a, b){ return Math.abs(b.vote * b.conf) - Math.abs(a.vote * a.conf); });
+    var bulls = byStrength.filter(function(s){ return s.vote * s.conf > 0.05; }).slice(0, 4);
+    var bears = byStrength.filter(function(s){ return s.vote * s.conf < -0.05; }).slice(0, 4);
+    $('bullCase').innerHTML = bulls.length
+      ? bulls.map(function(s){ return '<div class="debate-pt">• ' + s.bull + '</div>'; }).join('')
+      : '<div class="debate-pt">• No source clears the conviction bar for the bull side this run.</div>';
+    $('bearCase').innerHTML = bears.length
+      ? bears.map(function(s){ return '<div class="debate-pt">• ' + s.bear + '</div>'; }).join('')
+      : '<div class="debate-pt">• No source clears the conviction bar for the bear side this run.</div>';
+
+    var winner = fusion.pUp >= 0.5 ? 'Bull' : 'Bear';
+    var strongest = byStrength[0];
+    var judgeLine;
+    if(verdict === 'HOLD'){
+      judgeLine = '"Neither side carries the room. ' + bulls.length + ' sources argue up, ' + bears.length + ' argue down, and the weighted score lands at ' + (fusion.score >= 0 ? '+' : '') + fusion.score.toFixed(3) + ' — inside the no-trade band. HOLD, and let the sizer stay flat."';
+    } else {
+      judgeLine = '"' + winner + ' case is stronger. ' + (strongest ? 'The ' + strongest.name.toLowerCase() + ' source carries the most weighted conviction; ' : '') + 'weighted score ' + (fusion.score >= 0 ? '+' : '') + fusion.score.toFixed(3) + ' clears the band. ' + verdict + ', stop at ' + fmtPx(plan.stop) + ', and the Risk Sizer — not this bench — sets the stake."';
+    }
+    $('judgeText').textContent = judgeLine;
+    $('judgeMeta').textContent = 'Rule-based judge · weights from ' + cal.filter(function(c){ return c.resolved; }).length + ' resolved calls in this browser · pm source: ' + (pmMeta || 'abstained');
+
+    renderCalibration();
+    startSwarmSim(fusion.pUp);
+  }
+
+  function renderCalibration(){
+    var resolved = cal.filter(function(c){ return c.resolved; });
+    var pending = cal.filter(function(c){ return !c.resolved; });
+    if(resolved.length){
+      var brier = resolved.reduce(function(a, c){ return a + c.brier; }, 0) / resolved.length;
+      var hits = resolved.filter(function(c){ return (c.pUp >= 0.5 && c.outcome === 1) || (c.pUp < 0.5 && c.outcome === 0); }).length;
+      var bEl = $('calBrier');
+      bEl.textContent = brier.toFixed(3);
+      bEl.className = 'n' + (brier < 0.25 ? ' good' : '');
+      $('calHitRate').textContent = Math.round(hits / resolved.length * 100) + '%';
+    }
+    $('calResolved').textContent = resolved.length;
+    $('calPending').textContent = pending.length;
+
+    var recent = cal.slice(-10).reverse();
+    if(recent.length){
+      $('calRows').innerHTML = recent.map(function(c){
+        var d = new Date(c.ts);
+        var t = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ' ' + String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
+        var call = c.pUp > 0.58 ? 'BUY' : (c.pUp < 0.42 ? 'SELL' : 'HOLD');
+        var res = c.resolved
+          ? '<span class="' + (((c.pUp >= 0.5) === (c.outcome === 1)) ? 'hit">HIT' : 'miss">MISS') + '</span>'
+          : '<span class="pend">PENDING</span>';
+        return '<div class="cal-log-row"><span>' + t + '</span><span>' + c.sym.replace('USDT','') + '</span><span>' + call + ' @ ' + fmtPx(c.price) + '</span><span>' + Math.round(c.pUp * 100) + '%</span>' + res + '<span>' + (c.resolved ? c.brier.toFixed(3) : '—') + '</span></div>';
+      }).join('');
+    }
+  }
+
+  /* ───────────────────────── micro swarm canvas ───────────────────────── */
+  var swarmRAF = null;
+  function startSwarmSim(pUp){
+    var cv = $('swarmCanvas'), ctx = cv.getContext('2d');
+    var W = cv.clientWidth, H = cv.clientHeight;
+    cv.width = W * devicePixelRatio; cv.height = H * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+    var target = pUp; // consensus x position (0=bear side, 1=bull side)
+    var agents = [];
+    for(var i = 0; i < 20; i++){
+      agents.push({ x: Math.random(), y: 0.15 + Math.random() * 0.7, vx: 0, phase: Math.random() * Math.PI * 2 });
+    }
+    if(swarmRAF) cancelAnimationFrame(swarmRAF);
+    var t0 = performance.now();
+    function frame(now){
+      var t = (now - t0) / 1000;
+      ctx.clearRect(0, 0, W, H);
+      // midline + zones
+      ctx.strokeStyle = 'rgba(234,229,214,0.12)'; ctx.setLineDash([3,4]);
+      ctx.beginPath(); ctx.moveTo(W/2, 8); ctx.lineTo(W/2, H-8); ctx.stroke(); ctx.setLineDash([]);
+      ctx.font = '9px JetBrains Mono, monospace';
+      ctx.fillStyle = 'rgba(217,88,75,0.6)'; ctx.fillText('BEAR', 8, 14);
+      ctx.fillStyle = 'rgba(111,201,186,0.6)'; ctx.fillText('BULL', W - 34, 14);
+      var spread = 0;
+      agents.forEach(function(a){
+        var noise = Math.sin(t * 1.3 + a.phase) * 0.035 * Math.max(0.25, 1 - t / 6);
+        a.vx += ((target - a.x) * 0.02 + (Math.random() - 0.5) * 0.004);
+        a.vx *= 0.92;
+        a.x += a.vx;
+        var dx = a.x + noise;
+        spread += Math.abs(dx - target);
+        var col = dx > 0.53 ? '111,201,186' : (dx < 0.47 ? '217,88,75' : '232,163,61');
+        ctx.beginPath();
+        ctx.arc(dx * (W - 24) + 12, a.y * H, 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(' + col + ',0.85)';
+        ctx.fill();
+      });
+      spread /= agents.length;
+      var st = $('swarmState');
+      st.textContent = spread < 0.05 ? 'CONVERGED' : (spread < 0.15 ? 'converging…' : 'CONTESTED');
+      st.style.color = spread < 0.05 ? 'var(--teal)' : 'var(--amber)';
+      // consensus marker
+      ctx.fillStyle = 'rgba(234,229,214,0.9)';
+      ctx.fillRect(target * (W - 24) + 11, H - 10, 3, 6);
+      if(!prefersReduced && t < 30) swarmRAF = requestAnimationFrame(frame);
+    }
+    swarmRAF = requestAnimationFrame(frame);
+    $('swarmConsensus').textContent = '20 rule-based agents converge toward the fused consensus (P(up) ' + Math.round(pUp * 100) + '%). Slow convergence = contested tape — the sizer reads that as a cut.';
+  }
+
+  /* ───────────────────────── kill switch ───────────────────────── */
+  var killed = localStorage.getItem(LS_KILL) === '1';
+  var ksEl = $('killSwitch');
+  function paintKS(){
+    ksEl.classList.toggle('armed', killed);
+    ksEl.setAttribute('aria-checked', killed ? 'true' : 'false');
+  }
+  function toggleKS(){ killed = !killed; localStorage.setItem(LS_KILL, killed ? '1' : '0'); paintKS(); run(false); }
+  ksEl.addEventListener('click', toggleKS);
+  ksEl.addEventListener('keydown', function(e){ if(e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); toggleKS(); } });
+  paintKS();
+
+  /* ───────────────────────── orchestration ───────────────────────── */
+  var PM_TAGS = { BTCUSDT: 'bitcoin', ETHUSDT: 'ethereum', SOLUSDT: 'solana' };
+
+  function run(file){
+    $('dcConf').textContent = 'Fusing 8 sources…';
+    var klP = fetchJSON('https://api.binance.com/api/v3/klines?symbol=' + SYM + '&interval=1h&limit=200')
+      .then(function(rows){
+        return {
+          c: rows.map(function(r){ return parseFloat(r[4]); }),
+          h: rows.map(function(r){ return parseFloat(r[2]); }),
+          l: rows.map(function(r){ return parseFloat(r[3]); }),
+          v: rows.map(function(r){ return parseFloat(r[5]); })
+        };
+      });
+    var fundP = fetchJSON('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=' + SYM)
+      .then(function(d){ return parseFloat(d.lastFundingRate); }).catch(function(){ return null; });
+    var pmP = fetchPM('/markets?active=true&closed=false&order=volume24hr&ascending=false&limit=60')
+      .then(function(rows){
+        if(!Array.isArray(rows)) return null;
+        var kw = PM_TAGS[SYM];
+        var re = new RegExp('\\b(' + kw + '|' + SYM.replace('USDT','') + ')\\b', 'i');
+        var upRe = /(above|reach|hit|exceed|higher|close (over|above)|all.?time high|new high|\bup\b)/i;
+        var dnRe = /(below|under|lower|dip|fall|drop|crash|close (under|below))/i;
+        for(var i = 0; i < rows.length; i++){
+          var m = rows[i], q = m.question || m.title || '';
+          if(!re.test(q)) continue;
+          var isUp = upRe.test(q), isDn = dnRe.test(q);
+          if(!isUp && !isDn) continue;
+          var yp = null;
+          if(m.outcomePrices){ try { yp = parseFloat(JSON.parse(m.outcomePrices)[0]); } catch(e){} }
+          if(yp == null || isNaN(yp)) yp = m.lastTradePrice != null ? parseFloat(m.lastTradePrice) : null;
+          if(yp == null || isNaN(yp) || yp <= 0.05 || yp >= 0.95) continue; // near-resolved books carry no forward info
+          return { q: q, prob: isDn ? 1 - yp : yp };
+        }
+        return null;
+      }).catch(function(){ return null; });
+    var pxAllP = fetchJSON('https://api.binance.com/api/v3/ticker/price?symbols=' + encodeURIComponent(JSON.stringify(['BTCUSDT','ETHUSDT','SOLUSDT'])))
+      .then(function(list){
+        var by = {}; (list || []).forEach(function(r){ by[r.symbol] = parseFloat(r.price); });
+        return by;
+      }).catch(function(){ return {}; });
+
+    Promise.all([klP, fundP, pmP, pxAllP]).then(function(res){
+      var k = res[0], funding = res[1], pm = res[2], pxAll = res[3];
+      resolvePending(pxAll);
+      var sources = buildSources(k, funding, pm);
+      var fusion = fuse(sources);
+      var plan = riskPlan(k, fusion, killed);
+      if(file !== false) fileCall(SYM, fusion.pUp, k.c[k.c.length - 1], sources.reduce(function(o, s){ o[s.key] = s.vote * s.conf; return o; }, {}));
+      render(k, sources, fusion, plan, pm ? '"' + pm.q.slice(0, 44) + '…"' : null);
+    }).catch(function(e){
+      $('dcConf').textContent = 'Live data unreachable — retrying in 30s (' + e.message + ')';
+      setTimeout(function(){ run(false); }, 30000);
+    });
+  }
+
+  // asset tabs
+  document.querySelectorAll('.asset-tab').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('.asset-tab').forEach(function(x){ x.classList.remove('active'); });
+      b.classList.add('active');
+      SYM = b.dataset.sym;
+      run(true);
+    });
+  });
+  $('rerunBtn').addEventListener('click', function(){ run(true); });
+
+  run(true);
+  if(!prefersReduced) setInterval(function(){ run(false); }, 60000); // refresh votes; files a new call at most every 15m per asset
+})();
+</script>
+
+</body>
+</html>
