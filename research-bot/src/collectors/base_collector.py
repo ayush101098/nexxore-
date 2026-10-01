@@ -262,8 +262,19 @@ class BaseCollector(ABC, Generic[T]):
     ) -> Dict[str, Any]:
         """
         Fetch URL with retry logic and rate limiting
+        
+        Args:
+            url: URL to fetch
+            method: HTTP method
+            **kwargs: Additional request parameters
+            
+        Returns:
+            Response JSON data
+            
+        Raises:
+            Exception: If all retries fail
         """
-        last_error = None
+        last_error: Optional[Exception] = None
         
         for attempt in range(self.retry_config.max_retries + 1):
             try:
