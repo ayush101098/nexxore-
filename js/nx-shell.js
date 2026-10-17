@@ -35,8 +35,7 @@
     { href: '/stablecoin-hub', match: 'stablecoin-hub', icon: 'yield', label: 'Yield', full: 'Stablecoin Hub' },
     { group: 'Proof' },
     { href: '/track-record', match: 'track-record', icon: 'record', label: 'Record', full: 'Track Record' },
-    { sep: true },
-    { href: '/terminal-pro', match: 'terminal-pro', icon: 'pro', label: 'Pro', full: 'Pro workspace' }
+    { sep: true } // Pro is a paid workspace, reached from the Pro links inside pages, not listed here
   ];
 
   function page() { return location.pathname.replace(/^\/|\.html$/g, '').replace(/\/$/, '') || 'index'; }

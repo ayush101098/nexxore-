@@ -220,6 +220,11 @@
   .footer-links a{font-size:12.5px;color:var(--ink-faint);}
   .footer-links a:hover{color:var(--ink-dim);}
   .footer-brand{font-family:var(--mono);font-size:12px;color:var(--ink-faint);}
+  h1{font-size:34px;margin-bottom:14px;}
+  .hero{padding:40px 0 36px;}
+  .hero-sub{font-size:14.5px;margin-bottom:20px;}
+  .section-title{font-size:26px;}
+  section{padding:48px 0;}
 </style>
 <script src="/js/nx-facts.js"></script>
 <script src="/js/nx-shell.js"></script>
@@ -227,16 +232,7 @@
 <body>
 
 <nav>
-  <div class="logo"><span class="dot"></span>NEXXORE · SWARM</div>
-  <div class="nav-links">
-    <a href="/">Home</a>
-    <a href="#fusion">Signal fusion</a>
-    <a href="#debate">Debate</a>
-    <a href="#calibration">Calibration</a>
-    <a href="#modules">Modules</a>
-    <a href="/terminal-pro" class="pro">Pro Terminal</a>
-  </div>
-  <a href="/#early-access" class="nav-cta">Get early access</a>
+  <div class="logo">SWARM</div>
 </nav>
 
 <div class="wrap">
@@ -244,12 +240,12 @@
     <div>
       <div class="eyebrow">Agentic swarm · live in your browser</div>
       <h1>Every signal has a thesis. <em>Every thesis gets tested.</em></h1>
-      <p class="hero-sub">Eight signal sources vote on live market data. A Bull and a Bear argue the evidence; a Judge weighs it with weights earned from each source's own track record. A separate Risk Sizer sets the stake — direction never sizes its own position. Every call lands in a Brier-scored calibration log.</p>
+      <p class="hero-sub">Eight sources vote on live data, a Bull and a Bear argue the evidence, and every call is scored when it resolves.</p>
       <div class="cta-row">
         <button class="btn-primary" id="rerunBtn">Analyze market ↻</button>
         <a href="#calibration" class="btn-secondary">Your calibration log</a>
       </div>
-      <div class="hero-note">Paper-only. Deterministic engine, real live data, zero LLM cost. The calibration log is stored in your browser and is not a platform-wide track record.<br>The Claude-powered debate tier runs in the <a href="/terminal-pro" style="color:var(--teal);">Pro Terminal</a>.</div>
+      <div class="hero-note">Paper-only. Your calibration log is stored in this browser. Claude-powered debate is in <a href="/terminal-pro" style="color:var(--teal);">Pro</a>.</div>
     </div>
 
     <div class="decision-card">
@@ -296,7 +292,6 @@
     <div class="section-head">
       <div class="section-eyebrow">Decision report · <span id="rpAsset">BTC</span>/USDT · 1h horizon <span data-nx-status="swarm"></span></div>
       <h2 class="section-title">The verdict, the opposing case, and what would prove it wrong.</h2>
-      <p class="section-desc">A structured argument built from the same evidence the sources voted on, with the losing case kept in full.</p>
     </div>
     <div class="report-grid">
       <div class="rp-cell"><div class="rp-k">Verdict</div><div class="rp-v" id="rpVerdict">—</div><div class="rp-s" id="rpConf">—</div></div>
@@ -325,29 +320,6 @@
       </div>
     </div>
     <div class="honesty"><b>What's deterministic and what isn't:</b> this page runs the swarm's rule-based tier — real indicator math over real live data, no LLM, $0 per run. The Claude-powered debate (analyst personas, free-text argument, what-if scenarios) is the Pro tier. Nothing on this page is financial advice; it's a decision <i>process</i>, shown working.</div>
-  </div>
-</section>
-
-<section id="pipeline">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="section-eyebrow">The pipeline</div>
-      <h2 class="section-title">Every stage separate. Every stage observable.</h2>
-      <p class="section-desc">Direction, sizing, and approval live on different agents on purpose — the agent that wants the trade never decides how big it is, and the sizer never overrides the gate.</p>
-    </div>
-    <div class="pipe-rail">
-      <div class="pipe-node active"><div class="pn-stage">Ingest</div><div class="pn-name">Market data</div><div class="pn-desc">Binance klines + funding, Polymarket odds — live, in this page.</div></div>
-      <div class="pipe-sep"><span>→</span></div>
-      <div class="pipe-node active"><div class="pn-stage">Vote</div><div class="pn-name">8-source fusion</div><div class="pn-desc">Trend, momentum, RSI, MACD, vol regime, volume, funding, prediction markets.</div></div>
-      <div class="pipe-sep"><span>→</span></div>
-      <div class="pipe-node active"><div class="pn-stage">Argue</div><div class="pn-name">Bull / Bear / Judge</div><div class="pn-desc">Adversarial debate over the evidence; Judge rules with adaptive weights.</div></div>
-      <div class="pipe-sep"><span>→</span></div>
-      <div class="pipe-node active"><div class="pn-stage">Size</div><div class="pn-name">Risk Sizer</div><div class="pn-desc">Separate agent: vol-target Kelly fraction, ATR stops, 5% hard cap.</div></div>
-      <div class="pipe-sep"><span>→</span></div>
-      <div class="pipe-node active"><div class="pn-stage">Gate</div><div class="pn-name">Kill switch</div><div class="pn-desc">One switch zeroes all sizing. Paper-only until the Brier log earns real money.</div></div>
-      <div class="pipe-sep"><span>→</span></div>
-      <div class="pipe-node active"><div class="pn-stage">Score</div><div class="pn-name">Calibration log</div><div class="pn-desc">Every probability call resolved and Brier-scored. Weights adapt from it.</div></div>
-    </div>
   </div>
 </section>
 
@@ -391,7 +363,7 @@
           <div class="cal-stat"><div class="n" id="calHitRate">—</div><div class="l">Directional hit rate</div></div>
           <div class="cal-stat"><div class="n" id="calPending">0</div><div class="l">Pending resolution</div></div>
         </div>
-        <div class="cal-explain">This log lives in your browser (localStorage) and builds as you visit — a personal, tamper-proof-to-us record of what the engine told <i>you</i>. The hosted swarm's shared log publishes with the public track record. <a href="/track-record" style="color:var(--teal);">Track record →</a></div>
+        <div class="cal-explain">This log lives in your browser (localStorage) and builds as you visit — a personal, tamper-proof-to-us record of what the engine told <i>you</i>. The hosted swarm's shared log publishes with the public track record. The hosted log publishes on the Track Record page.</div>
       </div>
       <div class="cal-log">
         <div class="cal-log-head"><span>Time</span><span>Asset</span><span>Call</span><span>P(up)</span><span>Result</span><span>Brier</span></div>
@@ -401,63 +373,9 @@
   </div>
 </section>
 
-<section id="modules">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="section-eyebrow">The swarm's senses & hands</div>
-      <h2 class="section-title">Every NEXXORE product is an organ of the same organism.</h2>
-      <p class="section-desc">The terminal is how the swarm sees markets. The intelligence layer is how it reads the world. The strategy builder is how it encodes a thesis. The prediction terminal is how it checks its beliefs against people betting real money.</p>
-    </div>
-    <div class="module-grid">
-      <a class="module-card" href="/terminal">
-        <div class="module-role">Sensor · market microstructure</div>
-        <div class="module-name">⌨️ Trading Terminal</div>
-        <div class="module-desc">Live prices, funding and volatility on <span data-nx-fact="priceStreams">16</span> Binance streams, plus news and macro feeds.</div>
-        <div class="module-link">Open Terminal <span>→</span></div>
-      </a>
-      <a class="module-card" href="/intelligence">
-        <div class="module-role">Sensor · world state</div>
-        <div class="module-name">🌍 Geopolitical Intelligence</div>
-        <div class="module-desc">The Escalation Index turns headlines into a regime signal — the swarm's volatility source reads the same regime to scale conviction and size.</div>
-        <div class="module-link">Open Intelligence <span>→</span></div>
-      </a>
-      <a class="module-card" href="/prediction-terminal">
-        <div class="module-role">Sensor · crowd belief</div>
-        <div class="module-name">🎯 Prediction Terminal</div>
-        <div class="module-desc">Live Polymarket books and the whale feed. Prediction markets hold a voting seat in the fusion above — people risking money beat people posting takes.</div>
-        <div class="module-link">Open Prediction Terminal <span>→</span></div>
-      </a>
-      <a class="module-card" href="/strategy-builder">
-        <div class="module-role">Effector · thesis encoding</div>
-        <div class="module-name">🏗️ Strategy Builder</div>
-        <div class="module-desc">Turn a swarm verdict into a standing rule: regime-aware allocation logic with live Greeks and the same hard risk constraints the sizer obeys.</div>
-        <div class="module-link">Open Strategy Builder <span>→</span></div>
-      </a>
-      <a class="module-card" href="/terminal-pro">
-        <div class="module-role">Effector · execution</div>
-        <div class="module-name">◈ Agent Builder — Pro</div>
-        <div class="module-desc">The swarm's hands, designed to size trades inside your boundaries with a pre-trade receipt you approve. It runs on a simulated feed today; live execution is not available. Claude debate tier lives here.</div>
-        <div class="module-link">Open Pro Terminal <span>→</span></div>
-      </a>
-      <a class="module-card" href="/track-record">
-        <div class="module-role">Conscience · public memory</div>
-        <div class="module-name">📜 Track Record</div>
-        <div class="module-desc">The published log of hosted-swarm calls. Real-money execution unlocks only when this log shows written Brier improvement — the gate is the product.</div>
-        <div class="module-link">Open Track Record <span>→</span></div>
-      </a>
-    </div>
-  </div>
-</section>
-
 <footer>
   <div class="wrap footer-row">
     <div class="footer-brand">© 2026 NEXXORE. Paper-only. Not financial advice.</div>
-    <div class="footer-links">
-      <a href="/">Home</a>
-      <a href="/docs">Docs</a>
-      <a href="/track-record">Track Record</a>
-      <a href="/api/swarm">Swarm API</a>
-    </div>
   </div>
 </footer>
 
