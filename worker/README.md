@@ -28,9 +28,9 @@ npm run forecast:once   # one forecaster pass
 npm run resolve:once    # one resolver pass
 ```
 
-## Spend
+## Usage
 
-The forecaster stops for the day when `llm_spend` reaches `DAILY_LLM_BUDGET_USD`. It reserves `PER_FORECAST_RESERVE_USD` before starting each market, so a run never starts a forecast it can't pay for. Failed passes are still billed and counted. Set `MODEL_PRICES_JSON` for every model in use: the worker refuses to price a model it doesn't know.
+Each run logs its token counts (`tokensIn`, `tokensOut`). There is no spend cap in the worker: set a monthly limit on the Anthropic account if you want one.
 
 ## Tests
 

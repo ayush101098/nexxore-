@@ -56,19 +56,6 @@ create table if not exists forecast_reasoning (
 alter table forecast_reasoning enable row level security;
 create policy "public read" on forecast_reasoning for select using (true);
 
--- ── llm_spend: cost tracking for the daily budget (service role only) ─
-create table if not exists llm_spend (
-  id            bigint generated always as identity primary key,
-  day           date not null default (now() at time zone 'utc')::date,
-  alert_id      text references alerts (id),
-  model_id      text not null,
-  input_tokens  integer not null,
-  output_tokens integer not null,
-  cost_usd      numeric(12, 6) not null
-);
-create index if not exists llm_spend_day_idx on llm_spend (day);
-alter table llm_spend enable row level security;   -- no policies: service role only
-
 -- ── markets: cached Polymarket data (public) ─────────────────────────
 create table if not exists markets (
   market_id  text primary key,

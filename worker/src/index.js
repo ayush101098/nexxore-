@@ -48,7 +48,7 @@ async function main() {
     : makeDb({ url: cfg.supabaseUrl, serviceKey: cfg.supabaseServiceKey });
   if (cfg.ledgerFile) log.info(`local ledger: ${cfg.ledgerFile}`);
   const pm = makePolymarket();
-  const llm = makeForecaster({ models: cfg.models, effort: cfg.effort, prices: cfg.prices });
+  const llm = makeForecaster({ models: cfg.models, effort: cfg.effort });
 
   const forecast = guarded('forecast', cfg, () => runForecast({ cfg, pm, llm, db, log }));
   const resolve = guarded('resolve', cfg, () => runResolve({ pm, db, log }));
@@ -58,7 +58,7 @@ async function main() {
     await (process.argv[once + 1] === 'resolve' ? resolve : forecast)();
     return;
   }
-  log.info(`worker started: forecast every ${cfg.forecastEveryMinutes}m, resolve every ${cfg.resolveEveryMinutes}m, budget $${cfg.dailyBudgetUsd}/day`);
+  log.info(`worker started: forecast every ${cfg.forecastEveryMinutes}m, resolve every ${cfg.resolveEveryMinutes}m`);
   await resolve();
   await forecast();
   setInterval(forecast, cfg.forecastEveryMinutes * 60e3);

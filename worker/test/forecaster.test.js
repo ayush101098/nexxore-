@@ -1,55 +1,37 @@
-// F1/F2: budget stop, failed calls leave no row, every forecast logged, reforecast rule.
+// F1/F2: failed calls leave no row, every forecast logged, reforecast rule, failure stop.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { runForecast, buildRow, isDue } = require('../src/forecaster');
 
 const CFG = {
-  dailyBudgetUsd: 10, perForecastReserveUsd: 0.15, maxMarketsPerDay: 200, callThresholdCents: 3,
+  maxMarketsPerDay: 200, callThresholdCents: 3,
   reforecastHours: 6, reforecastMoveCents: 5, maxDaysToEnd: 90, minVolume24hUsd: 10000, minLiquidityUsd: 5000
 };
 const MKT = (id) => ({ marketId: id, question: `Q ${id}`, rules: 'r', endDate: '2026-12-01T00:00:00Z', category: 'politics', slug: id, liquidity: 9000, volume24h: 20000, feesEnabled: false });
 const SNAP = { mid: 0.5, yesAsk: 0.51, noAsk: 0.5, at: new Date('2026-10-18T10:00:00Z') };
 const log = { info() {}, error() {} };
 
-function fakeDb({ spent = 0, latest = {} } = {}) {
-  const db = { rows: [], spends: [], spent,
-    async spentToday() { return db.spent; },
+function fakeDb({ latest = {} } = {}) {
+  const db = { rows: [],
     async marketsForecastToday() { return new Set(); },
     async latestByMarket() { return latest; },
     async upsertMarket() {},
-    async insertForecast(row, reasoning, spends) { db.rows.push({ row, reasoning }); db.spends.push(...spends); },
-    async recordSpend(spends) { db.spends.push(...spends); }
+    async insertForecast(row, reasoning) { db.rows.push({ row, reasoning }); }
   };
   return db;
 }
 const fakePm = (markets, snap = SNAP) => ({ async listEligible() { return markets; }, async snapshot() { return snap; } });
-const spend = (c) => ({ model: 'm', input_tokens: 10, output_tokens: 5, cost_usd: c });
+const usage = () => ({ model: 'm', input_tokens: 10, output_tokens: 5 });
 function fakeLlm(p = 0.6) {
-  const llm = { calls: 0, async forecast() { llm.calls++; return { probability: p, thesis: 't', invalidation: 'i', bull: 'b', bear: 'c', judgeOutput: {}, modelIds: ['m'], promptVersion: 'v1', spends: [spend(0.05)] }; } };
+  const llm = { calls: 0, async forecast() { llm.calls++; return { probability: p, thesis: 't', invalidation: 'i', bull: 'b', bear: 'c', judgeOutput: {}, modelIds: ['m'], promptVersion: 'v1', usages: [usage()] }; } };
   return llm;
 }
 
-test('budget stop: $0.01 budget makes no model calls', async () => {
-  const llm = fakeLlm(); const db = fakeDb();
-  const stats = await runForecast({ cfg: { ...CFG, dailyBudgetUsd: 0.01 }, pm: fakePm([MKT('a')]), llm, db, log });
-  assert.equal(llm.calls, 0);
-  assert.equal(stats.stoppedBy, 'budget');
-  assert.equal(db.rows.length, 0);
-});
-
-test('budget stop mid-run once spend reaches the limit', async () => {
-  const llm = fakeLlm(); const db = fakeDb({ spent: 9.8 });
-  const stats = await runForecast({ cfg: CFG, pm: fakePm([MKT('a'), MKT('b'), MKT('c')]), llm, db, log });
-  assert.equal(llm.calls, 1); // 9.80 + 0.15 ≤ 10 → one; 9.85 + 0.15 > 10 → stop
-  assert.equal(stats.stoppedBy, 'budget');
-});
-
-test('a failed model call writes no ledger row but records the spend', async () => {
+test('a failed model call writes no ledger row', async () => {
   const db = fakeDb(); const errors = [];
-  const llm = { async forecast() { throw Object.assign(new Error('judge pass refused'), { spends: [spend(0.02)] }); } };
+  const llm = { async forecast() { throw Object.assign(new Error('judge pass refused'), { usages: [usage()] }); } };
   const stats = await runForecast({ cfg: CFG, pm: fakePm([MKT('a')]), llm, db, log: { info() {}, error: (m) => errors.push(m) } });
   assert.equal(db.rows.length, 0);
-  assert.equal(db.spends.length, 1);
   assert.equal(stats.failures, 1);
   assert.match(errors[0], /judge pass refused/);
 });
@@ -90,7 +72,7 @@ test('reforecast after 6 hours or a 5¢ move', () => {
 
 test('three failures in a row stop the run', async () => {
   const db = fakeDb(); let calls = 0;
-  const llm = { async forecast() { calls++; throw Object.assign(new Error('credit balance is too low'), { spends: [] }); } };
+  const llm = { async forecast() { calls++; throw Object.assign(new Error('credit balance is too low'), { usages: [] }); } };
   const stats = await runForecast({ cfg: CFG, pm: fakePm(['a', 'b', 'c', 'd', 'e'].map(MKT)), llm, db, log });
   assert.equal(calls, 3);
   assert.equal(stats.stoppedBy, 'consecutive_failures');

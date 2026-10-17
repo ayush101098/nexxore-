@@ -14,12 +14,6 @@ function makeDb({ url, serviceKey, client }) {
   }
 
   return {
-    async spentToday(now = new Date()) {
-      const day = utcDayStart(now).toISOString().slice(0, 10);
-      const rows = check(await sb.from('llm_spend').select('cost_usd').eq('day', day));
-      return rows.reduce((s, r) => s + Number(r.cost_usd || 0), 0);
-    },
-
     async marketsForecastToday(now = new Date()) {
       const rows = check(await sb.from('alerts').select('market_id').gte('flagged_at', utcDayStart(now).toISOString()));
       return new Set(rows.map((r) => r.market_id));
@@ -45,21 +39,11 @@ function makeDb({ url, serviceKey, client }) {
       }));
     },
 
-    /** Ledger row, reasoning and spend. The alert row goes first so the
-     *  forecast is on record even if a later insert fails. */
-    async insertForecast(row, reasoning, spends) {
+    /** Ledger row, then its reasoning. The alert row goes first so the
+     *  forecast is on record even if the reasoning insert fails. */
+    async insertForecast(row, reasoning) {
       check(await sb.from('alerts').insert(row));
       check(await sb.from('forecast_reasoning').insert({ alert_id: row.id, ...reasoning }));
-      await this.recordSpend(spends, row.id, row.flagged_at);
-    },
-
-    async recordSpend(spends, alertId = null, at = new Date().toISOString()) {
-      if (!spends || !spends.length) return;
-      const day = at.slice(0, 10);
-      check(await sb.from('llm_spend').insert(spends.map((s) => ({
-        day, alert_id: alertId, model_id: s.model,
-        input_tokens: s.input_tokens, output_tokens: s.output_tokens, cost_usd: s.cost_usd
-      }))));
     },
 
     async openMarketIds() {

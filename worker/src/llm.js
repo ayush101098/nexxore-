@@ -45,17 +45,7 @@ function marketBrief(m, today) {
 
 class PassError extends Error {}
 
-/** Cost of one response in USD from its usage and the served model's prices. */
-function costUsd(usage, model, prices) {
-  const p = prices[model];
-  if (!p) throw new PassError(`No price configured for model ${model}`);
-  const input = (usage.input_tokens || 0)
-    + 1.25 * (usage.cache_creation_input_tokens || 0)
-    + 0.1 * (usage.cache_read_input_tokens || 0);
-  return (input * p.input + (usage.output_tokens || 0) * p.output) / 1e6;
-}
-
-function makeForecaster({ client, models, effort, prices }) {
+function makeForecaster({ client, models, effort }) {
   client = client || new Anthropic();
 
   async function pass(role, model, eff, prompt, schema, validate) {
@@ -68,32 +58,31 @@ function makeForecaster({ client, models, effort, prices }) {
       output_config: { effort: eff, format: { type: 'json_schema', schema } },
       messages: [{ role: 'user', content: prompt }]
     });
-    const spend = {
+    const usage = {
       role,
       model: res.model,
       input_tokens: res.usage.input_tokens || 0,
-      output_tokens: res.usage.output_tokens || 0,
-      cost_usd: costUsd(res.usage, res.model, prices)
+      output_tokens: res.usage.output_tokens || 0
     };
-    if (res.stop_reason === 'refusal') throw Object.assign(new PassError(`${role} pass refused`), { spend });
-    if (res.stop_reason === 'max_tokens') throw Object.assign(new PassError(`${role} pass hit max_tokens`), { spend });
+    if (res.stop_reason === 'refusal') throw Object.assign(new PassError(`${role} pass refused`), { usage });
+    if (res.stop_reason === 'max_tokens') throw Object.assign(new PassError(`${role} pass hit max_tokens`), { usage });
     const text = res.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
     let out;
-    try { out = JSON.parse(text); } catch (e) { throw Object.assign(new PassError(`${role} pass returned invalid JSON`), { spend }); }
-    try { validate(out, role); } catch (e) { e.spend = spend; throw e; }
-    return { out, spend };
+    try { out = JSON.parse(text); } catch (e) { throw Object.assign(new PassError(`${role} pass returned invalid JSON`), { usage }); }
+    try { validate(out, role); } catch (e) { e.usage = usage; throw e; }
+    return { out, usage };
   }
 
-  /** Run a pass, retrying once on any failure (spec F1.10). Spend from failed
-   *  attempts is still returned so the budget counts it. */
-  async function withRetry(fn, spends) {
+  /** Run a pass, retrying once on any failure (spec F1.10). Token usage from
+   *  failed attempts is kept for the run log. */
+  async function withRetry(fn, usages) {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
         const r = await fn();
-        spends.push(r.spend);
+        usages.push(r.usage);
         return r.out;
       } catch (err) {
-        if (err.spend) spends.push(err.spend);
+        if (err.usage) usages.push(err.usage);
         if (attempt === 1 || isFatal(err)) throw err;
       }
     }
@@ -102,19 +91,19 @@ function makeForecaster({ client, models, effort, prices }) {
   /** Forecast one market. Throws on failure; never falls back to 0.5. */
   async function forecast(market, today) {
     const brief = marketBrief(market, today);
-    const spends = [];
+    const usages = [];
     try {
       const [bull, bear] = await Promise.all([
         withRetry(() => pass('bull', models.bull, effort.bull,
-          `${brief}\n\nMake the strongest honest case that this market resolves YES under these rules.`, CASE_SCHEMA, validateCase), spends),
+          `${brief}\n\nMake the strongest honest case that this market resolves YES under these rules.`, CASE_SCHEMA, validateCase), usages),
         withRetry(() => pass('bear', models.bear, effort.bear,
-          `${brief}\n\nMake the strongest honest case that this market resolves NO under these rules.`, CASE_SCHEMA, validateCase), spends)
+          `${brief}\n\nMake the strongest honest case that this market resolves NO under these rules.`, CASE_SCHEMA, validateCase), usages)
       ]);
 
       const judge = await withRetry(() => pass('judge', models.judge, effort.judge,
           `${brief}\n\nBULL CASE:\n${bull.case}\n\nBEAR CASE:\n${bear.case}\n\n` +
           'Weigh both cases against the rules and the time remaining. Return a calibrated probability that the market resolves YES, a one-line thesis, and a one-line invalidation condition.',
-          JUDGE_SCHEMA, validateJudge), spends);
+          JUDGE_SCHEMA, validateJudge), usages);
 
       return {
         probability: Math.min(0.99, Math.max(0.01, judge.probability)),
@@ -123,12 +112,12 @@ function makeForecaster({ client, models, effort, prices }) {
         bull: bull.case,
         bear: bear.case,
         judgeOutput: judge,
-        modelIds: [...new Set(spends.map((s) => s.model))],
+        modelIds: [...new Set(usages.map((s) => s.model))],
         promptVersion: PROMPT_VERSION,
-        spends
+        usages
       };
     } catch (err) {
-      err.spends = spends;
+      err.usages = usages;
       throw err;
     }
   }
@@ -155,4 +144,4 @@ function validateJudge(j) {
   if (typeof j.invalidation !== 'string' || !j.invalidation.trim()) throw new PassError('judge pass returned no invalidation');
 }
 
-module.exports = { makeForecaster, costUsd, PROMPT_VERSION, PassError, marketBrief, isFatal };
+module.exports = { makeForecaster, PROMPT_VERSION, PassError, marketBrief, isFatal };

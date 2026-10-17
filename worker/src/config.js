@@ -31,12 +31,6 @@ function load() {
       bear: process.env.BEAR_EFFORT || 'low',
       judge: process.env.JUDGE_EFFORT || 'medium'
     },
-    // USD per million tokens, per model: {"<model id>": {"input": 2, "output": 10}}
-    prices: JSON.parse(req('MODEL_PRICES_JSON')),
-
-    dailyBudgetUsd: num('DAILY_LLM_BUDGET_USD', 10),
-    // Spend reserved before starting a market, so a run never starts what it can't finish
-    perForecastReserveUsd: num('PER_FORECAST_RESERVE_USD', 0.15),
     maxMarketsPerDay: num('MAX_MARKETS_PER_DAY', 200),
     callThresholdCents: num('CALL_THRESHOLD_CENTS', 3),
     minVolume24hUsd: num('MIN_VOLUME_24H_USD', 10000),

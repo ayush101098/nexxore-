@@ -43,8 +43,7 @@ function round(x, d) { return Number(x.toFixed(d)); }
 const MAX_CONSECUTIVE_FAILURES = 3;
 
 async function runForecast({ cfg, pm, llm, db, log, now = () => Date.now() }) {
-  const stats = { eligible: 0, due: 0, forecast: 0, calls: 0, failures: 0, skipped: 0, tokensIn: 0, tokensOut: 0, costUsd: 0, stoppedBy: null };
-  let spent = await db.spentToday(new Date(now()));
+  const stats = { eligible: 0, due: 0, forecast: 0, calls: 0, failures: 0, skipped: 0, tokensIn: 0, tokensOut: 0, stoppedBy: null };
   const today = await db.marketsForecastToday(new Date(now()));
   const markets = await pm.listEligible(cfg, now());
   stats.eligible = markets.length;
@@ -61,29 +60,23 @@ async function runForecast({ cfg, pm, llm, db, log, now = () => Date.now() }) {
     stats.due++;
 
     if (!today.has(m.marketId) && today.size >= cfg.maxMarketsPerDay) { stats.stoppedBy = 'max_markets'; break; }
-    if (spent + cfg.perForecastReserveUsd > cfg.dailyBudgetUsd) { stats.stoppedBy = 'budget'; break; }
 
     let f;
     try {
       f = await llm.forecast(m, new Date(now()).toISOString().slice(0, 10));
     } catch (err) {
       stats.failures++;
-      const lost = (err.spends || []).reduce((s, x) => s + x.cost_usd, 0);
-      spent += lost; stats.costUsd += lost;
-      await db.recordSpend(err.spends || []);
+      for (const u of err.usages || []) { stats.tokensIn += u.input_tokens; stats.tokensOut += u.output_tokens; }
       log.error(`forecast failed ${m.marketId}: ${err.message}`);
       if (++consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) { stats.stoppedBy = 'consecutive_failures'; break; }
       continue; // no ledger row, never a 0.5 fallback
     }
     consecutiveFailures = 0;
-    const cost = f.spends.reduce((s, x) => s + x.cost_usd, 0);
-    spent += cost; stats.costUsd += cost;
-    for (const s of f.spends) { stats.tokensIn += s.input_tokens; stats.tokensOut += s.output_tokens; }
+    for (const u of f.usages) { stats.tokensIn += u.input_tokens; stats.tokensOut += u.output_tokens; }
 
     const snap = await pm.snapshot(m).catch(() => null);
     if (!snap) {
       stats.skipped++;
-      await db.recordSpend(f.spends);
       log.error(`no order book for ${m.marketId}; forecast not logged`);
       continue;
     }
@@ -91,13 +84,12 @@ async function runForecast({ cfg, pm, llm, db, log, now = () => Date.now() }) {
     await db.upsertMarket(m);
     await db.insertForecast(row, {
       bull_case: f.bull, bear_case: f.bear, judge_output: f.judgeOutput, model_ids: f.modelIds
-    }, f.spends);
+    });
     today.add(m.marketId);
     stats.forecast++;
     if (row.is_call) stats.calls++;
-    log.info(`forecast ${m.marketId} p=${row.model_prob} mid=${row.market_prob} ${row.side} cost=$${cost.toFixed(4)}`);
+    log.info(`forecast ${m.marketId} p=${row.model_prob} mid=${row.market_prob} ${row.side}`);
   }
-  stats.costUsd = round(stats.costUsd, 4);
   return stats;
 }
 
