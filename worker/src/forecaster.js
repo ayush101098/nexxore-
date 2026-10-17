@@ -38,12 +38,17 @@ function buildRow(m, f, snap, cfg) {
 
 function round(x, d) { return Number(x.toFixed(d)); }
 
+// Stop the run after this many markets fail in a row: something systemic
+// (key, billing, outage) is wrong, and continuing only multiplies errors.
+const MAX_CONSECUTIVE_FAILURES = 3;
+
 async function runForecast({ cfg, pm, llm, db, log, now = () => Date.now() }) {
   const stats = { eligible: 0, due: 0, forecast: 0, calls: 0, failures: 0, skipped: 0, tokensIn: 0, tokensOut: 0, costUsd: 0, stoppedBy: null };
   let spent = await db.spentToday(new Date(now()));
   const today = await db.marketsForecastToday(new Date(now()));
   const markets = await pm.listEligible(cfg, now());
   stats.eligible = markets.length;
+  let consecutiveFailures = 0;
   const latest = await db.latestByMarket(markets.map((m) => m.marketId));
 
   for (const m of markets) {
@@ -67,8 +72,10 @@ async function runForecast({ cfg, pm, llm, db, log, now = () => Date.now() }) {
       spent += lost; stats.costUsd += lost;
       await db.recordSpend(err.spends || []);
       log.error(`forecast failed ${m.marketId}: ${err.message}`);
+      if (++consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) { stats.stoppedBy = 'consecutive_failures'; break; }
       continue; // no ledger row, never a 0.5 fallback
     }
+    consecutiveFailures = 0;
     const cost = f.spends.reduce((s, x) => s + x.cost_usd, 0);
     spent += cost; stats.costUsd += cost;
     for (const s of f.spends) { stats.tokensIn += s.input_tokens; stats.tokensOut += s.output_tokens; }

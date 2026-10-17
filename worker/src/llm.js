@@ -94,7 +94,7 @@ function makeForecaster({ client, models, effort, prices }) {
         return r.out;
       } catch (err) {
         if (err.spend) spends.push(err.spend);
-        if (attempt === 1) throw err;
+        if (attempt === 1 || isFatal(err)) throw err;
       }
     }
   }
@@ -136,6 +136,14 @@ function makeForecaster({ client, models, effort, prices }) {
   return { forecast };
 }
 
+/** Request or account errors a retry can't fix (bad request, auth, billing).
+ *  The SDK already retries 429 and 5xx on its own. */
+function isFatal(err) {
+  return err instanceof Anthropic.BadRequestError
+    || err instanceof Anthropic.AuthenticationError
+    || err instanceof Anthropic.PermissionDeniedError;
+}
+
 function validateCase(c, role) {
   if (!c || typeof c.case !== 'string' || !c.case.trim()) throw new PassError(`${role} pass returned an empty case`);
 }
@@ -147,4 +155,4 @@ function validateJudge(j) {
   if (typeof j.invalidation !== 'string' || !j.invalidation.trim()) throw new PassError('judge pass returned no invalidation');
 }
 
-module.exports = { makeForecaster, costUsd, PROMPT_VERSION, PassError, marketBrief };
+module.exports = { makeForecaster, costUsd, PROMPT_VERSION, PassError, marketBrief, isFatal };

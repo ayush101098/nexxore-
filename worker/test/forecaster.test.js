@@ -87,3 +87,11 @@ test('reforecast after 6 hours or a 5¢ move', () => {
   assert.equal(isDue({ flagged_at: '2026-10-18T10:00:00Z', market_prob: 0.5 }, 0.52, CFG, now), false);
   assert.equal(isDue({ flagged_at: '2026-10-18T10:00:00Z', market_prob: 0.5 }, 0.55, CFG, now), true);
 });
+
+test('three failures in a row stop the run', async () => {
+  const db = fakeDb(); let calls = 0;
+  const llm = { async forecast() { calls++; throw Object.assign(new Error('credit balance is too low'), { spends: [] }); } };
+  const stats = await runForecast({ cfg: CFG, pm: fakePm(['a', 'b', 'c', 'd', 'e'].map(MKT)), llm, db, log });
+  assert.equal(calls, 3);
+  assert.equal(stats.stoppedBy, 'consecutive_failures');
+});

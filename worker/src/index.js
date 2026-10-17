@@ -31,7 +31,7 @@ function guarded(name, cfg, fn) {
     try {
       const stats = await fn();
       log.info(`${name} done ${JSON.stringify(stats)}`);
-      if (stats.failures > 0 || stats.errors > 0) await notifyOps(cfg, `Nexxore ${name}: ${JSON.stringify(stats)}`);
+      if (stats.failures > 0 || stats.errors > 0 || stats.stoppedBy === 'consecutive_failures') await notifyOps(cfg, `Nexxore ${name}: ${JSON.stringify(stats)}`);
     } catch (err) {
       log.error(`${name} run failed: ${err.stack || err.message}`);
       await notifyOps(cfg, `Nexxore ${name} run failed: ${err.message}`);
@@ -43,7 +43,10 @@ function guarded(name, cfg, fn) {
 
 async function main() {
   const cfg = load();
-  const db = makeDb({ url: cfg.supabaseUrl, serviceKey: cfg.supabaseServiceKey });
+  const db = cfg.ledgerFile
+    ? require('./localdb').makeLocalDb(cfg.ledgerFile)
+    : makeDb({ url: cfg.supabaseUrl, serviceKey: cfg.supabaseServiceKey });
+  if (cfg.ledgerFile) log.info(`local ledger: ${cfg.ledgerFile}`);
   const pm = makePolymarket();
   const llm = makeForecaster({ models: cfg.models, effort: cfg.effort, prices: cfg.prices });
 

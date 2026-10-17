@@ -16,8 +16,10 @@ function num(name, dflt) {
 
 function load() {
   return {
-    supabaseUrl: req('SUPABASE_URL'),
-    supabaseServiceKey: req('SUPABASE_SERVICE_ROLE_KEY'),
+    // Local runs write to a JSON file instead of Supabase
+    ledgerFile: process.env.LEDGER_FILE || null,
+    supabaseUrl: process.env.LEDGER_FILE ? null : req('SUPABASE_URL'),
+    supabaseServiceKey: process.env.LEDGER_FILE ? null : req('SUPABASE_SERVICE_ROLE_KEY'),
 
     models: {
       bull: req('BULL_MODEL'),

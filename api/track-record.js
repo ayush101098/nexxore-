@@ -105,7 +105,14 @@ async function loadAlerts(range) {
   const cutoff = getCutoff(range);
   const supabase = getSupabase();
 
-  if (!supabase) return [];
+  if (!supabase) {
+    // Local development: read the worker's file ledger (never set on Vercel)
+    if (process.env.LEDGER_FILE) {
+      const rows = JSON.parse(require('fs').readFileSync(process.env.LEDGER_FILE, 'utf8')).alerts || [];
+      return rows.filter((r) => !cutoff || new Date(r.flagged_at) >= cutoff);
+    }
+    return [];
+  }
 
   let query = supabase
     .from('alerts')
@@ -205,7 +212,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       range,
       generatedAt: new Date().toISOString(),
-      source: getSupabase() ? 'supabase' : 'none',
+      source: getSupabase() ? 'supabase' : (process.env.LEDGER_FILE ? 'local' : 'none'),
       stats: calculateStats(normalized),
       calibration: calculateCalibration(normalized),
       signals: normalized.slice(offset, offset + limit),

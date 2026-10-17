@@ -93,3 +93,12 @@ test('cost uses the served model and cache multipliers', () => {
   assert.equal(costUsd({ input_tokens: 0, cache_read_input_tokens: 1e6, output_tokens: 0 }, 'claude-sonnet-5-5', PRICES), 0.2);
   assert.throws(() => costUsd({ input_tokens: 1 }, 'unknown-model', PRICES), /No price configured/);
 });
+
+test('account and request errors are not retried', async () => {
+  const Anthropic = require('@anthropic-ai/sdk');
+  const billing = new Anthropic.BadRequestError(400, { error: { message: 'credit balance is too low' } }, 'credit balance is too low', new Headers());
+  const s = ok(); s.bull = [billing, reply('claude-sonnet-5-5', { case: 'x' })];
+  const client = fakeClient(s);
+  await assert.rejects(makeForecaster({ client, models: MODELS, effort: EFFORT, prices: PRICES }).forecast(MARKET, '2026-10-18'), /credit balance/);
+  assert.equal(client.calls.filter((c) => /resolves YES under/.test(c.messages[0].content)).length, 1);
+});
