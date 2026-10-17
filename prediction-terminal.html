@@ -270,7 +270,29 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
   .detail-metrics { grid-template-columns:repeat(3,1fr); }
   .header-nav { display:none; }
 }
+.scan-ctrls { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.scan-ctrls label { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); display:flex; align-items:center; gap:5px; }
+.scan-ctrls select { background:var(--bg2); color:var(--text); border:1px solid var(--border); border-radius:var(--radius); font-family:var(--mono); font-size:0.6rem; padding:3px 4px; }
+.panel-head h2 { display:flex; align-items:center; gap:8px; }
+td.edge-pos { color:var(--green); font-weight:600; }
+td.edge-neg { color:var(--text-dim); }
+td.est-cell { color:var(--violet); }
+.edge-box { margin-top:12px; padding:12px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); display:grid; grid-template-columns:1fr 1.2fr; gap:12px 16px; }
+@media (max-width:700px){ .edge-box { grid-template-columns:1fr; } }
+.eb-in label { font-family:var(--mono); font-size:0.56rem; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-dim); }
+.eb-row { display:flex; align-items:center; gap:6px; margin-top:6px; color:var(--text-dim); font-family:var(--mono); }
+.eb-row input { width:80px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); color:var(--text); font-family:var(--mono); font-size:0.9rem; padding:6px 8px; outline:none; }
+.eb-row input:focus { border-color:var(--border-hi); }
+.eb-row button { margin-left:4px; background:none; border:1px solid var(--border); color:var(--text-dim); font-family:var(--mono); font-size:0.58rem; padding:5px 8px; border-radius:var(--radius); cursor:pointer; }
+.eb-note { font-size:0.6rem; color:var(--text-dim); margin-top:6px; line-height:1.4; }
+.eb-out { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.eb-cell { padding:8px 9px; background:var(--surface); border:1px solid rgba(138,180,255,0.07); border-radius:var(--radius); }
+.eb-cell .k { font-size:0.56rem; color:var(--text-dim); }
+.eb-cell .v { font-family:var(--mono); font-size:0.9rem; color:var(--text); margin-top:3px; }
+.eb-foot { grid-column:1/-1; font-size:0.62rem; color:var(--text-muted); line-height:1.45; }
+.canvas-tag{font-size:0.78rem;color:var(--text-dim,rgba(255,255,255,0.6));margin:4px 0 0;font-weight:400;letter-spacing:0;}
 </style>
+<script src="/js/nx-facts.js"></script>
 </head>
 <body>
 
@@ -320,7 +342,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
   <!-- ══ CENTER: tiles · detail+chart · scanner ══ -->
   <main class="pane pane-center">
     <div class="canvas-head">
-      <h1>Prediction <span>Terminal</span></h1>
+      <div><h1>Prediction <span>Terminal</span></h1><p class="canvas-tag">Find the gap between market odds and your estimate.</p></div>
       <div class="canvas-ctrls">
         <input type="text" class="search-input" id="mktSearch" placeholder="Search markets…" autocomplete="off">
         <span class="stamp" id="refreshStamp">loading…</span>
@@ -338,7 +360,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     <!-- market detail -->
     <section class="panel" id="detailPanel">
       <div class="panel-head">
-        <h2>Market Detail</h2>
+        <h2>Market Detail <span data-nx-state="live" data-nx-watch="#bookBids" data-nx-ttl="90"></span></h2>
         <div class="chip-row" id="rangeChips">
           <button class="chip" data-range="1d">1D</button>
           <button class="chip on" data-range="1w">1W</button>
@@ -369,6 +391,20 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
           <div class="dm"><div class="k">24h change</div><div class="v" id="dChg">—</div></div>
           <div class="dm"><div class="k">Resolves</div><div class="v" id="dEnds">—</div></div>
         </div>
+        <div class="edge-box" id="edgeBox">
+          <div class="eb-in">
+            <label for="estInput">Your probability estimate (YES)</label>
+            <div class="eb-row"><input type="number" id="estInput" min="1" max="99" step="1" placeholder="e.g. 55" inputmode="decimal"><span>%</span>
+            <button id="estClear" type="button">Clear</button></div>
+            <div class="eb-note">Saved in this browser only. Whale prints and price moves are context, not a recommendation.</div>
+          </div>
+          <div class="eb-out">
+            <div class="eb-cell"><div class="k">Market price</div><div class="v" id="ebPx">—</div></div>
+            <div class="eb-cell"><div class="k">Net edge</div><div class="v" id="ebEdge">—</div></div>
+            <div class="eb-cell"><div class="k">Best side</div><div class="v" id="ebSide">—</div></div>
+          </div>
+          <div class="eb-foot" id="ebFoot">Enter your estimate to see the gap between the market's odds and yours, after the spread. Polymarket fees, where a market charges them, are not deducted.</div>
+        </div>
         <div class="book">
           <div><h4>Bids</h4><div id="bookBids"><div class="chart-empty" style="padding:12px 0">—</div></div></div>
           <div><h4>Asks</h4><div id="bookAsks"><div class="chart-empty" style="padding:12px 0">—</div></div></div>
@@ -396,6 +432,8 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
             <div class="tc"><span>Avg price</span><b id="tkAvg">—</b></div>
             <div class="tc"><span>Max payout</span><b id="tkPayout">—</b></div>
             <div class="tc"><span>You risk</span><b id="tkRisk">—</b></div>
+            <div class="tc"><span>EV at your est.</span><b id="tkEv">—</b></div>
+            <div class="tc"><span>Breakeven prob.</span><b id="tkBe">—</b></div>
           </div>
           <div class="ticket-note" id="tkNote"></div>
           <a class="ticket-cta" id="tkCta" href="#" target="_blank" rel="noopener">Trade on Polymarket →</a>
@@ -407,17 +445,27 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     <!-- scanner -->
     <section class="panel">
       <div class="panel-head">
-        <h2>Market Scanner</h2>
-        <span class="sub" id="scanCount">—</span>
+        <h2>Opportunity Scanner <span data-nx-state="live" data-nx-watch="#refreshStamp" data-nx-ttl="150"></span></h2>
+        <div class="scan-ctrls">
+          <label>Min liquidity
+            <select id="fMinLiq"><option value="0">Any</option><option value="1000">$1K</option><option value="10000" selected>$10K</option><option value="50000">$50K</option></select>
+          </label>
+          <label>Max spread
+            <select id="fMaxSpread"><option value="1">Any</option><option value="0.05">5¢</option><option value="0.02" selected>2¢</option><option value="0.01">1¢</option></select>
+          </label>
+          <span class="sub" id="scanCount">—</span>
+        </div>
       </div>
       <div style="overflow-x:auto">
         <table class="grid" id="mktTable">
           <thead>
             <tr>
               <th data-k="title">Market</th>
-              <th data-k="yes">Yes</th>
+              <th data-k="yes">Price</th>
+              <th data-k="est" title="Your probability estimate, saved in this browser">Your est.</th>
+              <th data-k="edge" class="sorted" title="Your estimate minus the price you would pay (best ask for YES, 1 − best bid for NO)">Net edge</th>
               <th data-k="chg">24h Δ</th>
-              <th data-k="vol24" class="sorted">Vol 24h</th>
+              <th data-k="vol24">Vol 24h</th>
               <th data-k="liq">Liquidity</th>
               <th data-k="spread">Spread</th>
               <th data-k="ends">Ends</th>
@@ -425,7 +473,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
             </tr>
           </thead>
           <tbody id="mktBody">
-            <tr><td colspan="8"><div class="loading">Scanning Polymarket…</div></td></tr>
+            <tr><td colspan="10"><div class="loading">Scanning Polymarket…</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -447,7 +495,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
           <button class="chip on" data-min="10000">≥$10K</button>
           <button class="chip" data-min="50000">≥$50K</button>
         </div>
-        <span class="rnote" id="whaleStamp">auto 20s</span>
+        <span class="rnote"><span data-nx-state="live" data-nx-watch="#whaleStamp" data-nx-ttl="90"></span> <span id="whaleStamp">auto 20s</span></span>
       </div>
       <div id="whaleFeed"><div class="loading">Listening for prints…</div></div>
     </div>
@@ -460,7 +508,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
           <button class="chip" data-w="30d">30D</button>
           <button class="chip" data-w="all">ALL</button>
         </div>
-        <span class="rnote">P&amp;L · Polymarket</span>
+        <span class="rnote"><span data-nx-state="live" data-nx-watch="#lbList" data-nx-ttl="420"></span> P&amp;L · Polymarket</span>
       </div>
       <div id="lbList"><div class="loading">Ranking traders…</div></div>
     </div>
@@ -517,8 +565,10 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     filtered: [],
     category: 'All',
     search: '',
-    sortKey: 'vol24',
+    sortKey: 'edge',
     sortDir: -1,
+    minLiq: 10000,
+    maxSpread: 0.02,
     selected: null,
     range: '1w',
     whaleMin: 10000,
@@ -590,6 +640,50 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     else { b.classList.remove('on'); $('wsText').textContent = 'Reconnecting'; }
   }
 
+  /* ── your estimates + net edge ───────────────────────────
+     Net edge = your probability minus the price you'd actually pay:
+     YES costs the best ask, NO costs 1 − best bid. Falls back to the
+     last price when the book snapshot has no quote. */
+  var LS_EST = 'nx_pm_est_v1';
+  var EST = {};
+  try { EST = JSON.parse(localStorage.getItem(LS_EST)) || {}; } catch (e) {}
+  function saveEst() { try { localStorage.setItem(LS_EST, JSON.stringify(EST)); } catch (e) {} }
+  function netEdge(m) {
+    var e = EST[m.id];
+    if (e == null) return null;
+    var ask = m.bestAsk != null ? m.bestAsk : m.yes;
+    var bid = m.bestBid != null ? m.bestBid : m.yes;
+    var yes = e - ask, no = bid - e;
+    return yes >= no ? { v: yes, side: 'yes', px: ask } : { v: no, side: 'no', px: 1 - bid };
+  }
+  function fmtEdge(ed) { return ed == null ? '—' : (ed.v >= 0 ? '+' : '') + (ed.v * 100).toFixed(1) + '¢ ' + ed.side.toUpperCase(); }
+
+  function renderEdge() {
+    var m = state.selected;
+    if (!m) return;
+    var e = EST[m.id];
+    var inp = $('estInput');
+    if (document.activeElement !== inp) inp.value = e != null ? Math.round(e * 100) : '';
+    var ask = m.bestAsk != null ? m.bestAsk : m.yes, bid = m.bestBid != null ? m.bestBid : m.yes;
+    $('ebPx').textContent = cents(ask) + ' / ' + cents(1 - bid);
+    var ed = netEdge(m);
+    var foot = $('ebFoot'), eEl = $('ebEdge');
+    if (!ed) {
+      eEl.textContent = '—'; eEl.style.color = ''; $('ebSide').textContent = '—';
+      foot.textContent = 'Enter your estimate to see the gap between the market\'s odds and yours, after the spread. Polymarket fees, where a market charges them, are not deducted.';
+      return;
+    }
+    eEl.textContent = (ed.v >= 0 ? '+' : '') + (ed.v * 100).toFixed(1) + '¢';
+    eEl.style.color = ed.v > 0 ? 'var(--green)' : 'var(--text-dim)';
+    $('ebSide').textContent = ed.v > 0 ? 'Buy ' + ed.side.toUpperCase() : 'No edge';
+    var thin = m.liq < 10000 ? ' Liquidity is thin, so larger orders will fill worse than this.' : '';
+    var wide = m.spread != null && m.spread > 0.03 ? ' The spread is wide (' + (m.spread * 100).toFixed(1) + '¢), which eats into the gap.' : '';
+    foot.textContent = ed.v > 0
+      ? 'At your ' + Math.round(e * 100) + '% estimate, buying ' + ed.side.toUpperCase() + ' at ' + cents(ed.px) + ' has a ' + (ed.v * 100).toFixed(1) + '¢ expected gain per $1 share, before fees. Resolves ' + fmtEnds(m.ends) + '.' + thin + wide + ' This is your estimate, not a model forecast.'
+      : 'After the spread, the market price is at or better than your estimate on both sides. There is no edge to take at ' + Math.round(e * 100) + '%.';
+    if (ed.v > 0 && state.ticket.side !== ed.side && !state.ticket.userPicked) { state.ticket.side = ed.side; renderTicket(); }
+  }
+
   /* ── markets scanner ──────────────────────────────────── */
   function fetchMarkets() {
     var urls = [
@@ -648,6 +742,8 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     var q = state.search.toLowerCase();
     state.filtered = state.markets.filter(function(m) {
       if (state.category !== 'All' && m.category !== state.category) return false;
+      if ((m.liq || 0) < state.minLiq) return false;
+      if (state.maxSpread < 1 && m.spread != null && m.spread > state.maxSpread) return false;
       if (q && m.title.toLowerCase().indexOf(q) === -1) return false;
       return true;
     });
@@ -655,6 +751,13 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     state.filtered.sort(function(a, b) {
       var av, bv;
       if (k === 'title') { av = a.title.toLowerCase(); bv = b.title.toLowerCase(); return av < bv ? dir : av > bv ? -dir : 0; }
+      if (k === 'edge' || k === 'est') {
+        var ea = k === 'edge' ? netEdge(a) : (EST[a.id] != null ? { v: EST[a.id] } : null);
+        var eb = k === 'edge' ? netEdge(b) : (EST[b.id] != null ? { v: EST[b.id] } : null);
+        if (ea && eb) return (ea.v - eb.v) * dir;
+        if (ea || eb) return ea ? -1 : 1;           /* estimated markets first */
+        return (b.vol24 || 0) - (a.vol24 || 0);     /* then by 24h volume */
+      }
       if (k === 'chg') { av = Math.abs(a.chg || 0); bv = Math.abs(b.chg || 0); }
       else if (k === 'ends') { av = a.ends ? new Date(a.ends).getTime() : Infinity; bv = b.ends ? new Date(b.ends).getTime() : Infinity; }
       else { av = a[k] || 0; bv = b[k] || 0; }
@@ -666,7 +769,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     applyFilters();
     var tb = $('mktBody');
     var rows = state.filtered.slice(0, 120);
-    if (!rows.length) { tb.innerHTML = '<tr><td colspan="8"><div class="empty">No markets match</div></td></tr>'; $('scanCount').textContent = '0 markets'; return; }
+    if (!rows.length) { tb.innerHTML = '<tr><td colspan="10"><div class="empty">No markets match these filters. Lower the minimum liquidity or widen the spread limit.</div></td></tr>'; $('scanCount').textContent = '0 markets'; return; }
     var html = '';
     rows.forEach(function(m, i) {
       var chg = m.chg || 0;
@@ -675,6 +778,8 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
       html += '<tr class="mkt-row' + (state.selected && state.selected.id === m.id ? ' sel' : '') + '" data-i="' + i + '">' +
         '<td class="mkt-name" title="' + esc(m.title) + '">' + esc(m.title) + '</td>' +
         '<td>' + cents(m.yes) + '</td>' +
+        (function() { var ed = netEdge(m); return '<td class="est-cell">' + (EST[m.id] != null ? Math.round(EST[m.id] * 100) + '%' : '—') + '</td>' +
+          '<td class="' + (ed ? (ed.v > 0 ? 'edge-pos' : 'edge-neg') : 'edge-neg') + '">' + fmtEdge(ed) + '</td>'; })() +
         '<td class="' + cls + '">' + (chg ? sign + (chg * 100).toFixed(1) + '¢' : '—') + '</td>' +
         '<td>' + fmtUsd(m.vol24) + '</td>' +
         '<td>' + fmtUsd(m.liq) + '</td>' +
@@ -683,7 +788,10 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
         '<td><button class="row-trade" data-trade="' + i + '">Trade</button></td></tr>';
     });
     tb.innerHTML = html;
-    $('scanCount').textContent = state.filtered.length + ' markets · sorted by ' + state.sortKey;
+    var nEst = state.filtered.filter(function(m) { return EST[m.id] != null; }).length;
+    $('scanCount').textContent = state.filtered.length + ' markets' + (state.sortKey === 'edge'
+      ? (nEst ? ' · ' + nEst + ' with your estimate, ranked by net edge' : ' · add an estimate to rank by net edge')
+      : ' · sorted by ' + state.sortKey);
     Array.prototype.forEach.call(tb.querySelectorAll('tr.mkt-row'), function(tr) {
       tr.addEventListener('click', function() { selectMarket(rows[parseInt(tr.getAttribute('data-i'), 10)]); });
     });
@@ -773,7 +881,9 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     updateDetailFields(m);
     $('ticket').style.display = 'block';
     $('tkMkt').textContent = m.title;
+    state.ticket.userPicked = false;
     renderTicket();
+    renderEdge();
     renderTable();
     loadHistory(quiet);
     loadBook();
@@ -825,7 +935,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     cta.textContent = 'Buy ' + side.toUpperCase() + (amt > 0 ? ' · $' + fmtNum(amt) : '') + ' on Polymarket →';
 
     if (!amt || amt <= 0 || isNaN(amt)) {
-      $('tkShares').textContent = $('tkAvg').textContent = $('tkPayout').textContent = $('tkRisk').textContent = '—';
+      $('tkShares').textContent = $('tkAvg').textContent = $('tkPayout').textContent = $('tkRisk').textContent = $('tkEv').textContent = $('tkBe').textContent = '—';
       note.textContent = 'Enter an amount to size the trade';
       cta.classList.add('disabled');
       return;
@@ -834,7 +944,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
 
     var q = quoteBuy(m, side, amt);
     if (!q) {
-      $('tkShares').textContent = $('tkAvg').textContent = $('tkPayout').textContent = '—';
+      $('tkShares').textContent = $('tkAvg').textContent = $('tkPayout').textContent = $('tkEv').textContent = $('tkBe').textContent = '—';
       $('tkRisk').textContent = '$' + fmtNum(amt);
       note.textContent = 'Live quote unavailable — trade at market on Polymarket';
       return;
@@ -843,6 +953,14 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
     $('tkAvg').textContent = (q.avg * 100).toFixed(1) + '¢';
     $('tkPayout').textContent = '$' + fmtNum(Math.round(q.shares));
     $('tkRisk').textContent = '$' + fmtNum(Math.round(q.filled));
+    $('tkBe').textContent = (q.avg * 100).toFixed(1) + '%';
+    var est = EST[m.id];
+    if (est != null) {
+      var pWin = side === 'yes' ? est : 1 - est;
+      var ev = q.shares * pWin - q.filled;
+      $('tkEv').textContent = (ev >= 0 ? '+$' : '−$') + fmtNum(Math.abs(Math.round(ev)));
+      $('tkEv').style.color = ev > 0 ? 'var(--green)' : 'var(--red)';
+    } else { $('tkEv').textContent = 'set est.'; $('tkEv').style.color = ''; }
     note.textContent = q.short
       ? 'Only ~$' + fmtNum(Math.round(q.filled)) + ' fills at current book depth'
       : (q.estimate ? 'Estimated from last price — book warming up' : '');
@@ -880,6 +998,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
         var sel = state.selected;
         if (!sel || sel.id !== m.id) return; /* user moved on while this was in flight */
         renderTicket(); /* refresh YES quote against the fresh book */
+        renderEdge();
         /* live odds from the book midpoint — fresher than the gamma snapshot */
         var bb = (d.bids || []).reduce(function(a, l) { return Math.max(a, parseFloat(l.price) || 0); }, 0);
         var ba = (d.asks || []).reduce(function(a, l) { var p = parseFloat(l.price); return p > 0 ? Math.min(a, p) : a; }, 1);
@@ -1062,6 +1181,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
   Array.prototype.forEach.call(document.querySelectorAll('.side-btn'), function(b) {
     b.addEventListener('click', function() {
       state.ticket.side = b.getAttribute('data-side');
+      state.ticket.userPicked = true;
       if (state.selected) ensureBook(state.ticket.side === 'yes' ? state.selected.tokenId : state.selected.noTokenId);
       else renderTicket();
     });
@@ -1281,6 +1401,19 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
       renderTable();
     });
   });
+  $('fMinLiq').addEventListener('change', function() { state.minLiq = parseFloat(this.value); renderTable(); });
+  $('fMaxSpread').addEventListener('change', function() { state.maxSpread = parseFloat(this.value); renderTable(); });
+  $('estInput').addEventListener('input', function() {
+    var m = state.selected; if (!m) return;
+    var v = parseFloat(this.value);
+    if (isNaN(v)) delete EST[m.id];
+    else EST[m.id] = Math.max(0.01, Math.min(0.99, v / 100));
+    saveEst(); renderEdge(); renderTicket(); renderTable();
+  });
+  $('estClear').addEventListener('click', function() {
+    var m = state.selected; if (!m) return;
+    delete EST[m.id]; $('estInput').value = ''; saveEst(); renderEdge(); renderTicket(); renderTable();
+  });
   var searchTimer;
   $('mktSearch').addEventListener('input', function() {
     clearTimeout(searchTimer);
@@ -1298,6 +1431,7 @@ tr.mkt-row:hover td.mkt-name, tr.mkt-row.sel td.mkt-name { color:var(--text); }
           if (all[i].id === state.selected.id) { state.selected = all[i]; break; }
         }
         updateDetailFields(state.selected);
+        renderEdge();
       }
       renderCats(); renderMovers(); renderPulse(); renderTable();
       $('refreshStamp').textContent = all.length + ' markets · ' + new Date().toLocaleTimeString('en-US', { hour12:false });

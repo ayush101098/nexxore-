@@ -320,7 +320,9 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
   .pane-left { border-right:none; border-bottom:1px solid var(--border); }
   .pane-right { border-left:none; border-top:1px solid var(--border); height:640px; overflow:hidden; }
 }
+.canvas-tag{font-size:0.78rem;color:var(--text-dim,rgba(255,255,255,0.6));margin:4px 0 0;font-weight:400;letter-spacing:0;}
 </style>
+<script src="/js/nx-facts.js"></script>
 </head>
 <body>
 
@@ -335,7 +337,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
   </div>
   <div class="header-right">
     <span class="clock" id="clock">--:--:-- UTC</span>
-    <button class="header-btn on"><span class="dot"></span>Agent Online</button>
+    <span class="header-btn"><span class="dot"></span>Agent · sandbox, no orders</span>
     <a class="header-btn" href="/terminal">Classic Terminal</a>
     <span id="acctArea"></span>
   </div>
@@ -347,11 +349,11 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
   <aside class="pane pane-left">
     <div class="nav-group">
       <div class="nav-label">Workspaces</div>
-      <a class="nav-item active" data-ws="canvas"><span class="nv"><span class="ic">◈</span>Signal Canvas</span><span class="nav-badge live">LIVE</span></a>
-      <a class="nav-item" data-ws="engine"><span class="nv"><span class="ic">◬</span>Risk Engine</span><span class="nav-badge live">LIVE</span></a>
-      <a class="nav-item"><span class="nv"><span class="ic">▤</span>Sandbox</span><span class="nav-badge soon">Q1–Q2 '26</span></a>
-      <a class="nav-item" href="/vaults"><span class="nv"><span class="ic">◧</span>Alpha Vaults</span><span class="nav-badge soon">Q2 '26</span></a>
-      <a class="nav-item"><span class="nv"><span class="ic">⬡</span>Agent Marketplace</span><span class="nav-badge soon">Q4 '26</span></a>
+      <a class="nav-item active" data-ws="canvas"><span class="nv"><span class="ic">◈</span>Signal Canvas</span><span class="nav-badge soon">SIM</span></a>
+      <a class="nav-item" data-ws="engine"><span class="nv"><span class="ic">◬</span>Risk Engine</span><span class="nav-badge soon">SIM</span></a>
+      <a class="nav-item"><span class="nv"><span class="ic">▤</span>Sandbox</span><span class="nav-badge soon">Planned</span></a>
+      <a class="nav-item" href="/vaults"><span class="nv"><span class="ic">◧</span>Alpha Vaults</span><span class="nav-badge soon">After audit</span></a>
+      <a class="nav-item"><span class="nv"><span class="ic">⬡</span>Agent Marketplace</span><span class="nav-badge soon">Planned</span></a>
     </div>
     <div class="nav-group">
       <div class="nav-label">Tools</div>
@@ -362,7 +364,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
     </div>
 
     <div class="dial-card">
-      <h3>Escalation Index</h3>
+      <h3>Escalation Index <span data-nx-state="simulated"></span></h3>
       <div class="dial-wrap"><svg id="dialSvg" width="170" height="108" viewBox="0 0 170 108"></svg></div>
       <div class="dial-read">
         <div class="val" id="dialVal">58</div>
@@ -376,7 +378,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
   <!-- ═══ CENTER · SIGNAL CANVAS ═══ -->
   <main class="pane pane-center">
     <div class="canvas-head">
-      <h1 id="canvasTitle">Signal <span>Canvas</span></h1>
+      <div><h1 id="canvasTitle">Signal <span>Canvas</span></h1><p class="canvas-tag">Research, risk, and execution in one quantitative workspace.</p></div>
       <div class="canvas-ctrls">
         <span class="regime-chip" id="regimeChip"></span>
         <div class="chip-row" id="wsChips">
@@ -400,6 +402,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
     <section class="panel">
       <div class="panel-head">
         <h2>Capital Rotation</h2>
+        <span data-nx-state="simulated"></span>
         <span class="sub">net stable + native flow between sectors · <span class="num" id="rotTotal"></span> rotated</span>
       </div>
       <div class="legend" id="rotLegend"></div>
@@ -413,6 +416,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
     <section class="panel">
       <div class="panel-head">
         <h2>Narrative Momentum</h2>
+        <span data-nx-state="simulated"></span>
         <span class="sub">composite = on-chain volume z × sentiment velocity, noise-stripped</span>
       </div>
       <div class="panel-body">
@@ -425,7 +429,8 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
     <section class="panel">
       <div class="panel-head">
         <h2>Predictive Vault Metrics</h2>
-        <span class="sub">probability-weighted forwards · Alpha Vaults launch Q2 '26</span>
+        <span data-nx-state="simulated"></span>
+        <span class="sub">probability-weighted forwards · Alpha Vaults open after the audit</span>
       </div>
       <div class="panel-body">
         <div class="view-visual">
@@ -446,6 +451,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
     <section class="panel">
       <div class="panel-head">
         <h2>Smart Money Overlay</h2>
+        <span data-nx-state="simulated"></span>
         <span class="sub">tracked wallet actions on sector index · ▲ accumulation ▼ distribution</span>
       </div>
       <div class="legend" id="smLegend"></div>
@@ -463,6 +469,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
     <section class="panel">
       <div class="panel-head">
         <h2>Escalation Index · Trigger Sources</h2>
+        <span data-nx-state="simulated"></span>
         <span class="sub">index = base drift (12) + Σ weighted active triggers · toggle to simulate an event firing or resolving</span>
       </div>
       <div class="panel-body"><div class="trig-list" id="trigList"></div></div>
@@ -472,6 +479,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
     <section class="panel">
       <div class="panel-head">
         <h2>Regime &amp; CVaR</h2>
+        <span data-nx-state="simulated"></span>
         <span class="sub">180-day simulated path · circuit breaker at −15% NAV</span>
       </div>
       <div class="panel-body">
@@ -497,6 +505,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
     <section class="panel">
       <div class="panel-head">
         <h2>Protocol Risk Scoring</h2>
+        <span data-nx-state="simulated"></span>
         <span class="sub">risk-adj APY = raw APY × (1 − risk/10 × 0.8) · adjust methodology weights to re-rank live</span>
       </div>
       <div class="panel-body">
@@ -509,6 +518,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
     <section class="panel">
       <div class="panel-head">
         <h2>Signal → Trade Sizing</h2>
+        <span data-nx-state="simulated"></span>
         <span class="sub">stake = min(f*, tolerance cap) × regime multiplier · shares the desk bankroll</span>
       </div>
       <div class="panel-body">
@@ -532,7 +542,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
   <aside class="pane pane-right">
     <div class="agent-head">
       <div class="agent-title">
-        <h2><span class="dot"></span>Agent Command</h2>
+        <h2><span class="dot"></span>Agent Command</h2> <span data-nx-state="simulated" data-nx-note="no orders sent"></span>
         <span class="agent-mode">SANDBOX MODE</span>
       </div>
     </div>
@@ -602,13 +612,14 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
       <div class="tier pro">
         <span class="t-flag">FOUNDING RATE</span>
         <div class="t-name">PRO</div>
-        <div class="price">$49<span>/mo</span></div>
-        <div class="t-per">$0 today · billed when your seat opens</div>
+        <div class="price"><span data-nx-fact="proPriceShort">$49</span><span>/mo</span></div>
+        <div class="t-per">$0 today · billed only when your seat opens</div>
+        <div class="t-per" style="margin-top:4px">Today the Pro workspace runs on a simulated feed.</div>
         <ul>
-          <li>Signal Canvas: capital rotation, narrative momentum, smart-money overlays</li>
-          <li>Intelligence &amp; Risk Engine: escalation index, CVaR, protocol scoring</li>
-          <li>Agent Command: Kelly sizing, boundaries, pre-trade receipts</li>
-          <li>Sandbox execution at GA (Q1–Q2 '26)</li>
+          <li>Signal Canvas: capital rotation, narrative momentum, smart-money overlays <span data-nx-status="proFeed"></span></li>
+          <li>Intelligence &amp; Risk Engine: escalation index, CVaR, protocol scoring <span data-nx-status="proFeed"></span></li>
+          <li>Agent Command: Kelly sizing, boundaries, pre-trade receipts <span data-nx-status="proFeed"></span></li>
+          <li>Sandbox execution <span data-nx-status="sandbox"></span></li>
         </ul>
         <button class="tier-btn pro-btn" onclick="openAuth('signup')">Sign up · Join the waitlist</button>
       </div>
@@ -640,7 +651,7 @@ input[type=range]::-moz-range-thumb { width:12px; height:12px; border-radius:50%
       </div>
       <div class="auth-msg" id="authMsg"></div>
       <button class="tier-btn pro-btn" id="authSubmit" type="submit">Create account · Join waitlist</button>
-      <p class="auth-note" id="authNote">Pro is rolling out in waves. Every signup joins the waitlist and locks the $49/mo founding rate — you're only billed when your seat opens.</p>
+      <p class="auth-note" id="authNote">Pro is rolling out in waves. Every signup joins the waitlist and locks the <span data-nx-fact="proPrice">$49/mo</span> founding rate — you're only billed when your seat opens.</p>
     </form>
     <div class="auth-done" id="authDone" style="display:none">
       <div class="big">✓</div>
@@ -1212,7 +1223,7 @@ function receiptCard(o){
   ap.onclick=()=>{
     if(!getUser()){ openAuth('signup','Approving agent trades is a Pro feature — sign up to reserve your seat.'); return; }
     ap.disabled=rj.disabled=true; ap.textContent='QUEUED ✓';
-    agentReply(`Queued to <b>sandbox executor</b>. No live capital moves — on-chain execution ships with Sandbox GA (Q1–Q2 '26). I'll surface the fill simulation in Track Record.`); };
+    agentReply(`Queued to <b>sandbox executor</b>. No live capital moves — on-chain execution is not available yet. I'll surface the fill simulation in Track Record.`); };
   rj.onclick=()=>{ ap.disabled=rj.disabled=true; rj.textContent='REJECTED';
     agentReply(`Discarded. Parameters stay untouched — adjust the boundary sliders or Kelly fraction and re-run when ready.`); };
 }
@@ -1318,7 +1329,7 @@ function setAuthMode(m){
   $('#nameField').style.display = m==='signup' ? '' : 'none';
   $('#authSubmit').textContent = m==='signup' ? 'Create account · Join waitlist' : 'Log in';
   $('#authNote').textContent = m==='signup'
-    ? 'Pro is rolling out in waves. Every signup joins the waitlist and locks the $49/mo founding rate — you’re only billed when your seat opens.'
+    ? 'Pro is rolling out in waves. Every signup joins the waitlist and locks the ' + ((window.NX && NX.facts.proPrice) || '$49/mo') + ' founding rate — you’re only billed when your seat opens.'
     : 'Log in with the email you signed up with. Accounts are on the waitlist until Pro seats open.';
 }
 $('#authForm').addEventListener('submit', async e=>{
@@ -1344,7 +1355,7 @@ $('#authForm').addEventListener('submit', async e=>{
   $('#authDoneText').innerHTML = (authMode==='login'
     ? 'We didn’t find an account for <b>'+email.replace(/</g,'&lt;')+'</b> on this device, so we’ve added it to the waitlist. '
     : '<b>'+email.replace(/</g,'&lt;')+'</b> is in the queue. ')
-    + 'Your $49/mo founding rate is locked — we’ll email you when your seat opens. Until then the full terminal runs on the simulated feed.';
+    + 'Your ' + ((window.NX && NX.facts.proPrice) || '$49/mo') + ' founding rate is locked — we’ll email you when your seat opens. Until then the full terminal runs on the simulated feed.';
 });
 $('#authModal').addEventListener('click', e=>{ if(e.target === $('#authModal')) closeAuth(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && $('#authModal').style.display==='flex') closeAuth(); });

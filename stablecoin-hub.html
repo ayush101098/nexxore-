@@ -152,7 +152,9 @@
     footer { border-top:1px solid var(--border); margin-top:40px; padding:24px; text-align:center; color:var(--dim); font-size:0.75rem; }
     footer a { color:var(--muted); text-decoration:none; margin:0 8px; }
     footer a:hover { color:var(--text); }
-  </style>
+  .hub-cta{display:inline-block;font-weight:600;font-size:0.88rem;padding:9px 16px;border-radius:8px;background:var(--green,#00E87A);color:#05050D;text-decoration:none;}
+</style>
+<script src="/js/nx-facts.js"></script>
 </head>
 <body>
   <header class="header">
@@ -171,8 +173,10 @@
   <main class="container">
     <section class="hero">
       <div class="eyebrow">Stablecoin Yield Finder</div>
-      <h1>Find the <em>best stablecoin yields</em> — and the strategy to capture them.</h1>
+      <h1>Compare stablecoin yield by <em>return, liquidity, and risk.</em></h1>
       <p>Live APYs across every chain and protocol, ranked with a transparent risk score, plus ready-made conservative, balanced, and aggressive allocations and a real-time peg monitor. One canonical dataset — no marketing numbers.</p>
+      <p style="margin-top:4px"><a href="#yields" class="hub-cta">Compare opportunities →</a> <a href="#methodology" style="margin-left:14px;font-size:0.85rem">How the risk score works</a></p>
+      <p style="font-size:0.8rem;opacity:0.7">Comparison only. Deposits and protocol interactions are not available.</p>
       <div class="freshness"><span class="dot"></span><span id="freshness">Loading live data from DeFiLlama…</span></div>
       <div class="stats" id="statStrip">
         <div class="stat"><div class="stat-label">Pools tracked</div><div class="stat-value" id="stPools">—</div></div>
@@ -187,7 +191,7 @@
     <!-- ── PEG MONITOR ── -->
     <section class="section" id="pegs">
       <div class="section-head">
-        <h2>Peg monitor</h2>
+        <h2>Peg monitor <span data-nx-state="live" data-nx-watch="#freshness" data-nx-ttl="3600" data-nx-grace="30"></span></h2>
         <span class="sub">on-peg &lt;0.1% · watch 0.1–0.5% · alert &gt;0.5% deviation</span>
       </div>
       <div class="peg-grid" id="pegGrid"><div class="loading">Loading peg data…</div></div>
@@ -197,7 +201,7 @@
     <!-- ── YIELD FINDER ── -->
     <section class="section" id="yields">
       <div class="section-head">
-        <h2>Yield finder</h2>
+        <h2>Yield finder <span data-nx-state="live" data-nx-watch="#freshness" data-nx-ttl="3600" data-nx-grace="30"></span></h2>
         <span class="sub" id="yieldCount">—</span>
       </div>
       <div class="panel">

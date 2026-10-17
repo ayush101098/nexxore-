@@ -1,7 +1,7 @@
 /* Puts the Nexxore mark on every brand/logo element and sets the favicon. */
 (function () {
   var SRC = '/assets/logo-mark.svg';
-  var SEL = '.logo, .nx-shell-logo, .tb-logo, .nav-logo, .brand, .footer-brand, .header-logo, .site-logo';
+  var SEL = '.logo, .logo-link, .nx-shell-logo, .tb-logo, .nav-logo, .brand, .footer-brand, .header-logo, .site-logo';
   function mark(h) {
     var i = document.createElement('img');
     i.src = SRC; i.alt = ''; i.setAttribute('data-nx-mark', '');
@@ -13,6 +13,11 @@
       if (el.querySelector('img[data-nx-mark]')) return;
       el.querySelectorAll('svg, .dot, .nx-shell-dot, .tb-dot, img').forEach(function (n) { n.remove(); });
       var h = el.matches('.footer-brand') ? 18 : 24;
+      if (!el.textContent.trim()) {
+        var t = document.createElement('span');
+        t.textContent = 'nexxore'; t.style.cssText = 'font-weight:700;color:inherit';
+        el.appendChild(t);
+      }
       el.insertBefore(mark(h), el.firstChild);
       if (getComputedStyle(el).display === 'inline') el.style.display = 'inline-flex';
       el.style.alignItems = el.style.alignItems || 'center';

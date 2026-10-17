@@ -21,7 +21,8 @@
     prev: document.querySelector('[data-page-prev]'),
     next: document.querySelector('[data-page-next]'),
     empty: document.querySelector('[data-empty-state]'),
-    exportCsv: document.querySelector('[data-export-csv]')
+    exportCsv: document.querySelector('[data-export-csv]'),
+    notice: document.querySelector('[data-no-results]')
   };
 
   const fmt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
@@ -54,14 +55,21 @@
   }
 
   function renderStats(data) {
-    setText(els.statTotal, fmt.format(data.stats.totalSignals));
+    const resolved = data.stats.resolvedSignals || 0;
+    setText(els.updatedAt, `Updated ${dateFmt.format(new Date(data.generatedAt))}`);
+    setText(els.source, data.source === 'sample' ? 'No published results yet' : 'Live database · paper forecasts');
+    if (els.notice) els.notice.hidden = resolved > 0;
+    if (!resolved) {
+      setText(els.statTotal, fmt.format(data.stats.totalSignals));
+      [els.statWinRate, els.statAvgReturn, els.statSharpe, els.statDrawdown, els.statPnl].forEach((el) => setText(el, 'n/a'));
+      return;
+    }
+    setText(els.statTotal, `${fmt.format(resolved)} / ${fmt.format(data.stats.totalSignals)}`);
     setText(els.statWinRate, `${fmt.format(data.stats.winRate)}%`);
     setText(els.statAvgReturn, formatBps(data.stats.avgReturnBps));
     setText(els.statSharpe, data.stats.sharpe.toFixed(2));
     setText(els.statDrawdown, formatPct(data.stats.maxDrawdownPct));
     setText(els.statPnl, formatPct(data.stats.totalPnlPct));
-    setText(els.updatedAt, `Updated ${dateFmt.format(new Date(data.generatedAt))}`);
-    setText(els.source, data.source === 'sample' ? 'Sample data until Supabase is configured' : 'Live database');
   }
 
   function renderCurve(points) {
@@ -103,6 +111,10 @@
 
   function renderCalibration(items) {
     if (!els.calibration) return;
+    if (!items.some((item) => item.count > 0)) {
+      els.calibration.innerHTML = '<div class="chart-empty">Calibration appears once forecasts resolve</div>';
+      return;
+    }
     els.calibration.innerHTML = items.map((item) => {
       const actual = Math.max(0, Math.min(item.actualWinRate, 100));
       const predicted = Math.max(0, Math.min(item.predictedWinRate, 100));

@@ -412,7 +412,35 @@
 
     .empty-state { text-align:center; padding:24px; color:var(--t3); font-size:0.72rem; }
     .empty-state .icon { font-size:1.5rem; margin-bottom:8px; }
-  </style>
+      .intent-strip{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding:9px 20px;border-bottom:1px solid var(--border);font-size:0.78rem;}
+    .intent-strip .is-head{color:var(--t1);font-weight:600;}
+    .intent-strip .is-steps{color:var(--t3,var(--t2));font-family:var(--mono,monospace);font-size:0.7rem;}
+    .intent-strip .is-steps{display:flex;gap:4px;flex-wrap:wrap;}
+    .is-steps button{background:none;border:1px solid var(--border);color:var(--t3,var(--t2));font-family:var(--mono,monospace);font-size:0.66rem;padding:4px 9px;border-radius:999px;cursor:pointer;}
+    .is-steps button b{font-weight:700;margin-right:3px;}
+    .is-steps button.done{color:var(--green,#00E87A);border-color:rgba(0,232,122,0.35);}
+    .is-steps button.done b::before{content:"✓ ";}
+    .is-steps button.current{color:var(--t1);border-color:var(--cyan,#00C8FF);}
+    .thesis-chips{display:flex;flex-wrap:wrap;gap:5px;}
+    .thesis-chips button{background:var(--bg-card,transparent);border:1px solid var(--border);color:var(--t2);font-size:0.7rem;padding:5px 9px;border-radius:5px;cursor:pointer;}
+    .thesis-chips button.on{border-color:var(--cyan,#00C8FF);color:var(--t1);}
+    .panel-section.adv{display:none;}
+    body.show-adv .panel-section.adv{display:block;}
+    .adv-toggle{display:block;width:calc(100% - 28px);margin:4px 14px 14px;padding:8px;background:none;border:1px dashed var(--border);color:var(--t2);font-family:var(--mono,monospace);font-size:0.68rem;border-radius:5px;cursor:pointer;}
+    .review-card{border-left:2px solid var(--red,#FF4D6A);}
+    .rv-loss{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0 10px;}
+    .rv-loss span{font-size:0.72rem;color:var(--t2);text-transform:uppercase;letter-spacing:0.06em;}
+    .rv-loss b{font-family:var(--mono,monospace);font-size:1.25rem;color:var(--red,#FF4D6A);}
+    .save-row{display:flex;gap:6px;}
+    .save-row input{flex:1;background:var(--bg-card,transparent);border:1px solid var(--border);color:var(--t1);border-radius:4px;padding:6px 8px;font-size:0.74rem;}
+    .save-note{font-size:0.64rem;color:var(--t3,var(--t2));margin:5px 0 6px;}
+    .saved-row{display:flex;gap:4px;margin-top:4px;}
+    .saved-load{flex:1;text-align:left;background:none;border:1px solid var(--border);color:var(--t1);border-radius:4px;padding:6px 8px;font-size:0.72rem;cursor:pointer;}
+    .saved-load span{display:block;font-size:0.62rem;color:var(--t3,var(--t2));font-family:var(--mono,monospace);margin-top:2px;}
+    .saved-del{background:none;border:1px solid var(--border);color:var(--t2);border-radius:4px;width:28px;cursor:pointer;}
+    .intent-strip .is-state{margin-left:auto;font-family:var(--mono,monospace);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:#E8A33D;}
+</style>
+<script src="/js/nx-facts.js"></script>
 </head>
 <body>
 
@@ -447,6 +475,18 @@
     </div>
   </header>
 
+  <div class="intent-strip">
+    <span class="is-head">Build the position. See the payoff. Know the downside.</span>
+    <span class="is-steps" id="wbSteps">
+      <button data-step="1" onclick="wbGo(1)"><b>1</b> Thesis</button>
+      <button data-step="2" onclick="wbGo(2)"><b>2</b> Structure</button>
+      <button data-step="3" onclick="wbGo(3)"><b>3</b> Stress-test</button>
+      <button data-step="4" onclick="wbGo(4)"><b>4</b> Review risk</button>
+      <button data-step="5" onclick="wbGo(5)"><b>5</b> Save</button>
+    </span>
+    <span class="is-state">Payoff &amp; risk are model estimates · Deribit execution places live orders after a final confirmation</span>
+  </div>
+
   <!-- ═══════════ LIVE TICKER BAR ═══════════ -->
   <div class="ticker-bar" id="tickerBar">
     <div class="ticker-item"><span class="ticker-label">Mark</span><span class="ticker-val" id="tkMark">—</span></div>
@@ -472,7 +512,16 @@
     <!-- LEFT PANEL: Templates + Legs -->
     <div class="panel">
       <div class="panel-section">
-        <div class="section-head">Strategy Templates <span class="badge" id="templateCount">8</span></div>
+        <div class="section-head" id="wbThesis">1 · What's your thesis?</div>
+        <div class="thesis-chips" id="thesisChips">
+          <button data-th="bullish">Bullish</button>
+          <button data-th="bearish">Bearish</button>
+          <button data-th="volup">Vol expansion</button>
+          <button data-th="voldown">Vol compression</button>
+          <button data-th="hedge">Hedge / income</button>
+          <button data-th="all" class="on">Show all</button>
+        </div>
+        <div class="section-head" style="margin-top:12px">2 · Pick a structure <span class="badge" id="templateCount">8</span></div>
         <div class="template-grid" id="templateGrid"></div>
       </div>
 
@@ -487,7 +536,7 @@
         <div id="legsContainer"></div>
       </div>
 
-      <div class="panel-section">
+      <div class="panel-section adv">
         <div class="section-head">Net Greeks</div>
         <div class="greeks-bar">
           <div class="greek-item"><div class="symbol">Δ Delta</div><div class="value" id="gDelta">0</div></div>
@@ -509,8 +558,8 @@
         </div>
       </div>
 
-      <div class="panel-section">
-        <div class="section-head">Scenario Controls</div>
+      <div class="panel-section" id="wbStress">
+        <div class="section-head">3 · Stress-test the scenario</div>
         <div class="scenario-panel">
           <div class="scenario-row">
             <div class="scn-slider">
@@ -528,8 +577,10 @@
         </div>
       </div>
 
-      <div class="panel-section">
-        <div class="section-head">Orderbook — <span id="obAsset">BTC</span> Perp <span class="status-dot live"></span></div>
+      <button class="adv-toggle" id="advToggle" type="button" onclick="toggleAdvanced()">Show advanced: Greeks, order book, options chain ▾</button>
+
+      <div class="panel-section adv">
+        <div class="section-head">Orderbook — <span id="obAsset">BTC</span> Perp <span data-nx-state="live" data-nx-watch="#obMid" data-nx-ttl="60"></span></div>
         <div class="orderbook-container">
           <div class="ob-header"><span>Price</span><span>Size</span><span>Total</span></div>
           <div class="ob-rows" id="obAsks"></div>
@@ -538,7 +589,7 @@
         </div>
       </div>
 
-      <div class="panel-section">
+      <div class="panel-section adv">
         <div class="section-head">Options Chain <span class="badge" id="chainSource">DERIBIT</span></div>
         <div class="chain-controls">
           <select id="expirySelect" onchange="loadChain()"></select>
@@ -566,6 +617,21 @@
 
     <!-- RIGHT PANEL: Trade Execution + Positions -->
     <div class="panel panel-right">
+      <div class="panel-section review-card" id="wbReview">
+        <div class="section-head">4 · Before you commit <span data-nx-state="simulated" data-nx-note="model estimate"></span></div>
+        <div id="reviewBody"><div class="empty-state" style="padding:10px;">Pick a structure to see max loss, breakevens, costs and liquidation.</div></div>
+      </div>
+
+      <div class="panel-section" id="wbSave">
+        <div class="section-head">5 · Save the strategy</div>
+        <div class="save-row">
+          <input type="text" id="saveName" placeholder="Name, e.g. BTC protected long" maxlength="60">
+          <button class="sb-mini-btn" onclick="saveStrategy()">Save</button>
+        </div>
+        <div class="save-note">Saved in this browser. Saving never places an order.</div>
+        <div id="savedList"></div>
+      </div>
+
       <div class="panel-section">
         <div class="section-head">Risk Engine <span class="sandbox-chip">4,000-PATH MC</span></div>
         <div id="riskEngineBody">
@@ -1459,7 +1525,22 @@ function sbRisk() {
     .filter(l => l.type === 'perp')
     .reduce((s, l) => s - legSideSign(l) * (l.qty || 1) * (l.entry || spot) * f8 * 3 * horizon, 0);
 
-  return { debit, maxProfit, maxLoss, capital, mean, sharpe, cvar, pop, fundDrag, perpNotional, horizon };
+  const breakevens = [];
+  for (let i = 1; i < NPTS; i++) {
+    if ((pay[i - 1] < 0) !== (pay[i] < 0)) {
+      const x0 = lo + ((hi - lo) * (i - 1)) / (NPTS - 1), x1 = lo + ((hi - lo) * i) / (NPTS - 1);
+      breakevens.push(x0 + (x1 - x0) * (pay[i - 1] / (pay[i - 1] - pay[i])));
+    }
+  }
+  // Deribit-style taker fees: perps 0.05% of notional; options min(0.03% of underlying, 12.5% of premium)
+  let fees = perpNotional * 0.0005, netPerp = 0, perpEntry = spot;
+  for (const l of ST.legs) {
+    if (l.type === 'perp') { netPerp += legSideSign(l) * (l.qty || 1); perpEntry = l.entry || spot; }
+    else fees += Math.min(0.0003 * spot, 0.125 * (l.entryPrem || 0)) * (l.qty || 1);
+  }
+  // liquidation at the 10x margin the capital estimate assumes, 0.5% maintenance
+  const liq = netPerp > 0 ? perpEntry * (1 - 0.1 + 0.005) : netPerp < 0 ? perpEntry * (1 + 0.1 - 0.005) : null;
+  return { debit, maxProfit, maxLoss, capital, mean, sharpe, cvar, pop, fundDrag, perpNotional, horizon, breakevens, fees, liq, ivShift, sig };
 }
 
 function sbMetricRow(label, val, color) {
@@ -1473,8 +1554,21 @@ function renderRisk() {
   if (!risk) {
     engine.innerHTML = '<div class="empty-state" style="padding:10px;">Add legs to run the engine.</div>';
     summary.innerHTML = '<div class="empty-state" style="padding:10px;">Summary appears with your first leg.</div>';
+    document.getElementById('reviewBody').innerHTML = '<div class="empty-state" style="padding:10px;">Pick a structure to see max loss, breakevens, costs and liquidation.</div>';
+    wbMark();
     return;
   }
+  const be = risk.breakevens.length ? risk.breakevens.map(b => '$' + fmt(Math.round(b))).join(' · ') : 'none in ±40%';
+  document.getElementById('reviewBody').innerHTML =
+    '<div class="rv-loss"><span>Max loss</span><b>' + (risk.maxLoss === -Infinity ? 'Unlimited' : fmtSign$(risk.maxLoss)) + '</b></div>' +
+    sbMetricRow('Breakeven' + (risk.breakevens.length > 1 ? 's' : ''), be, 'var(--t1)') +
+    sbMetricRow('Capital / margin', fmtSign$(risk.capital), 'var(--t1)') +
+    sbMetricRow('Est. execution fees', fmtSign$(-risk.fees), 'var(--red)') +
+    sbMetricRow('Funding / ' + risk.horizon + 'd', fmtSign$(risk.fundDrag), risk.fundDrag >= 0 ? 'var(--green)' : 'var(--red)') +
+    sbMetricRow('Liquidation', risk.liq ? '$' + fmt(Math.round(risk.liq)) + ' (10× margin)' : 'No perp leg', risk.liq ? 'var(--red)' : 'var(--t2)') +
+    '<div class="sb-panel-note"><b>Assumptions:</b> ' + risk.horizon + 'd horizon · IV ' + (risk.sig * 100).toFixed(0) + '% (' + (risk.ivShift >= 0 ? '+' : '') + Math.round(risk.ivShift * 100) + '% shift) · lognormal price paths · perp margin 10× · Deribit taker fees. Max loss and breakevens are measured on the horizon curve between −40% and +40% of spot.' +
+    (risk.maxLoss === -Infinity ? ' <b style="color:var(--red)">This structure has unlimited downside.</b>' : '') + '</div>';
+  wbMark();
   engine.innerHTML =
     sbMetricRow('Expected P&L', fmtSign$(risk.mean), risk.mean >= 0 ? 'var(--green)' : 'var(--red)') +
     sbMetricRow('Sharpe (ann.)', (risk.sharpe >= 0 ? '+' : '') + risk.sharpe.toFixed(2), risk.sharpe >= 1 ? 'var(--green)' : risk.sharpe >= 0 ? 'var(--gold)' : 'var(--red)') +
@@ -1808,8 +1902,9 @@ async function executeOptionStrategy() {
     estNotional += px * Number(leg.qty || 0);
   });
   estimatedFee = estNotional * 0.0005;
+  const rk = sbRisk();
   const shouldExecute = confirm(
-    `Confirm Deribit strategy execution?\nLegs: ${optLegs.length}\nNotional: $${fmt(estNotional)}\nEstimated Fee: $${fmt(estimatedFee)}`
+    `LIVE ORDER — this sends real market orders to Deribit with your API key.\n\nLegs: ${optLegs.length}\nNotional: $${fmt(estNotional)}\nEstimated fee: $${fmt(estimatedFee)}\nModel max loss: ${rk ? (rk.maxLoss === -Infinity ? 'UNLIMITED' : '$' + fmt(Math.abs(rk.maxLoss))) : '—'}\n\nPress OK only if you have reviewed the risk above.`
   );
   if (!shouldExecute) {
     btn.disabled = false;
@@ -1868,22 +1963,22 @@ function switchExecTab(tab) {
 // Unified templates — perp and option legs combine into one payoff.
 // Option strikes snap to the live Deribit chain when it's loaded.
 const TEMPLATES = [
-  { name: 'Long Straddle', desc: 'Buy ATM call + ATM put', tag: 'vol ↑', bias: 'neutral', make: () => [
+  { name: 'Long Straddle', thesis: ['volup'], desc: 'Buy ATM call + ATM put', tag: 'vol ↑', bias: 'neutral', make: () => [
     mkOptionLeg('call', 'buy', 1, 1), mkOptionLeg('put', 'buy', 1, 1)] },
-  { name: 'Bull Call Spread', desc: 'Buy ATM call, sell +8% call', tag: 'mild ↑', bias: 'bullish', make: () => [
+  { name: 'Bull Call Spread', thesis: ['bullish'], desc: 'Buy ATM call, sell +8% call', tag: 'mild ↑', bias: 'bullish', make: () => [
     mkOptionLeg('call', 'buy', 1, 1), mkOptionLeg('call', 'sell', 1.08, 0.97)] },
-  { name: 'Iron Condor', desc: 'Sell strangle + buy wings', tag: 'range', bias: 'neutral', make: () => [
+  { name: 'Iron Condor', thesis: ['voldown'], desc: 'Sell strangle + buy wings', tag: 'range', bias: 'neutral', make: () => [
     mkOptionLeg('put', 'buy', 0.85, 1.06), mkOptionLeg('put', 'sell', 0.92, 1.02),
     mkOptionLeg('call', 'sell', 1.08, 0.97), mkOptionLeg('call', 'buy', 1.15, 0.95)] },
-  { name: 'Covered Perp Call', desc: 'Long perp + sell +8% call', tag: 'yield', bias: 'hedge', make: () => [
+  { name: 'Covered Perp Call', thesis: ['hedge','bullish'], desc: 'Long perp + sell +8% call', tag: 'yield', bias: 'hedge', make: () => [
     mkPerpLeg('buy', 1), mkOptionLeg('call', 'sell', 1.08, 0.97)] },
-  { name: 'Protected Long Perp', desc: 'Long perp + buy −8% put', tag: 'hedged ↑', bias: 'bullish', make: () => [
+  { name: 'Protected Long Perp', thesis: ['bullish','hedge'], desc: 'Long perp + buy −8% put', tag: 'hedged ↑', bias: 'bullish', make: () => [
     mkPerpLeg('buy', 1), mkOptionLeg('put', 'buy', 0.92, 1.02)] },
-  { name: 'Perp Collar', desc: 'Long perp + put floor + call cap', tag: 'carry', bias: 'hedge', make: () => [
+  { name: 'Perp Collar', thesis: ['hedge'], desc: 'Long perp + put floor + call cap', tag: 'carry', bias: 'hedge', make: () => [
     mkPerpLeg('buy', 1), mkOptionLeg('put', 'buy', 0.9, 1.03), mkOptionLeg('call', 'sell', 1.1, 0.96)] },
-  { name: 'Short Strangle', desc: 'Sell +12% call + −12% put', tag: 'vol ↓', bias: 'neutral', make: () => [
+  { name: 'Short Strangle', thesis: ['voldown'], desc: 'Sell +12% call + −12% put', tag: 'vol ↓', bias: 'neutral', make: () => [
     mkOptionLeg('call', 'sell', 1.12, 0.96), mkOptionLeg('put', 'sell', 0.88, 1.04)] },
-  { name: 'Funding-Hedged Short', desc: 'Short perp + buy +6% call', tag: 'carry ↓', bias: 'bearish', make: () => [
+  { name: 'Funding-Hedged Short', thesis: ['bearish'], desc: 'Short perp + buy +6% call', tag: 'carry ↓', bias: 'bearish', make: () => [
     mkPerpLeg('sell', 1), mkOptionLeg('call', 'buy', 1.06, 0.98)] }
 ];
 
@@ -1891,12 +1986,82 @@ function initTemplates() {
   const grid = document.getElementById('templateGrid');
   document.getElementById('templateCount').textContent = TEMPLATES.length;
   grid.innerHTML = TEMPLATES.map((t, i) => `
-    <button class="template-btn" onclick="applyTemplate(${i})" data-idx="${i}">
+    <button class="template-btn" onclick="applyTemplate(${i})" data-idx="${i}" data-thesis="${t.thesis.join(' ')}">
       <span class="type-badge ${t.bias}">${t.tag}</span>
       <span class="name">${t.name}</span>
       <span class="desc">${t.desc}</span>
     </button>
   `).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  WORKBENCH: steps, thesis filter, advanced toggle, saved strategies
+// ═══════════════════════════════════════════════════
+var WB = { thesis: null, stressed: false };
+const WB_TARGET = { 1: 'wbThesis', 2: 'templateGrid', 3: 'wbStress', 4: 'wbReview', 5: 'wbSave' };
+function wbGo(n) {
+  const el = document.getElementById(WB_TARGET[n]);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function wbMark() {
+  if (!WB || !document.getElementById('wbSteps')) return;
+  const done = { 1: !!WB.thesis, 2: ST.legs.length > 0, 3: WB.stressed, 4: ST.legs.length > 0 && WB.stressed, 5: false };
+  let current = 0;
+  for (let i = 1; i <= 5; i++) if (!done[i]) { current = i; break; }
+  document.querySelectorAll('#wbSteps button').forEach(b => {
+    const n = +b.dataset.step;
+    b.classList.toggle('done', !!done[n]);
+    b.classList.toggle('current', n === current);
+  });
+}
+function setThesis(th) {
+  WB.thesis = th === 'all' ? null : th;
+  document.querySelectorAll('#thesisChips button').forEach(b => b.classList.toggle('on', b.dataset.th === th));
+  let shown = 0;
+  document.querySelectorAll('.template-btn').forEach(b => {
+    const ok = th === 'all' || (b.dataset.thesis || '').split(' ').includes(th);
+    b.style.display = ok ? '' : 'none';
+    if (ok) shown++;
+  });
+  document.getElementById('templateCount').textContent = shown;
+  wbMark();
+}
+function toggleAdvanced() {
+  const on = document.body.classList.toggle('show-adv');
+  document.getElementById('advToggle').textContent = on ? 'Hide advanced ▴' : 'Show advanced: Greeks, order book, options chain ▾';
+  if (on) setTimeout(drawPayoff, 0);
+}
+const SB_SAVED = 'nx_sb_saved_v1';
+function sbLoadSaved() { try { return JSON.parse(localStorage.getItem(SB_SAVED)) || []; } catch (e) { return []; } }
+function sbWriteSaved(list) { try { localStorage.setItem(SB_SAVED, JSON.stringify(list)); } catch (e) {} }
+function saveStrategy() {
+  if (!ST.legs.length) { toast('Add legs before saving', 'warning'); return; }
+  const name = (document.getElementById('saveName').value || '').trim() || (ST.activeTemplate || 'Custom') + ' · ' + ST.asset;
+  const list = sbLoadSaved();
+  list.unshift({ name, asset: ST.asset, thesis: WB.thesis, legs: JSON.parse(JSON.stringify(ST.legs)), ts: Date.now() });
+  sbWriteSaved(list.slice(0, 20));
+  document.getElementById('saveName').value = '';
+  toast('Saved: ' + name, 'success', 2000);
+  renderSaved();
+}
+function loadSaved(i) {
+  const it = sbLoadSaved()[i]; if (!it) return;
+  if (it.asset !== ST.asset) switchAsset(it.asset);
+  ST.legs = it.legs.map(l => Object.assign({}, l, { id: ST.nextId++ }));
+  ST.activeTemplate = it.name;
+  if (it.thesis) setThesis(it.thesis);
+  renderLegs();
+  toast('Loaded: ' + it.name + ' (entry prices as saved)', 'info', 2500);
+}
+function deleteSaved(i) { const list = sbLoadSaved(); list.splice(i, 1); sbWriteSaved(list); renderSaved(); }
+function renderSaved() {
+  const list = sbLoadSaved(), host = document.getElementById('savedList');
+  if (!list.length) { host.innerHTML = ''; return; }
+  host.innerHTML = list.map((it, i) => {
+    const d = new Date(it.ts);
+    const nm = String(it.name).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+    return '<div class="saved-row"><button class="saved-load" onclick="loadSaved(' + i + ')">' + nm + '<span>' + it.asset + ' · ' + it.legs.length + ' legs · ' + d.toLocaleDateString() + '</span></button><button class="saved-del" onclick="deleteSaved(' + i + ')" aria-label="Delete">×</button></div>';
+  }).join('');
 }
 
 function applyTemplate(idx) {
@@ -1978,7 +2143,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('perpOrderType').addEventListener('change', updatePerpSummary);
 
   // Scenario sliders — stress theta decay and vol shifts
-  const scnRecalc = () => { updateGreeks(); drawPayoff(); renderRisk(); };
+  const scnRecalc = () => { WB.stressed = true; updateGreeks(); drawPayoff(); renderRisk(); };
+  document.querySelectorAll('#thesisChips button').forEach(b => b.addEventListener('click', () => setThesis(b.dataset.th)));
+  renderSaved(); wbMark();
   document.getElementById('scnTime').addEventListener('input', function() {
     ST.dayFwd = parseInt(this.value) || 0;
     document.getElementById('scnTimeVal').textContent = 'T+' + ST.dayFwd + 'd';

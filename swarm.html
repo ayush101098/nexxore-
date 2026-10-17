@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NEXXORE Swarm | Self-Tuning Multi-Agent Trading Intelligence</title>
+<title>Swarm — Every Signal Has a Thesis | Nexxore</title>
 
 <!-- GA -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-6QGB2RQVP0"></script>
@@ -201,6 +201,17 @@
   .module-link{font-family:var(--mono);font-size:12px;color:var(--ink);border-top:1px solid var(--line);padding-top:12px;display:flex;justify-content:space-between;transition:color .15s;}
   .module-card:hover .module-link{color:var(--teal);}
 
+  .report-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:12px;}
+  @media (max-width:1000px){.report-grid{grid-template-columns:repeat(3,1fr);}}
+  @media (max-width:560px){.report-grid{grid-template-columns:1fr 1fr;}}
+  .rp-cell{background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;padding:14px;}
+  .rp-k{font-family:var(--mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint);}
+  .rp-v{font-family:var(--mono);font-size:19px;color:var(--ink);margin:6px 0 4px;}
+  .rp-s{font-size:11px;color:var(--ink-faint);line-height:1.45;}
+  .rp-crowd{font-size:12.5px;color:var(--ink-dim);margin:0 0 22px;font-family:var(--mono);}
+  .fusion-details > summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--teal);margin-bottom:18px;list-style:none;}
+  .fusion-details > summary::before{content:"▸ ";}
+  .fusion-details[open] > summary::before{content:"▾ ";}
   .honesty{background:var(--amber-dim);border:1px solid rgba(232,163,61,0.3);border-radius:6px;padding:16px 20px;font-size:12.5px;color:var(--ink-dim);line-height:1.7;font-family:var(--mono);margin-top:28px;}
   .honesty b{color:var(--amber);}
 
@@ -211,6 +222,7 @@
   .footer-links a:hover{color:var(--ink-dim);}
   .footer-brand{font-family:var(--mono);font-size:12px;color:var(--ink-faint);}
 </style>
+<script src="/js/nx-facts.js"></script>
 </head>
 <body>
 
@@ -240,19 +252,19 @@
   <section class="hero" style="border-top:none;">
     <div>
       <div class="eyebrow">Agentic swarm · live in your browser</div>
-      <h1>Not one model. A <em>desk of agents</em> that argue, vote, and keep score.</h1>
+      <h1>Every signal has a thesis. <em>Every thesis gets tested.</em></h1>
       <p class="hero-sub">Eight signal sources vote on live market data. A Bull and a Bear argue the evidence; a Judge weighs it with weights earned from each source's own track record. A separate Risk Sizer sets the stake — direction never sizes its own position. Every call lands in a Brier-scored calibration log.</p>
       <div class="cta-row">
-        <button class="btn-primary" id="rerunBtn">Re-run analysis ↻</button>
-        <a href="#calibration" class="btn-secondary">See the calibration log</a>
+        <button class="btn-primary" id="rerunBtn">Analyze market ↻</button>
+        <a href="#calibration" class="btn-secondary">Your calibration log</a>
       </div>
-      <div class="hero-note">Paper-only. Deterministic engine, real live data, zero LLM cost.<br>The Claude-powered debate tier runs in the <a href="/terminal-pro" style="color:var(--teal);">Pro Terminal</a>.</div>
+      <div class="hero-note">Paper-only. Deterministic engine, real live data, zero LLM cost. The calibration log is stored in your browser and is not a platform-wide track record.<br>The Claude-powered debate tier runs in the <a href="/terminal-pro" style="color:var(--teal);">Pro Terminal</a>.</div>
     </div>
 
     <div class="decision-card">
       <div class="dc-titlebar">
         <span>nexxore.xyz/swarm — decision engine</span>
-        <span style="margin-left:auto;"><span class="live-pill"><span class="ping"></span>LIVE DATA</span></span>
+        <span style="margin-left:auto;"><span data-nx-state="live" data-nx-watch="#dcPrice" data-nx-ttl="150"></span></span>
       </div>
       <div class="dc-body">
         <div class="asset-tabs" id="assetTabs">
@@ -288,6 +300,43 @@
   </section>
 </div>
 
+<section id="debate">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">Decision report · <span id="rpAsset">BTC</span>/USDT · 1h horizon <span data-nx-status="swarm"></span></div>
+      <h2 class="section-title">The verdict, the opposing case, and what would prove it wrong.</h2>
+      <p class="section-desc">A structured argument built from the same evidence the sources voted on, with the losing case kept in full.</p>
+    </div>
+    <div class="report-grid">
+      <div class="rp-cell"><div class="rp-k">Verdict</div><div class="rp-v" id="rpVerdict">—</div><div class="rp-s" id="rpConf">—</div></div>
+      <div class="rp-cell"><div class="rp-k">Model P(up, 1h)</div><div class="rp-v" id="rpProb">—</div><div class="rp-s">from 8 weighted sources</div></div>
+      <div class="rp-cell"><div class="rp-k">Expected edge</div><div class="rp-v" id="rpEdge">—</div><div class="rp-s">in the verdict direction, 1:1 payoff, before costs</div></div>
+      <div class="rp-cell"><div class="rp-k">Risk level</div><div class="rp-v" id="rpRisk">—</div><div class="rp-s" id="rpRiskS">—</div></div>
+      <div class="rp-cell"><div class="rp-k">Invalidation</div><div class="rp-v" id="rpStop">—</div><div class="rp-s">stop · 1.5 × ATR(14) from entry</div></div>
+      <div class="rp-cell"><div class="rp-k">Resolves</div><div class="rp-v" id="rpResolve">—</div><div class="rp-s">scored against the Binance price</div></div>
+    </div>
+    <div class="rp-crowd" id="rpCrowd">Crowd context: looking for a matching Polymarket market…</div>
+    <div class="debate-grid">
+      <div class="debate-col bull">
+        <div class="debate-role">▲ Bull case</div>
+        <div id="bullCase"><div class="debate-pt">Assembling evidence…</div></div>
+      </div>
+      <div class="debate-col bear">
+        <div class="debate-role">▼ Bear case</div>
+        <div id="bearCase"><div class="debate-pt">Assembling evidence…</div></div>
+      </div>
+    </div>
+    <div class="judge-box">
+      <div class="judge-seal">Verdict</div>
+      <div>
+        <div class="judge-text" id="judgeText">Weighing the evidence…</div>
+        <div class="judge-meta" id="judgeMeta"></div>
+      </div>
+    </div>
+    <div class="honesty"><b>What's deterministic and what isn't:</b> this page runs the swarm's rule-based tier — real indicator math over real live data, no LLM, $0 per run. The Claude-powered debate (analyst personas, free-text argument, what-if scenarios) is the Pro tier. Nothing on this page is financial advice; it's a decision <i>process</i>, shown working.</div>
+  </div>
+</section>
+
 <section id="pipeline">
   <div class="wrap">
     <div class="section-head">
@@ -318,6 +367,8 @@
       <h2 class="section-title">Eight sources vote. Accuracy decides whose vote counts.</h2>
       <p class="section-desc">Each source's rolling hit-rate is tracked in the calibration log below. Sources that earn their seat get amplified; sources that don't get muted. The weights you see here adapt from resolved calls in <i>your</i> browser's log.</p>
     </div>
+    <details class="fusion-details" id="fusionDetails">
+    <summary>Show source contributions and adaptive weights</summary>
     <div class="fusion-layout">
       <div class="fusion-table">
         <div class="fusion-head"><span>Source</span><span>Vote</span><span>Conviction</span><span style="text-align:right;">Hit rate</span><span class="fh-w" style="text-align:right;">Weight</span></div>
@@ -330,34 +381,7 @@
         <div class="swarm-consensus" id="swarmConsensus">20 rule-based agents Monte-Carlo toward consensus around the fused signal — a cheap visual check on how contested the call is.</div>
       </div>
     </div>
-  </div>
-</section>
-
-<section id="debate">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="section-eyebrow">Adversarial debate</div>
-      <h2 class="section-title">The Bull argues. The Bear argues. The Judge keeps score.</h2>
-      <p class="section-desc">Not "BUY 73%" from a black box — a structured argument built from the same evidence the sources voted on, with the losing case preserved in full.</p>
-    </div>
-    <div class="debate-grid">
-      <div class="debate-col bull">
-        <div class="debate-role">▲ Bull case</div>
-        <div id="bullCase"><div class="debate-pt">Assembling evidence…</div></div>
-      </div>
-      <div class="debate-col bear">
-        <div class="debate-role">▼ Bear case</div>
-        <div id="bearCase"><div class="debate-pt">Assembling evidence…</div></div>
-      </div>
-    </div>
-    <div class="judge-box">
-      <div class="judge-seal">Verdict</div>
-      <div>
-        <div class="judge-text" id="judgeText">Weighing the evidence…</div>
-        <div class="judge-meta" id="judgeMeta"></div>
-      </div>
-    </div>
-    <div class="honesty"><b>What's deterministic and what isn't:</b> this page runs the swarm's rule-based tier — real indicator math over real live data, no LLM, $0 per run. The Claude-powered debate (analyst personas, free-text argument, what-if scenarios) is the Pro tier. Nothing on this page is financial advice; it's a decision <i>process</i>, shown working.</div>
+    </details>
   </div>
 </section>
 
@@ -397,7 +421,7 @@
       <a class="module-card" href="/terminal">
         <div class="module-role">Sensor · market microstructure</div>
         <div class="module-name">⌨️ Trading Terminal</div>
-        <div class="module-desc">52 normalized streams — funding, depth, TVL, volatility. The raw feed every swarm source votes on.</div>
+        <div class="module-desc">Live prices, funding and volatility on <span data-nx-fact="priceStreams">16</span> Binance streams, plus news and macro feeds.</div>
         <div class="module-link">Open Terminal <span>→</span></div>
       </a>
       <a class="module-card" href="/intelligence">
@@ -409,7 +433,7 @@
       <a class="module-card" href="/prediction-terminal">
         <div class="module-role">Sensor · crowd belief</div>
         <div class="module-name">🎯 Prediction Terminal</div>
-        <div class="module-desc">1,400+ Polymarket books and the whale feed. Prediction markets hold a voting seat in the fusion above — people risking money beat people posting takes.</div>
+        <div class="module-desc">Live Polymarket books and the whale feed. Prediction markets hold a voting seat in the fusion above — people risking money beat people posting takes.</div>
         <div class="module-link">Open Prediction Terminal <span>→</span></div>
       </a>
       <a class="module-card" href="/strategy-builder">
@@ -421,7 +445,7 @@
       <a class="module-card" href="/terminal-pro">
         <div class="module-role">Effector · execution</div>
         <div class="module-name">◈ Agent Builder — Pro</div>
-        <div class="module-desc">The swarm's hands: Kelly-sized routing across Ethereum, Arbitrum, Base, and Solana, with a pre-trade receipt you approve before anything moves. Claude debate tier lives here.</div>
+        <div class="module-desc">The swarm's hands, designed to size trades inside your boundaries with a pre-trade receipt you approve. It runs on a simulated feed today; live execution is not available. Claude debate tier lives here.</div>
         <div class="module-link">Open Pro Terminal <span>→</span></div>
       </a>
       <a class="module-card" href="/track-record">
@@ -762,8 +786,26 @@
     $('judgeText').textContent = judgeLine;
     $('judgeMeta').textContent = 'Rule-based judge · weights from ' + cal.filter(function(c){ return c.resolved; }).length + ' resolved calls in this browser · pm source: ' + (pmMeta || 'abstained');
 
+    var asset = SYM.replace('USDT','');
+    $('rpAsset').textContent = asset;
+    var rv = $('rpVerdict'); rv.textContent = verdict;
+    rv.style.color = verdict === 'BUY' ? 'var(--teal)' : verdict === 'SELL' ? 'var(--red)' : 'var(--amber)';
+    $('rpConf').textContent = 'confidence ' + Math.round(Math.abs(2 * fusion.pUp - 1) * 100) + '%';
+    $('rpProb').textContent = Math.round(fusion.pUp * 100) + '%';
+    var edge = Math.abs(2 * fusion.pUp - 1); // in the verdict's direction
+    $('rpEdge').textContent = verdict === 'HOLD' ? 'No trade' : '+' + (edge * 100).toFixed(1) + ' pts';
+    var stopPct = Math.abs(plan.entry - plan.stop) / plan.entry * 100;
+    $('rpRisk').textContent = plan.rv > 0.8 ? 'High' : plan.rv > 0.45 ? 'Medium' : 'Low';
+    $('rpRiskS').textContent = (plan.rv * 100).toFixed(0) + '% ann. vol · stop ' + stopPct.toFixed(1) + '% away · size ' + (plan.size === 0 ? 'flat' : (plan.size * 100).toFixed(1) + '%');
+    $('rpStop').textContent = fmtPx(plan.stop);
+    var due = new Date(Date.now() + 3600e3);
+    $('rpResolve').textContent = String(due.getHours()).padStart(2,'0') + ':' + String(due.getMinutes()).padStart(2,'0');
+    $('rpCrowd').textContent = pmMeta
+      ? 'Crowd context (different question and horizon, not a direct comparison): ' + pmMeta
+      : 'Crowd context: no live Polymarket market matches ' + asset + ' right now, so that source abstained.';
+    lastPUp = fusion.pUp;
     renderCalibration();
-    startSwarmSim(fusion.pUp);
+    if ($('fusionDetails').open) startSwarmSim(fusion.pUp);
   }
 
   function renderCalibration(){
@@ -795,7 +837,8 @@
   }
 
   /* ───────────────────────── micro swarm canvas ───────────────────────── */
-  var swarmRAF = null;
+  var swarmRAF = null, lastPUp = 0.5;
+  $('fusionDetails').addEventListener('toggle', function(){ if (this.open) startSwarmSim(lastPUp); });
   function startSwarmSim(pUp){
     var cv = $('swarmCanvas'), ctx = cv.getContext('2d');
     var W = cv.clientWidth, H = cv.clientHeight;
@@ -905,7 +948,7 @@
       var fusion = fuse(sources);
       var plan = riskPlan(k, fusion, killed);
       if(file !== false) fileCall(SYM, fusion.pUp, k.c[k.c.length - 1], sources.reduce(function(o, s){ o[s.key] = s.vote * s.conf; return o; }, {}));
-      render(k, sources, fusion, plan, pm ? '"' + pm.q.slice(0, 44) + '…"' : null);
+      render(k, sources, fusion, plan, pm ? '"' + pm.q.slice(0, 44) + '…" (' + Math.round(pm.prob * 100) + '% implied up)' : null);
     }).catch(function(e){
       $('dcConf').textContent = 'Live data unreachable — retrying in 30s (' + e.message + ')';
       setTimeout(function(){ run(false); }, 30000);

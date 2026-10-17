@@ -374,23 +374,15 @@ body::after {
   .panel-map { grid-row:auto; }
 }
 </style>
+<script src="/js/nx-facts.js"></script>
 </head>
 <body>
 
 <!-- ══ BOOT ══ -->
 <div id="boot">
-  <div class="bl" id="b0">NEXXORE TERMINAL v5.1</div>
-  <div class="bl dim" id="b1">═══════════════════════════════════════</div>
-  <div class="bl" id="b2">▸ Opening WebSocket to Binance stream...</div>
-  <div class="bl" id="b3">▸ Spawning Web Worker for RSS pipeline...</div>
-  <div class="bl" id="b4">▸ Loading LocalStorage cache layer...</div>
-  <div class="bl" id="b5">▸ Rendering 20-layer geopolitical map...</div>
-  <div class="bl" id="b6">▸ Calibrating multi-factor signal engine...</div>
-  <div class="bl" id="b7">▸ Computing Global Liquidity Index...</div>
-  <div class="bl" id="b8">▸ Detecting market regime (RISK ON/OFF)...</div>
-  <div class="bl" id="b9">▸ Initializing derivatives dashboard...</div>
-  <div class="bl dim" id="b10">═══════════════════════════════════════</div>
-  <div class="bl" id="b11" style="color:var(--accent);font-weight:700">● ALL SYSTEMS NOMINAL — 52 DATA STREAMS LIVE</div>
+  <div class="bl" id="b0" style="font-size:15px;font-weight:700;letter-spacing:0.08em">NEXXORE TERMINAL</div>
+  <div class="bl dim" id="b1" style="margin-top:8px">See what moved the market — and what it means for your positions.</div>
+  <div class="bl" id="b11" style="margin-top:14px;color:var(--accent)">● Connecting to live market data…</div>
   <div class="boot-bar"><div class="boot-fill" id="bootFill"></div></div>
 </div>
 
@@ -404,7 +396,7 @@ body::after {
 </div>
 
 <!-- ══ TOP BAR ══ -->
-<h1 class="sr-only">Nexxore Terminal — Real-Time Crypto Intelligence & Geopolitical Monitor</h1>
+<h1 class="sr-only">See what moved the market — and what it means for your positions.</h1>
 <nav aria-label="Terminal navigation">
 <div class="topbar">
   <div class="topbar-l">
@@ -460,7 +452,7 @@ body::after {
   <!-- LEFT: NEWS -->
   <div class="panel panel-left">
     <div class="ph">
-      <div class="pt"><span class="live-dot"></span><span class="icon">📰</span> GLOBAL NEWS FEED</div>
+      <div class="pt"><span class="live-dot"></span><span class="icon">📰</span> GLOBAL NEWS FEED <span data-nx-state="live" data-nx-watch="#newsCount" data-nx-ttl="900" data-nx-grace="40"></span></div>
       <div style="display:flex;gap:3px;align-items:center"><span class="badge live">LIVE</span><span class="badge ct" id="newsCount">0</span></div>
     </div>
     <div class="news-tabs" id="newsFilters">
@@ -484,7 +476,7 @@ body::after {
   <!-- CENTER: MAP -->
   <div class="panel panel-map">
     <div class="ph">
-      <div class="pt"><span class="live-dot"></span><span class="icon">🌍</span> GEOPOLITICAL & SUPPLY CHAIN MONITOR</div>
+      <div class="pt"><span class="live-dot"></span><span class="icon">🌍</span> GEOPOLITICAL & SUPPLY CHAIN MONITOR <span data-nx-state="live" data-nx-watch="#mapEvents" data-nx-ttl="1800" data-nx-grace="40"></span></div>
       <div style="display:flex;gap:3px;align-items:center"><span class="badge ct" id="mapEvents">0 events</span><span class="badge ct" id="mapLanes">0 routes</span></div>
     </div>
     <div class="map-wrap">
@@ -544,7 +536,7 @@ body::after {
   <!-- RIGHT TOP: INDICES + CRYPTO + DERIVATIVES -->
   <div class="panel panel-rt">
     <div class="ph">
-      <div class="pt"><span class="live-dot"></span><span class="icon">📊</span> MARKETS</div>
+      <div class="pt"><span class="live-dot"></span><span class="icon">📊</span> MARKETS <span data-nx-state="live" data-nx-watch="#mktPanel" data-nx-ttl="60" data-nx-grace="25"></span></div>
       <div class="ptabs" id="mktTabs">
         <button class="ptab active" data-t="indices">INDICES</button>
         <button class="ptab" data-t="crypto">CRYPTO</button>
@@ -558,7 +550,7 @@ body::after {
   <!-- BOTTOM LEFT: SIGNALS + CORRELATION + LIQUIDITY -->
   <div class="panel panel-bl">
     <div class="ph">
-      <div class="pt"><span class="live-dot"></span><span class="icon">🤖</span> AI SIGNALS ENGINE</div>
+      <div class="pt"><span class="live-dot"></span><span class="icon">🤖</span> AI SIGNALS ENGINE <span data-nx-state="live" data-nx-watch="#sigPanel" data-nx-ttl="600" data-nx-grace="40"></span></div>
       <div class="ptabs" id="sigTabs">
         <button class="ptab active" data-t="signals">SIGNALS</button>
         <button class="ptab" data-t="liquidity">LIQ INDEX</button>
@@ -572,7 +564,7 @@ body::after {
   <!-- RIGHT BOTTOM: MACRO + SUPPLY CHAIN -->
   <div class="panel panel-rb">
     <div class="ph">
-      <div class="pt"><span class="live-dot"></span><span class="icon">🏛</span> MACRO & SUPPLY CHAIN</div>
+      <div class="pt"><span class="live-dot"></span><span class="icon">🏛</span> MACRO & SUPPLY CHAIN <span data-nx-state="live" data-nx-watch="#macroTime" data-nx-ttl="900" data-nx-grace="40"></span></div>
       <span class="badge ct" id="macroTime">--:--</span>
     </div>
     <div class="pbody">
@@ -632,7 +624,7 @@ const S = {
 
 // ══ BOOT ══
 (function(){
-  const ids=['b0','b1','b2','b3','b4','b5','b6','b7','b8','b9','b10','b11'];
+  const ids=['b0','b1','b11'];
   const fill=document.getElementById('bootFill');
   ids.forEach((id,i)=>setTimeout(()=>{const el=document.getElementById(id);if(el)el.classList.add('on');fill.style.width=((i+1)/ids.length*100)+'%';},50+i*80));
   setTimeout(()=>document.getElementById('boot').classList.add('done'),1100);

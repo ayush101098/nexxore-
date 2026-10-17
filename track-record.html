@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEXXORE Track Record - Live DeFi Signal Performance</title>
+  <title>Track Record — Every Forecast and Outcome | Nexxore</title>
   <meta name="description" content="Public NEXXORE track record with timestamped DeFi and prediction-market signals, win rate, return, drawdown, calibration, and verification links." />
   <link rel="canonical" href="https://nexxore.xyz/track-record" />
   <meta property="og:title" content="NEXXORE Track Record - Live DeFi Signal Performance" />
@@ -437,6 +437,17 @@
       cursor: not-allowed;
     }
 
+    .no-results, .method-note {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin: 0 0 18px;
+      font-size: 14px;
+      line-height: 1.55;
+      opacity: 0.9;
+    }
+    .no-results strong, .method-note strong { margin-right: 4px; }
+    .method-note { font-size: 13px; opacity: 0.75; }
     .empty-state {
       padding: var(--space-6);
       color: var(--text-muted);
@@ -490,6 +501,7 @@
       }
     }
   </style>
+<script src="/js/nx-facts.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -510,12 +522,13 @@
         <div class="hero-grid">
           <div class="hero-copy">
             <div class="eyebrow">Public Performance Ledger</div>
-            <h1>NEXXORE Track Record</h1>
-            <p>Timestamped signals, resolved outcomes, model calibration, and verification links for NEXXORE prediction-market and DeFi execution intelligence.</p>
+            <h1>A verifiable record of every forecast and outcome.</h1>
+            <p>Each call is timestamped when it is made and linked to its resolution evidence. Every entry is a paper forecast. There are no real-money executions. We report calibration and full outcomes rather than a headline win rate.</p>
+            <a class="btn btn-primary" href="#signal-log">Inspect the signal history</a>
           </div>
           <aside class="meta-panel" aria-label="Data source">
-            <span data-updated-at>Loading track record</span>
-            <strong data-source>Connecting to public API</strong>
+            <span data-updated-at>Checking for published results…</span>
+            <strong data-source>Paper forecasts only</strong>
           </aside>
         </div>
 
@@ -529,13 +542,22 @@
           <a class="btn btn-secondary" href="/api/track-record?range=30d&format=csv" data-export-csv>Export CSV</a>
         </div>
 
+        <div class="no-results" data-no-results hidden>
+          <strong>No published results yet.</strong>
+          No forecasts have resolved, so there is no win rate, return or drawdown to report. Metrics appear here only once calls resolve. Nothing on this page reflects real-money execution.
+        </div>
+
         <div class="stat-grid" aria-label="Track record summary">
-          <div class="stat-card"><span>Total Signals</span><strong data-stat="totalSignals">--</strong></div>
+          <div class="stat-card"><span>Resolved / Total</span><strong data-stat="totalSignals">--</strong></div>
           <div class="stat-card"><span>Win Rate</span><strong data-stat="winRate">--</strong></div>
           <div class="stat-card"><span>Avg Return</span><strong data-stat="avgReturnBps">--</strong></div>
           <div class="stat-card"><span>Sharpe</span><strong data-stat="sharpe">--</strong></div>
           <div class="stat-card"><span>Max Drawdown</span><strong data-stat="maxDrawdownPct">--</strong></div>
           <div class="stat-card"><span>Total P&L</span><strong data-stat="totalPnlPct">--</strong></div>
+        </div>
+
+        <div class="method-note">
+          <strong>Methodology.</strong> Calibration compares predicted and actual hit rate by edge tier. Sample period is the selected range. Unresolved calls stay in the log as open and count toward the total; win rate and P&amp;L use resolved calls only. P&amp;L is the recorded per-signal return in basis points and does not yet deduct fees or slippage.
         </div>
 
         <div class="content-grid">
@@ -556,7 +578,7 @@
           </section>
         </div>
 
-        <section class="panel table-panel">
+        <section class="panel table-panel" id="signal-log">
           <div class="panel__head">
             <h2>Signal Log</h2>
             <span>Sorted by newest first</span>

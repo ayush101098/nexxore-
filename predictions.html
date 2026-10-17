@@ -436,7 +436,25 @@ body::before {
 
 .tg-overlay { position:fixed;inset:0;background:rgba(5,5,13,0.7);backdrop-filter:blur(8px);z-index:9998;display:none;align-items:center;justify-content:center; }
 .tg-overlay.open { display:flex; }
-.tg-modal { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);width:380px;max-width:90vw; }
+.tg-modal { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);width:520px;max-width:94vw;max-height:88vh;overflow-y:auto; }
+.al-perm { font-size:0.66rem;color:var(--text-muted);background:rgba(232,160,32,0.06);border:1px solid rgba(232,160,32,0.18);border-radius:var(--radius);padding:8px 10px;margin-bottom:14px;line-height:1.45; }
+.al-count { font-family:var(--mono);color:var(--cyan);margin-left:4px; }
+.al-list { display:flex;flex-direction:column;gap:4px; }
+.al-empty { font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);padding:6px 0; }
+.al-row { display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:0.66rem; }
+.al-row .t { flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text); }
+.al-row .m { font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);white-space:nowrap; }
+.al-row button { background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:0.8rem; }
+.al-log { flex-direction:column;align-items:stretch; }
+.al-log .msg { color:var(--text);font-size:0.66rem;line-height:1.4; }
+.al-preview { margin-top:6px; }
+.al-preview .card-msg { font-family:var(--mono);font-size:0.62rem;color:var(--text);background:var(--bg);border:1px dashed var(--border);border-radius:var(--radius);padding:7px 9px;margin-bottom:4px;line-height:1.45; }
+.al-ghost { background:transparent !important;border:1px solid var(--border) !important;color:var(--text-muted) !important;margin-bottom:6px; }
+.tg-send-btn:disabled, .tg-toggle:disabled { opacity:0.4;cursor:not-allowed; }
+.al-channel { border-top:1px solid var(--border);padding-top:14px; }
+.al-link { margin-left:auto;background:none;border:none;color:var(--cyan);font-family:var(--mono);font-size:0.58rem;cursor:pointer; }
+.watch-btn { padding:6px 12px;margin:0 6px 8px 0;background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:var(--radius);font-family:var(--mono);font-size:0.65rem;cursor:pointer; }
+.watch-btn.on { color:var(--gold);border-color:rgba(232,160,32,0.4); }
 .tg-modal-head { display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);font-family:var(--display);font-weight:600;font-size:0.85rem; }
 .tg-modal-close { background:none;border:none;color:var(--text-dim);font-size:1rem;cursor:pointer; }
 .tg-modal-body { padding:16px; }
@@ -661,6 +679,7 @@ body::before {
   .td-overlay { padding:24px 8px; }
 }
 </style>
+<script src="/js/nx-facts.js"></script>
 </head>
 <body>
 
@@ -681,8 +700,8 @@ body::before {
       <a class="header-btn" href="intelligence.html" style="text-decoration:none;border-color:rgba(247,185,85,0.25);color:var(--gold)">&#9650; Intelligence Engine</a>
       <button class="header-btn" id="connectTradeBtn" style="border-color:rgba(0,232,122,0.25);color:var(--green)">Connect to trade</button>
       <button class="header-btn" id="hotkeyToggle"><span class="kbd">T</span> Terminal</button>
-      <button class="header-btn" id="telegramBtn">Alerts</button>
-      <button class="header-btn" id="tgPostBtn" style="border-color:rgba(0,200,255,0.2);color:var(--cyan)">Post Trades</button>
+      <button class="header-btn" id="telegramBtn" style="border-color:rgba(0,200,255,0.3);color:var(--cyan)">Create an alert</button>
+      <button class="header-btn" id="tgPostBtn">Channel posting</button>
       <div class="header-btn ws-live" id="wsStatus"><span class="dot"></span> <span id="wsText">Connecting...</span></div>
     </div>
   </header>
@@ -690,34 +709,66 @@ body::before {
   <div class="tg-overlay" id="tgModal">
     <div class="tg-modal">
       <div class="tg-modal-head">
-        <span>Telegram Integration</span>
+        <span>Alerts</span>
         <button class="tg-modal-close" id="tgModalClose">&times;</button>
       </div>
       <div class="tg-modal-body">
-        <div class="tg-status" id="tgStatus">
-          <span class="tg-dot checking"></span>
-          <span id="tgStatusText">Checking connection...</span>
-        </div>
+        <div class="al-perm">Each permission is separate. A browser alert only notifies you. It never posts or trades.</div>
+
         <div class="tg-section">
-          <label>Auto-Post Threshold</label>
-          <p class="tg-hint">Trades with edge above this threshold are posted automatically</p>
+          <label>1 · Watchlist <span class="al-count" id="alWatchCount">0</span></label>
+          <p class="tg-hint">Add markets with <b>☆ Watch</b> in the market detail panel.</p>
+          <div id="alWatchList" class="al-list"><div class="al-empty">No markets watched yet.</div></div>
+        </div>
+
+        <div class="tg-section">
+          <label>2 · Alert rule</label>
+          <p class="tg-hint">Alert when a watched market's YES price moves this far from its price when you started watching, or since its last alert.</p>
+          <div class="tg-threshold-row">
+            <input type="range" id="alMove" min="2" max="20" value="5" class="tg-slider">
+            <span id="alMoveVal" class="tg-threshold-val">&ge; 5¢</span>
+          </div>
+        </div>
+
+        <div class="tg-section">
+          <label>3 · Preview</label>
+          <button class="tg-send-btn al-ghost" id="alPreviewBtn" type="button">Preview what would fire now</button>
+          <div id="alPreview" class="al-preview"></div>
+        </div>
+
+        <div class="tg-section">
+          <label>4 · Enable browser alerts <span data-nx-status="alerts"></span></label>
+          <div class="tg-toggle-row">
+            <span id="alEnableHint">Run a preview first</span>
+            <button class="tg-toggle" id="alToggle" disabled><span class="tg-toggle-dot"></span></button>
+          </div>
+          <p class="tg-hint">Delivered in this tab, plus a browser notification if you allow it. Checks run each time markets refresh (about every 2 min) while this page is open. Rules and history are saved in this browser.</p>
+        </div>
+
+        <div class="tg-section">
+          <label>Recent alerts</label>
+          <div id="alLog" class="al-list"><div class="al-empty">No alerts yet.</div></div>
+        </div>
+
+        <div class="tg-section al-channel" id="alChannel">
+          <label>Channel posting · Nexxore Telegram (separate permission)</label>
+          <p class="tg-hint">Posts the biggest 24h movers to the Nexxore channel. This is public and does not depend on your watchlist. Preview before anything is sent.</p>
           <div class="tg-threshold-row">
             <input type="range" id="tgThreshold" min="3" max="20" value="8" class="tg-slider">
-            <span id="tgThresholdVal" class="tg-threshold-val">&ge; 8c</span>
+            <span id="tgThresholdVal" class="tg-threshold-val">&ge; 8 pts 24h</span>
           </div>
-        </div>
-        <div class="tg-section">
-          <label>Auto-Post</label>
-          <div class="tg-toggle-row">
-            <span>Send alerts every 30 min</span>
-            <button class="tg-toggle" id="tgAutoToggle"><span class="tg-toggle-dot"></span></button>
+          <button class="tg-send-btn al-ghost" id="tgPreviewBtn" type="button">Preview channel post</button>
+          <div id="tgPreview" class="al-preview"></div>
+          <button class="tg-send-btn" id="tgSendNow" disabled>Post previewed markets</button>
+          <div class="tg-toggle-row" style="margin-top:8px">
+            <span>Auto-post every 30 min while open</span>
+            <button class="tg-toggle" id="tgAutoToggle" disabled><span class="tg-toggle-dot"></span></button>
           </div>
-        </div>
-        <div class="tg-section">
-          <button class="tg-send-btn" id="tgSendNow">Post Top Trades Now</button>
-        </div>
-        <div class="tg-log" id="tgLog">
-          <div class="tg-log-title">Recent Posts</div>
+          <div class="tg-status" id="tgStatus" style="margin-top:8px">
+            <span class="tg-dot"></span>
+            <span id="tgStatusText">Not checked</span>
+            <button class="al-link" id="tgTestBtn" type="button">Send a test message</button>
+          </div>
         </div>
       </div>
     </div>
@@ -778,8 +829,8 @@ body::before {
       <section class="edge-hero">
         <div class="hero-top">
           <div class="hero-titles">
-            <h1>Prediction Market <span class="accent">Intelligence</span></h1>
-            <p class="hero-sub">The markets are everywhere — the edge is in what you build on top of them. A curated stack of open-source bots, datasets, backtesters and strategy engines for Polymarket &amp; Kalshi, plus a live cross-platform market scanner.</p>
+            <h1>Turn market mispricing into a <span class="accent">repeatable research workflow.</span></h1>
+            <p class="hero-sub">Find candidate markets, read the thesis and invalidation conditions, then set a watchlist alert you preview before it is enabled. Alerts, auto-posting and execution are separate permissions. Turning on one does not turn on the others.</p>
           </div>
           <div class="hero-meta">
             <span class="meta-chip" style="color:var(--gold);border-color:rgba(247,185,85,0.25);background:rgba(247,185,85,0.05)">11 Tools &middot; 120+ Strategies</span>
@@ -876,7 +927,7 @@ body::before {
         </div>
         <div class="grid-wide mb-20">
           <div class="card edge-cyan">
-            <div class="card-head"><div class="card-title">Live Markets <span class="badge live">Real-Time</span></div><span style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim)" id="scanTimestamp">Loading...</span></div>
+            <div class="card-head"><div class="card-title">Live Markets <span data-nx-state="live" data-nx-watch="#lastRefresh" data-nx-ttl="300" data-nx-grace="30"></span></div><span style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim)" id="scanTimestamp">Loading...</span></div>
             <div class="card-body">
               <div style="display:flex;gap:6px;margin-bottom:10px;"><input type="text" class="search-input" id="marketSearch" placeholder="Search markets..." style="flex:1"></div>
               <div class="chips mb-12" id="categoryFilters">
@@ -920,6 +971,7 @@ body::before {
                   <div class="hb-item"><span class="hb-label">Bid / Ask</span><span class="hb-value" id="detailBidAsk">—</span></div>
                 </div>
                 <div style="margin-top:10px;text-align:center;">
+                  <button id="watchBtn" class="watch-btn" type="button" style="display:none">☆ Watch</button>
                   <button id="takeTradeBtn" class="terminal-btn buy" style="display:none;padding:6px 12px;margin-bottom:8px;">Take this trade</button>
                   <a id="detailLink" href="#" target="_blank" style="font-family:var(--mono);font-size:0.65rem;color:var(--cyan);text-decoration:none;">View on platform →</a>
                 </div>
@@ -2230,6 +2282,7 @@ body::before {
     function selectMarket(m) {
       if (!m) return;
       selectedMarket = m;
+      if (window.nxAlertsSelect) window.nxAlertsSelect(m);
       document.getElementById('detailCategory').textContent = m.category.charAt(0).toUpperCase() + m.category.slice(1);
       document.getElementById('detailTitle').textContent = m.title;
       document.getElementById('detailPlatform').textContent = m.platform;
@@ -2456,6 +2509,7 @@ body::before {
 
         // Sort by volume
         markets.sort(function(a, b) { return (b.volume || 0) - (a.volume || 0); });
+        if (window.nxAlertsTick) window.nxAlertsTick();
 
         // Update stats with REAL data
         var totalVol = markets.reduce(function(s, m) { return s + (m.volume || 0); }, 0);
@@ -2529,45 +2583,160 @@ body::before {
     }
     init();
 
-    // TELEGRAM
+    // ── ALERTS: watchlist → rule → preview → enable. Channel posting is separate. ──
+    var AL = { watch: 'nx_alert_watch_v1', rule: 'nx_alert_rule_v1', log: 'nx_alert_log_v1' };
+    function alGet(k, fb) { try { return JSON.parse(localStorage.getItem(k)) || fb; } catch (e) { return fb; } }
+    function alSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+    function alEsc(t) { var d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; }
+    var watch = alGet(AL.watch, {});            // id → { title, base, url, platform, ts }
+    var rule = alGet(AL.rule, { move: 5, enabled: false, previewedAt: 0 });
+    var alLog = alGet(AL.log, []);
+    function byId(id) { for (var i = 0; i < markets.length; i++) if (markets[i].id === id) return markets[i]; return null; }
+
+    function alCandidates() {
+      var out = [];
+      Object.keys(watch).forEach(function(id) {
+        var w = watch[id], m = byId(id);
+        if (!m) return;
+        var d = m.yesOdds - w.base;
+        if (Math.abs(d) >= rule.move) out.push({ id: id, m: m, w: w, d: d,
+          text: w.title + ' — YES ' + w.base + '¢ → ' + m.yesOdds + '¢ (' + (d > 0 ? '+' : '') + d + '¢). Resolves ' + (m.expiry || '—') + '. Check the thesis and invalidation before acting.' });
+      });
+      return out;
+    }
+    function renderWatch() {
+      var ids = Object.keys(watch), host = document.getElementById('alWatchList');
+      document.getElementById('alWatchCount').textContent = ids.length;
+      host.innerHTML = ids.length ? ids.map(function(id) {
+        var w = watch[id], m = byId(id);
+        return '<div class="al-row"><span class="t" title="' + alEsc(w.title) + '">' + alEsc(w.title) + '</span><span class="m">' + w.base + '¢ → ' + (m ? m.yesOdds + '¢' : '…') + '</span><button data-unwatch="' + alEsc(id) + '" aria-label="Remove">×</button></div>';
+      }).join('') : '<div class="al-empty">No markets watched yet.</div>';
+      host.querySelectorAll('[data-unwatch]').forEach(function(b) { b.addEventListener('click', function() { delete watch[b.getAttribute('data-unwatch')]; alSet(AL.watch, watch); renderWatch(); syncWatchBtn(); }); });
+    }
+    function renderLog() {
+      var host = document.getElementById('alLog');
+      host.innerHTML = alLog.length ? alLog.slice(0, 15).map(function(a) {
+        var m = byId(a.id), since = m ? m.yesOdds - a.price : null;
+        return '<div class="al-row al-log"><div class="msg">' + alEsc(a.text) + '</div><div class="m">' + new Date(a.ts).toLocaleString() + ' · ' + alEsc(a.delivery) +
+          (since != null ? ' · since alert: ' + (since > 0 ? '+' : '') + since + '¢' : '') + '</div></div>';
+      }).join('') : '<div class="al-empty">No alerts yet.</div>';
+    }
+    function renderRule() {
+      document.getElementById('alMove').value = rule.move;
+      document.getElementById('alMoveVal').textContent = '≥ ' + rule.move + '¢';
+      var t = document.getElementById('alToggle');
+      t.disabled = !rule.previewedAt && !rule.enabled;
+      t.classList.toggle('active', !!rule.enabled);
+      document.getElementById('alEnableHint').textContent = rule.enabled ? 'On: watching ' + Object.keys(watch).length + ' markets' : (t.disabled ? 'Run a preview first' : 'Off');
+    }
+    function syncWatchBtn() {
+      var b = document.getElementById('watchBtn'), m = selectedMarket;
+      if (!m) { b.style.display = 'none'; return; }
+      b.style.display = 'inline-block';
+      var on = !!watch[m.id];
+      b.classList.toggle('on', on); b.textContent = on ? '★ Watching' : '☆ Watch';
+    }
+    window.nxAlertsSelect = function() { setTimeout(syncWatchBtn, 0); };
+    document.getElementById('watchBtn').addEventListener('click', function() {
+      var m = selectedMarket; if (!m) return;
+      if (watch[m.id]) delete watch[m.id];
+      else watch[m.id] = { title: m.title, base: m.yesOdds, url: m.url, platform: m.platform, ts: Date.now() };
+      alSet(AL.watch, watch); syncWatchBtn(); renderWatch();
+      showToast(watch[m.id] ? 'Added to watchlist' : 'Removed from watchlist', 'success');
+    });
+    document.getElementById('alMove').addEventListener('input', function() {
+      rule.move = parseInt(this.value, 10); rule.previewedAt = 0;
+      if (rule.enabled) { rule.enabled = false; showToast('Rule changed: preview again to re-enable', ''); }
+      alSet(AL.rule, rule); renderRule(); document.getElementById('alPreview').innerHTML = '';
+    });
+    document.getElementById('alPreviewBtn').addEventListener('click', function() {
+      var c = alCandidates(), host = document.getElementById('alPreview');
+      host.innerHTML = !Object.keys(watch).length ? '<div class="al-empty">Watch at least one market first.</div>'
+        : c.length ? c.map(function(x) { return '<div class="card-msg">🔔 ' + alEsc(x.text) + '</div>'; }).join('')
+        : '<div class="al-empty">Nothing would fire right now. A watched market has to move ' + rule.move + '¢ or more. This is the alert you would get:</div><div class="card-msg">🔔 [Market] — YES 46¢ → 52¢ (+6¢). Resolves [date]. Check the thesis and invalidation before acting.</div>';
+      rule.previewedAt = Date.now(); alSet(AL.rule, rule); renderRule();
+    });
+    document.getElementById('alToggle').addEventListener('click', function() {
+      if (this.disabled) return;
+      rule.enabled = !rule.enabled; alSet(AL.rule, rule); renderRule();
+      if (rule.enabled && 'Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+      showToast(rule.enabled ? 'Browser alerts on' : 'Browser alerts off', rule.enabled ? 'success' : '');
+    });
+    window.nxAlertsTick = function() {
+      renderWatch(); renderLog(); syncWatchBtn();
+      if (!rule.enabled) return;
+      alCandidates().forEach(function(x) {
+        var delivery = 'shown in page';
+        if ('Notification' in window) {
+          if (Notification.permission === 'granted') { try { new Notification('Nexxore alert', { body: x.text }); delivery = 'browser notification'; } catch (e) {} }
+          else if (Notification.permission === 'denied') delivery = 'in page (notifications blocked)';
+        }
+        showToast('🔔 ' + x.w.title + ' moved ' + (x.d > 0 ? '+' : '') + x.d + '¢', 'success');
+        addMemoryLine('alpha', 'Alert: <span class="hl">' + alEsc(x.w.title.slice(0, 50)) + '</span> ' + (x.d > 0 ? '+' : '') + x.d + '¢');
+        alLog.unshift({ id: x.id, text: x.text, price: x.m.yesOdds, ts: Date.now(), delivery: delivery });
+        watch[x.id].base = x.m.yesOdds; // next alert measures from here
+      });
+      alLog = alLog.slice(0, 50); alSet(AL.log, alLog); alSet(AL.watch, watch);
+      renderWatch(); renderLog();
+    };
+
+    // Channel posting — separate permission, preview required
     var TG_API = '/api/telegram';
-    var tgAutoPost = false, tgThreshold = 8, tgAutoInterval = null;
-    document.getElementById('telegramBtn').addEventListener('click', function() { document.getElementById('tgModal').classList.add('open'); checkTgStatus(); });
+    var tgAutoPost = false, tgThreshold = 8, tgAutoInterval = null, tgPreviewed = null;
+    function openAlerts(scrollTo) {
+      document.getElementById('tgModal').classList.add('open');
+      renderWatch(); renderLog(); renderRule();
+      if (scrollTo) setTimeout(function() { document.getElementById(scrollTo).scrollIntoView({ block: 'start' }); }, 30);
+    }
+    document.getElementById('telegramBtn').addEventListener('click', function() { openAlerts(); });
+    document.getElementById('tgPostBtn').addEventListener('click', function() { openAlerts('alChannel'); });
     document.getElementById('tgModalClose').addEventListener('click', function() { document.getElementById('tgModal').classList.remove('open'); });
     document.getElementById('tgModal').addEventListener('click', function(e) { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
-    document.getElementById('tgPostBtn').addEventListener('click', function() { postTg(); });
-    document.getElementById('tgThreshold').addEventListener('input', function() { tgThreshold = parseInt(this.value); document.getElementById('tgThresholdVal').textContent = '>= ' + tgThreshold + 'c'; });
+    document.getElementById('tgThreshold').addEventListener('input', function() {
+      tgThreshold = parseInt(this.value, 10);
+      document.getElementById('tgThresholdVal').textContent = '≥ ' + tgThreshold + ' pts 24h';
+      tgPreviewed = null; document.getElementById('tgPreview').innerHTML = '';
+      document.getElementById('tgSendNow').disabled = true;
+      if (!tgAutoPost) document.getElementById('tgAutoToggle').disabled = true;
+    });
+    function getTopMarkets() {
+      return markets.filter(function(m) { return m.priceChange1d != null && Math.abs(m.priceChange1d) * 100 >= tgThreshold; })
+        .sort(function(a, b) { return Math.abs(b.priceChange1d) - Math.abs(a.priceChange1d); })
+        .slice(0, 10);
+    }
+    document.getElementById('tgPreviewBtn').addEventListener('click', function() {
+      tgPreviewed = getTopMarkets();
+      var host = document.getElementById('tgPreview');
+      host.innerHTML = tgPreviewed.length
+        ? tgPreviewed.map(function(t, i) { return '<div class="card-msg">' + (i + 1) + '. ' + alEsc(t.title) + ' — YES ' + t.yesOdds + '¢ · ' + formatPriceChange(t.priceChange1d) + ' 24h · ' + alEsc(t.platform) + '</div>'; }).join('')
+        : '<div class="al-empty">No market moved ' + tgThreshold + ' pts or more in 24h. Nothing would be posted.</div>';
+      document.getElementById('tgSendNow').disabled = !tgPreviewed.length;
+      document.getElementById('tgAutoToggle').disabled = false;
+    });
     document.getElementById('tgAutoToggle').addEventListener('click', function() {
+      if (this.disabled) return;
       tgAutoPost = !tgAutoPost; this.classList.toggle('active', tgAutoPost);
-      if (tgAutoPost) { tgAutoInterval = setInterval(function() { postTg(true); }, 30*60*1000); showToast('Auto-post enabled', 'success'); addMemoryLine('alpha', 'Auto-post <span class="hl">ON</span> >=' + tgThreshold + 'c'); }
+      if (tgAutoPost) { tgAutoInterval = setInterval(function() { postTg(getTopMarkets(), true); }, 30*60*1000); showToast('Auto-post on: markets ≥ ' + tgThreshold + ' pts, every 30 min', 'success'); addMemoryLine('alpha', 'Auto-post <span class="hl">ON</span> ≥' + tgThreshold + ' pts'); }
       else { clearInterval(tgAutoInterval); tgAutoInterval = null; showToast('Auto-post off', ''); addMemoryLine('alpha', 'Auto-post <span class="hl">OFF</span>'); }
     });
-    document.getElementById('tgSendNow').addEventListener('click', function() { postTg(); });
-
-    function checkTgStatus() {
+    document.getElementById('tgSendNow').addEventListener('click', function() { if (tgPreviewed && tgPreviewed.length) postTg(tgPreviewed); });
+    document.getElementById('tgTestBtn').addEventListener('click', function() {
+      if (!confirm('This posts a test message to the Nexxore Telegram channel. Continue?')) return;
       var dot = document.querySelector('#tgStatus .tg-dot'), txt = document.getElementById('tgStatusText');
-      dot.className = 'tg-dot checking'; txt.textContent = 'Checking...';
-      fetch(TG_API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:'Scanner check'}) })
+      dot.className = 'tg-dot checking'; txt.textContent = 'Sending test…';
+      fetch(TG_API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:'Nexxore channel test'}) })
         .then(function(res) { return res.json(); })
         .then(function(data) {
           if (data.success) { dot.className = 'tg-dot online'; txt.textContent = 'Connected'; }
           else { dot.className = 'tg-dot offline'; txt.textContent = data.error || 'Not configured'; }
         })
         .catch(function() { dot.className = 'tg-dot offline'; txt.textContent = 'Unreachable'; });
-    }
+    });
 
-    function getTopMarkets() {
-      // Get markets with biggest price moves (real data)
-      return markets.filter(function(m) { return m.priceChange1d != null && Math.abs(m.priceChange1d) > 0; })
-        .sort(function(a, b) { return Math.abs(b.priceChange1d) - Math.abs(a.priceChange1d); })
-        .slice(0, 10);
-    }
-
-    function postTg(isAuto) {
-      var btn = document.getElementById('tgSendNow'), hBtn = document.getElementById('tgPostBtn');
-      btn.disabled = true; btn.textContent = 'Sending...'; hBtn.style.opacity = '0.5';
-      var topMarkets = getTopMarkets();
-      if (!topMarkets.length) { btn.disabled = false; btn.textContent = 'Post Top Trades Now'; hBtn.style.opacity = '1'; showToast('No movers found', 'error'); return; }
+    function postTg(topMarkets, isAuto) {
+      var btn = document.getElementById('tgSendNow');
+      if (!topMarkets || !topMarkets.length) { if (!isAuto) showToast('Nothing to post', 'error'); return; }
+      btn.disabled = true; btn.textContent = 'Sending...';
       fetch(TG_API, { method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({trades:topMarkets.map(function(t) { return {title:t.title,yesOdds:t.yesOdds,priceChange1d:formatPriceChange(t.priceChange1d),volume:formatVolume(t.volume),platform:t.platform,category:t.category,expiry:t.expiry}; })})
       })
@@ -2577,7 +2746,7 @@ body::before {
         else showToast(data.error || 'Failed', 'error');
       })
       .catch(function() { showToast('Network error', 'error'); })
-      .finally(function() { btn.disabled = false; btn.textContent = 'Post Top Trades Now'; hBtn.style.opacity = '1'; });
+      .finally(function() { btn.disabled = !(tgPreviewed && tgPreviewed.length); btn.textContent = 'Post previewed markets'; });
     }
 
     function showToast(msg, type) {
