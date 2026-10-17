@@ -540,22 +540,21 @@
 
         <div class="stat-grid" aria-label="Track record summary">
           <div class="stat-card"><span>Resolved / Total</span><strong data-stat="totalSignals">--</strong></div>
-          <div class="stat-card"><span>Win Rate</span><strong data-stat="winRate">--</strong></div>
-          <div class="stat-card"><span>Avg Return</span><strong data-stat="avgReturnBps">--</strong></div>
-          <div class="stat-card"><span>Sharpe</span><strong data-stat="sharpe">--</strong></div>
-          <div class="stat-card"><span>Max Drawdown</span><strong data-stat="maxDrawdownPct">--</strong></div>
-          <div class="stat-card"><span>Total P&L</span><strong data-stat="totalPnlPct">--</strong></div>
+          <div class="stat-card"><span>Model Brier</span><strong data-stat="brierModel">--</strong></div>
+          <div class="stat-card"><span>Market Brier</span><strong data-stat="brierMarket">--</strong></div>
+          <div class="stat-card"><span>Skill vs market</span><strong data-stat="brierSkill">--</strong></div>
+          <div class="stat-card"><span>Avg edge at entry</span><strong data-stat="avgNetEdgeC">--</strong></div>
+          <div class="stat-card"><span>Net P&amp;L</span><strong data-stat="netPnlPct">--</strong></div>
         </div>
 
         <div class="method-note">
-          <strong>Methodology.</strong> Calibration compares predicted and actual hit rate by edge tier. Sample period is the selected range. Unresolved calls stay in the log as open and count toward the total; win rate and P&amp;L use resolved calls only. P&amp;L is the recorded per-signal return in basis points and does not yet deduct fees or slippage.
-        </div>
+          <strong>Methodology.</strong> Each call stores the model probability and the market price at the same timestamp. When the market resolves, both are Brier-scored. Lower is better, and skill above zero means the model beat the market's own probabilities. Edge and P&amp;L are after the spread (entries use the ask) and venue fees. Open calls stay in the log and count toward the total. </div>
 
         <div class="content-grid">
           <section class="panel">
             <div class="panel__head">
               <h2>Equity Curve</h2>
-              <span>Cumulative resolved P&L</span>
+              <span>Net of spread and fees, equal stake per call</span>
             </div>
             <div class="chart-box" data-equity-curve></div>
           </section>
@@ -578,12 +577,14 @@
             <table>
               <thead>
                 <tr>
-                  <th>Timestamp</th>
-                  <th>Market / Asset</th>
-                  <th>Edge</th>
-                  <th>Confidence</th>
+                  <th>Called</th>
+                  <th>Market</th>
+                  <th>Model</th>
+                  <th>Market price</th>
+                  <th>Net edge</th>
                   <th>Outcome</th>
-                  <th>P&L</th>
+                  <th>Brier model / mkt</th>
+                  <th>Net P&amp;L</th>
                   <th>Audit</th>
                 </tr>
               </thead>

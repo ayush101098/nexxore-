@@ -10,15 +10,15 @@
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-6QGB2RQVP0');</script>
 
   <!-- SEO -->
-  <meta name="description" content="The prediction market intelligence stack: curated open-source trading bots, 36GB datasets, backtesters, copy-trading and arbitrage strategies for Polymarket and Kalshi — plus a live cross-platform market scanner.">
-  <meta name="keywords" content="polymarket trading bot, prediction market tools, polymarket strategies, kalshi arbitrage, polymarket copy trading, prediction market backtesting, polymarket dataset, smart money tracking, polymarket market making, prediction market analytics">
+  <meta name="description" content="Prediction market research for Polymarket: a live scanner, price movers, volume leaders, and watchlist alerts you preview before enabling.">
+  <meta name="keywords" content="polymarket scanner, prediction market alerts, polymarket watchlist, prediction market analytics">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
   <link rel="canonical" href="https://nexxore.xyz/predictions">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%2305050D' stroke='%2300C8FF' stroke-width='4'/%3E%3Ctext x='50' y='62' text-anchor='middle' font-size='36' font-weight='800' font-family='system-ui' fill='%2300C8FF'%3ENX%3C/text%3E%3C/svg%3E">
 
   <!-- OG -->
   <meta property="og:title" content="Prediction Market Tools &amp; Strategies — The Intelligence Stack | Nexxore">
-  <meta property="og:description" content="Curated open-source bots, datasets, backtesters and 120+ trading strategies for Polymarket and Kalshi.">
+  <meta property="og:description" content="Live Polymarket scanner with watchlist alerts. Manifold shown for comparison (play money).">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://nexxore.xyz/predictions">
   <meta property="og:image" content="https://nexxore.xyz/assets/icons/og-image.png">
@@ -27,7 +27,7 @@
   <meta name="twitter:site" content="@nexxore">
   <meta name="twitter:image" content="https://nexxore.xyz/assets/icons/og-image.png">
   <meta name="theme-color" content="#060B12">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":["SoftwareApplication","WebApplication"],"name":"Nexxore Predictions","url":"https://nexxore.xyz/predictions","applicationCategory":"FinanceApplication","applicationSubCategory":"Prediction Market Analytics","operatingSystem":"Web Browser","description":"AI-powered prediction market analytics — edge detection, probability mispricing analysis, and autonomous signal generation across Polymarket and Kalshi.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["AI Edge Detection Engine","Polymarket Analytics","Kalshi Signal Analysis","Probability Mispricing Detection","5-Agent Autonomous Intelligence","Real-Time Market Monitoring","Expected Value Calculator","Signal Confidence Scoring"]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":["SoftwareApplication","WebApplication"],"name":"Nexxore Predictions","url":"https://nexxore.xyz/predictions","applicationCategory":"FinanceApplication","applicationSubCategory":"Prediction Market Analytics","operatingSystem":"Web Browser","description":"AI-powered prediction market analytics — a live Polymarket scanner, price movers, volume leaders and watchlist alerts.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Polymarket Market Scanner","Price Movers","Volume Leaders","Watchlist Alerts"]}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Nexxore","item":"https://nexxore.xyz/"},{"@type":"ListItem","position":2,"name":"Predictions","item":"https://nexxore.xyz/predictions"}]}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://nexxore.xyz/#organization","name":"Nexxore","alternateName":["Nexxore DeFi","Nexxore Analytics","NEXXORE","nexxore","nexxore.xyz"],"url":"https://nexxore.xyz","logo":{"@type":"ImageObject","url":"https://nexxore.xyz/assets/icons/og-image.png","width":1200,"height":630},"image":"https://nexxore.xyz/assets/icons/og-image.png","description":"Nexxore is the institutional-grade DeFi risk analytics platform for crypto traders and funds.","foundingDate":"2025","sameAs":["https://x.com/nexxore","https://github.com/ayush101098/nexxore-"],"knowsAbout":["DeFi Risk Analytics","Perpetual Futures Funding Rates","Crypto Trading Risk Tools","Delta-Neutral Trading","On-Chain Analytics","Market Regime Detection"]}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://nexxore.xyz/#website","name":"Nexxore","alternateName":["Nexxore DeFi","Nexxore Analytics","nexxore"],"url":"https://nexxore.xyz","publisher":{"@id":"https://nexxore.xyz/#organization"},"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://nexxore.xyz/research?q={search_term_string}"},"query-input":"required name=search_term_string"}}</script>
@@ -694,7 +694,6 @@ body::before {
       <button class="header-btn" id="connectTradeBtn" style="border-color:rgba(0,232,122,0.25);color:var(--green)">Connect to trade</button>
       <button class="header-btn" id="hotkeyToggle"><span class="kbd">T</span> Terminal</button>
       <button class="header-btn" id="telegramBtn" style="border-color:rgba(0,200,255,0.3);color:var(--cyan)">Create an alert</button>
-      <button class="header-btn" id="tgPostBtn">Channel posting</button>
       <div class="header-btn ws-live" id="wsStatus"><span class="dot"></span> <span id="wsText">Connecting...</span></div>
     </div>
   </header>
@@ -706,7 +705,7 @@ body::before {
         <button class="tg-modal-close" id="tgModalClose">&times;</button>
       </div>
       <div class="tg-modal-body">
-        <div class="al-perm">Each permission is separate. A browser alert only notifies you. It never posts or trades.</div>
+        <div class="al-perm">A browser alert only notifies you. It never posts anywhere or places a trade.</div>
 
         <div class="tg-section">
           <label>1 · Watchlist <span class="al-count" id="alWatchCount">0</span></label>
@@ -743,26 +742,6 @@ body::before {
           <div id="alLog" class="al-list"><div class="al-empty">No alerts yet.</div></div>
         </div>
 
-        <div class="tg-section al-channel" id="alChannel">
-          <label>Channel posting · Nexxore Telegram (separate permission)</label>
-          <p class="tg-hint">Posts the biggest 24h movers to the Nexxore channel. This is public and does not depend on your watchlist. Preview before anything is sent.</p>
-          <div class="tg-threshold-row">
-            <input type="range" id="tgThreshold" min="3" max="20" value="8" class="tg-slider">
-            <span id="tgThresholdVal" class="tg-threshold-val">&ge; 8 pts 24h</span>
-          </div>
-          <button class="tg-send-btn al-ghost" id="tgPreviewBtn" type="button">Preview channel post</button>
-          <div id="tgPreview" class="al-preview"></div>
-          <button class="tg-send-btn" id="tgSendNow" disabled>Post previewed markets</button>
-          <div class="tg-toggle-row" style="margin-top:8px">
-            <span>Auto-post every 30 min while open</span>
-            <button class="tg-toggle" id="tgAutoToggle" disabled><span class="tg-toggle-dot"></span></button>
-          </div>
-          <div class="tg-status" id="tgStatus" style="margin-top:8px">
-            <span class="tg-dot"></span>
-            <span id="tgStatusText">Not checked</span>
-            <button class="al-link" id="tgTestBtn" type="button">Send a test message</button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -826,20 +805,19 @@ body::before {
             <p class="hero-sub">Find candidate markets, read the thesis and invalidation conditions, then set a watchlist alert you preview before it is enabled. Alerts, auto-posting and execution are separate permissions. Turning on one does not turn on the others.</p>
           </div>
           <div class="hero-meta">
-            <span class="meta-chip" style="color:var(--gold);border-color:rgba(247,185,85,0.25);background:rgba(247,185,85,0.05)">11 Tools &middot; 120+ Strategies</span>
-            <span class="meta-chip live"><span class="dot"></span> Live API Data</span>
-            <span class="meta-chip">Polymarket + Manifold</span>
+                        <span class="meta-chip live"><span class="dot"></span> Live API Data</span>
+            <span class="meta-chip" title="Manifold uses play money; it is shown for comparison only">Polymarket · Manifold (play money)</span>
           </div>
         </div>
 
         <div class="agents-grid" id="agentCards">
-          <div class="agent-card active" data-agent="tools" style="--agent-color:var(--gold)">
+          <div class="agent-card" data-agent="tools" style="--agent-color:var(--gold)">
             <div class="agent-card-top"><span class="agent-icon">&#9874;</span><span class="agent-live" style="color:var(--gold)">Open Source</span></div>
-            <div class="agent-card-name">Intelligence Stack</div>
-            <div class="agent-card-role">Bots, datasets, backtesters &amp; strategy engines</div>
+            <div class="agent-card-name">Third-party tools</div>
+            <div class="agent-card-role">Open-source repos by other teams, not run by Nexxore</div>
             <div class="agent-card-stat"><span class="agent-stat-label">Tools</span><span class="agent-stat-value">11</span></div>
           </div>
-          <div class="agent-card" data-agent="alpha" style="--agent-color:var(--cyan)">
+          <div class="agent-card active" data-agent="alpha" style="--agent-color:var(--cyan)">
             <div class="agent-card-top"><span class="agent-icon">&#9678;</span><span class="agent-live"><span class="dot"></span> Live</span></div>
             <div class="agent-card-name">Market Scanner</div>
             <div class="agent-card-role">Browse all open markets with real odds and volume</div>
@@ -861,14 +839,14 @@ body::before {
       </section>
 
       <div class="agent-tabs" id="agentTabs">
-        <button class="agent-tab active" data-panel="tools">&#9874; Tools &amp; Strategies</button>
-        <button class="agent-tab" data-panel="alpha">&#9678; Market Scanner</button>
+        <button class="agent-tab active" data-panel="alpha">&#9678; Market Scanner</button>
         <button class="agent-tab" data-panel="movers">&#11041; Price Movers</button>
         <button class="agent-tab" data-panel="volume">&#9672; Volume Leaders</button>
+        <button class="agent-tab" data-panel="tools">&#9874; Third-party tools</button>
       </div>
 
       <!-- TOOLS & STRATEGIES PANEL -->
-      <div class="agent-panel active" id="panel-tools">
+      <div class="agent-panel" id="panel-tools">
 
         <div class="toolkit-stats mb-16">
           <div class="stat-cell"><div class="stat-cell-label">Curated Tools</div><div class="stat-cell-value" style="color:var(--gold)">11</div><div class="stat-cell-delta neutral">All free &amp; open source</div></div>
@@ -878,7 +856,7 @@ body::before {
         </div>
 
         <div class="card edge-gold mb-16">
-          <div class="card-head"><div class="card-title">Strategy Playbook <span class="badge live">All 12 Run Live</span></div><span style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim)">Click any strategy to run it now on live market data</span></div>
+          <div class="card-head"><div class="card-title">Third-party strategy demos</div><span style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim)">Read-only demos of strategies built by other teams, on live data. Nexxore does not execute these, and latency strategies need sub-100ms bots.</span></div>
           <div class="card-body">
             <div class="strategy-grid">
               <div class="strategy-cell" data-strategy="arb"><div class="strategy-name">Cross-Venue Arbitrage<span class="strategy-live">&#9654; RUN</span></div><div class="strategy-desc">Same event priced differently across venues — scan every live gap in cents.</div><div class="strategy-tool">CloddsBot engine</div></div>
@@ -909,13 +887,13 @@ body::before {
       </div>
 
       <!-- ALPHA PANEL — MARKET SCANNER -->
-      <div class="agent-panel" id="panel-alpha">
+      <div class="agent-panel active" id="panel-alpha">
         <div class="stats-bar">
           <div class="stat-cell"><div class="stat-cell-label">Total Volume</div><div class="stat-cell-value" id="totalVolume">—</div><div class="stat-cell-delta neutral" id="totalVolumeDelta">Loading...</div></div>
           <div class="stat-cell"><div class="stat-cell-label">Active Markets</div><div class="stat-cell-value" id="activeMarkets">—</div><div class="stat-cell-delta neutral" id="activeMarketsDelta">Scanning...</div></div>
           <div class="stat-cell"><div class="stat-cell-label">Markets Loaded</div><div class="stat-cell-value" style="color:var(--cyan)" id="mispricedCount">—</div><div class="stat-cell-delta neutral">From live APIs</div></div>
           <div class="stat-cell"><div class="stat-cell-label">Avg Liquidity</div><div class="stat-cell-value" style="color:var(--green)" id="avgLiquidity">—</div><div class="stat-cell-delta neutral">Per market</div></div>
-          <div class="stat-cell"><div class="stat-cell-label">Platforms</div><div class="stat-cell-value" style="color:var(--violet)" id="platformCount">2</div><div class="stat-cell-delta up" id="platformNames">Polymarket + Manifold</div></div>
+          <div class="stat-cell"><div class="stat-cell-label">Platforms</div><div class="stat-cell-value" style="color:var(--violet)" id="platformCount">2</div><div class="stat-cell-delta up" id="platformNames">Polymarket + Manifold (play money)</div></div>
           <div class="stat-cell"><div class="stat-cell-label">Last Refresh</div><div class="stat-cell-value" id="lastRefresh" style="font-size:0.85rem">—</div><div class="stat-cell-delta neutral">Auto every 2 min</div></div>
         </div>
         <div class="grid-wide mb-20">
@@ -937,7 +915,7 @@ body::before {
               <div class="chips mb-12" id="platformFilters" style="border-top:1px solid var(--border);padding-top:6px;">
                 <span class="chip active" data-platform="all">All Platforms</span>
                 <span class="chip" data-platform="Polymarket" style="--ac:var(--cyan)">Polymarket</span>
-                <span class="chip" data-platform="Manifold" style="--ac:var(--violet)">Manifold</span>
+                <span class="chip" data-platform="Manifold" style="--ac:var(--violet)">Manifold · play money</span>
               </div>
               <div class="mispriced-list" id="mispricedList" style="max-height:480px;overflow-y:auto;"><div id="scanLoader" style="text-align:center;padding:28px 16px;"><div style="font-family:var(--mono);font-size:0.72rem;color:var(--cyan);margin-bottom:6px;animation:pulse 1.5s infinite;">Scanning live APIs...</div><div style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim);">Polymarket &middot; Manifold Markets</div></div></div>
             </div>
@@ -2660,74 +2638,13 @@ body::before {
       renderWatch(); renderLog();
     };
 
-    // Channel posting — separate permission, preview required
-    var TG_API = '/api/telegram';
-    var tgAutoPost = false, tgThreshold = 8, tgAutoInterval = null, tgPreviewed = null;
-    function openAlerts(scrollTo) {
+    function openAlerts() {
       document.getElementById('tgModal').classList.add('open');
       renderWatch(); renderLog(); renderRule();
-      if (scrollTo) setTimeout(function() { document.getElementById(scrollTo).scrollIntoView({ block: 'start' }); }, 30);
     }
-    document.getElementById('telegramBtn').addEventListener('click', function() { openAlerts(); });
-    document.getElementById('tgPostBtn').addEventListener('click', function() { openAlerts('alChannel'); });
+    document.getElementById('telegramBtn').addEventListener('click', openAlerts);
     document.getElementById('tgModalClose').addEventListener('click', function() { document.getElementById('tgModal').classList.remove('open'); });
     document.getElementById('tgModal').addEventListener('click', function(e) { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
-    document.getElementById('tgThreshold').addEventListener('input', function() {
-      tgThreshold = parseInt(this.value, 10);
-      document.getElementById('tgThresholdVal').textContent = '≥ ' + tgThreshold + ' pts 24h';
-      tgPreviewed = null; document.getElementById('tgPreview').innerHTML = '';
-      document.getElementById('tgSendNow').disabled = true;
-      if (!tgAutoPost) document.getElementById('tgAutoToggle').disabled = true;
-    });
-    function getTopMarkets() {
-      return markets.filter(function(m) { return m.priceChange1d != null && Math.abs(m.priceChange1d) * 100 >= tgThreshold; })
-        .sort(function(a, b) { return Math.abs(b.priceChange1d) - Math.abs(a.priceChange1d); })
-        .slice(0, 10);
-    }
-    document.getElementById('tgPreviewBtn').addEventListener('click', function() {
-      tgPreviewed = getTopMarkets();
-      var host = document.getElementById('tgPreview');
-      host.innerHTML = tgPreviewed.length
-        ? tgPreviewed.map(function(t, i) { return '<div class="card-msg">' + (i + 1) + '. ' + alEsc(t.title) + ' — YES ' + t.yesOdds + '¢ · ' + formatPriceChange(t.priceChange1d) + ' 24h · ' + alEsc(t.platform) + '</div>'; }).join('')
-        : '<div class="al-empty">No market moved ' + tgThreshold + ' pts or more in 24h. Nothing would be posted.</div>';
-      document.getElementById('tgSendNow').disabled = !tgPreviewed.length;
-      document.getElementById('tgAutoToggle').disabled = false;
-    });
-    document.getElementById('tgAutoToggle').addEventListener('click', function() {
-      if (this.disabled) return;
-      tgAutoPost = !tgAutoPost; this.classList.toggle('active', tgAutoPost);
-      if (tgAutoPost) { tgAutoInterval = setInterval(function() { postTg(getTopMarkets(), true); }, 30*60*1000); showToast('Auto-post on: markets ≥ ' + tgThreshold + ' pts, every 30 min', 'success'); addMemoryLine('alpha', 'Auto-post <span class="hl">ON</span> ≥' + tgThreshold + ' pts'); }
-      else { clearInterval(tgAutoInterval); tgAutoInterval = null; showToast('Auto-post off', ''); addMemoryLine('alpha', 'Auto-post <span class="hl">OFF</span>'); }
-    });
-    document.getElementById('tgSendNow').addEventListener('click', function() { if (tgPreviewed && tgPreviewed.length) postTg(tgPreviewed); });
-    document.getElementById('tgTestBtn').addEventListener('click', function() {
-      if (!confirm('This posts a test message to the Nexxore Telegram channel. Continue?')) return;
-      var dot = document.querySelector('#tgStatus .tg-dot'), txt = document.getElementById('tgStatusText');
-      dot.className = 'tg-dot checking'; txt.textContent = 'Sending test…';
-      fetch(TG_API, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:'Nexxore channel test'}) })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          if (data.success) { dot.className = 'tg-dot online'; txt.textContent = 'Connected'; }
-          else { dot.className = 'tg-dot offline'; txt.textContent = data.error || 'Not configured'; }
-        })
-        .catch(function() { dot.className = 'tg-dot offline'; txt.textContent = 'Unreachable'; });
-    });
-
-    function postTg(topMarkets, isAuto) {
-      var btn = document.getElementById('tgSendNow');
-      if (!topMarkets || !topMarkets.length) { if (!isAuto) showToast('Nothing to post', 'error'); return; }
-      btn.disabled = true; btn.textContent = 'Sending...';
-      fetch(TG_API, { method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({trades:topMarkets.map(function(t) { return {title:t.title,yesOdds:t.yesOdds,priceChange1d:formatPriceChange(t.priceChange1d),volume:formatVolume(t.volume),platform:t.platform,category:t.category,expiry:t.expiry}; })})
-      })
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        if (data.success) { showToast('Posted ' + (data.trades_sent || topMarkets.length) + ' markets', 'success'); addMemoryLine('alpha', 'Telegram: <span class="hl">' + topMarkets.length + ' markets</span>' + (isAuto?' [AUTO]':'')); }
-        else showToast(data.error || 'Failed', 'error');
-      })
-      .catch(function() { showToast('Network error', 'error'); })
-      .finally(function() { btn.disabled = !(tgPreviewed && tgPreviewed.length); btn.textContent = 'Post previewed markets'; });
-    }
 
     function showToast(msg, type) {
       var t = document.getElementById('tgToast'); t.textContent = msg; t.className = 'tg-toast show ' + type;

@@ -40,7 +40,7 @@
     intelligence: 'paper',
     strategyBuilder: 'live',
     strategyExecution: 'own-key',
-    stablecoinHub: 'live',
+    stablecoinHub: 'planned', // parked until audit + track record
     alerts: 'live',
     trackRecord: 'paper',
     pro: 'waitlist',

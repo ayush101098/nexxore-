@@ -68,6 +68,15 @@
   .note{margin-top:14px;font-size:12px;color:var(--ink-faint);font-family:var(--mono);min-height:16px;}
   .note.err{color:var(--red);}
   .open-btn{display:inline-block;}
+  .live-card{margin:44px auto 0;max-width:520px;text-align:left;border:1px solid var(--line);border-radius:10px;padding:16px 18px;background:rgba(255,255,255,0.015);}
+  .lc-head{font-family:var(--mono);font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-faint);display:flex;align-items:center;gap:7px;}
+  .lc-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 6px var(--teal);}
+  .lc-title{font-size:15px;color:var(--ink);margin:9px 0 12px;line-height:1.35;}
+  .lc-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .lc-row span{display:block;font-family:var(--mono);font-size:9.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;}
+  .lc-row b{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--ink);}
+  .lc-note{font-size:12px;color:var(--ink-faint);margin-top:12px;line-height:1.5;}
+  @media (max-width:520px){ .lc-row{grid-template-columns:1fr 1fr;} }
   footer{padding:24px 32px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-faint);font-family:var(--mono);}
   footer a:hover{color:var(--ink-dim);}
   footer .links{display:flex;gap:20px;}
@@ -89,6 +98,17 @@
         <button type="submit" id="waitlistBtn">Get access →</button>
       </form>
       <div class="note" id="waitlistNote">Enter your email to open the platform.</div>
+    </div>
+    <div class="live-card" id="liveCard" hidden>
+      <div class="lc-head"><span class="lc-dot"></span>Live on Polymarket · bracket check · <span id="lcTime"></span></div>
+      <div class="lc-title" id="lcTitle"></div>
+      <div class="lc-row">
+        <div><span>Outcomes</span><b id="lcLegs"></b></div>
+        <div><span>Σ YES ask</span><b id="lcAsk"></b></div>
+        <div><span>Σ YES bid</span><b id="lcBid"></b></div>
+        <div><span>Gap after spread</span><b id="lcGap"></b></div>
+      </div>
+      <div class="lc-note" id="lcNote"></div>
     </div>
   </div>
 </main>
@@ -131,6 +151,48 @@
       try { localStorage.setItem(KEY, JSON.stringify({ email: email, ts: Date.now(), synced: synced })); } catch (e) {}
       location.href = '/terminal';
     });
+  })();
+</script>
+
+<script>
+  /* One live market above the fold: the mutually exclusive Polymarket event
+     whose YES prices sit furthest from $1 after crossing every spread. */
+  (function () {
+    var urls = ['https://gamma-api.polymarket.com', '/api/pm/gamma'];
+    var path = '/events?active=true&closed=false&order=volume24hr&ascending=false&limit=100';
+    function get(i) {
+      return fetch(urls[i] + path).then(function (r) { if (!r.ok) throw 0; return r.json(); })
+        .catch(function () { if (i + 1 < urls.length) return get(i + 1); throw 0; });
+    }
+    get(0).then(function (events) {
+      var best = null;
+      (events || []).forEach(function (ev) {
+        if (!ev.negRisk || ev.negRiskAugmented || !Array.isArray(ev.markets)) return;
+        var legs = ev.markets.filter(function (m) { return m.active && !m.closed; });
+        if (legs.length < 3) return;
+        var sa = 0, sb = 0;
+        for (var i = 0; i < legs.length; i++) {
+          if (legs[i].bestAsk == null || legs[i].bestBid == null) return;
+          sa += parseFloat(legs[i].bestAsk); sb += parseFloat(legs[i].bestBid);
+        }
+        var gap = Math.max(1 - sa, sb - 1);
+        if (!best || gap > best.gap) best = { title: ev.title, n: legs.length, sa: sa, sb: sb, gap: gap, side: 1 - sa >= sb - 1 ? 'YES' : 'NO' };
+      });
+      if (!best) return;
+      var c = function (v) { return (v * 100).toFixed(1) + '¢'; };
+      document.getElementById('lcTitle').textContent = best.title;
+      document.getElementById('lcLegs').textContent = best.n;
+      document.getElementById('lcAsk').textContent = c(best.sa);
+      document.getElementById('lcBid').textContent = c(best.sb);
+      var g = document.getElementById('lcGap');
+      g.textContent = (best.gap > 0 ? '+' : '') + c(best.gap);
+      g.style.color = best.gap > 0 ? 'var(--teal)' : 'var(--ink-dim)';
+      document.getElementById('lcNote').textContent = best.gap > 0
+        ? 'Exactly one outcome wins, so a full set pays $1. Buying every ' + best.side + ' right now locks in ' + c(best.gap) + ' per set before fees, limited by the thinnest leg.'
+        : 'Exactly one outcome wins, so YES prices should sum to $1. This is the closest any event comes to a free gap right now: none survives the spread.';
+      document.getElementById('lcTime').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('liveCard').hidden = false;
+    }).catch(function () {});
   })();
 </script>
 

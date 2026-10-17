@@ -285,11 +285,14 @@ td.est-cell { color:var(--violet); }
 .eb-row input:focus { border-color:var(--border-hi); }
 .eb-row button { margin-left:4px; background:none; border:1px solid var(--border); color:var(--text-dim); font-family:var(--mono); font-size:0.58rem; padding:5px 8px; border-radius:var(--radius); cursor:pointer; }
 .eb-note { font-size:0.6rem; color:var(--text-dim); margin-top:6px; line-height:1.4; }
-.eb-out { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.eb-out { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; }
 .eb-cell { padding:8px 9px; background:var(--surface); border:1px solid rgba(138,180,255,0.07); border-radius:var(--radius); }
 .eb-cell .k { font-size:0.56rem; color:var(--text-dim); }
 .eb-cell .v { font-family:var(--mono); font-size:0.9rem; color:var(--text); margin-top:3px; }
 .eb-foot { grid-column:1/-1; font-size:0.62rem; color:var(--text-muted); line-height:1.45; }
+.br-note { font-size:0.62rem; color:var(--text-dim); padding:8px 14px 0; line-height:1.45; }
+.br-flag { font-family:var(--mono); font-size:0.52rem; color:var(--gold); border:1px solid rgba(232,163,61,0.35); border-radius:2px; padding:1px 4px; margin-left:4px; }
+td.br-warn { color:var(--gold); }
 .canvas-tag{font-size:0.78rem;color:var(--text-dim,rgba(255,255,255,0.6));margin:4px 0 0;font-weight:400;letter-spacing:0;}
 </style>
 <script src="/js/nx-facts.js"></script>
@@ -396,6 +399,7 @@ td.est-cell { color:var(--violet); }
             <div class="eb-cell"><div class="k">Market price</div><div class="v" id="ebPx">—</div></div>
             <div class="eb-cell"><div class="k">Net edge</div><div class="v" id="ebEdge">—</div></div>
             <div class="eb-cell"><div class="k">Best side</div><div class="v" id="ebSide">—</div></div>
+            <div class="eb-cell"><div class="k">Size before edge is gone</div><div class="v" id="ebSize">—</div></div>
           </div>
           <div class="eb-foot" id="ebFoot">Enter your estimate to see the gap between the market's odds and yours, after the spread. Polymarket fees, where a market charges them, are not deducted.</div>
         </div>
@@ -469,6 +473,20 @@ td.est-cell { color:var(--violet); }
           <tbody id="mktBody">
             <tr><td colspan="10"><div class="loading">Scanning Polymarket…</div></td></tr>
           </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- bracket consistency -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Bracket Consistency <span data-nx-state="live" data-nx-watch="#bracketBody" data-nx-ttl="150"></span></h2>
+        <span class="sub" id="bracketCount">—</span>
+      </div>
+      <div class="br-note">In events where exactly one outcome wins, YES prices should add up to $1. A gap after crossing every spread is structural edge. Top of book only, so the thinnest leg limits size. Open-ended events can add outcomes, so their gaps are not risk-free.</div>
+      <div style="overflow-x:auto">
+        <table class="grid">
+          <thead><tr><th>Event</th><th>Legs</th><th>Σ YES ask</th><th>Σ YES bid</th><th>Gap after spread</th><th>Thinnest leg</th></tr></thead>
+          <tbody id="bracketBody"><tr><td colspan="6"><div class="loading">Checking events…</div></td></tr></tbody>
         </table>
       </div>
     </section>
@@ -575,7 +593,7 @@ td.est-cell { color:var(--violet); }
 
   /* ── helpers ──────────────────────────────────────────── */
   function $(id) { return document.getElementById(id); }
-  function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML.replace(/"/g, '&quot;'); }
   function fmtUsd(n, dec) {
     if (n == null || isNaN(n)) return '—';
     var a = Math.abs(n);
@@ -652,6 +670,22 @@ td.est-cell { color:var(--violet); }
   }
   function fmtEdge(ed) { return ed == null ? '—' : (ed.v >= 0 ? '+' : '') + (ed.v * 100).toFixed(1) + '¢ ' + ed.side.toUpperCase(); }
 
+  /* Walk the asks for the chosen side and buy every level still priced below
+     your probability: that is the most you can take before the next share
+     costs more than you think it is worth. */
+  function sizeBeforeEdgeGone(m, side, pSide) {
+    var token = side === 'yes' ? m.tokenId : m.noTokenId;
+    var book = token ? state.books[token] : null;
+    if (!book) { if (token) ensureBook(token); return 'loading book…'; }
+    var asks = (book.asks || []).map(function(l) { return { p: parseFloat(l.price), s: parseFloat(l.size) }; })
+      .filter(function(l) { return l.p > 0 && l.p < 1 && l.s > 0; })
+      .sort(function(a, b) { return a.p - b.p; });
+    var usd = 0, shares = 0;
+    for (var i = 0; i < asks.length && asks[i].p < pSide; i++) { usd += asks[i].p * asks[i].s; shares += asks[i].s; }
+    if (!shares) return 'none at the ask';
+    return '$' + fmtNum(Math.round(usd)) + ' · avg ' + (usd / shares * 100).toFixed(1) + '¢';
+  }
+
   function renderEdge() {
     var m = state.selected;
     if (!m) return;
@@ -663,13 +697,14 @@ td.est-cell { color:var(--violet); }
     var ed = netEdge(m);
     var foot = $('ebFoot'), eEl = $('ebEdge');
     if (!ed) {
-      eEl.textContent = '—'; eEl.style.color = ''; $('ebSide').textContent = '—';
+      eEl.textContent = '—'; eEl.style.color = ''; $('ebSide').textContent = '—'; $('ebSize').textContent = '—';
       foot.textContent = 'Enter your estimate to see the gap between the market\'s odds and yours, after the spread. Polymarket fees, where a market charges them, are not deducted.';
       return;
     }
     eEl.textContent = (ed.v >= 0 ? '+' : '') + (ed.v * 100).toFixed(1) + '¢';
     eEl.style.color = ed.v > 0 ? 'var(--green)' : 'var(--text-dim)';
     $('ebSide').textContent = ed.v > 0 ? 'Buy ' + ed.side.toUpperCase() : 'No edge';
+    $('ebSize').textContent = ed.v > 0 ? sizeBeforeEdgeGone(m, ed.side, ed.side === 'yes' ? e : 1 - e) : '—';
     var thin = m.liq < 10000 ? ' Liquidity is thin, so larger orders will fill worse than this.' : '';
     var wide = m.spread != null && m.spread > 0.03 ? ' The spread is wide (' + (m.spread * 100).toFixed(1) + '¢), which eats into the gap.' : '';
     foot.textContent = ed.v > 0
@@ -690,6 +725,7 @@ td.est-cell { color:var(--violet); }
     return Promise.allSettled(urls.map(function(u) { return pm('gamma', u).then(function(r) { return r.ok ? r.json() : []; }); }))
     .then(function(results) {
       var seen = {}, all = [];
+      state.brackets = findBrackets(results);
       results.forEach(function(r) {
         if (r.status !== 'fulfilled') return;
         var items = Array.isArray(r.value) ? r.value : [];
@@ -730,6 +766,59 @@ td.est-cell { color:var(--violet); }
       });
       return all;
     });
+  }
+
+  /* Mutually exclusive events (Polymarket "negRisk"): exactly one outcome
+     resolves YES, so the YES prices should sum to $1.
+       Σ best asks < $1  → buying every YES pays $1 for less than $1
+       Σ best bids > $1  → buying every NO pays (n−1) for less than (n−1)
+     Top of book only; each leg's depth limits the size. Open-ended events can
+     add outcomes later, so a gap there is not risk-free. */
+  function findBrackets(results) {
+    var seen = {}, out = [];
+    results.forEach(function(r) {
+      if (r.status !== 'fulfilled' || !Array.isArray(r.value)) return;
+      r.value.forEach(function(ev) {
+        if (!ev || !ev.negRisk || !Array.isArray(ev.markets) || seen[ev.id]) return;
+        seen[ev.id] = true;
+        var legs = ev.markets.filter(function(mk) { return mk.active && !mk.closed; });
+        if (legs.length < 3) return;
+        var sumAsk = 0, sumBid = 0, missing = 0, minLiq = Infinity;
+        legs.forEach(function(mk) {
+          var a = mk.bestAsk != null ? parseFloat(mk.bestAsk) : NaN, b = mk.bestBid != null ? parseFloat(mk.bestBid) : NaN;
+          if (isNaN(a) || isNaN(b)) { missing++; return; }
+          sumAsk += a; sumBid += b;
+          minLiq = Math.min(minLiq, parseFloat(mk.liquidityClob || mk.liquidity || 0));
+        });
+        if (missing) return; /* an unquoted leg makes the set impossible to complete */
+        var buyYes = 1 - sumAsk, buyNo = sumBid - 1;
+        out.push({
+          title: ev.title, url: 'https://polymarket.com/event/' + (ev.slug || ''),
+          n: legs.length, sumAsk: sumAsk, sumBid: sumBid,
+          gap: Math.max(buyYes, buyNo), trade: buyYes >= buyNo ? 'Buy all YES' : 'Buy all NO',
+          openEnded: !!ev.negRiskAugmented, minLiq: minLiq === Infinity ? 0 : minLiq
+        });
+      });
+    });
+    out.sort(function(a, b) { return b.gap - a.gap; });
+    return out;
+  }
+
+  function renderBrackets() {
+    var host = $('bracketBody'), list = state.brackets || [];
+    if (!list.length) { host.innerHTML = '<tr><td colspan="6"><div class="empty">No fully quoted mutually exclusive events in this scan.</div></td></tr>'; $('bracketCount').textContent = '—'; return; }
+    var arb = list.filter(function(b) { return b.gap > 0 && !b.openEnded; }).length;
+    $('bracketCount').textContent = list.length + ' events · ' + arb + ' closed set' + (arb === 1 ? '' : 's') + ' with a positive gap';
+    host.innerHTML = list.slice(0, 15).map(function(b) {
+      var pos = b.gap > 0;
+      return '<tr><td class="mkt-name" title="' + esc(b.title) + '"><a href="' + esc(b.url) + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">' + esc(b.title) + '</a>' +
+        (b.openEnded ? ' <span class="br-flag" title="New outcomes can be added, so the set may not be complete">open-ended</span>' : '') + '</td>' +
+        '<td>' + b.n + '</td>' +
+        '<td>' + (b.sumAsk * 100).toFixed(1) + '¢</td>' +
+        '<td>' + (b.sumBid * 100).toFixed(1) + '¢</td>' +
+        '<td class="' + (pos ? (b.openEnded ? 'br-warn' : 'edge-pos') : 'edge-neg') + '">' + (pos ? '+' : '') + (b.gap * 100).toFixed(1) + '¢ ' + (pos ? b.trade : '') + '</td>' +
+        '<td>' + fmtUsd(b.minLiq) + '</td></tr>';
+    }).join('');
   }
 
   function applyFilters() {
@@ -1169,7 +1258,7 @@ td.est-cell { color:var(--violet); }
     if (!token || state.books[token]) { renderTicket(); return; }
     pm('clob', '/book?token_id=' + token)
       .then(function(r) { return r.json(); })
-      .then(function(d) { state.books[token] = { bids: d.bids || [], asks: d.asks || [] }; renderTicket(); })
+      .then(function(d) { state.books[token] = { bids: d.bids || [], asks: d.asks || [] }; renderTicket(); renderEdge(); })
       .catch(function() { renderTicket(); });
   }
   Array.prototype.forEach.call(document.querySelectorAll('.side-btn'), function(b) {
@@ -1427,7 +1516,7 @@ td.est-cell { color:var(--violet); }
         updateDetailFields(state.selected);
         renderEdge();
       }
-      renderCats(); renderMovers(); renderPulse(); renderTable();
+      renderCats(); renderMovers(); renderPulse(); renderTable(); renderBrackets();
       $('refreshStamp').textContent = all.length + ' markets · ' + new Date().toLocaleTimeString('en-US', { hour12:false });
       if (!state.selected && state.filtered.length) selectMarket(state.filtered[0], true);
     }).catch(function() {

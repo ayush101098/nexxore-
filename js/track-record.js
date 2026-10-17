@@ -9,11 +9,11 @@
     updatedAt: document.querySelector('[data-updated-at]'),
     source: document.querySelector('[data-source]'),
     statTotal: document.querySelector('[data-stat="totalSignals"]'),
-    statWinRate: document.querySelector('[data-stat="winRate"]'),
-    statAvgReturn: document.querySelector('[data-stat="avgReturnBps"]'),
-    statSharpe: document.querySelector('[data-stat="sharpe"]'),
-    statDrawdown: document.querySelector('[data-stat="maxDrawdownPct"]'),
-    statPnl: document.querySelector('[data-stat="totalPnlPct"]'),
+    statBrierModel: document.querySelector('[data-stat="brierModel"]'),
+    statBrierMarket: document.querySelector('[data-stat="brierMarket"]'),
+    statSkill: document.querySelector('[data-stat="brierSkill"]'),
+    statEdge: document.querySelector('[data-stat="avgNetEdgeC"]'),
+    statPnl: document.querySelector('[data-stat="netPnlPct"]'),
     curve: document.querySelector('[data-equity-curve]'),
     calibration: document.querySelector('[data-calibration]'),
     tableBody: document.querySelector('[data-signal-rows]'),
@@ -54,22 +54,20 @@
     return 'status-pill status-pill--open';
   }
 
+  function orNa(v, f) { return v == null ? 'n/a' : f(v); }
+
   function renderStats(data) {
-    const resolved = data.stats.resolvedSignals || 0;
+    const st = data.stats;
+    const resolved = st.resolvedSignals || 0;
     setText(els.updatedAt, `Updated ${dateFmt.format(new Date(data.generatedAt))}`);
-    setText(els.source, data.source === 'sample' ? 'No published results yet' : 'Live database · paper forecasts');
+    setText(els.source, data.source === 'supabase' ? 'Live ledger · paper forecasts' : 'No published results yet');
     if (els.notice) els.notice.hidden = resolved > 0;
-    if (!resolved) {
-      setText(els.statTotal, fmt.format(data.stats.totalSignals));
-      [els.statWinRate, els.statAvgReturn, els.statSharpe, els.statDrawdown, els.statPnl].forEach((el) => setText(el, 'n/a'));
-      return;
-    }
-    setText(els.statTotal, `${fmt.format(resolved)} / ${fmt.format(data.stats.totalSignals)}`);
-    setText(els.statWinRate, `${fmt.format(data.stats.winRate)}%`);
-    setText(els.statAvgReturn, formatBps(data.stats.avgReturnBps));
-    setText(els.statSharpe, data.stats.sharpe.toFixed(2));
-    setText(els.statDrawdown, formatPct(data.stats.maxDrawdownPct));
-    setText(els.statPnl, formatPct(data.stats.totalPnlPct));
+    setText(els.statTotal, `${fmt.format(resolved)} / ${fmt.format(st.totalSignals)}`);
+    setText(els.statBrierModel, orNa(st.brierModel, (v) => v.toFixed(3)));
+    setText(els.statBrierMarket, orNa(st.brierMarket, (v) => v.toFixed(3)));
+    setText(els.statSkill, orNa(st.brierSkill, (v) => (v > 0 ? '+' : '') + (v * 100).toFixed(1) + '%'));
+    setText(els.statEdge, orNa(st.avgNetEdgeC, (v) => (v > 0 ? '+' : '') + v.toFixed(1) + '¢'));
+    setText(els.statPnl, orNa(st.netPnlPct, formatPct));
   }
 
   function renderCurve(points) {
@@ -141,18 +139,22 @@
     if (!els.tableBody) return;
     els.empty.hidden = data.signals.length > 0;
 
-    els.tableBody.innerHTML = data.signals.map((signal) => `
+    const pct = (v) => v == null ? '—' : Math.round(v * 100) + '%';
+    const esc = (t) => String(t == null ? '' : t).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+    els.tableBody.innerHTML = data.signals.map((r) => `
       <tr>
-        <td>${dateFmt.format(new Date(signal.flagged_at))}</td>
+        <td>${dateFmt.format(new Date(r.flagged_at))}</td>
         <td>
-          <strong>${signal.market_name}</strong>
-          <span>${signal.signal_type.replace(/_/g, ' ')}</span>
+          <strong>${esc(r.market_name)}</strong>
+          <span>${esc(r.side)} at ${r.entry_price == null ? '—' : Math.round(r.entry_price * 100) + '¢'}</span>
         </td>
-        <td>${signal.edge_score}c</td>
-        <td>${fmt.format(signal.confidence)}%</td>
-        <td><span class="${statusClass(signal.outcome)}">${signal.outcome}</span></td>
-        <td class="${signal.pnl_bps < 0 ? 'negative' : 'positive'}">${formatBps(signal.pnl_bps)}</td>
-        <td><a href="${signal.market_url}" target="_blank" rel="noopener">Verify</a></td>
+        <td>${pct(r.model_prob)}</td>
+        <td>${pct(r.market_prob)}</td>
+        <td>${r.net_edge_c == null ? '—' : (r.net_edge_c > 0 ? '+' : '') + r.net_edge_c.toFixed(1) + '¢'}</td>
+        <td><span class="${statusClass(r.outcome)}">${r.outcome}</span></td>
+        <td>${r.brier_model == null ? '—' : r.brier_model.toFixed(3) + ' / ' + r.brier_market.toFixed(3)}</td>
+        <td class="${(r.net_pnl_bps || 0) < 0 ? 'negative' : 'positive'}">${r.net_pnl_bps == null ? '—' : formatBps(r.net_pnl_bps)}</td>
+        <td><a href="${esc(r.market_url)}" target="_blank" rel="noopener">Verify</a></td>
       </tr>
     `).join('');
 

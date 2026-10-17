@@ -32,7 +32,6 @@
     { group: 'Strategies' },
     { href: '/strategy-builder', match: 'strategy-builder', icon: 'builder', label: 'Builder', full: 'Strategy Builder' },
     { href: '/intelligence', match: 'intelligence', icon: 'risk', label: 'Risk', full: 'Intelligence & Risk Engine' },
-    { href: '/stablecoin-hub', match: 'stablecoin-hub', icon: 'yield', label: 'Yield', full: 'Stablecoin Hub' },
     { group: 'Proof' },
     { href: '/track-record', match: 'track-record', icon: 'record', label: 'Record', full: 'Track Record' },
     { sep: true } // Pro is a paid workspace, reached from the Pro links inside pages, not listed here

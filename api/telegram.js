@@ -1,13 +1,20 @@
-// Telegram Bot API — Posts trade alerts to Telegram channel
-// Uses env vars: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+// Telegram Bot API — Posts trade alerts to the Nexxore channel.
+// Uses env vars: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_POST_KEY.
+// Server-to-server only: callers must send `Authorization: Bearer <TELEGRAM_POST_KEY>`.
+// Without that key set, posting is disabled, so the public can never post as the channel.
+const crypto = require('crypto');
+
+function authorized(req) {
+  const key = process.env.TELEGRAM_POST_KEY;
+  if (!key) return false;
+  const got = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  const a = Buffer.from(got), b = Buffer.from(key);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  if (!authorized(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -80,7 +87,7 @@ module.exports = async (req, res) => {
 
   } catch (err) {
     console.error('Telegram send error:', err);
-    return res.status(500).json({ error: 'Internal error', details: err.message });
+    return res.status(500).json({ error: 'Internal error' });
   }
 };
 
