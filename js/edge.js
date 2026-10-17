@@ -82,6 +82,17 @@
     return ((won ? 1 : 0) - c) / c * 10000;
   }
 
+  /** Polymarket taker fee for buying at `price`, in bps of the amount paid.
+   *  Polymarket charges fee = shares · rate · (p · (1 − p))^exponent, so per
+   *  dollar spent (shares · p) that is rate · (p · (1 − p))^exponent / p.
+   *  Returns 0 when the market has fees disabled. */
+  function polymarketFeeBps(market, price) {
+    if (!market || !market.feesEnabled || !(price > 0 && price < 1)) return 0;
+    var sch = market.feeSchedule || {};
+    var rate = Number(sch.rate) || 0, exp = sch.exponent == null ? 1 : Number(sch.exponent);
+    return 10000 * rate * Math.pow(price * (1 - price), exp) / price;
+  }
+
   /** Everything the ledger stores or derives for one forecast. */
   function evaluate(o) {
     var side = o.side || chooseSide(o.p, o.m);
@@ -106,6 +117,6 @@
     chooseSide: chooseSide, sideProb: sideProb, effectiveCost: effectiveCost,
     netEdgeCents: netEdgeCents, brier: brier, brierSkill: brierSkill,
     kelly: kelly, depthLimit: depthLimit, stake: stake, netPnlBps: netPnlBps,
-    evaluate: evaluate
+    polymarketFeeBps: polymarketFeeBps, evaluate: evaluate
   };
 });

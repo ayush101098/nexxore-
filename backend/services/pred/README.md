@@ -1,3 +1,5 @@
+> **Superseded (October 2026).** The Edge Engine forecaster and resolver now live in [`worker/`](../../../worker/) (Node, Claude, no mock models). This Python service still starts its consensus engine with `use_mock=True` and is not used by the v1 ledger. Do not deploy it.
+
 # PRED Agent - Prediction Market Intelligence System
 
 ## Overview

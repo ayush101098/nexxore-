@@ -77,3 +77,12 @@ test('Brier skill', () => {
   assert.equal(E.brierSkill(null, 0.25), null);
   assert.equal(E.brierSkill(0.2, 0), null);
 });
+
+test('Polymarket fee: rate · (1 − p) of the amount paid when exponent is 1', () => {
+  const m = { feesEnabled: true, feeSchedule: { rate: 0.05, exponent: 1 } };
+  assert.equal(cents(E.polymarketFeeBps(m, 0.46)), 270); // 5% × 0.54
+  // Docs example: 100 shares at 0.50, crypto rate 0.07 → $1.75 on $50 spent = 350 bps
+  assert.equal(cents(E.polymarketFeeBps({ feesEnabled: true, feeSchedule: { rate: 0.07, exponent: 1 } }, 0.5)), 350);
+  assert.equal(E.polymarketFeeBps({ feesEnabled: false, feeSchedule: { rate: 0.05 } }, 0.46), 0);
+  assert.equal(E.polymarketFeeBps(m, 0), 0);
+});

@@ -12,8 +12,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - run: npm test
+      - name: Worker tests
+        run: cd worker && npm ci && npm test
+      - name: No mocks in Edge Engine production code (spec F1)
+        run: |
+          if grep -rniE '\bmock' worker/src js/edge.js api/track-record.js; then
+            echo "Mock code found in a production path"; exit 1
+          fi
 
   secrets:
     # Scans the commits in each push or PR for keys and tokens.
