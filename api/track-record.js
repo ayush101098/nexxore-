@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const Edge = require('../js/edge.js');
 
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX = 60;
@@ -32,18 +33,20 @@ function getClientIp(req) {
   return Array.isArray(forwarded) ? forwarded[0] : (forwarded || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
 }
 
-function isRateLimited(req) {
+function isRateLimited(req, res) {
   const ip = getClientIp(req);
   const now = Date.now();
   const bucket = rateBuckets.get(ip) || { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
 
   if (now > bucket.resetAt) {
     rateBuckets.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    if (res) res.setHeader('X-RateLimit-Remaining', String(RATE_LIMIT_MAX - 1));
     return false;
   }
 
   bucket.count += 1;
   rateBuckets.set(ip, bucket);
+  if (res) res.setHeader('X-RateLimit-Remaining', String(Math.max(0, RATE_LIMIT_MAX - bucket.count)));
   return bucket.count > RATE_LIMIT_MAX;
 }
 
@@ -61,43 +64,40 @@ function num(v) {
 function normalizeAlert(row) {
   const modelProb = num(row.model_prob);
   const marketProb = num(row.market_prob);
-  const side = String(row.side || (modelProb != null && marketProb != null && modelProb < marketProb ? 'NO' : 'YES')).toUpperCase();
-  const entry = num(row.entry_price);
   const feeBps = num(row.fee_bps) ?? DEFAULT_FEE_BPS;
-  const y = row.resolved_yes == null ? null : (Number(row.resolved_yes) ? 1 : 0);
-  const resolved = y != null;
+  const side = String(row.side || (modelProb != null && marketProb != null ? Edge.chooseSide(modelProb, marketProb) : 'YES')).toUpperCase();
+  const ask = num(row.entry_price) ?? (marketProb == null ? null : (side === 'YES' ? marketProb : 1 - marketProb));
+  const status = String(row.status || (row.resolved_yes == null ? 'open' : 'resolved')).toLowerCase();
+  const y = status === 'void' || row.resolved_yes == null ? null : (Number(row.resolved_yes) ? 1 : 0);
 
-  // Probability that the chosen side wins, per the model, and its cost per $1 payout
-  const pSide = modelProb == null ? null : (side === 'YES' ? modelProb : 1 - modelProb);
-  const cost = entry != null ? entry : (marketProb == null ? null : (side === 'YES' ? marketProb : 1 - marketProb));
-  const feeFrac = feeBps / 10000;
-
-  // Edge at entry after spread (cost uses the ask) and fees, in cents per $1 share
-  const netEdge = pSide != null && cost != null ? (pSide - cost - cost * feeFrac) * 100 : null;
-  // Realized return on stake after spread and fees
-  let netPnlBps = null;
-  if (resolved && cost) {
-    const won = (side === 'YES' ? y : 1 - y) === 1;
-    netPnlBps = ((won ? 1 : 0) - cost - cost * feeFrac) / cost * 10000;
-  }
+  const ev = modelProb != null && ask != null
+    ? Edge.evaluate({ p: modelProb, m: marketProb, side, ask, feeBps, y })
+    : null;
 
   return {
     id: String(row.id || ''),
+    market_id: row.market_id || null,
     market_url: row.market_url || '#',
     market_name: row.market_name || 'Unnamed market',
+    category: row.category || null,
     flagged_at: row.flagged_at || row.created_at,
     resolved_at: row.resolved_at || null,
+    status,
+    is_call: !!row.is_call,
     side,
     model_prob: modelProb,
     market_prob: marketProb,
-    entry_price: cost,
+    entry_price: ask,
     fee_bps: feeBps,
-    net_edge_c: netEdge == null ? null : Number(netEdge.toFixed(2)),
+    net_edge_c: ev ? Number(ev.netEdgeC.toFixed(2)) : null,
     resolved_yes: y,
-    outcome: resolved ? ((side === 'YES' ? y : 1 - y) === 1 ? 'WIN' : 'LOSS') : 'OPEN',
-    brier_model: resolved && modelProb != null ? Number(Math.pow(modelProb - y, 2).toFixed(4)) : null,
-    brier_market: resolved && marketProb != null ? Number(Math.pow(marketProb - y, 2).toFixed(4)) : null,
-    net_pnl_bps: netPnlBps == null ? null : Number(netPnlBps.toFixed(1))
+    outcome: status === 'void' ? 'VOID' : (y == null ? 'OPEN' : (ev && ev.won ? 'WIN' : 'LOSS')),
+    brier_model: ev && ev.brierModel != null ? Number(ev.brierModel.toFixed(4)) : null,
+    brier_market: ev && ev.brierMarket != null ? Number(ev.brierMarket.toFixed(4)) : null,
+    net_pnl_bps: ev && ev.netPnlBps != null ? Number(ev.netPnlBps.toFixed(1)) : null,
+    thesis: row.thesis || null,
+    invalidation: row.invalidation || null,
+    prompt_version: row.prompt_version || null
   };
 }
 
@@ -127,11 +127,11 @@ function mean(values) {
 function round(v, d) { return v == null ? null : Number(v.toFixed(d)); }
 
 function calculateStats(rows) {
-  const resolved = rows.filter((r) => r.outcome !== 'OPEN');
+  const resolved = rows.filter((r) => r.outcome === 'WIN' || r.outcome === 'LOSS'); // excludes open and void
   const scored = resolved.filter((r) => r.brier_model != null && r.brier_market != null);
   const brierModel = mean(scored.map((r) => r.brier_model));
   const brierMarket = mean(scored.map((r) => r.brier_market));
-  const pnl = resolved.filter((r) => r.net_pnl_bps != null);
+  const pnl = resolved.filter((r) => r.is_call && r.net_pnl_bps != null); // P&L counts calls only
 
   let cumulative = 0;
   const equityCurve = [...pnl]
@@ -143,13 +143,15 @@ function calculateStats(rows) {
 
   return {
     totalSignals: rows.length,
+    voidSignals: rows.filter((r) => r.outcome === 'VOID').length,
+    calls: rows.filter((r) => r.is_call).length,
     resolvedSignals: resolved.length,
-    openSignals: rows.length - resolved.length,
+    openSignals: rows.filter((r) => r.outcome === 'OPEN').length,
     brierModel: round(brierModel, 4),
     brierMarket: round(brierMarket, 4),
     // > 0 means the model's probabilities beat the market's own on the same calls
-    brierSkill: brierModel != null && brierMarket ? round(1 - brierModel / brierMarket, 3) : null,
-    avgNetEdgeC: round(mean(rows.filter((r) => r.net_edge_c != null).map((r) => r.net_edge_c)), 2),
+    brierSkill: round(Edge.brierSkill(brierModel, brierMarket), 3),
+    avgNetEdgeC: round(mean(rows.filter((r) => r.is_call && r.net_edge_c != null).map((r) => r.net_edge_c)), 2),
     hitRate: resolved.length ? round(resolved.filter((r) => r.outcome === 'WIN').length / resolved.length * 100, 1) : null,
     netPnlPct: pnl.length ? Number(cumulative.toFixed(2)) : null,
     equityCurve
@@ -157,7 +159,7 @@ function calculateStats(rows) {
 }
 
 function calculateCalibration(rows) {
-  const scored = rows.filter((r) => r.brier_model != null);
+  const scored = rows.filter((r) => r.brier_model != null && r.outcome !== 'VOID');
   const bins = [[0, 0.2], [0.2, 0.4], [0.4, 0.6], [0.6, 0.8], [0.8, 1.0001]];
   return bins.map(([lo, hi]) => {
     const inBin = scored.filter((r) => r.model_prob >= lo && r.model_prob < hi);
@@ -171,7 +173,7 @@ function calculateCalibration(rows) {
 }
 
 function toCsv(alerts) {
-  const headers = ['id', 'flagged_at', 'resolved_at', 'market_name', 'side', 'model_prob', 'market_prob', 'entry_price', 'fee_bps', 'net_edge_c', 'resolved_yes', 'brier_model', 'brier_market', 'net_pnl_bps', 'market_url'];
+  const headers = ['id', 'market_id', 'flagged_at', 'resolved_at', 'status', 'is_call', 'market_name', 'category', 'side', 'model_prob', 'market_prob', 'entry_price', 'fee_bps', 'net_edge_c', 'resolved_yes', 'brier_model', 'brier_market', 'net_pnl_bps', 'prompt_version', 'market_url'];
   const rows = alerts.map((alert) => headers.map((key) => {
     const value = alert[key] == null ? '' : String(alert[key]);
     return `"${value.replace(/"/g, '""')}"`;
@@ -183,8 +185,8 @@ module.exports = async (req, res) => {
   applyCors(res);
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-  if (isRateLimited(req)) return res.status(429).json({ error: 'Rate limit exceeded' });
+  if (req.method !== 'GET') return res.status(405).json({ error: { code: 'method_not_allowed', message: 'GET only' } });
+  if (isRateLimited(req, res)) return res.status(429).json({ error: { code: 'rate_limited', message: 'Too many requests' } });
 
   try {
     const range = req.query.range || '30d';
@@ -196,7 +198,7 @@ module.exports = async (req, res) => {
     if (req.query.format === 'csv') {
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="nexxore-track-record-${range}.csv"`);
-      return res.status(200).send(toCsv(normalized.filter((alert) => alert.outcome !== 'OPEN')));
+      return res.status(200).send(toCsv(normalized.filter((alert) => alert.outcome === 'WIN' || alert.outcome === 'LOSS')));
     }
 
     const offset = (page - 1) * limit;
@@ -216,6 +218,6 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     console.error('Track record API error:', error);
-    return res.status(500).json({ error: 'Failed to load track record' });
+    return res.status(500).json({ error: { code: 'server_error', message: 'Failed to load track record' } });
   }
 };

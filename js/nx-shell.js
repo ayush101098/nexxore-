@@ -27,7 +27,6 @@
     { href: '/terminal', match: 'terminal', icon: 'terminal', label: 'Terminal', full: 'Trading Terminal' },
     { href: '/prediction-terminal', match: 'prediction-terminal', icon: 'predict', label: 'Predict', full: 'Prediction Terminal' },
     { group: 'Research' },
-    { href: '/swarm', match: 'swarm', icon: 'swarm', label: 'Swarm', full: 'The Swarm' },
     { href: '/predictions', match: 'predictions', icon: 'alerts', label: 'Alerts', full: 'Prediction Agent & Alerts' },
     { group: 'Strategies' },
     { href: '/strategy-builder', match: 'strategy-builder', icon: 'builder', label: 'Builder', full: 'Strategy Builder' },

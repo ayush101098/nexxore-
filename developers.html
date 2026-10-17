@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Developer docs — Nexxore</title>
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6QGB2RQVP0"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-6QGB2RQVP0');</script>
+
+  <meta name="description" content="Nexxore developer docs: the server-to-server Telegram endpoint, internal data services and self-hosting.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://nexxore.xyz/developers">
+  <meta name="theme-color" content="#0a0a0b">
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='fg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%234a6fa5'/><stop offset='100%25' stop-color='%233d8b6e'/></linearGradient></defs><rect width='32' height='32' rx='4' fill='%230a0a0b'/><g transform='translate(4,4) scale(0.75)'><circle cx='12' cy='10' r='7' stroke='url(%23fg)' stroke-width='2' fill='none'/><circle cx='20' cy='10' r='7' stroke='url(%23fg)' stroke-width='2' fill='none' opacity='.85'/><circle cx='16' cy='17' r='7' stroke='url(%23fg)' stroke-width='2' fill='none' opacity='.85'/></g></svg>" type="image/svg+xml">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--bg-base); color:var(--text-primary); font-family:var(--font-family-sans); line-height:1.7; }
+    a { color:inherit; }
+
+    /* layout */
+    .docs-layout { display:grid; grid-template-columns:240px 1fr; min-height:100vh; }
+    .docs-sidebar { position:sticky; top:0; height:100vh; overflow-y:auto; border-right:1px solid var(--border-subtle); padding:24px 0; background:var(--bg-elevated); }
+    .docs-main { padding:48px 56px 80px; max-width:820px; }
+
+    /* sidebar */
+    .sidebar-logo { padding:0 20px 28px; display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .sidebar-logo span { font-weight:700; font-size:1rem; }
+    .sidebar-logo .badge { font-size:0.58rem; padding:2px 7px; border-radius:4px; background:rgba(74,111,165,0.12); color:#4a6fa5; font-weight:600; }
+
+    .sidebar-section { padding:0 12px; margin-bottom:8px; }
+    .sidebar-section-title { font-size:0.65rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px; padding:8px 12px 6px; }
+    .sidebar-link { display:block; font-size:0.84rem; color:var(--text-secondary); text-decoration:none; padding:7px 12px; border-radius:6px; transition:all 0.15s; }
+    .sidebar-link:hover { color:var(--text-primary); background:rgba(255,255,255,0.04); }
+    .sidebar-link.active { color:var(--text-primary); background:rgba(74,111,165,0.08); font-weight:500; }
+
+    /* content */
+    h1 { font-size:2rem; font-weight:700; letter-spacing:-0.02em; margin-bottom:8px; line-height:1.2; }
+    h1 + .subtitle { font-size:1.05rem; color:var(--text-secondary); margin-bottom:40px; line-height:1.6; }
+    h2 { font-size:1.35rem; font-weight:700; margin-top:56px; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--border-subtle); letter-spacing:-0.01em; }
+    h3 { font-size:1.05rem; font-weight:600; margin-top:32px; margin-bottom:10px; }
+    p { margin-bottom:16px; color:var(--text-secondary); font-size:0.92rem; }
+    p strong { color:var(--text-primary); font-weight:600; }
+    ul, ol { margin-bottom:16px; padding-left:20px; }
+    li { font-size:0.92rem; color:var(--text-secondary); margin-bottom:8px; line-height:1.6; }
+    li strong { color:var(--text-primary); }
+
+    /* code blocks */
+    code { font-family:var(--font-family-mono); font-size:0.82rem; background:var(--bg-card); padding:2px 6px; border-radius:4px; color:#c4b5fd; }
+    pre { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:10px; padding:20px 24px; margin-bottom:20px; overflow-x:auto; }
+    pre code { background:none; padding:0; font-size:0.8rem; line-height:1.65; color:var(--text-secondary); }
+    .code-label { font-size:0.65rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
+
+    /* callout boxes */
+    .callout { padding:16px 20px; border-radius:10px; margin-bottom:20px; font-size:0.88rem; border-left:3px solid; }
+    .callout.info { background:rgba(74,111,165,0.06); border-color:#4a6fa5; }
+    .callout.warn { background:rgba(245,158,11,0.06); border-color:#f59e0b; }
+    .callout.tip { background:rgba(61,139,110,0.06); border-color:#3d8b6e; }
+    .callout p { margin-bottom:0; }
+    .callout strong { color:var(--text-primary); }
+
+    /* table */
+    table { width:100%; border-collapse:collapse; margin-bottom:20px; font-size:0.85rem; }
+    th { text-align:left; font-weight:600; padding:10px 14px; border-bottom:1px solid var(--border-default); color:var(--text-primary); font-size:0.78rem; text-transform:uppercase; letter-spacing:0.3px; }
+    td { padding:10px 14px; border-bottom:1px solid var(--border-subtle); color:var(--text-secondary); }
+
+    /* diagram */
+    .arch-diagram { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; padding:28px; margin:24px 0; text-align:center; }
+    .arch-flow { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
+    .arch-box { padding:14px 22px; border-radius:8px; font-size:0.82rem; font-weight:600; text-align:center; }
+    .arch-box.brain { background:rgba(74,111,165,0.1); border:1px solid rgba(74,111,165,0.2); color:#c4b5fd; }
+    .arch-box.logic { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); color:#fcd34d; }
+    .arch-box.muscle { background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.2); color:#86efac; }
+    .arch-arrow { color:var(--text-muted); font-size:1.2rem; }
+
+    /* back link */
+    .back-link { display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; color:var(--text-muted); text-decoration:none; margin-bottom:24px; transition:color 0.15s; }
+    .back-link:hover { color:var(--text-primary); }
+
+    /* mobile */
+    @media (max-width:768px) {
+      .docs-layout { grid-template-columns:1fr; }
+      .docs-sidebar { display:none; }
+      .docs-main { padding:28px 20px 60px; }
+      h1 { font-size:1.6rem; }
+    }
+  </style>
+<script src="/js/nx-facts.js"></script>
+</head>
+<body>
+  <div class="docs-layout">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <a href="/" class="sidebar-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 90" style="height:20px;width:auto;"><defs><linearGradient id="dlg" x1="0" x2="1"><stop offset="0" stop-color="#4a6fa5"/><stop offset="1" stop-color="#3d8b6e"/></linearGradient></defs><circle cx="38" cy="30" r="22" stroke="url(#dlg)" stroke-width="4" fill="none" opacity="0.95"/><circle cx="62" cy="30" r="22" stroke="url(#dlg)" stroke-width="4" fill="none" opacity="0.85"/><circle cx="50" cy="52" r="22" stroke="url(#dlg)" stroke-width="4" fill="none" opacity="0.85"/></svg>
+        <span>nexxore</span>
+        <span class="badge">docs</span>
+      </a>
+
+      <nav>
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Developers</div>
+          <a href="#telegram" class="sidebar-link active">Telegram channel endpoint</a>
+          <a href="#market-data" class="sidebar-link">Market Data service</a>
+          <a href="#signal-engine" class="sidebar-link">Signal Engine service</a>
+          <a href="#deployment" class="sidebar-link">Self-hosting</a>
+        </div>
+        <div class="sidebar-section">
+          <a href="/docs" class="sidebar-link">← Product docs</a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main class="docs-main">
+      <h1>Developer docs</h1>
+      <p>Internal services and operations. For how the product works, see the <a href="/docs" style="color:#4a6fa5">product docs</a>.</p>
+
+      <h2 id="telegram">Telegram channel endpoint</h2>
+      <p><code>POST /api/telegram</code> posts to the Nexxore channel. It is server-to-server only: every request needs the <code>TELEGRAM_POST_KEY</code> bearer key, and requests without it get <code>401</code>. Never call it from a browser or ship the key to one.</p>
+      <div class="code-label">Post a message</div>
+      <pre><code>curl -X POST https://nexxore.xyz/api/telegram \
+  -H "Authorization: Bearer $TELEGRAM_POST_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Edge Engine run complete"}'</code></pre>
+      <p>Server environment: <code>TELEGRAM_BOT_TOKEN</code>, <code>TELEGRAM_CHAT_ID</code> and <code>TELEGRAM_POST_KEY</code>. Personal alerts to a user's own chat are a separate flow and do not use this endpoint.</p>
+
+      <h2 id="market-data">Market Data Agent</h2>
+      <p>The Market Data Agent is a dedicated Dexscreener integration service that provides real-time DEX pair data, volume tracking, and liquidity monitoring across 5 chains. It acts as the data backbone for the Signal Engine and On-Chain Analyst.</p>
+
+      <h3>Capabilities</h3>
+      <ul>
+        <li><strong>Dexscreener API Client</strong> — Async HTTP client with sliding-window rate limiting (60 rpm slow / 300 rpm fast bucket)</li>
+        <li><strong>Top Movers Discovery</strong> — Boosted + trending tokens aggregated from token profiles, boosts, and pair data</li>
+        <li><strong>New Pair Detection</strong> — Surfaces newly created pairs with >$100K liquidity within 24h</li>
+        <li><strong>Liquidity Monitoring</strong> — Tracks significant liquidity changes (>20% in 10 min) across all monitored pairs</li>
+        <li><strong>Token Search</strong> — Full-text search across Dexscreener's pair database</li>
+        <li><strong>Time-Series Storage</strong> — SQLite snapshots with 7-day retention and materialized latest view</li>
+        <li><strong>Caching Layer</strong> — Redis with in-memory LRU fallback, per-category TTLs (10s–300s)</li>
+      </ul>
+
+      <h3>Architecture</h3>
+      <div class="arch-diagram">
+        <div class="arch-flow">
+          <div class="arch-box brain">Dexscreener API<br><small style="opacity:0.7">5 chains, 10s poll</small></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box logic">Poller + Cache<br><small style="opacity:0.7">Redis/LRU, SQLite</small></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box muscle">REST API :3860<br><small style="opacity:0.7">top movers, search, pairs</small></div>
+        </div>
+      </div>
+
+      <h3>Key endpoints</h3>
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET</code></td><td><code>/api/v1/pairs/top-movers</code></td><td>Top movers across all chains</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/pairs/new</code></td><td>Newly created pairs (&lt;24h)</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/search?q=</code></td><td>Search Dexscreener pairs</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/pairs/liquidity-changes</code></td><td>Significant liquidity shifts</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/pairs/{chain}/{token}</code></td><td>Token pair data by chain</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <p><strong>Run it:</strong> <code>python -m services.market-data.main</code> — starts on port 3860. No API key required (Dexscreener is free).</p>
+      </div>
+
+      <h2 id="signal-engine">Signal Engine</h2>
+      <p>The Signal Engine is a Market Intelligence Agent that consumes data from the Market Data Agent and produces composite alpha signals. It runs 4 independent detectors and combines them into a 0–100 scoring system.</p>
+
+      <h3>Signal detectors</h3>
+      <table>
+        <thead><tr><th>Signal</th><th>Trigger Condition</th><th>Weight</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Momentum Spike</strong></td><td>price_5m >5%, volume >2× avg, liquidity >$500K</td><td>0–40 pts</td></tr>
+          <tr><td><strong>Volume Breakout</strong></td><td>vol_1h >3× 24h avg, >20 transactions</td><td>0–30 pts</td></tr>
+          <tr><td><strong>Liquidity Inflow</strong></td><td>liquidity increase >20% in 10 min window</td><td>0–20 pts</td></tr>
+          <tr><td><strong>New Pair</strong></td><td>pair age <24h, liquidity >$100K, vol_1h >$5K</td><td>0–10 pts</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Scoring classification</h3>
+      <ul>
+        <li><strong>Score >70</strong> → <strong style="color:#3d8b6e;">Strong Trade</strong> — high-confidence alpha opportunity</li>
+        <li><strong>Score 50–70</strong> → <strong style="color:#f59e0b;">Watchlist</strong> — monitor for breakout confirmation</li>
+        <li><strong>Score <50</strong> → Ignore</li>
+      </ul>
+
+      <h3>Architecture</h3>
+      <div class="arch-diagram">
+        <div class="arch-flow">
+          <div class="arch-box brain">Market Data :3860<br><small style="opacity:0.7">rolling windows</small></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box logic">4 Signal Detectors<br><small style="opacity:0.7">momentum, vol, liq, new</small></div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box muscle">Scorer + WS :3861<br><small style="opacity:0.7">0–100 composite</small></div>
+        </div>
+      </div>
+
+      <h3>Key endpoints</h3>
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET</code></td><td><code>/api/v1/signals/top</code></td><td>Top scored tokens</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/signals/strong-trades</code></td><td>Score >70 strong trades</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/v1/signals/watchlist</code></td><td>Score 50–70 watchlist</td></tr>
+          <tr><td><code>WS</code></td><td><code>/ws/signals/live</code></td><td>Live signal feed (WebSocket)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <p><strong>Run it:</strong> <code>python -m services.signal-engine.main</code> — starts on port 3861. Requires Market Data Agent running on 3860.</p>
+      </div>
+
+      <h2 id="deployment">Self-Hosting</h2>
+      <p>Nexxore is deployed on Vercel. If you want to run your own instance:</p>
+
+      <pre><code>git clone https://github.com/ayush101098/nexxore-.git
+cd nexxore-
+npm install
+
+# Set env vars
+cp .env.example .env
+# Edit .env with your keys
+
+# Deploy
+vercel --prod</code></pre>
+
+      <div class="callout info">
+        <p><strong>Note:</strong> You'll need your own API keys for Binance price feeds, Telegram bot, and any other integrations you want to use. See the <code>.env.example</code> file for the full list.</p>
+      </div>
+
+      <div class="callout tip">
+        <p>Last updated: October 2026.</p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Sidebar active state on scroll
+    const sections = document.querySelectorAll('h2[id], h3[id]');
+    const links = document.querySelectorAll('.sidebar-link');
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+      links.forEach(l => {
+        l.classList.remove('active');
+        if (l.getAttribute('href') === '#' + current) l.classList.add('active');
+      });
+    });
+
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const t = document.querySelector(a.getAttribute('href'));
+        if (t) { e.preventDefault(); t.scrollIntoView({ behavior:'smooth', block:'start' }); }
+      });
+    });
+
+    // Clean .html extensions
+    document.querySelectorAll('a[href$=".html"]').forEach(l => {
+      const h = l.getAttribute('href');
+      if (h) l.setAttribute('href', h.replace(/\.html$/, ''));
+    });
+  </script>
+<script src="/js/nx-brand.js"></script>
+</body>
+</html>
