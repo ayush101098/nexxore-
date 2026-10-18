@@ -14,18 +14,16 @@ const path = require('path');
 const SHEET_ID = process.env.GOOGLE_SHEET_ID;
 const SHEET_NAME = 'Waitlist'; // The sheet tab name
 
-// Initialize auth - uses service account credentials
+// Service-account auth. On Vercel, put the whole key JSON in
+// GOOGLE_SERVICE_ACCOUNT_JSON (there is no key file on disk there).
+// GOOGLE_APPLICATION_CREDENTIALS (a file path) still works for local runs.
 async function getAuthClient() {
   try {
-    // Try to use service account from credentials file
-    const keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || 
-                    path.join(__dirname, '../credentials.json');
-    
-    const auth = new google.auth.GoogleAuth({
-      keyFile: keyPath,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets']
-    });
-    
+    const scopes = ['https://www.googleapis.com/auth/spreadsheets'];
+    const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    const auth = raw
+      ? new google.auth.GoogleAuth({ credentials: JSON.parse(raw), scopes })
+      : new google.auth.GoogleAuth({ keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS || path.join(__dirname, '../credentials.json'), scopes });
     return await auth.getClient();
   } catch (error) {
     console.error('Auth error:', error.message);
@@ -48,7 +46,7 @@ async function appendToSheet(email, name = '', source = 'website') {
     const result = await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
       range: `${SHEET_NAME}!A:D`,
-      valueInputOption: 'USER_ENTERED',
+      valueInputOption: 'RAW',
       resource: { values }
     });
 
@@ -77,14 +75,21 @@ async function handler(req, res) {
     return;
   }
 
-  const { email, name } = req.body;
-
-  if (!email || !email.includes('@')) {
+  const body = req.body || {};
+  const email = String(body.email || '').trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
     res.status(400).json({ error: 'Valid email required' });
     return;
   }
+  if (!SHEET_ID) {
+    res.status(500).json({ success: false, error: 'Waitlist not configured' });
+    return;
+  }
 
-  const result = await appendToSheet(email, name || '');
+  // Where the signup came from: homepage, gate:<page>, app:<page>, terminal-pro
+  const source = String(body.source || 'website').replace(/[^a-z0-9:_-]/gi, '').slice(0, 40) || 'website';
+  // Written with valueInputOption RAW, so no value is ever run as a formula
+  const result = await appendToSheet(email, String(body.name || '').slice(0, 200), source);
   
   if (result.success) {
     res.status(200).json({ success: true, message: result.message });
