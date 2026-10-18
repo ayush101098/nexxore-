@@ -3,7 +3,7 @@
 const { load } = require('./config');
 const { makeDb } = require('./db');
 const { makePolymarket } = require('./polymarket');
-const { makeForecaster } = require('./llm');
+const { loadModel, makeCalibratedForecaster } = require('./model');
 const { runForecast } = require('./forecaster');
 const { runResolve } = require('./resolver');
 
@@ -31,7 +31,7 @@ function guarded(name, cfg, fn) {
     try {
       const stats = await fn();
       log.info(`${name} done ${JSON.stringify(stats)}`);
-      if (stats.failures > 0 || stats.errors > 0 || stats.stoppedBy === 'consecutive_failures') await notifyOps(cfg, `Nexxore ${name}: ${JSON.stringify(stats)}`);
+      if (stats.errors > 0 || stats.stoppedBy === 'consecutive_failures') await notifyOps(cfg, `Nexxore ${name}: ${JSON.stringify(stats)}`);
     } catch (err) {
       log.error(`${name} run failed: ${err.stack || err.message}`);
       await notifyOps(cfg, `Nexxore ${name} run failed: ${err.message}`);
@@ -48,9 +48,11 @@ async function main() {
     : makeDb({ url: cfg.supabaseUrl, serviceKey: cfg.supabaseServiceKey });
   if (cfg.ledgerFile) log.info(`local ledger: ${cfg.ledgerFile}`);
   const pm = makePolymarket();
-  const llm = makeForecaster({ models: cfg.models, effort: cfg.effort });
+  const calibration = loadModel(cfg.calibrationFile);
+  const model = makeCalibratedForecaster(calibration);
+  log.info(`model ${calibration.version}: held-out Brier skill ${(calibration.heldOut.skill * 100).toFixed(2)}% vs market`);
 
-  const forecast = guarded('forecast', cfg, () => runForecast({ cfg, pm, llm, db, log }));
+  const forecast = guarded('forecast', cfg, () => runForecast({ cfg, pm, model, db, log }));
   const resolve = guarded('resolve', cfg, () => runResolve({ pm, db, log }));
 
   const once = process.argv.indexOf('--once');

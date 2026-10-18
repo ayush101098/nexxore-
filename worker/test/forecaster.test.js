@@ -1,4 +1,4 @@
-// F1/F2: failed calls leave no row, every forecast logged, reforecast rule, failure stop.
+// Forecast run: every forecast logged from one snapshot, reforecast rule, failure stop.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { runForecast, buildRow, isDue } = require('../src/forecaster');
@@ -21,26 +21,16 @@ function fakeDb({ latest = {} } = {}) {
   return db;
 }
 const fakePm = (markets, snap = SNAP) => ({ async listEligible() { return markets; }, async snapshot() { return snap; } });
-const usage = () => ({ model: 'm', input_tokens: 10, output_tokens: 5 });
-function fakeLlm(p = 0.6) {
-  const llm = { calls: 0, async forecast() { llm.calls++; return { probability: p, thesis: 't', invalidation: 'i', bull: 'b', bear: 'c', judgeOutput: {}, modelIds: ['m'], promptVersion: 'v1', usages: [usage()] }; } };
-  return llm;
+function fakeModel(p = 0.6) {
+  const model = { calls: 0, forecast() { model.calls++; return { probability: typeof p === 'function' ? p() : p, thesis: 't', invalidation: 'i', reasoning: { model: 'v1' }, modelIds: ['v1'], promptVersion: 'v1' }; } };
+  return model;
 }
-
-test('a failed model call writes no ledger row', async () => {
-  const db = fakeDb(); const errors = [];
-  const llm = { async forecast() { throw Object.assign(new Error('judge pass refused'), { usages: [usage()] }); } };
-  const stats = await runForecast({ cfg: CFG, pm: fakePm([MKT('a')]), llm, db, log: { info() {}, error: (m) => errors.push(m) } });
-  assert.equal(db.rows.length, 0);
-  assert.equal(stats.failures, 1);
-  assert.match(errors[0], /judge pass refused/);
-});
 
 test('every forecast is logged; only ≥ threshold rows are calls', async () => {
   const db = fakeDb();
   // p 0.6 vs ask 0.51 → +9¢ (call); p 0.52 vs 0.51 → +1¢ (logged, not a call)
-  let n = 0; const llm = { async forecast() { const p = n++ === 0 ? 0.6 : 0.52; return { ...(await fakeLlm(p).forecast()), probability: p }; } };
-  await runForecast({ cfg: CFG, pm: fakePm([MKT('a'), MKT('b')]), llm, db, log });
+  let n = 0; const model = fakeModel(() => (n++ === 0 ? 0.6 : 0.52));
+  await runForecast({ cfg: CFG, pm: fakePm([MKT('a'), MKT('b')]), model, db, log });
   assert.equal(db.rows.length, 2);
   assert.deepEqual(db.rows.map((r) => r.row.is_call), [true, false]);
   assert.ok(db.rows.every((r) => r.row.prompt_version === 'v1' && r.row.status === 'open'));
@@ -48,8 +38,10 @@ test('every forecast is logged; only ≥ threshold rows are calls', async () => 
 
 test('no order book: no ledger row', async () => {
   const db = fakeDb();
-  const stats = await runForecast({ cfg: CFG, pm: fakePm([MKT('a')], null), llm: fakeLlm(), db, log });
+  const model = fakeModel();
+  const stats = await runForecast({ cfg: CFG, pm: fakePm([MKT('a')], null), model, db, log });
   assert.equal(db.rows.length, 0);
+  assert.equal(model.calls, 0);
   assert.equal(stats.skipped, 1);
 });
 
@@ -70,10 +62,18 @@ test('reforecast after 6 hours or a 5¢ move', () => {
   assert.equal(isDue({ flagged_at: '2026-10-18T10:00:00Z', market_prob: 0.5 }, 0.55, CFG, now), true);
 });
 
-test('three failures in a row stop the run', async () => {
-  const db = fakeDb(); let calls = 0;
-  const llm = { async forecast() { calls++; throw Object.assign(new Error('credit balance is too low'), { usages: [] }); } };
-  const stats = await runForecast({ cfg: CFG, pm: fakePm(['a', 'b', 'c', 'd', 'e'].map(MKT)), llm, db, log });
-  assert.equal(calls, 3);
+test('three markets without a book in a row stop the run', async () => {
+  const db = fakeDb(); const model = fakeModel();
+  const stats = await runForecast({ cfg: CFG, pm: fakePm(['a', 'b', 'c', 'd', 'e'].map(MKT), null), model, db, log });
+  assert.equal(stats.skipped, 3);
   assert.equal(stats.stoppedBy, 'consecutive_failures');
+});
+
+test('the ledger row uses the snapshot the forecast was made from', async () => {
+  const db = fakeDb(); let seen = null;
+  const model = { forecast(m, snap) { seen = snap; return fakeModel(0.6).forecast(); } };
+  await runForecast({ cfg: CFG, pm: fakePm([MKT('a')]), model, db, log });
+  assert.equal(seen, SNAP);
+  assert.equal(db.rows[0].row.flagged_at, SNAP.at.toISOString());
+  assert.equal(db.rows[0].row.market_prob, SNAP.mid);
 });

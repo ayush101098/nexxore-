@@ -45,11 +45,11 @@ drop trigger if exists alerts_no_delete on alerts;
 create trigger alerts_no_delete before delete on alerts
   for each row execute function alerts_block_delete();
 
--- ── forecast_reasoning: full bull / bear / judge output (public) ─────
+-- ── forecast_reasoning: model inputs and output for each forecast (public) ─
 create table if not exists forecast_reasoning (
   alert_id     text primary key references alerts (id),
-  bull_case    text not null,
-  bear_case    text not null,
+  bull_case    text,                 -- null for the calibration model
+  bear_case    text,
   judge_output jsonb not null,
   model_ids    text[] not null
 );

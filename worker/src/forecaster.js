@@ -1,5 +1,5 @@
-// One forecast run (spec F1 + F2): pick due markets, forecast, read the book at
-// the same moment, and write every forecast to the ledger — calls or not.
+// One forecast run: pick due markets, read the book, forecast from that
+// snapshot, and write every forecast to the ledger — calls or not.
 const crypto = require('crypto');
 const Edge = require('../../js/edge.js');
 
@@ -39,11 +39,11 @@ function buildRow(m, f, snap, cfg) {
 function round(x, d) { return Number(x.toFixed(d)); }
 
 // Stop the run after this many markets fail in a row: something systemic
-// (key, billing, outage) is wrong, and continuing only multiplies errors.
+// (an API outage) is wrong, and continuing only multiplies errors.
 const MAX_CONSECUTIVE_FAILURES = 3;
 
-async function runForecast({ cfg, pm, llm, db, log, now = () => Date.now() }) {
-  const stats = { eligible: 0, due: 0, forecast: 0, calls: 0, failures: 0, skipped: 0, tokensIn: 0, tokensOut: 0, stoppedBy: null };
+async function runForecast({ cfg, pm, model, db, log, now = () => Date.now() }) {
+  const stats = { eligible: 0, due: 0, forecast: 0, calls: 0, skipped: 0, stoppedBy: null };
   const today = await db.marketsForecastToday(new Date(now()));
   const markets = await pm.listEligible(cfg, now());
   stats.eligible = markets.length;
@@ -52,43 +52,27 @@ async function runForecast({ cfg, pm, llm, db, log, now = () => Date.now() }) {
 
   for (const m of markets) {
     const last = latest[m.marketId];
-    let preSnap = null;
-    if (last && now() - Date.parse(last.flagged_at) < cfg.reforecastHours * 3600e3) {
-      preSnap = await pm.snapshot(m).catch(() => null);
-    }
-    if (!isDue(last, preSnap && preSnap.mid, cfg, now())) continue;
-    stats.due++;
-
-    if (!today.has(m.marketId) && today.size >= cfg.maxMarketsPerDay) { stats.stoppedBy = 'max_markets'; break; }
-
-    let f;
-    try {
-      f = await llm.forecast(m, new Date(now()).toISOString().slice(0, 10));
-    } catch (err) {
-      stats.failures++;
-      for (const u of err.usages || []) { stats.tokensIn += u.input_tokens; stats.tokensOut += u.output_tokens; }
-      log.error(`forecast failed ${m.marketId}: ${err.message}`);
-      if (++consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) { stats.stoppedBy = 'consecutive_failures'; break; }
-      continue; // no ledger row, never a 0.5 fallback
-    }
-    consecutiveFailures = 0;
-    for (const u of f.usages) { stats.tokensIn += u.input_tokens; stats.tokensOut += u.output_tokens; }
-
     const snap = await pm.snapshot(m).catch(() => null);
+    if (!isDue(last, snap && snap.mid, cfg, now())) continue;
+    stats.due++;
+    if (!today.has(m.marketId) && today.size >= cfg.maxMarketsPerDay) { stats.stoppedBy = 'max_markets'; break; }
     if (!snap) {
       stats.skipped++;
-      log.error(`no order book for ${m.marketId}; forecast not logged`);
+      log.error(`no order book for ${m.marketId}; not forecast`);
+      if (++consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) { stats.stoppedBy = 'consecutive_failures'; break; }
       continue;
     }
+    consecutiveFailures = 0;
+
+    // Probability and ledger row from the same book snapshot
+    const f = model.forecast(m, snap, snap.at.getTime());
     const row = buildRow(m, f, snap, cfg);
     await db.upsertMarket(m);
-    await db.insertForecast(row, {
-      bull_case: f.bull, bear_case: f.bear, judge_output: f.judgeOutput, model_ids: f.modelIds
-    });
+    await db.insertForecast(row, { bull_case: null, bear_case: null, judge_output: f.reasoning, model_ids: f.modelIds });
     today.add(m.marketId);
     stats.forecast++;
     if (row.is_call) stats.calls++;
-    log.info(`forecast ${m.marketId} p=${row.model_prob} mid=${row.market_prob} ${row.side}`);
+    log.info(`forecast ${m.marketId} p=${row.model_prob} mid=${row.market_prob} ${row.side} ${row.is_call ? 'CALL' : 'no call'}`);
   }
   return stats;
 }

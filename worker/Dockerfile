@@ -6,6 +6,7 @@ COPY js/edge.js js/edge.js
 COPY worker/package.json worker/package-lock.json worker/
 RUN cd worker && npm ci --omit=dev
 COPY worker/src worker/src
+COPY worker/model worker/model
 WORKDIR /app/worker
 USER node
 CMD ["node", "src/index.js"]

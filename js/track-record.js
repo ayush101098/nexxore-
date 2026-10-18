@@ -60,7 +60,8 @@
     const st = data.stats;
     const resolved = st.resolvedSignals || 0;
     setText(els.updatedAt, `Updated ${dateFmt.format(new Date(data.generatedAt))}`);
-    setText(els.source, data.source === 'supabase' ? 'Live ledger · paper forecasts' : 'No published results yet');
+    setText(els.source, data.source === 'supabase' ? 'Live ledger · paper forecasts'
+      : data.source === 'local' ? `Local ledger · ${st.totalSignals} forecasts` : 'No published results yet');
     if (els.notice) els.notice.hidden = resolved > 0;
     setText(els.statTotal, `${fmt.format(resolved)} / ${fmt.format(st.totalSignals)}`);
     setText(els.statBrierModel, orNa(st.brierModel, (v) => v.toFixed(3)));

@@ -21,16 +21,8 @@ function load() {
     supabaseUrl: process.env.LEDGER_FILE ? null : req('SUPABASE_URL'),
     supabaseServiceKey: process.env.LEDGER_FILE ? null : req('SUPABASE_SERVICE_ROLE_KEY'),
 
-    models: {
-      bull: req('BULL_MODEL'),
-      bear: req('BEAR_MODEL'),
-      judge: req('JUDGE_MODEL')
-    },
-    effort: {
-      bull: process.env.BULL_EFFORT || 'low',
-      bear: process.env.BEAR_EFFORT || 'low',
-      judge: process.env.JUDGE_EFFORT || 'medium'
-    },
+    // Fitted calibration model (default: worker/model/calibration.json)
+    calibrationFile: process.env.CALIBRATION_FILE || null,
     maxMarketsPerDay: num('MAX_MARKETS_PER_DAY', 200),
     callThresholdCents: num('CALL_THRESHOLD_CENTS', 3),
     minVolume24hUsd: num('MIN_VOLUME_24H_USD', 10000),
