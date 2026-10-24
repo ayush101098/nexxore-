@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engines | Nexxore</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6QGB2RQVP0"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-6QGB2RQVP0');</script>
+<link rel="shortcut icon" href="https://nexxore.xyz/assets/icons/favicon.ico" type="image/x-icon">
+<link rel="icon" type="image/svg+xml" href="https://nexxore.xyz/assets/logo.svg">
+<meta name="theme-color" content="#0A0E17">
+<meta name="description" content="Signals for Hyperliquid perps and Solana tokens. Set leverage, take-profit and stop or hedge, then execute on a DEX from your own wallet or on a centralised exchange.">
+<link rel="canonical" href="https://nexxore.xyz/engines">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E17; --panel:#0F1521; --raised:#151C2B; --ink:#E8E6DF; --dim:rgba(232,230,223,.6); --faint:rgba(232,230,223,.36);
+    --line:rgba(232,230,223,.08); --line2:rgba(232,230,223,.15);
+    --up:#5FC3A8; --down:#E06A5A; --warn:#E3A44A; --accent:#5FC3A8; --series:#1E9AC4;
+    --mono:'JetBrains Mono',monospace; --sans:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--sans);-webkit-font-smoothing:antialiased}
+  button,input{font:inherit;color:inherit}
+  a{color:inherit}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .up{color:var(--up)} .down{color:var(--down)} .warn{color:var(--warn)} .dim{color:var(--dim)} .faint{color:var(--faint)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  header{display:flex;align-items:center;gap:22px;padding:0 24px;height:56px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(10,14,23,.94);backdrop-filter:blur(8px);z-index:20}
+  .brand{display:inline-flex;align-items:center;font:500 13px var(--mono);letter-spacing:.14em;text-decoration:none}
+  nav.tabs{display:flex;gap:2px;height:100%}
+  nav.tabs button{background:none;border:none;padding:0 12px;height:100%;cursor:pointer;color:var(--dim);font-weight:500;border-bottom:2px solid transparent}
+  nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  nav.tabs button .soon{font-size:11px;color:var(--faint);margin-left:4px}
+  header .sp{flex:1}
+  .hbtn{background:none;border:1px solid var(--line2);border-radius:6px;padding:6px 11px;cursor:pointer;font-size:12.5px;color:var(--dim);white-space:nowrap}
+  .hbtn:hover{color:var(--ink)}
+  .bal{font:12.5px var(--mono);color:var(--dim);white-space:nowrap}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--faint);margin-right:6px;vertical-align:1px}
+  .dot.ok{background:var(--up)} .dot.bad{background:var(--down)}
+  @media (max-width:760px){header{padding:10px 14px 0;gap:10px;flex-wrap:wrap;height:auto;position:static} nav.tabs{order:3;width:100%;height:42px} .bal{display:none}}
+
+  main{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;padding:20px 24px 40px;max-width:1360px;margin:0 auto}
+  @media (max-width:1000px){main{grid-template-columns:1fr;padding:14px 16px 40px}}
+  #left,aside.ticket{min-width:0}
+  section.blk{margin-bottom:22px}
+  .bh{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+  .bh h2{font-size:13px;font-weight:600}
+  .bh .sub{font-size:12px;color:var(--faint)}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-weight:500;font-size:11px;color:var(--faint);text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;font-family:var(--mono);font-variant-numeric:tabular-nums}
+  th:first-child,td:first-child{text-align:left;padding-left:14px}
+  th:last-child,td:last-child{padding-right:14px}
+  td.l,th.l{text-align:left}
+  tbody tr:last-child td{border-bottom:none}
+  tr.pick{cursor:pointer}
+  tr.pick:hover td{background:rgba(255,255,255,.02)}
+  tr.sel td{background:rgba(95,195,168,.06)}
+  td .sym{font-family:var(--sans);font-weight:600}
+  .empty{padding:20px 14px;color:var(--faint);font-size:12.5px;text-align:left!important;font-family:var(--sans)!important;white-space:normal!important}
+  .pill{display:inline-block;font:500 11px var(--sans);padding:2px 7px;border-radius:4px;background:rgba(232,230,223,.06);color:var(--dim)}
+  .pill.go{background:rgba(95,195,168,.14);color:var(--up)}
+  .pill.bad{background:rgba(224,106,90,.14);color:var(--down)}
+  .pill.warn{background:rgba(227,164,74,.14);color:var(--warn)}
+  .act{background:none;border:1px solid var(--line2);border-radius:5px;padding:3px 9px;cursor:pointer;font:500 11.5px var(--sans);color:var(--dim)}
+  .act:hover{color:var(--ink)}
+  .act.hot{border-color:rgba(227,164,74,.5);color:var(--warn)}
+
+  aside.ticket{position:sticky;top:76px;align-self:start;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+  @media (max-width:1000px){aside.ticket{position:static;order:-1}}
+  .t-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+  .t-head .mk{font-weight:600;font-size:16px}
+  .t-head .px{font:15px var(--mono)}
+  .t-sub{font-size:12px;color:var(--faint);margin:-8px 0 12px}
+  .seg{display:flex;border:1px solid var(--line2);border-radius:7px;overflow:hidden;margin-bottom:12px}
+  .seg button{flex:1;background:none;border:none;padding:7px 4px;cursor:pointer;font-size:12.5px;color:var(--dim);white-space:nowrap}
+  .seg button+button{border-left:1px solid var(--line2)}
+  .seg button[aria-pressed="true"]{background:var(--raised);color:var(--ink)}
+  .seg button:disabled{opacity:.35;cursor:not-allowed}
+  .seg.side button[aria-pressed="true"][data-v="1"]{color:var(--up)}
+  .seg.side button[aria-pressed="true"][data-v="-1"]{color:var(--down)}
+  .fl{font-size:11.5px;color:var(--faint);margin-bottom:5px;display:flex;justify-content:space-between}
+  .inp{display:flex;align-items:center;border:1px solid var(--line2);border-radius:7px;margin-bottom:12px;background:var(--bg)}
+  .inp input{flex:1;min-width:0;background:none;border:none;padding:8px 10px;font-family:var(--mono);outline:none}
+  .inp span{padding:0 10px;font-size:12px;color:var(--faint);white-space:nowrap}
+  .chips{display:flex;gap:4px;margin:-6px 0 12px}
+  .chips button{background:none;border:1px solid var(--line);border-radius:5px;padding:2px 8px;font-size:11.5px;color:var(--dim);cursor:pointer}
+  .sum{border-top:1px solid var(--line);padding-top:10px;margin-top:2px}
+  .sum div{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;color:var(--dim)}
+  .sum div b{font:400 12.5px var(--mono);color:var(--ink)}
+  .go{width:100%;margin-top:12px;padding:11px;border:none;border-radius:7px;background:var(--accent);color:#08110E;font-weight:600;cursor:pointer}
+  .go.short{background:var(--down);color:#170806}
+  .go:disabled{opacity:.5;cursor:wait}
+  .msg{font-size:12px;color:var(--dim);margin-top:10px;min-height:16px;line-height:1.5}
+  .msg.err{color:var(--down)} .msg.ok{color:var(--up)}
+  .note{font-size:11.5px;color:var(--faint);line-height:1.5;margin-top:10px}
+  .cex{margin-top:10px;border:1px solid var(--line);border-radius:7px}
+  .cex div{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;font-size:12px;border-bottom:1px solid var(--line)}
+  .cex div:last-child{border-bottom:none}
+  .cex b{font:400 12px var(--mono)}
+  .cex button{background:none;border:none;color:var(--faint);cursor:pointer;font-size:11px;margin-left:6px}
+
+  details.more{border-top:1px solid var(--line);padding-top:12px}
+  details.more summary{cursor:pointer;font-size:12.5px;color:var(--dim);list-style:none}
+  details.more summary::-webkit-details-marker{display:none}
+  details.more summary::before{content:"+ ";color:var(--faint)}
+  details.more[open] summary::before{content:"− "}
+  .kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:12px 0}
+  .kv div{font-size:11.5px;color:var(--faint)}
+  .kv b{display:block;font:400 14px var(--mono);color:var(--ink);margin-top:2px}
+  .chart{position:relative;height:150px;margin-top:10px}
+  .chart svg{display:block;width:100%;height:100%}
+  .chart .tip{position:absolute;pointer-events:none;background:var(--raised);border:1px solid var(--line2);border-radius:5px;padding:5px 8px;font:11px/1.5 var(--mono);display:none;white-space:nowrap}
+
+  .eq{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:22px;max-width:560px}
+  .eq h2{font-size:16px;font-weight:600;margin-bottom:6px}
+  .eq p{color:var(--dim);font-size:13.5px;margin-bottom:14px}
+
+  .scrim{position:fixed;inset:0;background:rgba(5,8,14,.6);z-index:40;display:none}
+  .scrim.on{display:block}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);background:var(--panel);border-left:1px solid var(--line2);z-index:41;transform:translateX(100%);transition:transform .18s;overflow-y:auto;padding:18px 20px}
+  .drawer.on{transform:none}
+  .drawer h3{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;justify-content:space-between}
+  .drawer h4{font-size:11.5px;font-weight:500;color:var(--faint);margin:18px 0 6px}
+  .row{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--line)}
+  .row span:last-child{font-family:var(--mono);text-align:right;word-break:break-all}
+  footer{grid-column:1/-1;font-size:11.5px;color:var(--faint);border-top:1px solid var(--line);padding-top:14px;line-height:1.6}
+</style>
+<script src="/js/nx-facts.js"></script>
+<script src="/js/nx-shell.js"></script>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">NEXXORE</a>
+  <nav class="tabs" role="tablist" aria-label="Markets">
+    <button role="tab" data-tab="perps" aria-selected="true">Perps</button>
+    <button role="tab" data-tab="solana" aria-selected="false">Solana</button>
+    <button role="tab" data-tab="equities" aria-selected="false">Equities<span class="soon">soon</span></button>
+  </nav>
+  <span class="sp"></span>
+  <span class="bal" id="hdrBal"></span>
+  <span class="bal" id="hdrFeed"></span>
+  <button class="hbtn" id="walletBtn" type="button">Connect wallet</button>
+  <button class="hbtn" id="vaultBtn" type="button">Vault</button>
+</header>
+
+<main>
+  <div id="left">
+    <div id="trade">
+      <section class="blk">
+        <div class="bh"><h2>Signals</h2><span class="sub" id="sigSub"></span></div>
+        <div class="tw"><table id="sigTable"></table></div>
+      </section>
+      <section class="blk">
+        <div class="bh"><h2>Positions</h2><span class="sub" id="posSub"></span></div>
+        <div class="tw"><table id="posTable"></table></div>
+      </section>
+      <details class="more" id="more">
+        <summary>Model record and backtest</summary>
+        <div id="record"></div>
+      </details>
+    </div>
+    <div id="equities" hidden>
+      <div class="eq">
+        <h2>US equities</h2>
+        <p>Long-only stocks ranked on fundamentals, catalysts and trend. Not trading yet. It opens after the crypto engines have a 30-day record and a licensed data provider and broker are in place.</p>
+        <button class="hbtn" id="eqNotify" type="button">Notify me</button>
+        <span class="faint" id="eqNote" style="font-size:12px;margin-left:8px"></span>
+      </div>
+    </div>
+  </div>
+
+  <aside class="ticket" id="ticket" aria-label="Trade ticket"></aside>
+
+  <footer>Signals are not advice; most trades lose money after fees. Live orders are signed by your own wallet and Nexxore never holds your funds. On Hyperliquid and Jupiter, the Nexxore commission shown on each ticket is paid by the venue to the Nexxore vault. On centralised exchanges you place the order yourself through a referral link. Paper mode simulates fills against live order books.</footer>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drTitle"><h3><span id="drTitle"></span><button class="act" id="drClose" type="button">Close</button></h3><div id="drBody"></div></div>
+
+<script src="/js/engines/config.js"></script>
+<script src="/js/engines/core.js"></script>
+<script src="/js/engines/perp.js"></script>
+<script src="/js/engines/onchain.js"></script>
+<script src="/js/engines/exec.js"></script>
+<script src="/js/engines/app.js"></script>
+<script src="/js/nx-brand.js"></script>
+</body>
+</html>

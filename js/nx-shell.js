@@ -20,6 +20,7 @@
     risk: '<path d="M11 3l7 3v5c0 4.2-3 7.4-7 8.5-4-1.1-7-4.3-7-8.5V6l7-3z"/><path d="M11 8v4M11 15v.5"/>',
     yield: '<circle cx="11" cy="11" r="8"/><path d="M13.6 8.2c-.5-.9-1.5-1.3-2.6-1.3-1.5 0-2.6.8-2.6 2s1.1 1.7 2.6 2c1.6.3 2.7.8 2.7 2.1s-1.2 2.1-2.7 2.1c-1.2 0-2.2-.5-2.7-1.4M11 5.5v1.4M11 15.1v1.4"/>',
     record: '<path d="M5 3h9l3 3v13H5z"/><path d="M8 10h6M8 13h6M8 16h4"/>',
+    engines: '<path d="M3 15a8 8 0 0116 0"/><path d="M11 15l4-5"/><circle cx="11" cy="15" r="1.4"/><path d="M5.5 10.5l1 .8M11 7v1.3M16.5 10.5l-1 .8"/>',
     pro: '<path d="M11 3l2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"/>'
   };
   var NAV = [
@@ -29,6 +30,7 @@
     { group: 'Research' },
     { href: '/predictions', match: 'predictions', icon: 'alerts', label: 'Alerts', full: 'Prediction Agent & Alerts' },
     { group: 'Strategies' },
+    { href: '/engines', match: 'engines', icon: 'engines', label: 'Engines', full: 'Engines · signals and execution' },
     { href: '/strategy-builder', match: 'strategy-builder', icon: 'builder', label: 'Builder', full: 'Strategy Builder' },
     { href: '/intelligence', match: 'intelligence', icon: 'risk', label: 'Risk', full: 'Intelligence & Risk Engine' },
     { group: 'Proof' },
