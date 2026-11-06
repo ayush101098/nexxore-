@@ -47,6 +47,8 @@ class RecordedSource:
                 observed_at=datetime.fromisoformat(q["observed_at"]) + offset,
                 source=q["source"],
                 reference=q.get("reference", False),
+                eth_balance=Decimal(q["eth_balance"]) if "eth_balance" in q else None,
+                usdc_balance=Decimal(q["usdc_balance"]) if "usdc_balance" in q else None,
             )
             for q in self._data["quotes"]
         ]

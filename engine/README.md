@@ -76,6 +76,47 @@ and T_eq = 2π/σ² · ((√r − 1)/(√r + 1))² (Panoptic).
 
 These are options-like payoffs from swap curves, not option contracts.
 
+### Aqua premium rule
+
+A fully crossed range trades about q ETH at an average price of K_eq, so a
+curve fee of f earns about f · K_eq per ETH. Meanwhile the curve writes an
+options-like payoff worth C_eq, which is Black-Scholes at K_eq and T_eq. The
+curve's fee must cover that value plus a markup m = 0.20:
+
+```
+f_min = (1 + m) · C_eq / K_eq
+```
+
+- **Edge:** for `aqua_premium` decisions, the gross edge is q · (f · K_eq − C_eq),
+  and the fee is income rather than a cost line.
+- **New rule:** an extra rule (3b, after the gas check) rejects a curve whose
+  fee is below f_min.
+- **Recorded:** every `aqua_premium` Decision records K_eq, T_eq, C_eq and f_min
+  in `inputs.aqua`.
+- **Also from `/aqua/price`:** it returns `premium_floor.fee_instruction_min`,
+  which is f_min in SwapVM flat-fee units (1e9 = 100%), rounded up.
+
+Demo curves (w = 1.275, spot $3,400, vol 55%), from
+`tests/fixtures/aqua_premium.json` and `/aqua/price`:
+
+| Curve | Range | K_eq | T_eq | C_eq | f_min | Fee instruction ≥ |
+|---|---|---|---|---|---|---|
+| upside, call-like | 3,400–4,335 | 3,839.14 | 6.99 d | 6.44 | 0.2014% | 2,013,952 |
+| downside, put-like | 2,666.67–3,400 | 3,011.09 | 6.99 d | 5.71 | 0.2274% | 2,274,072 |
+
+## Quote cap
+
+Aqua's `quote()` runs the curve maths on virtual reserves, so it prices
+trades that a one-sided curve can't fill, and those trades revert (see
+`contracts/aqua`). When a venue reports its real balances, the scanner caps
+each opportunity at what the venue can actually pay out:
+
+- if the venue is above the reference price, we would sell ETH to it, so the
+  cap is its USDC balance;
+- if it is below, we would buy ETH from it, so the cap is its ETH balance × price.
+
+When the cap is zero, the scanner drops the opportunity.
+
 ## Sources
 
 `scanner/recorded.py` replays `data/recorded_quotes.json`, which is the
@@ -87,8 +128,12 @@ PRDs wire them up, they return 501 with a TODO.
 
 - `/scan` emits only `price_gap` opportunities so far. `aqua_premium` and
   `vol_regime` come with PRDs 3 and 4.
-- `/evaluate` treats the trade as spot exposure on the v4 pool. Aqua curves
-  enter the book through `/executions` and `/stress`.
+- `/evaluate` treats a `price_gap` trade as spot exposure on the v4 pool.
+- **No `aqua_premium` curve can be approved under the current profiles.** The
+  stress test counts a curve's full holdings: a 1 ETH upside curve loses
+  about $1,354 in the −40% scenario, and every stress budget is $150–$500.
+  The edge a curve earns (about $5 per ETH) can never clear both the budget
+  and the minimum edge at the same time. See the fixture.
 - In the stress grid, Aqua curves are repriced on vol shocks as their
   equivalent option, as the PRD specifies. The curve's token balances depend
   only on price, so this convention overstates vol risk rather than hiding it.

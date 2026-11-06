@@ -31,7 +31,16 @@ def test_scan_emits_gaps_above_threshold(client):
     for o in opps:
         validate("opportunity", o)
     # chainlink is the reference; the static pool's 1.8 bps gap is under the 5 bps default.
-    assert sorted(o["source_venue"] for o in opps) == ["aqua_router", "uniswap_v4_hooked"]
+    # aqua_router (ETH-only upside curve) quotes above reference, but selling ETH to it needs
+    # USDC it does not hold, so the quote cap drops it.
+    assert sorted(o["source_venue"] for o in opps) == ["aqua_router_put", "uniswap_v4_hooked"]
+
+
+def test_scan_caps_aqua_quotes_at_the_curves_real_balance(client):
+    opps = {o["source_venue"]: o for o in client.post("/scan", json={"size": "10000.00"}).json()}
+    # The put-like curve bids above reference and holds 3,241.77 USDC: that is all it can pay.
+    assert opps["aqua_router_put"]["size"] == "3241.77"
+    assert opps["uniswap_v4_hooked"]["size"] == "10000.00"  # no balances reported -> uncapped
 
 
 def test_scan_is_deterministic(client):
@@ -127,3 +136,18 @@ def test_stress_endpoint(client):
     assert len(r["scenarios"]) == 14
     assert r["worst_loss"] == "27.09"
     assert r["worst_scenario"]["spot_shock"] == "-0.40"
+
+
+def test_aqua_price_reports_the_premium_floor_for_the_demo_curve(client):
+    r = client.post(
+        "/aqua/price",
+        json={"spot": "3400", "range_low": "3400", "range_high": "4335",
+              "side": "call_like", "size": "1", "volatility": "0.55"},
+    ).json()
+    assert r["equivalent_strike"] == "3839.14"
+    assert float(r["equivalent_term_days"]) == pytest.approx(6.99, abs=0.01)
+    floor = r["premium_floor"]
+    assert float(floor["c_eq_per_eth"]) == pytest.approx(6.44, abs=0.01)
+    assert float(floor["f_min"]) == pytest.approx(0.002014, rel=0.001)
+    # SwapVM flat fee in 1e9 units, rounded up so the fee never falls below f_min.
+    assert floor["fee_instruction_min"] == "2013952"
