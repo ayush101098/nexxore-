@@ -5,7 +5,7 @@
 #   make demo-freeze   save the running state as the new frozen demo
 #   ARC_REHEARSAL=1 make up   also a local Arc stand-in, so Approve and sign -> fund -> settle runs offline
 #   make outage-test   kill the engine for real under a headed browser
-.PHONY: up down demo-reset demo-freeze outage-test test openapi arc-deploy testnet
+.PHONY: up down demo-reset demo-freeze preflight hook-volatile outage-test test openapi arc-deploy testnet
 
 up:
 	./scripts/stack.sh up
@@ -17,6 +17,12 @@ demo-freeze:
 	./scripts/stack.sh freeze
 outage-test:
 	./scripts/outage-test.sh
+# PASS/FAIL checks before a demo (after make up and make demo-reset); exits 1 on any FAIL.
+preflight:
+	./scripts/preflight.sh
+# A volatile spell through the live hooked pool: the fee rises toward the cap (VOL_BLOCKS, VOL_ETH).
+hook-volatile:
+	$(MAKE) -C contracts/hook hook-volatile
 
 test:
 	cd engine && ../.venv/bin/python -m pytest -q
