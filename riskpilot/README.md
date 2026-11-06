@@ -34,6 +34,10 @@ the real Uniswap v4 PoolManager, 1inch Aqua and SwapVM, WETH and USDC.
    - each one validated and simulated again right before it is sent.
 
    Your wallet signs. The engine holds no user key.
+6. **Ask.** "Ask RiskPilot" answers questions about your own positions, and writes a daily risk
+   brief, on 0G Private Computer. Answers are built only from the engine's numbers (holdings,
+   positions, Greeks, the full stress grid, recent decisions). Every dollar figure and percentage
+   is checked against that context, and each answer shows its 0G request ID.
 5. **Settle.** An approved decision can be funded in a USDC escrow on Arc, keyed by `decision_id`.
    The arc-worker then settles it after the trade is verified. Arc is built and tested, but it is
    off by default: the demo is Ethereum only, and Arc is enabled once `deployments/arc-testnet.json`
@@ -87,7 +91,7 @@ Position, Execution).
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r shared/requirements.txt -r engine/requirements.txt
-cp .env.example .env              # set AQUA_FORK_RPC_URL
+cp .env.example .env              # set AQUA_FORK_RPC_URL; ZG_API_KEY (pc.0g.ai) for Ask RiskPilot
 make up                           # fork + engine; the first run builds the chain and freezes it (~2 min)
 open http://localhost:8000/riskpilot
 make demo-reset                   # back to the frozen block, same decision ids, ~3 s
@@ -106,9 +110,9 @@ make down
 
 | Suite | Command | Tests |
 |---|---|---|
-| Engine | `cd engine && ../.venv/bin/python -m pytest -q` | 91 |
+| Engine | `cd engine && ../.venv/bin/python -m pytest -q` | 98 |
 | Schemas | `cd shared && ../.venv/bin/python -m pytest -q` | 19 |
-| e2e (Playwright, needs `make up`) | `cd web && npm ci && npx playwright test riskpilot` | 16 |
+| e2e (Playwright, needs `make up`) | `cd web && npm ci && npx playwright test riskpilot` | 18 |
 | Reset check | `make demo-reset && cd web && RESET=1 E2E_EXTERNAL=1 npx playwright test reset` | 1 |
 | Arc e2e (local Arc stand-in) | `ARC_REHEARSAL=1 make demo-reset && cd web && ARC=1 E2E_EXTERNAL=1 npx playwright test arc` | 1 |
 | Foundry: Aqua (fork) | `cd contracts/aqua && make test` | 12 |
@@ -137,6 +141,9 @@ The API is under `/v1`; the unversioned paths are aliases. The spec is `docs/ope
 | `GET /v1/settlements` | Arc settlement status per decision |
 | `GET`/`POST /v1/decisions/{id}/settlement` | Payout for an escrowed amount; record a settle tx |
 | `POST /v1/scan`, `POST /v1/stress`, `POST /v1/aqua/price` | Scanner, stress grid and Aqua curve pricing as standalone calls |
+| `POST /v1/assistant/ask` | `{question, wallet}` → answer, 0G `request_id`, cited decision IDs, `context_snapshot_id` (503 "Assistant unavailable" on any 0G error) |
+| `POST /v1/assistant/brief` | `{wallet}` → the daily risk brief and its `request_id` |
+| `GET /v1/assistant/log?wallet=`, `GET /v1/assistant/context/{id}` | Past answers with request IDs; the exact context an answer was given |
 | `GET /v1/health`, `GET /v1/metrics` | Dependencies and warnings; p50/p95 per route |
 | `POST /v1/demo/seed`, `GET /v1/demo/info` | The demo's five opportunities; demo deployment info |
 
@@ -185,6 +192,7 @@ confirmed 0x8f300cc3fd0da6f9dd23bfa91ff66fb21604205ad8afe041a825daa49507c16a in 
 |---|---|---|---|
 | 1inch Aqua / SwapVM | One-sided XYCConcentrate curves shipped through Aqua to AquaSwapVMRouter v1.0.2; priced as a covered call (above spot) and a cash-secured put (below spot); fee floor f_min = (1 + m) · C_eq / K_eq | `contracts/aqua/src/AquaCurves.sol`, `AquaCollateral.sol`, `script/ShipDemoCurves.s.sol`; `engine/pricing.py`; `web/adapters.js` (`aquaAdapter`) | 12 fork tests (`contracts/aqua/test/AquaOptionsFork.t.sol`); e2e 5 ships the curve from the page and a taker fills it, both receipts verified; `/v1/aqua/price` gives `fee_instruction_min` 2,013,952, equal to the shipped curve's fee |
 | Uniswap v4 | `VolatilityFeeHook`: a dynamic fee from an EWMA of the pool's own tick returns, set in `beforeSwap` with `OVERRIDE_FEE_FLAG`; the scanner reads every v4 ETH/USDC pool | `contracts/hook/src/VolatilityFeeHook.sol`; `contracts/hook/script/HookPool.s.sol`; `engine/scanner/live.py`; `web/adapters.js` (`v4Adapter`) | 6 Foundry tests; e2e 4b swaps through the hooked pool and checks the fee paid equals `hook.getFee`; `make hook-volatile` moves the fee from 2,161 to 8,976 pips and the hooked gap goes from APPROVE to REJECT on the next block; `FEEDBACK.md` |
+| 0G Private Computer | "Ask RiskPilot" and the daily brief: the engine calls 0G's OpenAI-compatible router (`https://router-api.0g.ai/v1`, model `0gm-1.0-35b-a3b`, private trust mode) from the backend, with `ZG_API_KEY` from the environment; the system prompt and post-check keep answers to the engine's numbers | `engine/assistant/__init__.py`; `engine/api.py` (`/assistant/*`); `web/index.html` (Ask RiskPilot panel) | 7 engine tests (`engine/tests/test_assistant.py`: grid-grounded answer, regenerate once, warning, unavailable, brief, replayable context); e2e 15 against a stand-in router. Without 0G, users can't ask about their positions or get the daily brief, and their position data would go to a non-private model. |
 | Arc | `RiskPilotEscrow`: USDC escrow per `decision_id` (6-decimal ERC-20 interface), 24 h refund; the arc-worker settles verified decisions | `contracts/arc/src/RiskPilotEscrow.sol`; `engine/arc_worker.py`; `web/adapters.js` (`arcAdapter`) | 7 Foundry tests; worker unit tests (settle once, no second settle after a restart, 2/8/30 s retries); `web/e2e/arc.spec.ts` against a local Arc stand-in: one click to Settled, and a restart adds no second `Settled` event |
 
 ## Deployed addresses

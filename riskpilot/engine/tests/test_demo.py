@@ -37,7 +37,7 @@ def curves_file(tmp_path, monkeypatch):
 CHAIN = {"block": 26354383, "base_fee_gwei": Decimal("0.000000007"), "tip_gwei": Decimal("0.000089"), "eth": Decimal("992")}
 
 
-def client(holdings=None, gas=None, spot=None, gap=None, chain=CHAIN, clock=lambda: NOW) -> TestClient:
+def client(holdings=None, gas=None, spot=None, gap=None, chain=CHAIN, clock=lambda: NOW, llm=None) -> TestClient:
     def down(value):
         def read(*_):
             if value is None:
@@ -47,7 +47,7 @@ def client(holdings=None, gas=None, spot=None, gap=None, chain=CHAIN, clock=lamb
 
     app = create_app(
         Store(":memory:"), clock=clock, holdings_reader=down(holdings), gas_reader=down(gas),
-        spot_reader=down(spot), gap_reader=down(gap), chain_reader=down(chain),
+        spot_reader=down(spot), gap_reader=down(gap), chain_reader=down(chain), llm=llm,
     )
     return TestClient(app)
 

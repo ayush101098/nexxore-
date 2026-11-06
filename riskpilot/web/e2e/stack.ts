@@ -107,8 +107,11 @@ export async function rpcAt<T = any>(url: string, method: string, params: unknow
   return j.result;
 }
 
-/** sendError: make every eth_sendTransaction fail with this message (e.g. MetaMask's stale-nonce text). */
-export async function installWallet(page: Page, address: string = DEMO_WALLET, privateKey?: `0x${string}`, opts: { sendError?: string } = {}) {
+/** sendError: make every eth_sendTransaction fail with this message (e.g. MetaMask's stale-nonce text).
+ *  firstSendDelayMs: wait this long before the first send, like a person reading a wallet prompt. */
+export async function installWallet(page: Page, address: string = DEMO_WALLET, privateKey?: `0x${string}`,
+  opts: { sendError?: string; firstSendDelayMs?: number } = {}) {
+  let sends = 0;
   const account = privateKey ? privateKeyToAccount(privateKey) : null;
   await page.exposeFunction("__rpWallet", async (method: string, params: any[], chainId: number) => {
     const url = CHAIN_RPC[chainId];
@@ -120,6 +123,7 @@ export async function installWallet(page: Page, address: string = DEMO_WALLET, p
         return account.signMessage({ message: { raw: params[0] } });
       case "eth_sendTransaction":
         if (opts.sendError) throw Object.assign(new Error(opts.sendError), { code: -32603 });
+        if (sends++ === 0 && opts.firstSendDelayMs) await new Promise((r) => setTimeout(r, opts.firstSendDelayMs));
         await rpcAt(url, "anvil_impersonateAccount", [address]);
         return rpcAt(url, "eth_sendTransaction", params);
       default: return rpcAt(url, method, params);

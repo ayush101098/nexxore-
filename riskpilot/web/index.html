@@ -174,6 +174,19 @@ details table { margin-top:var(--s1); font-size:11px; }
 .settle.Settled { color:var(--approve); border-color:var(--approve); }
 .settle.Failed { color:var(--reject); border-color:var(--reject); }
 @media (max-width:760px) { .cards { grid-template-columns:1fr; } }
+.ask { display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); gap:var(--s2); }
+.brief { border:1px solid var(--border); border-radius:var(--r); padding:var(--s2); background:var(--surface-2); white-space:pre-wrap; }
+.brief h3 { font-size:13px; font-weight:600; margin-bottom:var(--s1); white-space:normal; }
+.askrow { display:flex; gap:var(--s1); margin-bottom:var(--s1); }
+.askrow input { flex:1; min-width:0; background:var(--bg); border:1px solid var(--border); border-radius:var(--r); color:var(--text); padding:6px var(--s1); font:inherit; }
+.askrow input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+.qa { border-top:1px solid var(--border); padding:var(--s1) 0; }
+.qa .q { color:var(--text-2); margin-bottom:4px; }
+.qa .a { white-space:pre-wrap; }
+.meta { font-family:var(--mono); font-size:11px; color:var(--text-3); margin-top:4px; }
+.warn { color:var(--requote); margin-top:4px; }
+.sr { position:absolute; left:-9999px; }
+@media (max-width:1100px) { .ask { grid-template-columns:1fr; } }
 @media (max-width:1100px) {
   .span-7, .span-5, .span-4 { grid-column:span 12; }
   .top { flex-direction:column; } .status { flex-wrap:wrap; } .st { flex:1 1 45%; }
@@ -216,6 +229,20 @@ details table { margin-top:var(--s1); font-size:11px; }
           <div class="panel-h"><h2 id="h-arc">Settlement</h2><span class="k">Arc: next</span></div>
           <div class="panel-b" id="arc"><span class="skel w80"></span><span class="skel w60"></span></div>
         </section>
+      </div>
+    </section>
+
+    <section class="panel span-12" aria-labelledby="h-ask">
+      <div class="panel-h"><h2 id="h-ask">Ask RiskPilot</h2><span class="k">0G Private Computer · 0gm-1.0-35b-a3b</span></div>
+      <p class="helper">Answers about your own positions, built only from the engine's numbers. Each one shows its 0G request ID.</p>
+      <div class="panel-b ask">
+        <div class="brief" id="brief" data-testid="brief"><span class="skel w80"></span><span class="skel w60"></span></div>
+        <div class="chat">
+          <form id="askForm" class="askrow"><label for="askQ" class="sr">Question</label>
+            <input id="askQ" data-testid="ask-input" type="text" maxlength="500" autocomplete="off" placeholder="What happens to my positions if ETH drops 20%?">
+            <button class="btn ghost sm" type="submit" id="askBtn" data-testid="ask-button">Ask</button></form>
+          <div id="answers" data-testid="answers" aria-live="polite"></div>
+        </div>
       </div>
     </section>
 
@@ -450,6 +477,7 @@ async function chooseProfile(name) {
     S.profile = name; S.needsProfile = false;
     $("profilePick").hidden = true;
     renderStatus(); renderOpps(); renderDecision();
+    renderBrief(true); renderAnswers();
   } catch (e) { $("profileErr").textContent = `Not set: ${e.shortMessage || e.message}`; }
 }
 
@@ -549,6 +577,35 @@ function stressBars(d) {
     ${table ? `<details><summary>14 stress scenarios</summary><table><thead><tr><th class="num">Spot</th><th class="num">Vol</th><th class="num">P&amp;L before</th><th class="num">P&amp;L after</th></tr></thead><tbody>${table}</tbody></table></details>` : ""}`;
 }
 
+// The curve's options-like payoff: its P&L at each spot move, read from the engine's stress grid
+// (P&L after − P&L before, no vol shock). A covered call caps the upside; a cash-secured put loses
+// as ETH falls.
+function payoffChart(d) {
+  const rows = (d.inputs.stress_grid || []).filter((s) => Number(s.vol_shock) === 0)
+    .map((s) => ({ x: Number(s.spot_shock), y: Number(s.pnl_after) - Number(s.pnl_before) })).sort((a, b) => a.x - b.x);
+  if (!rows.length) return "";
+  const W = 520, H = 132, L = 56, R = 8, top = 8, bot = 30, n = rows.length;
+  const m = Math.max(...rows.map((r) => Math.abs(r.y)), 1) * 1.1;
+  const y = (v) => top + ((m - v) / (2 * m)) * (H - top - bot), slot = (W - L - R) / n, bw = Math.max(6, slot * 0.6);
+  let g = `<line class="axis" x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}"/>`;
+  const compact = (v) => (Math.abs(v) >= 1000 ? `${v < 0 ? "−" : ""}$${num(Math.abs(v) / 1000, 1)}k` : usd(v));
+  g += `<text x="${L - 6}" y="${y(m / 1.1) + 4}" text-anchor="end">${compact(m / 1.1)}</text><text x="${L - 6}" y="${y(-m / 1.1) + 4}" text-anchor="end">${compact(-m / 1.1)}</text>`;
+  rows.forEach((r, i) => {
+    const cx = L + slot * (i + 0.5), y0 = y(0), y1 = y(r.y);
+    g += `<rect x="${cx - bw / 2}" y="${Math.min(y0, y1)}" width="${bw}" height="${Math.max(1, Math.abs(y1 - y0))}" rx="2" fill="${r.y >= 0 ? "var(--approve)" : "var(--reject)"}"/>`;
+    g += `<rect class="hit" x="${cx - slot / 2}" y="${top}" width="${slot}" height="${H - top - bot}" data-tip="${esc(`ETH ${r.x >= 0 ? "+" : ""}${pct(r.x, 0)}: this curve ${r.y >= 0 ? "+" : ""}${usd(r.y)}`)}"/>`;
+    g += `<text x="${cx}" y="${H - 16}" text-anchor="middle">${r.x > 0 ? "+" : ""}${Math.round(r.x * 100)}%</text>`;
+  });
+  g += `<text x="${(L + W - R) / 2}" y="${H - 2}" text-anchor="middle">ETH price move</text>`;
+  const call = d.inputs.aqua.side === "call_like";
+  const what = call ? `vs. keeping the ${num(d.inputs.proposed_position.params.quantity_eth, 0)} WETH: above the range the upside is given up for the premium`
+    : "the put buys ETH as it falls: losses grow below the range";
+  return `<div class="sub"><span>Options-like payoff: P&amp;L change by ETH move (stress grid, after − before)</span></div>
+    <p class="helper" style="padding:0">${esc(what)}</p>
+    <svg class="chart" data-testid="payoff" viewBox="0 0 ${W} ${H}" role="img" aria-label="Payoff of the curve across ${n} spot moves">${g}</svg>
+    <p class="helper" data-testid="premium-vs-risk" style="padding:0">Earns ${usd(d.gross_edge)} premium if the range is crossed; risk charge ${usd(d.risk_charge)} (λ × added worst-case loss); net ${usd(d.net_edge)}.${d.verdict === "REJECT" && Number(d.stress_loss_before) > Number(d.budget) ? ` Your wallet's worst case (${usd(d.stress_loss_before)}) is already over the ${usd(d.budget)} budget, so any curve that adds downside is rejected.` : ""}</p>`;
+}
+
 // ── decision panel ───────────────────────────────────────────────────────
 let timer = null;
 const V4_VENUES = { uniswap_v4_hooked: "hooked v4 pool", uniswap_v4_static: "static 0.30% v4 pool" }; // tradable via the demo router
@@ -622,7 +679,7 @@ function renderDecision() {
     <div class="log" id="log" aria-live="polite">${S.log.join("<br>")}</div>`;
   h += `<div class="sub"><span>Net edge, USD</span></div>${waterfall(d)}`;
   h += `<div class="sub"><span>Stress test, worst of 14 scenarios · <span data-testid="stress-before">${usd(d.stress_loss_before)}</span> → <span data-testid="stress-after">${usd(d.stress_loss_after)}</span> · budget <span data-testid="budget">${usd(d.budget)}</span></span></div>${stressBars(d)}`;
-  if (inp.aqua) h += aquaBlock(d);
+  if (inp.aqua) h += aquaBlock(d) + payoffChart(d);
   const tsOf = (k) => inp.timestamps?.[k];
   const lines = Object.entries(inp.sources || {}).map(([k, v]) => `${k}: ${esc(v)}${tsOf(k) ? ` · ${hms(tsOf(k))}` : ""}`);
   if (inp.request?.holdings) lines.push(`holdings: ${num(inp.request.holdings.weth, 4)} WETH, ${usd(inp.request.holdings.usdc).slice(1)} USDC`);
@@ -658,7 +715,8 @@ async function approve(d, kind, key) {
     if (signer.provider) await switchTo(signer.provider, CHAIN_ID, { chainName: "RiskPilot demo chain (mainnet fork)", rpcUrls: [RPC], nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 } });
     const ctx = { viem: V.viem, pub: V.pub, chainId: CHAIN_ID, A, signer };
     const adapter = kind === "aqua" ? aquaAdapter({ ...ctx, info: S.info }) : v4Adapter({ ...ctx, hook: S.info?.hook, aquaCommitted });
-    await adapter.validate(d);
+    const startedAt = Date.now(); // the click: the flow may outlive the 30 s TTL by FLOW_GRACE_MS
+    await adapter.validate(d, { startedAt });
     const execN = signer.batch ? 1 : (await adapter.buildTx(d)).length;
     const dep = S.info?.arc, arcN = dep ? 2 : 0, n = execN + arcN;
     const pr = d.inputs.profile, gas = pr?.gas_ceiling_gwei && Number(pr.gas_ceiling_gwei) > 0
@@ -667,7 +725,7 @@ async function approve(d, kind, key) {
       if (phase === "sign" && S.perf.firstPrompt === null) S.perf.firstPrompt = performance.now() - S.perf.click;
       set(phase === "sign" ? `Signing ${i} of ${n}: ${label}…` : `Confirming ${i} of ${n}…`);
     };
-    const execution = await execute(adapter, d, signer, V.pub, log, { onStep, gas, total: n });
+    const execution = await execute(adapter, d, signer, V.pub, log, { onStep, gas, total: n, startedAt });
     await engine("/executions", { method: "POST", body: JSON.stringify(execution) });
     S.lastTx[key] = { hash: execution.tx_hash, decision_id: d.decision_id };
     log(`verified · ${short(execution.tx_hash)}`, "ok");
@@ -675,7 +733,7 @@ async function approve(d, kind, key) {
       set(ARC_LOCAL ? "Switching to Arc (local stand-in)…" : "Switching to Arc testnet…");
       const arcS = await arcSigner();
       const arc = arcAdapter({ viem: V.viem, arcPub: V.arcPub, dep, usdc: dep.usdc || ARC.usdc, stakeUnits: V.viem.parseUnits(String(dep.stake_usdc), 6), signer: arcS, executed: true });
-      const funded = await execute(arc, d, arcS, V.arcPub, log, { onStep, offset: execN, total: n });
+      const funded = await execute(arc, d, arcS, V.arcPub, log, { onStep, offset: execN, total: n, startedAt });
       S.settlements[d.decision_id] = { decision_id: d.decision_id, status: "Funded", fund_tx: funded.tx_hash, funded_at: performance.now() };
       log(`funded on Arc · ${short(funded.tx_hash)} · the arc-worker settles it`, "ok");
       // Back to the demo chain, so the wallet is where the next decision needs it.
@@ -843,7 +901,7 @@ const REFUND_AFTER_S = 24 * 3600;
 async function renderArc() {
   const el = $("arc"), dep = S.info?.arc;
   if (!S.up.engine) { el.innerHTML = unavailable("engine"); return; }
-  if (!dep) { el.innerHTML = `<p class="empty" data-testid="arc-next">Ethereum only for now. USDC settlement on Arc comes next (preview it locally: ARC_REHEARSAL=1 make up).</p>`; return; }
+  if (!dep) { el.innerHTML = `<p class="empty" data-testid="arc-next">Arc testnet escrow not set up yet. Run <span class="mono">make arc-setup SENDER=&lt;your address&gt;</span> (your wallet signs about 4 prompts), then <span class="mono">make up</span>: Approve and sign then funds on Arc and the arc-worker settles. Preview offline: <span class="mono">ARC_REHEARSAL=1 make up</span>.</p>`; return; }
   try {
     const abi = V.viem.parseAbi(["function reserve() view returns (uint256)", "function deposits(bytes32) view returns (address depositor, uint64 fundedAt, uint256 amount, uint8 status)"]);
     const from = BigInt(dep.deployed_block), at = now(), explorer = ARC_LOCAL ? null : ARC.explorer;
@@ -885,6 +943,53 @@ async function refundArc(key, dep) {
     await renderArc();
   } catch (e) { log(`Refund stopped: ${e.shortMessage || e.message}`, "bad"); }
 }
+
+// ── Ask RiskPilot (0G Private Computer) ──────────────────────────────────
+// The engine builds the context from its own data and calls 0G; the browser never sees the key.
+function assistantMeta(r) {
+  const cites = r.cited_decision_ids?.length ? ` · cites ${r.cited_decision_ids.map(esc).join(", ")}` : "";
+  return `<div class="meta" data-testid="request-id" data-request-id="${esc(r.request_id)}">0G request ${esc(r.request_id)} · ${esc(r.model)} · context ${esc(r.context_snapshot_id)}${cites}${r.regenerated ? " · regenerated once" : ""}</div>`
+    + (r.warning ? `<div class="warn" data-testid="assistant-warning">${esc(r.warning)}</div>` : "");
+}
+// Any 0G failure: say so. Never show a cached or invented answer as new.
+const assistantDown = () => `<span class="unavail" data-testid="assistant-unavailable">Assistant unavailable</span>`;
+let briefFor = null;
+async function renderBrief(force = false) {
+  const el = $("brief"), w = viewer();
+  if (!S.up.engine) { el.innerHTML = unavailable("engine"); briefFor = null; return; }
+  if (!w || S.needsProfile) { el.innerHTML = `<p class="empty">The daily brief appears once a profile is chosen.</p>`; return; }
+  if (briefFor === w && !force) return;
+  briefFor = w;
+  el.innerHTML = `<h3>Daily risk brief</h3><p class="empty">Generating on 0G Private Computer…</p>`;
+  try {
+    const r = await engine("/assistant/brief", { method: "POST", body: JSON.stringify({ wallet: w }) });
+    el.innerHTML = `<h3>Daily risk brief · ${esc(hms(r.created_at))}</h3><div>${esc(r.answer)}</div>${assistantMeta(r)}`;
+  } catch (e) { el.innerHTML = `<h3>Daily risk brief</h3>${assistantDown(e)}`; briefFor = null; }
+}
+async function renderAnswers() {
+  const el = $("answers"), w = viewer();
+  if (!S.up.engine || !w) { el.innerHTML = ""; return; }
+  try {
+    const rows = (await engine(`/assistant/log?wallet=${w}&limit=10`)).filter((r) => r.kind === "ask");
+    el.innerHTML = rows.map((r) => `<div class="qa" data-testid="qa"><div class="q">${esc(r.question)}</div><div class="a" data-testid="answer">${esc(r.answer)}</div>${assistantMeta(r)}</div>`).join("")
+      || `<p class="empty">Try: "Why did you reject the put-like curve?"</p>`;
+  } catch { el.innerHTML = ""; }
+}
+$("askForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const q = $("askQ").value.trim(), w = viewer();
+  if (!q || !w) return;
+  $("askBtn").disabled = true; $("askBtn").textContent = "Asking…";
+  const pending = document.createElement("div");
+  pending.className = "qa"; pending.innerHTML = `<div class="q">${esc(q)}</div><div class="a empty">Asking 0G Private Computer…</div>`;
+  $("answers").prepend(pending);
+  try {
+    await engine("/assistant/ask", { method: "POST", body: JSON.stringify({ wallet: w, question: q }) });
+    $("askQ").value = "";
+    await renderAnswers();
+  } catch (err) { pending.querySelector(".a").outerHTML = `<div class="a">${assistantDown(err)}</div>`; }
+  finally { $("askBtn").disabled = false; $("askBtn").textContent = "Ask"; }
+});
 
 // ── history ──────────────────────────────────────────────────────────────
 function renderHistory() {
@@ -944,6 +1049,7 @@ async function refreshAll() {
   try { await loadEngine(); S.up.engine = true; } catch { S.up.engine = false; S.seed = null; }
   try { if (!V) await loadViem(); S.chain = await readChain(); S.up.chain = true; } catch { S.up.chain = false; S.chain = null; }
   renderStatus(); renderOpps(); renderDecision(); renderHistory();
+  renderBrief(); renderAnswers();
   await renderPositions();
   renderDecision();
 }
@@ -951,7 +1057,7 @@ async function refreshAll() {
 function engineDown() {
   if (!S.up.engine && !S.seed) return;
   S.up.engine = false; S.seed = null; S.seedErr = "engine"; S.perf.downAt = performance.now();
-  renderStatus(); renderOpps(); renderDecision(); renderHistory(); renderPositions();
+  renderStatus(); renderOpps(); renderDecision(); renderHistory(); renderPositions(); renderBrief();
 }
 
 // Push, not polling: the engine streams block, opportunity, decision, health and settlement events.

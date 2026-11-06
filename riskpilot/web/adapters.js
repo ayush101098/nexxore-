@@ -11,9 +11,18 @@ export class AdapterRefused extends Error {}
 
 const nowIso = () => new Date().toISOString().replace(/\.\d+Z$/, "Z");
 
-function requireLiveApprove(d) {
+// A person confirming several wallet prompts takes longer than a decision's 30 s TTL. A flow that
+// started while the decision was live may finish within FLOW_GRACE_MS: every step is still
+// re-validated (collateral, balances) and the trade re-simulated against its minimum output.
+export const FLOW_GRACE_MS = 120_000;
+function requireLiveApprove(d, { startedAt } = {}) {
   if (d.verdict !== "APPROVE") throw new AdapterRefused(`decision is ${d.verdict}, not APPROVE`);
-  if (Date.parse(d.expires_at) <= Date.now()) throw new AdapterRefused(`decision expired at ${d.expires_at}`);
+  const expires = Date.parse(d.expires_at), now = Date.now();
+  if (expires > now) return;
+  if (startedAt && startedAt < expires && now - startedAt <= FLOW_GRACE_MS) return;
+  throw new AdapterRefused(startedAt && startedAt < expires
+    ? `the signing flow took over ${FLOW_GRACE_MS / 1000} s; press Approve and sign again for a fresh decision`
+    : `decision expired at ${d.expires_at}`);
 }
 
 /**
@@ -23,8 +32,9 @@ function requireLiveApprove(d) {
  * gas: { maxFeePerGas, maxPriorityFeePerGas } from the engine's derived ceiling, when given.
  * Returns the Execution.
  */
-export async function execute(adapter, decision, signer, pub, log = () => {}, { onStep = () => {}, gas = null, offset = 0, total = null } = {}) {
-  await adapter.validate(decision);
+export async function execute(adapter, decision, signer, pub, log = () => {}, { onStep = () => {}, gas = null, offset = 0, total = null, startedAt = Date.now() } = {}) {
+  const flow = { startedAt };
+  await adapter.validate(decision, flow);
   const txs = await adapter.buildTx(decision);
   const n = total ?? txs.length;
   if (signer.batch && txs.length > 1) return adapter.verify(await sendBatch(adapter, decision, signer, pub, txs, log, onStep, offset, n));
@@ -32,7 +42,7 @@ export async function execute(adapter, decision, signer, pub, log = () => {}, { 
   for (const [j, tx] of txs.entries()) {
     const i = offset + j + 1;
     // Re-check before every transaction: the decision can expire, or the chain move, between steps.
-    if (j > 0) await adapter.validate(decision);
+    if (j > 0) await adapter.validate(decision, flow);
     if (!tx.prep) log(`simulated: ${(await adapter.simulate(decision)).summary}`);
     onStep({ i, n, label: tx.label, phase: "sign" });
     log(`${i} of ${n}: ${tx.label} · sign`);
@@ -102,8 +112,8 @@ export function aquaAdapter({ viem, pub, chainId, info, A, signer }) {
   const adapter = {
     name: "aqua",
 
-    async validate(d) {
-      requireLiveApprove(d);
+    async validate(d, flow = {}) {
+      requireLiveApprove(d, flow);
       const c = curveFor(d);
       if (!c) throw new AdapterRefused("not an Aqua decision");
       if (signer.address.toLowerCase() !== info.maker.toLowerCase()) throw new AdapterRefused(`signer is not the curve's maker ${info.maker}`);
@@ -209,8 +219,8 @@ export function v4Adapter({ viem, pub, chainId, hook, A, signer, aquaCommitted =
 
   return {
     name: "v4",
-    async validate(d) {
-      requireLiveApprove(d);
+    async validate(d, flow = {}) {
+      requireLiveApprove(d, flow);
       if (!hook) throw new AdapterRefused("no v4 pools deployed (make hook-pool)");
       if (!pool(d)) throw new AdapterRefused(`no adapter for ${d.inputs.request.opportunity.source_venue}`);
       const t = trade(d);
@@ -268,9 +278,9 @@ export function arcAdapter({ viem, arcPub, dep, usdc, stakeUnits, signer, execut
   let current = null;
   return {
     name: "arc",
-    async validate(d) {
+    async validate(d, flow = {}) {
       if (executed) { if (d.verdict !== "APPROVE") throw new AdapterRefused(`decision is ${d.verdict}, not APPROVE`); }
-      else requireLiveApprove(d);
+      else requireLiveApprove(d, flow);
       if (!dep) throw new AdapterRefused("escrow not deployed on Arc");
       const [, , , status] = await arcPub.readContract({ address: dep.escrow, abi, functionName: "deposits", args: [keyOf(d)] });
       if (status !== 0) throw new AdapterRefused("this decision is already funded");

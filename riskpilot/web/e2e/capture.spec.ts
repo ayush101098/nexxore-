@@ -13,7 +13,8 @@ const installed = new WeakSet<Page>();
 async function open(page: Page, shoot?: string) {
   if (!installed.has(page)) {
     installed.add(page);
-    if (shoot) { const w = freshWallet(); await installWallet(page, w.address, w.key); } else await installWallet(page);
+    // A 3 s first prompt holds the stepper on "Signing 1 of 2" long enough to photograph it.
+    if (shoot) { const w = freshWallet(); await installWallet(page, w.address, w.key); } else await installWallet(page, undefined, undefined, { firstSendDelayMs: 3_000 });
   }
   await page.goto("/riskpilot");
   const card = page.locator("[data-testid=profile-card][data-profile=moderate]");

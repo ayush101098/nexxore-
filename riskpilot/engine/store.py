@@ -32,6 +32,17 @@ CREATE TABLE IF NOT EXISTS settlements (
     status TEXT NOT NULL,
     body TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS assistant_contexts (
+    context_id TEXT PRIMARY KEY,
+    body TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS assistant_log (
+    request_id TEXT PRIMARY KEY,
+    wallet TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    body TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS assistant_log_wallet ON assistant_log (wallet, created_at);
 CREATE INDEX IF NOT EXISTS decisions_created ON decisions (created_at);
 CREATE INDEX IF NOT EXISTS executions_decision ON executions (decision_id);
 CREATE INDEX IF NOT EXISTS positions_status ON positions (status);
@@ -112,3 +123,17 @@ class Store:
 
     def list_settlements(self) -> list[dict]:
         return self._read("SELECT body FROM settlements ORDER BY rowid")
+
+    def save_assistant(self, entry: dict, context: dict) -> None:
+        """An answer or brief with the exact context it was given (replayable by context_snapshot_id)."""
+        with self._lock, self._db:
+            self._db.execute("INSERT OR IGNORE INTO assistant_contexts VALUES (?, ?)", (entry["context_snapshot_id"], json.dumps(context)))
+            self._db.execute("INSERT OR REPLACE INTO assistant_log VALUES (?, ?, ?, ?)",
+                             (entry["request_id"], entry["wallet"].lower(), entry["created_at"], json.dumps(entry)))
+
+    def assistant_log(self, wallet: str, limit: int = 50) -> list[dict]:
+        return self._read("SELECT body FROM assistant_log WHERE wallet = ? ORDER BY created_at DESC LIMIT ?", (wallet.lower(), limit))
+
+    def assistant_context(self, context_id: str) -> dict | None:
+        rows = self._read("SELECT body FROM assistant_contexts WHERE context_id = ?", (context_id,))
+        return rows[0] if rows else None

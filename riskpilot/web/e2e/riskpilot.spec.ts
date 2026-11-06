@@ -83,6 +83,13 @@ test("3. put-like curve: stress over budget, Approve disabled", async ({ page })
   expect(after).toBeGreaterThan(Number(d.budget));
   await expect(page.getByTestId("approve")).toBeDisabled();
   await expect(page.getByTestId("approve")).toHaveText("Rejected: adds $629.93 worst-case loss, limit $250");
+  // The options-like payoff: a cash-secured put loses as ETH falls (stress grid, after − before).
+  await expect(page.getByTestId("payoff")).toBeVisible();
+  const g = d.inputs.stress_grid.find((r: any) => Number(r.spot_shock) === -0.4 && Number(r.vol_shock) === 0);
+  expect(Number(g.pnl_after) - Number(g.pnl_before)).toBeLessThan(0);
+  await expect(page.getByTestId("premium-vs-risk")).toContainText(`Earns ${usd(d.gross_edge)} premium`);
+  await expect(page.getByTestId("premium-vs-risk")).toContainText(`risk charge ${usd(d.risk_charge)}`);
+  await expect(page.getByTestId("premium-vs-risk")).toContainText("already over the $250.00 budget");
   test.info().annotations.push({ type: "bug-list", description:
     `Spec expects stress after ≈ $971; engine reports ${usd(d.stress_loss_after)} (+${usd(Number(d.stress_loss_after) - Number(d.stress_loss_before))} from this trade). ` +
     "The $971 figure is from the $3,400 fixture; the demo is now on the fork's $2,218.55." });
@@ -147,11 +154,15 @@ test("4c. a stale wallet nonce after demo-reset gives a plain instruction, not a
   await expect(page.getByTestId("approve")).toBeEnabled(); // the decision is still live: try again after the reset
 });
 
-test("5. one click ships the curve; ship and fill receipts verified automatically", async ({ page }) => {
-  await open(page);
+test("5. one click ships the curve, even when the first prompt takes longer than the 30 s TTL; receipts verified", async ({ page }) => {
+  test.setTimeout(180_000);
+  // A person reads the approval prompt for 35 s: the decision expires mid-flow, and the ship must still go.
+  await installWallet(page, DEMO_WALLET, undefined, { firstSendDelayMs: 35_000 });
+  await page.goto("/riskpilot");
+  await expect(page.locator("[data-testid=opp-row]")).toHaveCount(ROWS);
   await select(page, "Call-like");
   await page.getByTestId("approve").click();
-  await expect(page.locator("#log")).toContainText("verified ·", { timeout: 60_000 });
+  await expect(page.locator("#log")).toContainText("verified ·", { timeout: 90_000 });
   const ship = page.getByTestId("ship-tx").first();
   await expect(ship).toBeVisible();
   takerFill("upside");
@@ -222,7 +233,7 @@ test("9. the only trade control is Approve and sign", async ({ page }) => {
   for (const label of ["Price gap · hooked", "Put-like", "Call-like"]) {
     await select(page, label);
     const names = await page.locator("main button").evaluateAll((bs) => bs.map((b) => b.textContent?.trim() ?? ""));
-    const trade = names.filter((n) => !/^(Copy|Replay|View API|Change|\?)$/.test(n));
+    const trade = names.filter((n) => !/^(Copy|Replay|View API|Change|Ask|\?)$/.test(n));
     expect(trade, label).toHaveLength(1);
     expect(trade[0]).toMatch(/^(Approve and sign|Rejected:|Already shipped|Requoting)/);
     for (const gone of ["Re-evaluate", "Ship", "Verify", "Fund"]) expect(names.some((n) => n.startsWith(gone)), gone).toBe(false);
@@ -279,4 +290,20 @@ test("13. read-only page: no wallet requests, nothing signable", async ({ page }
   await expect(page.getByTestId("approve")).toBeDisabled();
   await expect(page.getByTestId("approve")).toHaveText("Read-only page: run make up to sign");
   expect(await page.evaluate(() => (window as any).__walletCalls)).toEqual([]);
+});
+
+test("15. Ask RiskPilot: the daily brief and an answer show their 0G request IDs; a 0G error says Assistant unavailable", async ({ page }) => {
+  await open(page);
+  const brief = page.getByTestId("brief");
+  await expect(brief).toContainText("Daily risk brief");
+  await expect(brief.getByTestId("request-id")).toHaveAttribute("data-request-id", /^0g-e2e-\d+$/);
+  await page.getByTestId("ask-input").fill("Why did you reject the put-like curve?");
+  await page.getByTestId("ask-button").click();
+  const qa = page.getByTestId("qa").first();
+  await expect(qa.getByTestId("answer")).toContainText("was rejected");
+  await expect(qa.getByTestId("request-id")).toContainText(/0G request 0g-e2e-\d+ · 0gm-1.0-35b-a3b · context ctx_[0-9a-f]{16} · cites dec_[0-9a-f]{16}/);
+  await expect(qa.getByTestId("assistant-warning")).toHaveCount(0); // every figure was in the context
+  await page.getByTestId("ask-input").fill("FAIL");
+  await page.getByTestId("ask-button").click();
+  await expect(page.getByTestId("assistant-unavailable").first()).toHaveText("Assistant unavailable");
 });

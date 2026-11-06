@@ -128,6 +128,125 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/assistant/ask:
+    post:
+      summary: Post Assistant Ask
+      description: Ask about your own positions. Answered by 0G from engine data only; shows the 0G request ID.
+      operationId: post_assistant_ask_assistant_ask_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              additionalProperties: true
+              type: object
+              title: Body
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Post Assistant Ask Assistant Ask Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/assistant/brief:
+    post:
+      summary: Post Assistant Brief
+      description: 'The daily risk brief: what changed in the last 24 hours.'
+      operationId: post_assistant_brief_assistant_brief_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              additionalProperties: true
+              type: object
+              title: Body
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Post Assistant Brief Assistant Brief Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/assistant/log:
+    get:
+      summary: Get Assistant Log
+      description: Past answers and briefs with their 0G request IDs and context snapshot IDs.
+      operationId: get_assistant_log_assistant_log_get
+      parameters:
+      - name: wallet
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Wallet
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+                title: Response Get Assistant Log Assistant Log Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/assistant/context/{context_id}:
+    get:
+      summary: Get Assistant Context
+      description: The exact context an answer was given, for replay.
+      operationId: get_assistant_context_assistant_context__context_id__get
+      parameters:
+      - name: context_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Context Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get Assistant Context Assistant Context  Context Id  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /v1/settlements:
     get:
       summary: Get Settlements

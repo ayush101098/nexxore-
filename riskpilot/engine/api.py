@@ -29,6 +29,7 @@ from scanner.live import (
 )
 from scanner.recorded import RecordedSource
 from schemas import validate
+from assistant import AssistantUnavailable, Llm, answer, build_context, zg_client
 from signing import EngineKey
 from store import Store
 from stream import HEARTBEAT_S, BlockWatcher, Hub, Sources
@@ -92,6 +93,7 @@ def create_app(
     stream: bool = False,
     engine_key: EngineKey | None = None,
     arc_reader: Callable[[dict], dict] | None = None,
+    llm: Llm | None = None,
 ) -> FastAPI:
     sources = sources if sources is not None else default_sources()
     key = engine_key or EngineKey()
@@ -373,6 +375,57 @@ def create_app(
             raise HTTPException(501, str(e)) from None
         return {"decision_id": decision_id, "chain_id": 31337, "from": wallet, "version": "1.0",
                 "atomicRequired": True, "calls": calls, "signature": d["signature"]}
+
+    # ── Ask RiskPilot (0G Private Computer) ──
+    assistant_llm = llm or zg_client()
+
+    def assistant_context(wallet: str) -> dict:
+        opps = latest.get(wallet.lower())
+        if opps is None and store.get_profile(wallet):
+            opps = seed_for(wallet, None)
+        stress = lambda positions, spot: run_stress_test(positions, spot=spot)
+        return build_context(store, wallet, opps, stress, now=clock())
+
+    def assistant_reply(wallet: str, question: str | None, kind: str) -> dict:
+        if not (isinstance(wallet, str) and wallet.startswith("0x") and len(wallet) == 42):
+            raise HTTPException(422, "wallet must be an address")
+        context = assistant_context(wallet)
+        try:
+            out = answer(assistant_llm, context, question or "", kind)
+        except AssistantUnavailable as e:
+            log.warning(json.dumps({"event": "assistant_unavailable", "wallet": wallet, "error": str(e)}))
+            raise HTTPException(503, {"detail": "Assistant unavailable", "reason": str(e)}) from None
+        entry = {"kind": kind, "wallet": wallet.lower(), "question": question, "created_at": iso(clock()), **out}
+        store.save_assistant(entry, context)
+        log.info(json.dumps({"event": "assistant", "kind": kind, "request_id": out["request_id"],
+                             "context": out["context_snapshot_id"], "decision_ids": out["cited_decision_ids"]}))
+        return entry
+
+    @app.post("/assistant/ask")
+    def post_assistant_ask(body: dict) -> dict:
+        """Ask about your own positions. Answered by 0G from engine data only; shows the 0G request ID."""
+        q = (body.get("question") or "").strip()
+        if not q:
+            raise HTTPException(422, "question is required")
+        return assistant_reply(body.get("wallet", ""), q[:1000], "ask")
+
+    @app.post("/assistant/brief")
+    def post_assistant_brief(body: dict) -> dict:
+        """The daily risk brief: what changed in the last 24 hours."""
+        return assistant_reply(body.get("wallet", ""), None, "brief")
+
+    @app.get("/assistant/log")
+    def get_assistant_log(wallet: str, limit: int = 50) -> list[dict]:
+        """Past answers and briefs with their 0G request IDs and context snapshot IDs."""
+        return store.assistant_log(wallet, limit)
+
+    @app.get("/assistant/context/{context_id}")
+    def get_assistant_context(context_id: str) -> dict:
+        """The exact context an answer was given, for replay."""
+        ctx = store.assistant_context(context_id)
+        if ctx is None:
+            raise HTTPException(404, f"unknown context {context_id}")
+        return ctx
 
     @app.get("/settlements")
     def get_settlements(decision_id: str | None = None) -> list[dict]:

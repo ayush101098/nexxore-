@@ -19,8 +19,10 @@ const SETTLED = "0x" + execSync(`cast keccak "Settled(bytes32,address,uint256,ui
 const settledLogs = (key: string) => arcRpc("eth_getLogs", [{ address: dep().escrow, topics: [SETTLED, key], fromBlock: "0x0", toBlock: "latest" }]);
 
 test("one click: ship the call-like curve, fund on Arc, the worker settles; a restart never settles twice", async ({ page }) => {
-  test.setTimeout(180_000);
-  await installWallet(page); // the demo wallet, impersonated on the fork and on the Arc stand-in
+  test.setTimeout(240_000);
+  // The demo wallet, impersonated on the fork and the Arc stand-in. Its first prompt takes 35 s, like a
+  // person reading it, so the 30 s decision expires mid-flow and the remaining steps must still run.
+  await installWallet(page, DEMO_WALLET, undefined, { firstSendDelayMs: 35_000 });
   await page.goto(`/riskpilot?arcRpc=${ARC_RPC}`);
   const card = page.locator("[data-testid=profile-card][data-profile=moderate]");
   if (await card.isVisible().catch(() => false)) await card.click();
@@ -37,7 +39,7 @@ test("one click: ship the call-like curve, fund on Arc, the worker settles; a re
   });
   const t0 = Date.now();
   await btn.click();
-  await expect(page.locator("#decision").getByTestId("settle-chip")).toHaveAttribute("data-status", "Settled", { timeout: 60_000 });
+  await expect(page.locator("#decision").getByTestId("settle-chip")).toHaveAttribute("data-status", "Settled", { timeout: 120_000 });
   const clickToSettled = Date.now() - t0;
   test.info().annotations.push({ type: "latency", description: `click to Settled ${clickToSettled} ms` });
   console.log(`click to Settled: ${clickToSettled} ms`);
