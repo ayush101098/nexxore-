@@ -42,10 +42,14 @@ class UniswapTradingApiSource(_Live):
 
 
 class AquaRouterSource(_Live):
-    """Static call to AquaSwapVMRouter quote() on the Anvil fork."""
+    """Static call to AquaSwapVMRouter quote() on the Ethereum mainnet fork.
+
+    quote() ignores the curve's real Aqua balances, so cap amountOut at
+    aqua.safeBalances(...) for tokenOut (see contracts/aqua/README.md).
+    """
 
     name = "aqua_router"
-    todo = "TODO(PRD 3): static-call quote() on AquaSwapVMRouter v1.0.2 (confirm chain and ABI at the v1.0.2 tag)"
+    todo = "TODO: static-call quote() on AquaSwapVMRouter v1.0.2 (Ethereum mainnet fork; see contracts/aqua)"
 
     def __init__(self):
         self.rpc_url = os.environ.get("AQUA_FORK_RPC_URL")
