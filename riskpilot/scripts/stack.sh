@@ -76,6 +76,12 @@ arc_up() {
 
 engine_up() {
   port_free 8000 || { log "engine already on :8000"; return; }
+  # A persistent engine signing key (EIP-712 decisions), so signatures survive restarts.
+  if [ -z "${RISKPILOT_ENGINE_KEY:-}" ]; then
+    mkdir -p "$ROOT/.secrets"; chmod 700 "$ROOT/.secrets"
+    [ -s "$ROOT/.secrets/engine.key" ] || (umask 077; cast wallet new --json | "$PY" -c 'import json,sys; print(json.load(sys.stdin)[0]["private_key"])' >"$ROOT/.secrets/engine.key")
+    RISKPILOT_ENGINE_KEY=$(cat "$ROOT/.secrets/engine.key"); export RISKPILOT_ENGINE_KEY
+  fi
   # Arc testnet (make arc-setup): the arc-worker settles with the operator key made there.
   if [ "${ARC_REHEARSAL:-0}" != 1 ] && [ -f "$ROOT/contracts/arc/deployments/arc-testnet.json" ] && [ -s "$ROOT/.secrets/arc-operator.key" ]; then
     ARC_OPERATOR_KEY=$(cat "$ROOT/.secrets/arc-operator.key"); export ARC_OPERATOR_KEY
