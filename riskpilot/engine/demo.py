@@ -1,6 +1,7 @@
 """Demo seed: the three opportunities the /riskpilot page opens with.
 
-1. price gap on the live hooked v4 pool             -> REJECT (the hook's fee eats the gap)
+1. every live price gap the scanner finds across the demo chain's v4 ETH/USDC pools
+   (the hooked pool, the static 0.30% comparison pool, the fork's own 0.30% pool)
 2. put-like Aqua curve, 1 ETH of USDC below spot    -> REJECT (adds stress above budget)
 3. call-like Aqua curve, 7 held WETH above spot     -> APPROVE (covered call on held ETH)
 
@@ -69,7 +70,7 @@ def seed_requests(
     read_holdings: Callable[[str], Holdings],
     read_gas_gwei: Callable[[], Decimal],
     read_spot: Callable[[], Decimal] | None = None,
-    live_gap: Callable[[datetime], tuple[dict, dict]] | None = None,
+    live_gaps: Callable[[datetime], list[tuple[str, dict, dict]]] | None = None,
 ) -> tuple[list[tuple[str, EvaluateRequest]], dict]:
     """Return [(label, request)] plus a sources report for the page's status bar."""
     curves = load_curves()
@@ -91,14 +92,22 @@ def seed_requests(
 
     gap = _fixture("reject", now)
     gap["opportunity"]["opportunity_id"] = "opp_demogap"
+    gaps = [("Price gap · hooked v4 pool", gap)]
     sources["price_gap"] = "recorded fixture"
-    if live_gap is not None:
+    if live_gaps is not None:
         try:
-            opportunity, market = live_gap(now)
-            gap.update(opportunity=opportunity, size=opportunity["size"], market=market, book=[])
-            sources["price_gap"] = "demo chain: hooked v4 pool via StateView and V4Quoter"
+            found = live_gaps(now)
+            if found:
+                gaps = []
+                for label, opportunity, market in found:
+                    g = copy.deepcopy(gap)
+                    g.update(opportunity=opportunity, size=opportunity["size"], market=market, book=[])
+                    gaps.append((f"Price gap · {label}", g))
+                sources["price_gap"] = f"demo chain: {len(found)} v4 pools via StateView and V4Quoter"
+            else:
+                sources["price_gap"] = "recorded fixture (no live gap above the scan threshold)"
         except Exception as e:  # noqa: BLE001
-            sources["price_gap"] = f"recorded fixture (live pool unavailable: {e})"
+            sources["price_gap"] = f"recorded fixture (live pools unavailable: {e})"
 
     spot = None
     if read_spot is not None:
@@ -150,10 +159,12 @@ def seed_requests(
     if spot is not None and up:
         call["size"] = call["opportunity"]["size"] = f"{q * spot:.2f}"
 
-    for r in (gap, put, call):
+    gap_requests = [g for _, g in gaps]
+    for r in (*gap_requests, put, call):
         if holdings is not None:
             r["holdings"] = {"weth": str(holdings.weth), "usdc": str(holdings.usdc)}
-        if gas is not None and r is not gap:  # the live gap's market already reads gas from the chain
+        live_market = r in gap_requests and sources["price_gap"].startswith("demo chain")
+        if gas is not None and not live_market:  # live gap markets already read gas from the chain
             r["market"]["gas"]["price_gwei"] = str(gas)
             r["market"]["gas"]["source"] = "demo chain eth_gasPrice"
 
@@ -161,7 +172,7 @@ def seed_requests(
         return f"{Decimal(r['aqua']['range_low']):,.0f}–{Decimal(r['aqua']['range_high']):,.0f}"
 
     requests = [
-        ("Price gap · hooked v4 pool", gap),
+        *gaps,
         (f"Put-like curve · {span(put)}", put),
         (f"Call-like curve · {span(call)}", call),
     ]

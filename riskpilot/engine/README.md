@@ -181,6 +181,22 @@ When the cap is zero, the scanner drops the opportunity.
 
 ## Sources
 
+**Live v4 pools.** `scanner/live.py` `HookedV4PoolSource` reads every v4 ETH/USDC pool on the demo
+chain: the hooked pool, the static 0.30% comparison pool and the fork's own 0.30% pool. Prices come
+from StateView, and the main 0.05% pool is the reference.
+
+- **Opportunities:** each pool at least 5 bp from the reference becomes a `price_gap` opportunity.
+- **Market:** `market()` builds each one from the chain:
+  - a V4Quoter quote at size, priced excluding the fee;
+  - the pool's fee, or the hook's live fee for the hooked pool;
+  - the hooked pool's realized σ;
+  - `eth_gasPrice`.
+- **No assumed hedge:** a gap trade sells ETH into the dearer pool (or buys from the cheaper one),
+  and the stress test prices what that does to the wallet's holdings.
+- **Seed:** `/demo/seed` returns every live gap plus the two Aqua curves.
+
+
+
 `scanner/recorded.py` replays `data/recorded_quotes.json`, which is the
 default. The hooked v4 pool, the Uniswap Trading API and the Aqua router
 quote() sources in `scanner/live.py` have their interfaces fixed. Until their

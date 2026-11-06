@@ -21,7 +21,7 @@ from profiles import PROFILES
 from scanner import Source, scan
 from scanner.holdings import DEFAULT_RPC, read_gas_gwei, read_holdings
 from scanner.live import (
-    AquaRouterSource, HookedV4PoolSource, UniswapTradingApiSource, hook_pool_state, load_hook, main_pool_price,
+    V4_LABELS, AquaRouterSource, HookedV4PoolSource, UniswapTradingApiSource, hook_pool_state, load_hook, main_pool_price,
 )
 from scanner.recorded import RecordedSource
 from schemas import validate
@@ -63,7 +63,7 @@ def create_app(
     holdings_reader: Callable[[str], Holdings] = _chain_holdings,
     gas_reader: Callable[[], Decimal] = _chain_gas,
     spot_reader: Callable[[], Decimal] | None = None,
-    gap_reader: Callable[[datetime], tuple[dict, dict]] | None = None,
+    gap_reader: Callable[[datetime], list[tuple[str, dict, dict]]] | None = None,
 ) -> FastAPI:
     sources = sources if sources is not None else default_sources()
     app = FastAPI(title="RiskPilot engine", version=MODEL_VERSION)
@@ -236,16 +236,18 @@ def create_app(
         rpc = os.environ.get("DEMO_RPC_URL", DEFAULT_RPC)
         v4 = HookedV4PoolSource(rpc)
 
-        def live_gap(now):
-            opps = [o for o in scan("ETH/USDC", [v4], now, Decimal("10000.00"), Decimal("5")) if o["source_venue"] == "uniswap_v4_hooked"]
-            if not opps:
-                raise RuntimeError("no gap on the hooked pool")
-            return opps[0], v4.market("uniswap_v4_hooked", now, Decimal(opps[0]["size"])).model_dump(mode="json")
+        def live_gaps(now):
+            """Every v4 pool whose price is at least 5 bps from the main ETH/USDC pool."""
+            out = []
+            for opp in scan("ETH/USDC", [v4], now, Decimal("10000.00"), Decimal("5")):
+                market = v4.market(opp["source_venue"], now, Decimal(opp["size"])).model_dump(mode="json")
+                out.append((V4_LABELS[opp["source_venue"]], opp, market))
+            return out
 
         requests, report = seed_requests(
             clock(), wallet, holdings_reader, gas_reader,
             read_spot=spot_reader or (lambda: main_pool_price(rpc)),
-            live_gap=gap_reader if gap_reader is not None else (live_gap if load_hook() else None),
+            live_gaps=gap_reader if gap_reader is not None else (live_gaps if load_hook() else None),
         )
         items = []
         for label, req in requests:

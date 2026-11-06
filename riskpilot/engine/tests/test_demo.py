@@ -150,10 +150,15 @@ def test_seed_uses_the_live_hooked_pool_when_it_is_up():
                                             "source": "demo chain eth_gasPrice"},
               "fee_rate": "0.01", "volatility": {"annualized": "4.0", "observed_at": "2026-11-06T14:00:00Z", "source": "hook.getVolatility"},
               "hedge": {"ratio": "1", "cost": "5.00"}}
-    c = client(holdings=Holdings(weth="8", usdc="5000"), gas=Decimal("1"), spot=Decimal("2218.55"), gap=(gap_opp, market))
+    static = {**gap_opp, "opportunity_id": "opp_static", "source_venue": "uniswap_v4_static"}
+    gaps = [("hooked v4 pool", gap_opp, market), ("static 0.30% v4 pool", static, {**market, "fee_rate": "0.003"})]
+    c = client(holdings=Holdings(weth="8", usdc="5000"), gas=Decimal("1"), spot=Decimal("2218.55"), gap=gaps)
     body = c.post("/demo/seed").json()
-    gap = body["items"][0]["decision"]
-    assert body["sources"]["price_gap"].startswith("demo chain")
-    assert gap["opportunity_id"] == "opp_live"
-    assert gap["costs"]["fees"] == "100.00", "the hook's 1% fee on $10,000"
-    assert gap["verdict"] == "REJECT"
+    assert body["sources"]["price_gap"] == "demo chain: 2 v4 pools via StateView and V4Quoter"
+    labels = [i["label"] for i in body["items"]]
+    assert labels[:2] == ["Price gap · hooked v4 pool", "Price gap · static 0.30% v4 pool"]
+    hooked, flat = body["items"][0]["decision"], body["items"][1]["decision"]
+    assert hooked["opportunity_id"] == "opp_live"
+    assert hooked["costs"]["fees"] == "100.00", "the hook's 1% fee on $10,000"
+    assert flat["costs"]["fees"] == "30.00", "the static pool's 0.30% on $10,000"
+    assert hooked["verdict"] == "REJECT"
