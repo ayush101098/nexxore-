@@ -9,106 +9,122 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='16' fill='%23111823'/%3E%3Cpath d='M26 70V30h28a14 14 0 010 28H38m12 0l16 12' fill='none' stroke='%23E8EDF4' stroke-width='8'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+/* shadcn/ui-style tokens: zinc neutrals, one radius scale, verdict colours as the only hues. */
 :root {
-  /* neutrals */
-  --bg: #0A0F17; --surface: #111823; --surface-2: #161F2C; --border: #253041;
-  --text: #E8EDF4; --text-2: #A9B4C3; --text-3: #8F9BAD;
-  /* one accent for links and focus */
-  --accent: #5AA9FF;
-  /* verdict colours (also the only colours in charts); all >= 6.3:1 on --surface */
-  --approve: #3DDC97; --reject: #FF7070; --requote: #F5B942; --review: #A3AEBD;
-  --on-approve: #06140D; --on-reject: #1A0505; --on-requote: #1A1203; --on-review: #0B0F14;
-  --neutral-bar: #5B6779; --grid: #1D2734;
-  --sans: 'Inter', system-ui, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, monospace;
-  --r: 8px; --s1: 8px; --s2: 16px; --s3: 24px;
+  --bg: #09090b;            /* background */
+  --surface: #0c0c0e;       /* card */
+  --surface-2: #18181b;     /* muted / secondary */
+  --surface-3: #27272a;     /* accent (hover) */
+  --border: #27272a;        /* border / input */
+  --text: #fafafa;          /* foreground */
+  --text-2: #a1a1aa;        /* muted-foreground */
+  --text-3: #8b8b94;        /* tertiary (>= 5:1 on card) */
+  --accent: #e4e4e7;        /* links + focus ring (zinc-200) */
+  --ring: #71717a;
+  --approve: #34d399; --reject: #f87171; --requote: #fbbf24; --review: #a1a1aa;
+  --approve-bg: rgba(52,211,153,.12); --reject-bg: rgba(248,113,113,.12); --requote-bg: rgba(251,191,36,.12); --review-bg: rgba(161,161,170,.14);
+  --on-approve: #052e1c; --on-reject: #2b0707; --on-requote: #2a1d02; --on-review: #18181b;
+  --neutral-bar: #52525b; --grid: #1f1f23;
+  --sans: 'Geist', 'Inter', system-ui, sans-serif; --mono: 'Geist Mono', 'IBM Plex Mono', ui-monospace, monospace;
+  --r: 8px; --r-lg: 12px; --s1: 8px; --s2: 16px; --s3: 24px;
 }
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 html { -webkit-font-smoothing:antialiased; }
-body { background:var(--bg); color:var(--text); font-family:var(--sans); font-size:13px; line-height:1.45; overflow-x:hidden; }
-a { color:var(--accent); text-decoration:none; }
-a:hover { text-decoration:underline; }
-:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+body { background:var(--bg); color:var(--text); font-family:var(--sans); font-size:13px; line-height:1.5; overflow-x:hidden; letter-spacing:-0.005em; }
+a { color:var(--text); text-decoration:underline; text-decoration-color:var(--ring); text-underline-offset:3px; }
+a:hover { text-decoration-color:var(--text); }
+:focus-visible { outline:2px solid var(--ring); outline-offset:2px; }
 button { font-family:var(--sans); }
 .num, td.num, .v, [data-wf] { font-variant-numeric:tabular-nums; }
 .mono { font-family:var(--mono); }
 .page { max-width:1440px; margin:0 auto; padding:var(--s2) var(--s3) var(--s3); }
 
-/* header + status bar */
-.top { display:flex; align-items:stretch; border:1px solid var(--border); border-radius:var(--r); background:var(--surface); }
-.brand { padding:var(--s1) var(--s2); display:flex; flex-direction:column; justify-content:center; border-right:1px solid var(--border); flex:0 0 auto; }
-.brand h1 { font-size:17px; font-weight:700; letter-spacing:-0.2px; }
-.brand p { font-size:12px; color:var(--text-2); }
+/* hero */
+.hero { display:flex; align-items:center; justify-content:space-between; gap:var(--s3); padding:2px 2px 12px; flex-wrap:wrap; }
+.hero-l { display:flex; align-items:center; gap:12px; min-width:0; }
+.logo { width:30px; height:30px; border-radius:var(--r); background:var(--text); color:var(--bg); display:grid; place-items:center; font-weight:700; font-size:15px; flex:0 0 auto; }
+.hero h1 { font-size:18px; font-weight:600; letter-spacing:-0.02em; line-height:1.2; }
+.hero h1 span { color:var(--text-2); font-weight:500; }
+.hero p { font-size:12.5px; color:var(--text-2); }
+.steps { display:flex; gap:6px; list-style:none; flex-wrap:wrap; }
+.steps li { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-2); border:1px solid var(--border); border-radius:999px; padding:3px 10px 3px 4px; background:var(--surface); }
+.steps b { width:18px; height:18px; border-radius:999px; background:var(--surface-3); color:var(--text); font-size:11px; font-weight:600; display:grid; place-items:center; }
+
+/* status bar */
+.top { display:flex; align-items:stretch; border:1px solid var(--border); border-radius:var(--r-lg); background:var(--surface); margin-bottom:var(--s2); }
 .status { display:flex; flex:1; min-width:0; }
-.st { flex:1 1 0; min-width:0; padding:var(--s1) var(--s2); border-right:1px solid var(--border); }
+.st { flex:1 1 0; min-width:0; padding:10px var(--s2); border-right:1px solid var(--border); }
 .st:last-child { border-right:none; }
 .st.wide { flex:2.2 1 0; }
 .st.prof { flex:1.9 1 0; }
 .st.prof .v { white-space:normal; overflow:visible; }
-.k { font-size:11px; color:var(--text-3); white-space:nowrap; }
-.v { font-size:13px; font-weight:600; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.k { font-size:11px; color:var(--text-3); white-space:nowrap; font-weight:500; }
+.v { font-size:13px; font-weight:500; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .v .unavail, .st.wide .v { white-space:normal; }
-.tagline { color:var(--text-3); font-size:12px; margin:var(--s1) 0 var(--s2); }
 
-/* 12-column grid, 24px gutters */
-.grid { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:var(--s3); }
+/* 12-column grid */
+.grid { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:var(--s2); align-items:start; }
 .span-7 { grid-column:span 7; } .span-5 { grid-column:span 5; } .span-4 { grid-column:span 4; } .span-12 { grid-column:span 12; }
-.panel { border:1px solid var(--border); border-radius:var(--r); background:var(--surface); min-width:0; }
-.panel-h { display:flex; align-items:baseline; justify-content:space-between; gap:var(--s1); padding:var(--s1) var(--s2) 0; flex-wrap:wrap; }
-.panel-h h2 { font-size:14px; font-weight:600; }
-.helper { font-size:12px; color:var(--text-3); padding:2px var(--s2) var(--s1); border-bottom:1px solid var(--border); }
+.panel { border:1px solid var(--border); border-radius:var(--r-lg); background:var(--surface); min-width:0; }
+.panel-h { display:flex; align-items:center; justify-content:space-between; gap:var(--s1); padding:14px var(--s2) 0; flex-wrap:wrap; }
+.panel-h h2 { font-size:14px; font-weight:600; letter-spacing:-0.01em; }
+.panel-h .k { font-family:var(--mono); font-size:11px; }
+.helper { font-size:12px; color:var(--text-2); padding:2px var(--s2) 12px; border-bottom:1px solid var(--border); }
 .panel-b { padding:var(--s2); }
-.section-h { display:flex; align-items:baseline; gap:var(--s2); margin-bottom:var(--s1); }
-.section-h h2 { font-size:14px; font-weight:600; }
+.section-h { display:flex; align-items:baseline; gap:12px; margin:4px 0 var(--s1); }
+.section-h h2 { font-size:14px; font-weight:600; letter-spacing:-0.01em; }
 .section-h .helper { padding:0; border:none; }
-.sub { font-size:11px; color:var(--text-3); margin:12px 0 4px; display:flex; justify-content:space-between; gap:var(--s1); }
+.sub { font-size:11px; color:var(--text-3); margin:14px 0 6px; display:flex; justify-content:space-between; gap:var(--s1); font-weight:500; }
 .sub:first-child { margin-top:0; }
-.linkbtn { background:none; border:none; color:var(--accent); font-size:12px; cursor:pointer; padding:0; }
-.linkbtn:hover { text-decoration:underline; }
+.linkbtn { background:none; border:none; color:var(--text-2); font-size:12px; cursor:pointer; padding:0; text-decoration:underline; text-decoration-color:var(--ring); text-underline-offset:3px; }
+.linkbtn:hover { color:var(--text); }
 
-/* tables */
+/* tables (shadcn Table) */
 .tscroll { overflow-x:auto; }
 table { width:100%; border-collapse:collapse; }
-th { text-align:left; font-size:11px; font-weight:500; color:var(--text-3); padding:0 var(--s1) var(--s1); border-bottom:1px solid var(--border); white-space:nowrap; }
-td { padding:var(--s1); border-bottom:1px solid var(--border); vertical-align:middle; }
+th { text-align:left; font-size:12px; font-weight:500; color:var(--text-2); padding:0 var(--s1) var(--s1); border-bottom:1px solid var(--border); white-space:nowrap; }
+td { padding:10px var(--s1); border-bottom:1px solid var(--border); vertical-align:middle; }
 tr:last-child td { border-bottom:none; }
 td.num, th.num { text-align:right; white-space:nowrap; }
 .sub2 { display:block; font-size:11px; color:var(--text-3); margin-top:2px; }
 tbody tr.pick { cursor:pointer; }
-tbody tr.pick:hover td { background:var(--surface-2); }
+tbody tr.pick:hover td { background:rgba(39,39,42,.5); }
 tbody tr.sel td { background:var(--surface-2); }
-tbody tr.sel td:first-child { box-shadow:inset 2px 0 0 var(--accent); }
+tbody tr.sel td:first-child { box-shadow:inset 2px 0 0 var(--text); }
 
-/* verdict chip: solid, uppercase, one width */
-.chip { display:inline-block; min-width:118px; text-align:center; padding:3px var(--s1); border-radius:var(--r); font-size:11px; font-weight:700; letter-spacing:0.3px; text-transform:uppercase; white-space:nowrap; }
-.chip.APPROVE { background:var(--approve); color:var(--on-approve); }
-.chip.REJECT { background:var(--reject); color:var(--on-reject); }
-.chip.REQUOTE { background:var(--requote); color:var(--on-requote); }
-.chip.REQUIRE_REVIEW { background:var(--review); color:var(--on-review); }
-.chip.state { min-width:0; background:var(--surface-2); color:var(--text-2); border:1px solid var(--border); }
+/* verdict badge (shadcn Badge, tinted) */
+.chip { display:inline-flex; align-items:center; justify-content:center; min-width:96px; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:600; letter-spacing:0.02em; white-space:nowrap; border:1px solid transparent; }
+.chip.APPROVE { background:var(--approve-bg); color:var(--approve); border-color:rgba(52,211,153,.35); }
+.chip.REJECT { background:var(--reject-bg); color:var(--reject); border-color:rgba(248,113,113,.35); }
+.chip.REQUOTE { background:var(--requote-bg); color:var(--requote); border-color:rgba(251,191,36,.35); }
+.chip.REQUIRE_REVIEW { background:var(--review-bg); color:var(--review); border-color:rgba(161,161,170,.35); }
+.chip.state { min-width:0; background:var(--surface-2); color:var(--text-2); border-color:var(--border); }
 
 /* decision */
 .dec-head { display:flex; align-items:center; gap:var(--s1); flex-wrap:wrap; }
 .dec-id { font-family:var(--mono); font-size:11px; color:var(--text-3); }
-.reason { font-size:13px; margin-top:var(--s1); }
-.act { display:flex; align-items:center; gap:var(--s2); margin-top:12px; flex-wrap:wrap; }
-.btn { padding:var(--s1) var(--s2); border:1px solid transparent; border-radius:var(--r); background:var(--approve); color:var(--on-approve); font-size:13px; font-weight:600; cursor:pointer; font-variant-numeric:tabular-nums; }
+.reason { font-size:13px; margin-top:var(--s1); color:var(--text); }
+.act { display:flex; align-items:center; gap:12px; margin-top:12px; flex-wrap:wrap; }
+/* shadcn Button: default (primary), outline (.ghost), sm */
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; height:36px; padding:0 var(--s2); border:1px solid transparent; border-radius:var(--r); background:var(--text); color:#18181b; font-size:13px; font-weight:500; cursor:pointer; font-variant-numeric:tabular-nums; transition:background 120ms ease, color 120ms ease; }
+.btn:hover:not(:disabled) { background:#e4e4e7; }
 .btn:disabled { background:var(--surface-2); color:var(--text-2); border-color:var(--border); cursor:not-allowed; }
-.btn.ghost { background:none; border-color:var(--border); color:var(--text); font-weight:500; }
-.btn.ghost:hover { border-color:var(--accent); }
-.btn.sm { padding:2px var(--s1); font-size:12px; }
-.signer { font-size:11px; color:var(--text-3); }
+.btn.ghost { background:transparent; border-color:var(--border); color:var(--text); }
+.btn.ghost:hover:not(:disabled) { background:var(--surface-3); }
+.btn.sm { height:28px; padding:0 10px; font-size:12px; }
+.signer { font-size:12px; color:var(--text-3); }
 .log { font-family:var(--mono); font-size:11px; color:var(--text-2); margin-top:var(--s1); max-height:48px; overflow-y:auto; }
 .log:empty { display:none; }
 .log .ok { color:var(--approve); } .log .bad { color:var(--reject); }
 .kv { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px var(--s3); }
-.kv div { display:flex; justify-content:space-between; gap:var(--s1); border-bottom:1px solid var(--grid); padding-bottom:2px; }
+.kv div { display:flex; justify-content:space-between; gap:var(--s1); border-bottom:1px solid var(--grid); padding:3px 0; }
 .kv dt { color:var(--text-2); display:flex; align-items:center; gap:4px; white-space:nowrap; }
-.kv dd { font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
-.q { width:16px; height:16px; border-radius:50%; border:1px solid var(--border); background:none; color:var(--text-2); font-size:10px; line-height:14px; cursor:help; }
-.inputs { font-size:11px; color:var(--text-3); line-height:1.45; }
-.verdict-note { font-size:12px; font-weight:600; }
+.kv dd { font-weight:500; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.q { width:16px; height:16px; border-radius:50%; border:1px solid var(--border); background:none; color:var(--text-3); font-size:10px; line-height:14px; cursor:help; }
+.inputs { font-size:11px; color:var(--text-3); line-height:1.5; }
+.verdict-note { font-size:12px; font-weight:500; }
 .verdict-note.over { color:var(--reject); } .verdict-note.within { color:var(--approve); }
 
 /* charts */
@@ -116,21 +132,22 @@ tbody tr.sel td:first-child { box-shadow:inset 2px 0 0 var(--accent); }
 .chart text { font-family:var(--sans); font-size:11px; fill:var(--text-2); font-variant-numeric:tabular-nums; }
 .chart .lbl { fill:var(--text); }
 .chart .axis { stroke:var(--grid); stroke-width:1; }
-.chart .ref { stroke:var(--text-2); stroke-width:1; stroke-dasharray:4 3; }
+.chart .ref { stroke:var(--text-3); stroke-width:1; stroke-dasharray:4 3; }
 .chart .hit { fill:transparent; }
-details summary { font-size:11px; color:var(--accent); cursor:pointer; margin-top:var(--s1); }
+details summary { font-size:12px; color:var(--text-2); cursor:pointer; margin-top:var(--s1); }
+details summary:hover { color:var(--text); }
 details table { margin-top:var(--s1); font-size:11px; }
 
 /* positions */
 .cells { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s1); }
-.cell { border:1px solid var(--border); border-radius:var(--r); padding:var(--s1); min-width:0; }
+.cell { border:1px solid var(--border); border-radius:var(--r); padding:var(--s1) 10px; min-width:0; background:var(--surface-2); }
 .curve { padding-bottom:var(--s1); margin-bottom:var(--s1); border-bottom:1px solid var(--border); }
 .curve:last-of-type { border-bottom:none; }
-.curve-t { font-weight:600; display:flex; gap:var(--s1); align-items:center; flex-wrap:wrap; }
+.curve-t { font-weight:500; display:flex; gap:var(--s1); align-items:center; flex-wrap:wrap; }
 .line { font-size:12px; color:var(--text-2); margin-top:4px; display:flex; align-items:center; gap:var(--s1); flex-wrap:wrap; }
 .hashchip { display:inline-flex; align-items:center; gap:4px; font-family:var(--mono); font-size:12px; color:var(--text); }
-.hashchip button, .hashchip a { font-family:var(--sans); font-size:11px; background:none; border:1px solid var(--border); border-radius:var(--r); color:var(--text-2); padding:0 6px; cursor:pointer; }
-.hashchip a { color:var(--accent); }
+.hashchip button, .hashchip a { font-family:var(--sans); font-size:11px; background:none; border:1px solid var(--border); border-radius:6px; color:var(--text-2); padding:0 6px; cursor:pointer; text-decoration:none; }
+.hashchip button:hover, .hashchip a:hover { background:var(--surface-3); color:var(--text); }
 .ok-text { color:var(--approve); } .bad-text { color:var(--reject); }
 .legend { display:flex; gap:var(--s2); font-size:11px; color:var(--text-2); margin-top:4px; }
 .legend i { display:inline-block; width:14px; height:2px; background:var(--text); vertical-align:middle; margin-right:4px; }
@@ -139,55 +156,60 @@ details table { margin-top:var(--s1); font-size:11px; }
 /* states */
 .unavail { color:var(--requote); font-size:12px; }
 .empty { color:var(--text-3); font-size:12px; }
-.skel { display:block; height:12px; border-radius:var(--r); background:var(--surface-2); margin:var(--s1) 0; }
+.skel { display:block; height:12px; border-radius:6px; background:var(--surface-2); margin:var(--s1) 0; }
 .skel.w60 { width:60%; } .skel.w80 { width:80%; } .skel.w40 { width:40%; } .skel.tall { height:96px; }
 
-/* tooltip */
-#tip { position:fixed; z-index:60; pointer-events:none; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r); padding:var(--s1); font-size:11px; color:var(--text); line-height:1.5; display:none; max-width:320px; white-space:pre-line; }
+/* tooltip (shadcn Tooltip) */
+#tip { position:fixed; z-index:60; pointer-events:none; background:var(--text); color:#18181b; border-radius:6px; padding:6px 10px; font-size:11.5px; line-height:1.5; display:none; max-width:320px; white-space:pre-line; }
 
-/* API drawer */
-.drawer { position:fixed; top:0; right:0; bottom:0; width:min(560px,100vw); background:var(--surface); border-left:1px solid var(--border); z-index:50; display:flex; flex-direction:column; transform:translateX(100%); opacity:0; transition:transform 150ms ease, opacity 150ms ease; visibility:hidden; }
+/* API drawer (Sheet) */
+.drawer { position:fixed; top:0; right:0; bottom:0; width:min(560px,100vw); background:var(--bg); border-left:1px solid var(--border); z-index:50; display:flex; flex-direction:column; transform:translateX(100%); opacity:0; transition:transform 150ms ease, opacity 150ms ease; visibility:hidden; }
 .drawer.open { transform:none; opacity:1; visibility:visible; }
 .drawer-h { display:flex; justify-content:space-between; align-items:center; padding:var(--s2); border-bottom:1px solid var(--border); }
 .drawer-h h2 { font-size:14px; font-weight:600; }
 .drawer-b { padding:var(--s2); overflow-y:auto; flex:1; }
-.drawer pre { font-family:var(--mono); font-size:11px; color:var(--text-2); background:var(--bg); border:1px solid var(--border); border-radius:var(--r); padding:var(--s1); overflow:auto; max-height:38vh; white-space:pre; }
+.drawer pre { font-family:var(--mono); font-size:11px; color:var(--text-2); background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:12px; overflow:auto; max-height:38vh; white-space:pre; }
 .endpoint { font-family:var(--mono); font-size:12px; color:var(--text); margin-bottom:var(--s1); }
 
-.tag { display:inline-block; margin-left:var(--s1); padding:0 6px; border:1px solid var(--border); border-radius:var(--r); font-size:10px; color:var(--text-2); font-weight:500; white-space:nowrap; vertical-align:1px; }
-.overlay { position:fixed; inset:0; background:rgba(5,8,12,0.78); display:flex; align-items:center; justify-content:center; z-index:40; padding:var(--s2); }
+.tag { display:inline-block; margin-left:var(--s1); padding:0 8px; border:1px solid var(--border); border-radius:999px; font-size:10.5px; color:var(--text-2); font-weight:500; white-space:nowrap; vertical-align:1px; }
+/* profile picker (Dialog) */
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,.72); display:flex; align-items:center; justify-content:center; z-index:40; padding:var(--s2); }
 .overlay[hidden] { display:none; }
-.picker { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:var(--s3); max-width:880px; width:100%; }
-.picker h2 { font-size:16px; font-weight:600; margin-bottom:4px; outline:none; }
+.picker { background:var(--bg); border:1px solid var(--border); border-radius:var(--r-lg); padding:var(--s3); max-width:880px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,.5); }
+.picker h2 { font-size:17px; font-weight:600; letter-spacing:-0.01em; margin-bottom:4px; outline:none; }
 .picker > p { color:var(--text-2); margin-bottom:var(--s2); }
-.cards { display:grid; grid-template-columns:repeat(3, 1fr); gap:var(--s2); }
-.card { text-align:left; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r); padding:var(--s2); color:var(--text); cursor:pointer; font-size:12px; }
-.card:hover, .card:focus-visible { border-color:var(--accent); }
-.card h3 { font-size:14px; font-weight:600; margin-bottom:var(--s1); }
-.card dl { display:grid; grid-template-columns:auto auto; gap:2px var(--s1); color:var(--text-2); }
+.cards { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
+.card { text-align:left; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:var(--s2); color:var(--text); cursor:pointer; font-size:12px; transition:border-color 120ms ease, background 120ms ease; }
+.card:hover, .card:focus-visible { border-color:var(--ring); background:var(--surface-2); }
+.card h3 { font-size:14px; font-weight:600; margin-bottom:4px; }
+.card dl { display:grid; grid-template-columns:auto auto; gap:4px var(--s1); color:var(--text-2); }
 .card dd { text-align:right; color:var(--text); font-variant-numeric:tabular-nums; }
-.card .blurb { color:var(--text-2); margin-bottom:var(--s1); }
-.picker .err { color:var(--reject); margin-top:var(--s1); min-height:1em; }
-.debug { position:fixed; right:var(--s2); bottom:var(--s2); width:420px; max-height:60vh; overflow:auto; background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:var(--s2); font-family:var(--mono); font-size:11px; color:var(--text-2); z-index:30; white-space:pre-wrap; }
+.card .blurb { color:var(--text-2); margin-bottom:12px; }
+.picker .err { color:var(--text-2); margin-top:12px; }
+.picker .err:empty { display:none; }
+.debug { position:fixed; right:var(--s2); bottom:var(--s2); width:420px; max-height:60vh; overflow:auto; background:var(--bg); border:1px solid var(--border); border-radius:var(--r-lg); padding:var(--s2); font-family:var(--mono); font-size:11px; color:var(--text-2); z-index:30; white-space:pre-wrap; }
 .debug[hidden] { display:none; }
-.settle { display:inline-block; padding:0 6px; border-radius:var(--r); border:1px solid var(--border); font-size:11px; }
-.settle.Settled { color:var(--approve); border-color:var(--approve); }
-.settle.Failed { color:var(--reject); border-color:var(--reject); }
+.settle { display:inline-block; padding:0 8px; border-radius:999px; border:1px solid var(--border); font-size:11px; }
+.settle.Settled { color:var(--approve); border-color:rgba(52,211,153,.4); background:var(--approve-bg); }
+.settle.Failed { color:var(--reject); border-color:rgba(248,113,113,.4); background:var(--reject-bg); }
 @media (max-width:760px) { .cards { grid-template-columns:1fr; } }
+/* Ask RiskPilot */
 .ask { display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); gap:var(--s2); }
 .brief { border:1px solid var(--border); border-radius:var(--r); padding:var(--s2); background:var(--surface-2); white-space:pre-wrap; }
 .brief h3 { font-size:13px; font-weight:600; margin-bottom:var(--s1); white-space:normal; }
 .askrow { display:flex; gap:var(--s1); margin-bottom:var(--s1); }
-.askrow input { flex:1; min-width:0; background:var(--bg); border:1px solid var(--border); border-radius:var(--r); color:var(--text); padding:6px var(--s1); font:inherit; }
-.askrow input:focus { outline:2px solid var(--accent); outline-offset:1px; }
-.qa { border-top:1px solid var(--border); padding:var(--s1) 0; }
-.qa .q { color:var(--text-2); margin-bottom:4px; }
+.askrow input { flex:1; min-width:0; height:36px; background:transparent; border:1px solid var(--border); border-radius:var(--r); color:var(--text); padding:0 12px; font:inherit; }
+.askrow input::placeholder { color:var(--text-3); }
+.askrow input:focus { outline:2px solid var(--ring); outline-offset:1px; }
+.askrow .btn.sm { height:36px; }
+.qa { border-top:1px solid var(--border); padding:10px 0; }
+.qa .q { color:var(--text-2); margin-bottom:4px; width:auto; height:auto; border:none; border-radius:0; font-size:12px; line-height:1.5; cursor:auto; }
 .qa .a { white-space:pre-wrap; }
 .meta { font-family:var(--mono); font-size:11px; color:var(--text-3); margin-top:4px; }
 .warn { color:var(--requote); margin-top:4px; }
 .sr { position:absolute; left:-9999px; }
-@media (max-width:1100px) { .ask { grid-template-columns:1fr; } }
 @media (max-width:1100px) {
+  .ask { grid-template-columns:1fr; }
   .span-7, .span-5, .span-4 { grid-column:span 12; }
   .top { flex-direction:column; } .status { flex-wrap:wrap; } .st { flex:1 1 45%; }
 }
@@ -195,27 +217,29 @@ details table { margin-top:var(--s1); font-size:11px; }
 </head>
 <body>
 <div class="page">
-  <header class="top">
-    <div class="brand"><h1>RiskPilot: pricing liquidity risk</h1><p>Risk-aware execution engine for programmable liquidity</p></div>
-    <div class="status" id="status" aria-label="Status"></div>
+  <header class="hero">
+    <div class="hero-l"><div class="logo" aria-hidden="true">R</div>
+      <div><h1>RiskPilot: <span>pricing liquidity risk</span></h1>
+      <p>Prices LP positions as options, stress-tests them against your wallet, executes only what you sign.</p></div></div>
+    <ol class="steps" aria-label="How it works"><li><b>1</b>Scan every block</li><li><b>2</b>Price and stress-test</li><li><b>3</b>You sign</li></ol>
   </header>
-  <p class="tagline">Agents propose. RiskPilot prices, stress-tests and gates. You sign.</p>
+  <div class="top"><div class="status" id="status" aria-label="Status"></div></div>
 
   <main class="grid">
     <section class="panel span-7" aria-labelledby="h-opps">
       <div class="panel-h"><h2 id="h-opps">Opportunities</h2><span class="k" id="oppNote"></span></div>
-      <p class="helper">Proposed by the scanner or any agent via POST /evaluate</p>
+      <p class="helper">Live from the scanner, or any agent via the API.</p>
       <div class="panel-b tscroll" id="opps"><span class="skel w80"></span><span class="skel w60"></span><span class="skel w80"></span></div>
     </section>
 
     <section class="panel span-5" aria-labelledby="h-dec">
       <div class="panel-h"><h2 id="h-dec">Decision</h2><button class="linkbtn" id="viewApi" type="button" disabled>View API</button></div>
-      <p class="helper">Net edge after all costs, and what this trade does to your worst case</p>
+      <p class="helper">Edge after costs, and what it does to your worst case.</p>
       <div class="panel-b" id="decision"><span class="skel w40"></span><span class="skel w80"></span><span class="skel tall"></span><span class="skel tall"></span></div>
     </section>
 
     <section class="span-12" aria-labelledby="h-pos">
-      <div class="section-h"><h2 id="h-pos">Positions</h2><p class="helper">Executed only after your signature</p></div>
+      <div class="section-h"><h2 id="h-pos">Positions</h2></div>
       <div class="grid">
         <section class="panel span-4" aria-labelledby="h-aqua">
           <div class="panel-h"><h2 id="h-aqua">Aqua curves</h2><span class="k">AquaSwapVMRouter v1.0.2</span></div>
@@ -226,7 +250,7 @@ details table { margin-top:var(--s1); font-size:11px; }
           <div class="panel-b" id="hook"><span class="skel w80"></span><span class="skel tall"></span></div>
         </section>
         <section class="panel span-4" aria-labelledby="h-arc">
-          <div class="panel-h"><h2 id="h-arc">Settlement</h2><span class="k">Arc: next</span></div>
+          <div class="panel-h"><h2 id="h-arc">Arc settlement</h2><span class="k">RiskPilotEscrow</span></div>
           <div class="panel-b" id="arc"><span class="skel w80"></span><span class="skel w60"></span></div>
         </section>
       </div>
@@ -234,12 +258,12 @@ details table { margin-top:var(--s1); font-size:11px; }
 
     <section class="panel span-12" aria-labelledby="h-ask">
       <div class="panel-h"><h2 id="h-ask">Ask RiskPilot</h2><span class="k">0G Private Computer · 0gm-1.0-35b-a3b</span></div>
-      <p class="helper">Answers about your own positions, built only from the engine's numbers. Each one shows its 0G request ID.</p>
+      <p class="helper">Private answers from your own engine data.</p>
       <div class="panel-b ask">
         <div class="brief" id="brief" data-testid="brief"><span class="skel w80"></span><span class="skel w60"></span></div>
         <div class="chat">
           <form id="askForm" class="askrow"><label for="askQ" class="sr">Question</label>
-            <input id="askQ" data-testid="ask-input" type="text" maxlength="500" autocomplete="off" placeholder="What happens to my positions if ETH drops 20%?">
+            <input id="askQ" data-testid="ask-input" type="text" maxlength="500" autocomplete="off" placeholder="What if ETH drops 20%?">
             <button class="btn ghost sm" type="submit" id="askBtn" data-testid="ask-button">Ask</button></form>
           <div id="answers" data-testid="answers" aria-live="polite"></div>
         </div>
@@ -247,8 +271,8 @@ details table { margin-top:var(--s1); font-size:11px; }
     </section>
 
     <section class="panel span-12" aria-labelledby="h-hist">
-      <div class="panel-h"><h2 id="h-hist">Decision history</h2></div>
-      <p class="helper">Every decision is stored with its inputs and can be replayed</p>
+      <div class="panel-h"><h2 id="h-hist">History</h2></div>
+      <p class="helper">Every decision replays from its inputs.</p>
       <div class="panel-b tscroll" id="history"><span class="skel w80"></span><span class="skel w80"></span></div>
     </section>
   </main>
@@ -262,7 +286,7 @@ details table { margin-top:var(--s1); font-size:11px; }
 <div class="overlay" id="profilePick" hidden role="dialog" aria-modal="true" aria-labelledby="h-prof">
   <div class="picker">
     <h2 id="h-prof" tabindex="-1">Choose a risk profile</h2>
-    <p>Chosen once for this wallet and signed by it. Every limit below is fixed by the profile; the engine derives the rest each block.</p>
+    <p>Signed once by your wallet. The engine sizes everything else per block.</p>
     <div class="cards" id="profileCards"></div>
     <p class="err" id="profileErr" aria-live="polite"></p>
   </div>
@@ -409,9 +433,9 @@ document.addEventListener("click", async (e) => {
 
 // ── status bar ────────────────────────────────────────────────────────────
 const PROFILE_BLURB = {
-  conservative: "Small positions, large edge required, tight slippage.",
-  moderate: "The default: a $250 stress budget for most wallets.",
-  aggressive: "Larger positions and budget, thinner edge accepted.",
+  conservative: "Small size, high bar.",
+  moderate: "The default. $250 stress budget.",
+  aggressive: "Bigger size, thinner edge.",
 };
 function budgetLine(pr) {
   if (!pr || !pr.budget) return "";
@@ -456,12 +480,12 @@ function showPicker(changing = false) {
   $("profileCards").innerHTML = ["conservative", "moderate", "aggressive"].filter((n) => P[n]).map((n) => {
     const p = P[n];
     return `<button type="button" class="card" data-testid="profile-card" data-profile="${n}"><h3>${esc(p.label)}</h3><p class="blurb">${esc(PROFILE_BLURB[n])}</p><dl>
-      <dt>Stress budget</dt><dd>${pct(p.budget_share, 1)} of wallet, cap ${usd(p.budget_cap).replace(/\.00$/, "")}</dd>
+      <dt>Stress budget</dt><dd>${pct(p.budget_share, 1).replace(".0%", "%")} · cap ${usd(p.budget_cap).replace(/\.00$/, "")}</dd>
       <dt>Minimum net edge</dt><dd>${usd(p.min_edge)}</dd><dt>Edge / uncertainty k</dt><dd>${num(p.k, 1)}</dd>
       <dt>Risk price λ</dt><dd>${num(p.lambda, 2)}</dd><dt>Aqua fee margin</dt><dd>${pct(p.aqua_margin, 0)}</dd>
       <dt>Max slippage</dt><dd>${pct(p.max_slippage, 2)}</dd><dt>Max position</dt><dd>${pct(p.max_position_share, 0)} of wallet</dd></dl></button>`;
   }).join("");
-  $("profileErr").textContent = changing ? "Changing cancels any live approval; everything is re-evaluated under the new profile." : "";
+  $("profileErr").textContent = changing ? "Changing cancels live approvals and re-prices everything." : "";
   $("profilePick").hidden = false;
   $("profileCards").querySelectorAll("[data-profile]").forEach((b) => { b.onclick = () => chooseProfile(b.dataset.profile); });
   $("h-prof").focus(); // focus the dialog, not a card: nothing is preselected
@@ -484,6 +508,7 @@ async function chooseProfile(name) {
 // ── opportunities ────────────────────────────────────────────────────────
 const age = (iso) => Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));
 const DEMO_POOLS = new Set(["uniswap_v4_hooked", "uniswap_v4_static"]); // seeded by make hook-pool
+const VENUE_NAME = { uniswap_v4_hooked: "Uniswap v4", uniswap_v4_static: "Uniswap v4", uniswap_v4_eth_usdc_30: "Uniswap v4", aqua_router: "1inch Aqua" };
 // Selection follows the opportunity key across blocks and reseeds; decision ids change, keys do not.
 function selectIndex() {
   const items = S.seed?.items || [];
@@ -493,13 +518,13 @@ function selectIndex() {
   return i;
 }
 function renderOpps() {
-  if (!S.up.engine || !S.seed) { $("opps").innerHTML = S.up.engine && S.needsProfile ? `<p class="empty">Choose a risk profile to evaluate opportunities.</p>` : unavailable(S.seedErr || "engine"); $("oppNote").textContent = ""; return; }
+  if (!S.up.engine || !S.seed) { $("opps").innerHTML = S.up.engine && S.needsProfile ? `<p class="empty">Choose a profile to see opportunities.</p>` : unavailable(S.seedErr || "engine"); $("oppNote").textContent = ""; return; }
   selectIndex();
   const rows = S.seed.items.map((it, i) => {
     const o = it.opportunity, d = it.decision, s = tip(`engine /v1/evaluate · ${o.source}`, d.created_at);
     const tag = DEMO_POOLS.has(o.source_venue) ? `<span class="tag" data-testid="demo-tag" data-tip="Deployed and seeded by make hook-pool on the mainnet fork; not a mainnet pool.">Demo pool · seeded on fork</span>` : "";
     return `<tr class="pick ${i === S.sel ? "sel" : ""}" data-i="${i}" tabindex="0" aria-selected="${i === S.sel}" data-testid="opp-row" data-label="${esc(it.label)}" data-key="${esc(it.key)}" data-decision="${d.decision_id}">
-      <td ${s}>${esc(it.label)}${tag}<span class="sub2">${esc(o.type)} · ${esc(o.pair)} · ${esc(o.source_venue)} → ${esc(o.target)}</span></td>
+      <td ${s}>${esc(it.label)}${tag}<span class="sub2">${esc(VENUE_NAME[o.source_venue] || o.source_venue)} · ${esc(o.pair)}</span></td>
       <td class="num" ${s}>${usd(o.observed_price)}<span class="sub2">ref ${usd(o.reference_price)}</span></td>
       <td class="num" ${s}>${usd(d.inputs.request.size)}</td>
       <td class="num" ${s}>${usd(d.gross_edge)}</td>
@@ -598,12 +623,12 @@ function payoffChart(d) {
   });
   g += `<text x="${(L + W - R) / 2}" y="${H - 2}" text-anchor="middle">ETH price move</text>`;
   const call = d.inputs.aqua.side === "call_like";
-  const what = call ? `vs. keeping the ${num(d.inputs.proposed_position.params.quantity_eth, 0)} WETH: above the range the upside is given up for the premium`
-    : "the put buys ETH as it falls: losses grow below the range";
-  return `<div class="sub"><span>Options-like payoff: P&amp;L change by ETH move (stress grid, after − before)</span></div>
-    <p class="helper" style="padding:0">${esc(what)}</p>
+  const what = call ? `Versus holding ${num(d.inputs.proposed_position.params.quantity_eth, 0)} WETH: upside above the range traded for the premium.`
+    : "Buys ETH as it falls: losses grow below the range.";
+  return `<div class="sub"><span>Payoff by ETH move</span><span>stress grid, after − before</span></div>
+    <p class="helper" style="padding:0;border:0">${esc(what)}</p>
     <svg class="chart" data-testid="payoff" viewBox="0 0 ${W} ${H}" role="img" aria-label="Payoff of the curve across ${n} spot moves">${g}</svg>
-    <p class="helper" data-testid="premium-vs-risk" style="padding:0">Earns ${usd(d.gross_edge)} premium if the range is crossed; risk charge ${usd(d.risk_charge)} (λ × added worst-case loss); net ${usd(d.net_edge)}.${d.verdict === "REJECT" && Number(d.stress_loss_before) > Number(d.budget) ? ` Your wallet's worst case (${usd(d.stress_loss_before)}) is already over the ${usd(d.budget)} budget, so any curve that adds downside is rejected.` : ""}</p>`;
+    <p class="helper" data-testid="premium-vs-risk" style="padding:4px 0 0;border:0">Earns ${usd(d.gross_edge)} premium, risk charge ${usd(d.risk_charge)}, net ${usd(d.net_edge)}.${d.verdict === "REJECT" && Number(d.stress_loss_before) > Number(d.budget) ? ` Your worst case (${usd(d.stress_loss_before)}) is already over the ${usd(d.budget)} budget, so added downside is rejected.` : ""}</p>`;
 }
 
 // ── decision panel ───────────────────────────────────────────────────────
@@ -663,8 +688,8 @@ function settleChip(id) {
 function renderDecision() {
   clearInterval(timer);
   $("viewApi").disabled = !(S.up.engine && S.seed);
-  if (READ_ONLY && !S.up.engine) { $("decision").innerHTML = `<p class="empty" data-testid="read-only">Read-only page. Run <span class="mono">make up</span> and open localhost:8000/riskpilot to evaluate and sign.</p>`; $("viewApi").disabled = true; return; }
-  if (!S.up.engine || !S.seed) { $("decision").innerHTML = S.up.engine && S.needsProfile ? `<p class="empty">No decisions until a profile is chosen.</p>` : unavailable(S.seedErr || "engine"); return; }
+  if (READ_ONLY && !S.up.engine) { $("decision").innerHTML = `<p class="empty" data-testid="read-only">Read-only. Run <span class="mono">make up</span> locally to sign.</p>`; $("viewApi").disabled = true; return; }
+  if (!S.up.engine || !S.seed) { $("decision").innerHTML = S.up.engine && S.needsProfile ? `<p class="empty">Choose a profile first.</p>` : unavailable(S.seedErr || "engine"); return; }
   if (S.busy) return; // the stepper owns the button until the signature flow ends
   const it = S.seed.items[selectIndex()], d = it.decision, inp = d.inputs, ds = tip(`engine /v1/evaluate · ${d.model_version}`, d.created_at);
   const shipped = liveShipped(d), kind = adapterFor(d);
@@ -678,7 +703,7 @@ function renderDecision() {
       <span class="signer" id="signerNote">${last ? `<a href="#tx-${last.hash}" data-testid="confirmed">Confirmed · view tx</a> ${settleChip(last.decision_id)}` : live ? "signer: " + esc(S.signer?.kind || "") : ""}</span></div>
     <div class="log" id="log" aria-live="polite">${S.log.join("<br>")}</div>`;
   h += `<div class="sub"><span>Net edge, USD</span></div>${waterfall(d)}`;
-  h += `<div class="sub"><span>Stress test, worst of 14 scenarios · <span data-testid="stress-before">${usd(d.stress_loss_before)}</span> → <span data-testid="stress-after">${usd(d.stress_loss_after)}</span> · budget <span data-testid="budget">${usd(d.budget)}</span></span></div>${stressBars(d)}`;
+  h += `<div class="sub"><span>Worst of 14 stress scenarios · <span data-testid="stress-before">${usd(d.stress_loss_before)}</span> → <span data-testid="stress-after">${usd(d.stress_loss_after)}</span> · budget <span data-testid="budget">${usd(d.budget)}</span></span></div>${stressBars(d)}`;
   if (inp.aqua) h += aquaBlock(d) + payoffChart(d);
   const tsOf = (k) => inp.timestamps?.[k];
   const lines = Object.entries(inp.sources || {}).map(([k, v]) => `${k}: ${esc(v)}${tsOf(k) ? ` · ${hms(tsOf(k))}` : ""}`);
@@ -827,7 +852,7 @@ async function renderAqua() {
       }
       h += `</div>`;
     }
-    el.innerHTML = h + `<p class="empty">Options-like payoffs from swap curves, not option contracts.</p>`;
+    el.innerHTML = h + `<p class="empty">Options-like payoffs from swap curves.</p>`;
     bindTips(el);
   } catch (e) { el.innerHTML = unavailable("demo chain: " + (e.shortMessage || e.message)); }
 }
@@ -901,7 +926,7 @@ const REFUND_AFTER_S = 24 * 3600;
 async function renderArc() {
   const el = $("arc"), dep = S.info?.arc;
   if (!S.up.engine) { el.innerHTML = unavailable("engine"); return; }
-  if (!dep) { el.innerHTML = `<p class="empty" data-testid="arc-next">Arc testnet escrow not set up yet. Run <span class="mono">make arc-setup SENDER=&lt;your address&gt;</span> (your wallet signs about 4 prompts), then <span class="mono">make up</span>: Approve and sign then funds on Arc and the arc-worker settles. Preview offline: <span class="mono">ARC_REHEARSAL=1 make up</span>.</p>`; return; }
+  if (!dep) { el.innerHTML = `<p class="empty" data-testid="arc-next">Not set up. Run <span class="mono">make arc-setup SENDER=0x…</span>, then <span class="mono">make up</span>.</p>`; return; }
   try {
     const abi = V.viem.parseAbi(["function reserve() view returns (uint256)", "function deposits(bytes32) view returns (address depositor, uint64 fundedAt, uint256 amount, uint8 status)"]);
     const from = BigInt(dep.deployed_block), at = now(), explorer = ARC_LOCAL ? null : ARC.explorer;
@@ -928,7 +953,7 @@ async function renderArc() {
     for (const l of st) rows.push({ b: l.blockNumber, t: `settle ${name(l.args.decisionId)} · paid ${num(Number(l.args.payout) / 1e6, 6)} USDC`, tx: l.transactionHash, extra: "" });
     rows.sort((a, b) => Number(a.b - b.b));
     h += rows.length ? rows.map((r) => `<div class="line" data-testid="arc-row" ${tip("Arc Funded / Settled logs", at)}>${esc(r.t)} ${hashChip(r.tx, explorer && `${explorer}/tx/${r.tx}`)}${r.extra}</div>`).join("")
-      : `<p class="empty">Funded inside Approve and sign; the arc-worker settles each one.</p>`;
+      : `<p class="empty">No escrows yet. Funding happens inside Approve and sign.</p>`;
     el.innerHTML = h; bindTips(el);
     el.querySelectorAll("[data-refund]").forEach((b) => { b.onclick = () => refundArc(b.dataset.refund, dep); });
   } catch (e) { el.innerHTML = unavailable("Arc: " + (e.shortMessage || e.message)); }
@@ -957,10 +982,10 @@ let briefFor = null;
 async function renderBrief(force = false) {
   const el = $("brief"), w = viewer();
   if (!S.up.engine) { el.innerHTML = unavailable("engine"); briefFor = null; return; }
-  if (!w || S.needsProfile) { el.innerHTML = `<p class="empty">The daily brief appears once a profile is chosen.</p>`; return; }
+  if (!w || S.needsProfile) { el.innerHTML = `<p class="empty">Choose a profile to get your daily brief.</p>`; return; }
   if (briefFor === w && !force) return;
   briefFor = w;
-  el.innerHTML = `<h3>Daily risk brief</h3><p class="empty">Generating on 0G Private Computer…</p>`;
+  el.innerHTML = `<h3>Daily risk brief</h3><p class="empty">Writing your brief on 0G…</p>`;
   try {
     const r = await engine("/assistant/brief", { method: "POST", body: JSON.stringify({ wallet: w }) });
     el.innerHTML = `<h3>Daily risk brief · ${esc(hms(r.created_at))}</h3><div>${esc(r.answer)}</div>${assistantMeta(r)}`;
@@ -972,7 +997,7 @@ async function renderAnswers() {
   try {
     const rows = (await engine(`/assistant/log?wallet=${w}&limit=10`)).filter((r) => r.kind === "ask");
     el.innerHTML = rows.map((r) => `<div class="qa" data-testid="qa"><div class="q">${esc(r.question)}</div><div class="a" data-testid="answer">${esc(r.answer)}</div>${assistantMeta(r)}</div>`).join("")
-      || `<p class="empty">Try: "Why did you reject the put-like curve?"</p>`;
+      || `<p class="empty">Try "Why was the put rejected?"</p>`;
   } catch { el.innerHTML = ""; }
 }
 $("askForm").addEventListener("submit", async (e) => {
@@ -992,13 +1017,20 @@ $("askForm").addEventListener("submit", async (e) => {
 });
 
 // ── history ──────────────────────────────────────────────────────────────
+// A decision's opportunity by name (the seeded label), falling back to its id.
+function oppName(d) {
+  const it = (S.seed?.items || []).find((i) => i.decision.opportunity_id === d.opportunity_id);
+  if (it) return it.label;
+  const aq = d.inputs?.aqua?.side;
+  return aq ? (aq === "call_like" ? "Call-like curve" : "Put-like curve") : d.opportunity_id;
+}
 function renderHistory() {
   if (!S.up.engine) { $("history").innerHTML = unavailable("engine"); return; }
   if (!S.history.length) { $("history").innerHTML = `<p class="empty">No decisions yet.</p>`; return; }
   const txs = new Map(S.executions.map((e) => [e.decision_id, e]));
   const rows = S.history.map((d) => {
     const e = txs.get(d.decision_id);
-    return `<tr data-testid="history-row" data-decision="${d.decision_id}" data-verdict="${d.verdict}"><td class="num" style="text-align:left">${hms(d.created_at)}</td><td class="mono">${esc(d.opportunity_id)}</td><td><span class="chip ${d.verdict}">${d.verdict}</span></td>
+    return `<tr data-testid="history-row" data-decision="${d.decision_id}" data-verdict="${d.verdict}"><td class="num" style="text-align:left">${hms(d.created_at)}</td><td title="${esc(d.opportunity_id)}">${esc(oppName(d))}</td><td><span class="chip ${d.verdict}">${d.verdict}</span></td>
       <td style="color:var(--text-2)">${esc(d.reason)}</td>
       <td>${e ? hashChip(e.tx_hash) : ""}${e?.settlement_tx ? ` settle ${hashChip(e.settlement_tx, `${ARC.explorer}/tx/${e.settlement_tx}`)}` : ""}</td>
       <td style="white-space:nowrap"><button class="btn ghost sm" type="button" data-replay="${d.decision_id}">Replay</button> <span data-rout="${d.decision_id}"></span></td></tr>`;
