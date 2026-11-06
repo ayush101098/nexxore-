@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 from models import EvaluateRequest
+from pricing import aqua_position, aqua_premium_floor
 from profiles import PROFILES
 from schemas import validate
 from stress import run_stress_test
@@ -86,7 +87,43 @@ def _sanity_failure(req: EvaluateRequest) -> str | None:
     gap = abs(reference - observed) / reference
     if gap > SANITY["gap"][1]:
         return f"Review: {gap:.2%} gap between observed and reference looks like a bad feed"
+    if a := req.aqua:
+        lo, hi, mid, tol = a.range_low, a.range_high, m.quote.mid, req.tolerance
+        if not 0 < lo < hi:
+            return f"Review: aqua range {lo}-{hi} is not a valid range"
+        if a.side == "call_like" and lo < mid * (1 - tol):
+            return f"Review: call_like range {lo}-{hi} does not sit above spot {mid}"
+        if a.side == "put_like" and hi > mid * (1 + tol):
+            return f"Review: put_like range {lo}-{hi} does not sit below spot {mid}"
     return None
+
+
+def _premium_floor(req: EvaluateRequest) -> dict | None:
+    """Aqua premium rule inputs (K_eq, T_eq, C_eq, f_min) when the curve params are usable."""
+    a, m = req.aqua, req.market
+    if a is None or not (0 < a.range_low < a.range_high and m.volatility.annualized > 0 and m.quote.mid > 0):
+        return None
+    return aqua_premium_floor(
+        float(m.quote.mid), float(a.range_low), float(a.range_high), a.side, float(m.volatility.annualized)
+    )
+
+
+def _floor_inputs(req: EvaluateRequest, floor: dict | None) -> dict | None:
+    if floor is None:
+        return None
+    a = req.aqua
+    return {
+        "side": a.side,
+        "range_low": str(a.range_low),
+        "range_high": str(a.range_high),
+        "fee_rate": str(req.market.fee_rate),
+        "k_eq": f"{floor['k_eq']:.2f}",
+        "t_eq_years": f"{floor['t_eq']:.8f}",
+        "t_eq_days": f"{floor['t_eq'] * 365:.4f}",
+        "c_eq": f"{floor['c_eq']:.6f}",
+        "markup": f"{floor['markup']:.2f}",
+        "f_min": f"{floor['f_min']:.8f}",
+    }
 
 
 def _timestamps(req: EvaluateRequest) -> dict[str, datetime]:
@@ -122,6 +159,27 @@ def _proposed_position(req: EvaluateRequest, trade_delta: float) -> dict:
     }
 
 
+def _proposed_aqua_position(req: EvaluateRequest, q: float) -> dict:
+    """The curve to ship, holding q ETH of exposure; stress reprices it with Black-Scholes."""
+    a, m = req.aqua, req.market
+    sigma = float(m.volatility.annualized)
+    r = aqua_position(float(m.quote.mid), float(a.range_low), float(a.range_high), a.side, q, sigma, strict=False)
+    return {
+        "primitive": "aqua",
+        "params": {
+            "side": a.side,
+            "range_low": str(a.range_low),
+            "range_high": str(a.range_high),
+            "quantity_eth": f"{q:.6f}",
+            "volatility": str(m.volatility.annualized),
+            "fee_rate": str(m.fee_rate),
+        },
+        "collateral": str(usd(r["collateral"])),
+        "entry": {"price": str(m.quote.mid), "at": iso(req.as_of)},
+        "greeks": r["position_greeks"].as_strings(),
+    }
+
+
 def generate_execution_decision(req: EvaluateRequest) -> dict:
     opp, m, profile = req.opportunity, req.market, PROFILES[req.profile]
     reference = Decimal(opp["reference_price"])
@@ -130,21 +188,30 @@ def generate_execution_decision(req: EvaluateRequest) -> dict:
     gross, costs, risk_charge, hurdle = zero, dict.fromkeys(["gas", "slippage", "fees", "hedge"], zero), zero, zero
     loss_before = loss_after = uncertainty = zero
     proposed = None
+    floor = _premium_floor(req)
 
     verdict, reason = None, _sanity_failure(req)
     if reason:
         verdict = "REQUIRE_REVIEW"
     else:
         q = float(req.size / mid)  # ETH
-        side = 1 if mid < reference else -1  # buy ETH below fair value, sell above
-        gross = usd(q * float(abs(reference - mid)))
+        if floor is not None:
+            # Maker side: a fully crossed range trades ~q ETH at K_eq, earning the fee, and
+            # writes an options-like payoff worth C_eq per ETH. The fee is income, not a cost.
+            gross = usd(q * (float(m.fee_rate) * floor["k_eq"] - floor["c_eq"]))
+            fees = zero
+            proposed = _proposed_aqua_position(req, q)
+        else:
+            side = 1 if mid < reference else -1  # buy ETH below fair value, sell above
+            gross = usd(q * float(abs(reference - mid)))
+            fees = usd(m.fee_rate * req.size)
+            proposed = _proposed_position(req, side * q)
         costs = {
             "gas": usd(float(m.gas.units * m.gas.price_gwei) * 1e-9 * float(mid)),
             "slippage": usd(abs(float(m.quote.price - mid)) * q),
-            "fees": usd(m.fee_rate * req.size),
+            "fees": fees,
             "hedge": usd(m.hedge.cost),
         }
-        proposed = _proposed_position(req, side * q)
         loss_before = usd(run_stress_test(req.book, spot=float(mid))["worst_loss"])
         loss_after = usd(run_stress_test(req.book + [proposed], spot=float(mid))["worst_loss"])
         risk_charge = usd(profile.lam * max(zero, loss_after - loss_before))
@@ -155,7 +222,7 @@ def generate_execution_decision(req: EvaluateRequest) -> dict:
     net = gross - sum(costs.values()) - risk_charge
 
     if verdict is None:
-        verdict, reason = _verdict(req, gross, costs, risk_charge, net, hurdle, loss_after, profile.budget)
+        verdict, reason = _verdict(req, gross, costs, risk_charge, net, hurdle, loss_after, profile.budget, floor)
 
     expires = req.as_of + timedelta(seconds=DECISION_TTL_S) if verdict == "APPROVE" else req.as_of
     decision = {
@@ -187,6 +254,7 @@ def generate_execution_decision(req: EvaluateRequest) -> dict:
             "volatility": str(m.volatility.annualized),
             "uncertainty": str(uncertainty),
             "hurdle": str(hurdle),
+            "aqua": _floor_inputs(req, floor),
             "proposed_position": proposed,
             "request": req.model_dump(mode="json"),
         },
@@ -198,7 +266,7 @@ def generate_execution_decision(req: EvaluateRequest) -> dict:
     return decision
 
 
-def _verdict(req, gross, costs, risk_charge, net, hurdle, loss_after, budget) -> tuple[str, str]:
+def _verdict(req, gross, costs, risk_charge, net, hurdle, loss_after, budget, floor) -> tuple[str, str]:
     m = req.market
     # 1. stale inputs (sanity bounds were checked before pricing)
     if reason := _staleness_failure(req):
@@ -215,6 +283,13 @@ def _verdict(req, gross, costs, risk_charge, net, hurdle, loss_after, budget) ->
         return "REJECT", f"Rejected: liquidity {fmt_usd(m.liquidity)} below size {fmt_usd(req.size)}"
     if costs["gas"] > req.gas_budget:
         return "REJECT", f"Rejected: gas {fmt_usd(costs['gas'])} above {fmt_usd(req.gas_budget)} budget"
+    # 3b. Aqua premium rule: the curve's fee must cover (1 + m) x its equivalent option value
+    if floor is not None and m.fee_rate < Decimal(str(floor["f_min"])):
+        return "REJECT", (
+            f"Rejected: curve fee {m.fee_rate:.3%} below premium floor {floor['f_min']:.3%} "
+            f"({1 + floor['markup']:.1f} x C_eq ${floor['c_eq']:,.2f} / K_eq ${floor['k_eq']:,.2f}, "
+            f"T_eq {floor['t_eq'] * 365:.1f} d)"
+        )
     # 4. post-trade stress
     if loss_after > budget:
         return "REJECT", f"Rejected: post-trade stress loss {fmt_usd(loss_after)} above {fmt_usd(budget)} budget"

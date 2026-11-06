@@ -8,7 +8,7 @@ from decimal import Decimal
 from typing import Literal
 
 from jsonschema import ValidationError
-from pydantic import AwareDatetime, BaseModel, ConfigDict, field_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, field_validator, model_validator
 
 from schemas import validate
 
@@ -62,6 +62,14 @@ class Market(_Model):
     hedge: Hedge = Hedge()
 
 
+class AquaCurveParams(_Model):
+    """The curve an aqua_premium decision would ship; market.fee_rate is its Fee instruction."""
+
+    side: Literal["call_like", "put_like"]
+    range_low: Decimal
+    range_high: Decimal
+
+
 Profile = Literal["conservative", "balanced", "aggressive"]
 
 
@@ -76,11 +84,18 @@ class EvaluateRequest(_Model):
     as_of: AwareDatetime
     tolerance: Decimal = Decimal("0.003")
     gas_budget: Decimal = Decimal("25.00")
+    aqua: AquaCurveParams | None = None  # required for aqua_premium opportunities
 
     @field_validator("opportunity")
     @classmethod
     def _opportunity(cls, v: dict) -> dict:
         return _shared("opportunity", v)
+
+    @model_validator(mode="after")
+    def _aqua_params(self) -> "EvaluateRequest":
+        if self.opportunity["type"] == "aqua_premium" and self.aqua is None:
+            raise ValueError("aqua_premium opportunities need aqua curve params")
+        return self
 
     @field_validator("book")
     @classmethod
@@ -99,6 +114,7 @@ class EvaluateBody(_Model):
     as_of: AwareDatetime | None = None  # default: now
     tolerance: Decimal = Decimal("0.003")
     gas_budget: Decimal = Decimal("25.00")
+    aqua: AquaCurveParams | None = None
 
 
 class ScanBody(_Model):

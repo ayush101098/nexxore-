@@ -1,5 +1,6 @@
 """FastAPI app for the RiskPilot engine (PRD 2)."""
 
+import math
 from collections.abc import Callable
 from datetime import datetime, timezone
 
@@ -10,13 +11,16 @@ from fastapi.responses import JSONResponse
 
 from decision import MODEL_VERSION, generate_execution_decision, iso, usd
 from models import AquaPriceBody, EvaluateBody, EvaluateRequest, ScanBody, StressBody
-from pricing import DAYS_PER_YEAR, aqua_position
+from pricing import DAYS_PER_YEAR, aqua_position, aqua_premium_floor
 from scanner import Source, scan
 from scanner.live import AquaRouterSource, HookedV4PoolSource, UniswapTradingApiSource
 from scanner.recorded import RecordedSource
 from schemas import validate
 from store import Store
 from stress import run_stress_test
+
+# SwapVM flat-fee units: 1e9 = 100% (swap-vm v1.0.2 Fee.sol BPS).
+FEE_BPS = 10**9
 
 POSITION_STATUS = {"pending": "pending", "confirmed": "open", "reverted": "failed"}
 
@@ -81,6 +85,7 @@ def create_app(
             as_of=as_of,
             tolerance=body.tolerance,
             gas_budget=body.gas_budget,
+            aqua=body.aqua,
         )
         decision = generate_execution_decision(req)
         store.save_decision(decision)
@@ -95,6 +100,9 @@ def create_app(
             )
         except ValueError as e:
             raise HTTPException(422, str(e)) from None
+        floor = aqua_premium_floor(
+            float(body.spot), float(body.range_low), float(body.range_high), body.side, float(body.volatility)
+        )
         return {
             "label": "Options-like payoff from a swap curve. Greeks are equivalent values, not an option contract.",
             "side": body.side,
@@ -107,6 +115,13 @@ def create_app(
             "equivalent_premium": f"{r['equivalent_premium']:.6f}",
             "collateral": str(usd(r["collateral"])),
             "max_loss": str(usd(r["max_loss"])),
+            # Aqua premium rule: the Fee instruction must be at least f_min.
+            "premium_floor": {
+                "c_eq_per_eth": f"{floor['c_eq']:.6f}",
+                "markup": f"{floor['markup']:.2f}",
+                "f_min": f"{floor['f_min']:.8f}",
+                "fee_instruction_min": str(math.ceil(floor["f_min"] * FEE_BPS)),
+            },
         }
 
     @app.post("/stress")

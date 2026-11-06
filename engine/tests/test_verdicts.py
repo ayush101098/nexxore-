@@ -120,3 +120,52 @@ def test_conservative_profile_is_stricter():
     assert decision["budget"] == "150.00"
     # λ = 1.0 doubles the risk charge on the same $20.00 stress increase.
     assert decision["risk_charge"] == "20.00"
+
+
+def test_aqua_premium_fixture_reports_the_premium_floor():
+    fixture = load("aqua_premium")
+    decision = decide(fixture["request"])
+    validate("decision", decision)
+    assert (decision["verdict"], decision["reason"]) == (fixture["expected"]["verdict"], fixture["expected"]["reason"])
+    aqua, want = decision["inputs"]["aqua"], fixture["expected"]["aqua"]
+    assert float(aqua["k_eq"]) == pytest.approx(want["k_eq"], abs=0.01)
+    assert float(aqua["t_eq_days"]) == pytest.approx(want["t_eq_days"], abs=0.01)
+    assert float(aqua["c_eq"]) == pytest.approx(want["c_eq"], abs=0.01)
+    assert float(aqua["f_min"]) == pytest.approx(want["f_min"], rel=0.001)
+    # The curve's fee is income on the maker side, so it is not itemized as a cost.
+    assert decision["costs"]["fees"] == "0.00"
+    assert decision["inputs"]["proposed_position"]["primitive"] == "aqua"
+
+
+def _aqua_with(mutate) -> dict:
+    request = copy.deepcopy(load("aqua_premium")["request"])
+    mutate(request)
+    return decide(request)
+
+
+def test_aqua_fee_below_premium_floor_is_rejected():
+    decision = _aqua_with(lambda r: r["market"].update(fee_rate="0.0015"))
+    assert decision["verdict"] == "REJECT"
+    assert decision["reason"] == (
+        "Rejected: curve fee 0.150% below premium floor 0.201% (1.2 x C_eq $6.44 / K_eq $3,839.14, T_eq 7.0 d)"
+    )
+
+
+def test_every_aqua_decision_carries_f_min():
+    # Even a stale-input REQUIRE_REVIEW records the premium floor.
+    decision = _aqua_with(lambda r: r["market"]["volatility"].update(observed_at="2026-11-06T09:29:15Z"))
+    assert decision["verdict"] == "REQUIRE_REVIEW"
+    assert decision["inputs"]["aqua"]["f_min"] == "0.00201395"
+
+
+def test_aqua_range_on_wrong_side_of_spot_needs_review():
+    decision = _aqua_with(lambda r: r["aqua"].update(range_low="3200"))
+    assert decision["verdict"] == "REQUIRE_REVIEW"
+    assert decision["reason"] == "Review: call_like range 3200-4335 does not sit above spot 3400.00"
+
+
+def test_aqua_premium_needs_curve_params():
+    request = copy.deepcopy(load("aqua_premium")["request"])
+    del request["aqua"]
+    with pytest.raises(ValueError):
+        EvaluateRequest.model_validate(request)

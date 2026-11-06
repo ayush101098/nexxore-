@@ -77,7 +77,24 @@ def aqua_equivalent(p_low: float, p_high: float, sigma: float) -> tuple[float, f
     return k_eq, t_eq
 
 
-def aqua_position(spot: float, p_low: float, p_high: float, side: str, q: float, sigma: float) -> dict:
+PREMIUM_MARKUP = 0.20  # m: a curve's fee must earn at least (1 + m) x its equivalent option value
+
+
+def aqua_premium_floor(spot: float, p_low: float, p_high: float, side: str, sigma: float, m: float = PREMIUM_MARKUP) -> dict:
+    """Aqua premium rule: the minimum curve fee for an options-like curve.
+
+    C_eq is Black-Scholes at K_eq and T_eq (per ETH). A fully crossed range trades
+    about one ETH per ETH of size at an average price K_eq, so a fee f earns about
+    f * K_eq per ETH; f_min = (1 + m) * C_eq / K_eq makes that cover C_eq plus a margin m.
+    """
+    k_eq, t_eq = aqua_equivalent(p_low, p_high, sigma)
+    c_eq = bs_price(spot, k_eq, t_eq, sigma, side == "call_like")
+    return {"k_eq": k_eq, "t_eq": t_eq, "c_eq": c_eq, "f_min": (1 + m) * c_eq / k_eq, "markup": m}
+
+
+def aqua_position(
+    spot: float, p_low: float, p_high: float, side: str, q: float, sigma: float, strict: bool = True
+) -> dict:
     """Options-like view of one Aqua curve holding q ETH of exposure.
 
     call_like: range above spot holding q ETH, sold as price rises
@@ -85,10 +102,11 @@ def aqua_position(spot: float, p_low: float, p_high: float, side: str, q: float,
     put_like:  range below spot holding q * K_eq USDC, buying ETH as price falls
                -> short q puts at K_eq (cash-secured put).
     These are options-like payoffs from swap curves, not option contracts.
+    strict=False skips the spot-side check, for repricing after spot has moved.
     """
-    if side == "call_like" and p_low < spot:
+    if strict and side == "call_like" and p_low < spot:
         raise ValueError("call_like range must sit above spot (range_low >= spot)")
-    if side == "put_like" and p_high > spot:
+    if strict and side == "put_like" and p_high > spot:
         raise ValueError("put_like range must sit below spot (range_high <= spot)")
     if side not in ("call_like", "put_like"):
         raise ValueError("side must be call_like or put_like")
