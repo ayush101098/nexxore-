@@ -44,7 +44,7 @@ send() { cast send --rpc-url "$RPC" "$@" >/dev/null; }
 
 echo "Funding ETH and wrapping to WETH"
 for A in "$MAKER" "$TAKER"; do cast rpc --rpc-url "$RPC" anvil_setBalance "$A" 0x3635C9ADC5DEA00000 >/dev/null; done  # 1,000 ETH
-send --private-key "$MAKER_PK" "$WETH" 'deposit()' --value 6ether  # covers the 5 ETH call-like curve
+send --private-key "$MAKER_PK" "$WETH" 'deposit()' --value 8ether  # covers the 7 ETH call-like curve
 send --private-key "$TAKER_PK" "$WETH" 'deposit()' --value 5ether
 
 # USDC holder to impersonate. For the pinned block, find_usdc_holder.py found this EOA

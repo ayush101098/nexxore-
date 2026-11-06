@@ -293,15 +293,27 @@ contract AquaOptionsForkTest is Test, AquaCurves {
         console.log("downside bid after:            ", priceAfter);
     }
 
+    /// The demo curves sit on the fork's own ETH price: DemoParams.SPOT matches the main
+    /// ETH/USDC v4 pool at the pinned block, read through StateView.
+    function test_DemoSpotIsTheForksEthPrice() public view {
+        (bool ok, bytes memory ret) =
+            DemoParams.STATE_VIEW.staticcall(abi.encodeWithSignature("getSlot0(bytes32)", DemoParams.MAIN_POOL_ID));
+        require(ok, "StateView.getSlot0 failed");
+        uint256 sqrtP = abi.decode(ret, (uint160));
+        // Main pool is ETH(0)/USDC(1): raw price = USDC units per wei; x 1e18 wei = USDC units per ETH.
+        uint256 usdcPerEth = sqrtP * sqrtP * 1e18 >> 192;
+        assertApproxEqRel(usdcPerEth, DemoParams.SPOT, 0.0001e18, "SPOT within 0.01% of the fork's price");
+    }
+
     function test_DemoCurvesShipAndPriceInRange() public {
-        deal(WETH, maker, 6 ether);
+        deal(WETH, maker, 8 ether);
         deal(USDC, maker, 5_000e6);
         Curve memory up = upsideCurve(maker, DemoParams.SPOT, DemoParams.WIDTH_BPS, DemoParams.CALL_ETH, DemoParams.UPSIDE_FEE);
         Curve memory down =
             downsideCurve(maker, DemoParams.SPOT, DemoParams.WIDTH_BPS, DemoParams.PUT_USDC, DemoParams.DOWNSIDE_FEE);
-        assertEq(up.range.highUsdc, 4335e6, "upside top");
-        assertEq(equivalentStrike(up.range) / 1e4, 3839_14, "upside K_eq 3,839.14");
-        assertEq(equivalentStrike(down.range) / 1e4, 3011_09, "downside K_eq 3,011.09");
+        assertEq(up.range.highUsdc, 2_828.65125e6, "upside top = spot x 1.275");
+        assertEq(equivalentStrike(up.range) / 1e4, 2505_09, "upside K_eq 2,505.09 (floored; the engine rounds to 2,505.10)");
+        assertEq(equivalentStrike(down.range) / 1e4, 1964_78, "downside K_eq 1,964.78");
         _shipChecked(up, down);
 
         // Wide range: probe with small sizes for the marginal price.

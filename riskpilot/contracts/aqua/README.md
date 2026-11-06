@@ -38,7 +38,11 @@ make demo-reset   # forget the saved demo state
    user signs. `make demo-ship` ships it from the command line instead.
 
 The fork runs as chain ID 31337, so a browser wallet can't confuse it with
-mainnet. The maker holds 6 WETH, which covers the 5 ETH call-like curve.
+mainnet. The maker holds 8 WETH, which covers the 7 ETH call-like curve.
+
+**One ETH price.** The demo curves sit on the fork's own price: `DemoParams.SPOT` is $2,218.55, the
+main ETH/USDC v4 pool at the pinned block, and `test_DemoSpotIsTheForksEthPrice` checks it through
+StateView. The v4 hook pool (`contracts/hook`) uses the same chain and the same price.
 
 State is dumped to `demo/anvil-state.json` every 10 s and on Ctrl-C, and the
 next run reloads it with `--state`. If setup fails partway, the half-built
@@ -48,8 +52,8 @@ Demo curves (w = 1.275, `src/DemoParams.sol`):
 
 | Curve | Range | K_eq | T_eq @ 55% vol | Fee instruction (1e9 = 100%) |
 |---|---|---|---|---|
-| upside, call-like, 5 ETH | 3,400–4,335 | 3,839.14 | 6.99 d | **2,013,952** (0.2014% = engine f_min, rounded up) |
-| downside, put-like, 3,011.09 USDC | 2,666.67–3,400 | 3,011.09 | 6.99 d | **2,274,072** (0.2274%) |
+| upside, call-like, 7 ETH | 2,218.55–2,828.65 | 2,505.10 | 6.99 d | **2,013,952** (0.2014% = engine f_min, rounded up) |
+| downside, put-like, 1,964.78 USDC | 1,740.04–2,218.55 | 1,964.78 | 6.99 d | **2,274,072** (0.2274%) |
 
 The fork test's own unit curves stay at w = 1.10, which is about a 1-day
 equivalent term.
@@ -124,7 +128,7 @@ locked in a pool.** We don't claim that the two curves share capital.
 | Collateral check refuses over-allocation | `test_CollateralCheck*`: single curve, two curves on one token, live strategies, allowance |
 | Whole flow from a clean fork in one command | `make test` |
 
-One run (spot $3,400, 1 ETH upside curve, taker spends 1,500 USDC):
+One run of the w = 1.10 unit test (spot $3,400, 1 ETH upside curve, taker spends 1,500 USDC):
 
 ```
 before fill   maker 2.000000 WETH  5,000 USDC   taker 5.000000 WETH  10,000 USDC

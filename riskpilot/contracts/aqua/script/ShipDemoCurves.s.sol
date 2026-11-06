@@ -53,6 +53,7 @@ contract ShipDemoCurves is Script, AquaCurves {
         vm.serializeAddress(root, "router", DemoParams.ROUTER);
         vm.serializeAddress(root, "aqua", DemoParams.AQUA);
         vm.serializeUint(root, "fork_block", vm.envOr("AQUA_FORK_BLOCK", DemoParams.FORK_BLOCK));
+        vm.serializeUint(root, "spot_usdc", DemoParams.SPOT);
         vm.serializeString(root, "upside", _curveJson("upside", "call_like", up, hUp, DemoParams.UPSIDE_FEE));
         string memory out =
             vm.serializeString(root, "downside", _curveJson("downside", "put_like", down, hDown, DemoParams.DOWNSIDE_FEE));
