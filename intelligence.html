@@ -222,6 +222,30 @@ body { background:var(--bg); color:var(--text); font-family:var(--body); font-si
 .page-footer a { color:var(--text-muted); text-decoration:none; }
 .page-footer a:hover { color:var(--cyan); }
 
+/* RiskPilot (ETHGlobal) */
+.rp-head { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin:34px 0 6px; }
+.rp-head h2 { font-family:var(--display); font-size:1.15rem; font-weight:700; }
+.rp-lede { font-size:0.72rem; color:var(--text-muted); max-width:820px; margin-bottom:14px; line-height:1.65; }
+.rp-flow { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+.rp-step { flex:1; min-width:96px; padding:8px 10px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); }
+.rp-step .n { font-family:var(--display); font-size:0.66rem; font-weight:600; }
+.rp-step .d { font-family:var(--mono); font-size:0.5rem; color:var(--text-dim); margin-top:2px; }
+.rp-scroll { overflow-x:auto; }
+.rp-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:0.6rem; }
+.rp-table th { text-align:left; font-weight:500; font-size:0.5rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; padding:6px 8px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.rp-table td { padding:7px 8px; border-bottom:1px solid var(--border); vertical-align:top; color:var(--text); }
+.rp-table td.num { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.rp-table th.num { text-align:right; }
+.rp-table td.why { color:var(--text-muted); font-family:var(--body); font-size:0.6rem; min-width:220px; }
+.rp-table tr.pick td { background:rgba(25,230,197,0.06); }
+.verdict { font-size:0.5rem; font-weight:700; padding:2px 6px; border-radius:2px; white-space:nowrap; }
+.verdict.approve { background:rgba(25,230,197,0.12); color:var(--green); }
+.verdict.reject { background:rgba(255,92,92,0.12); color:var(--red); }
+.verdict.requote { background:rgba(247,185,85,0.12); color:var(--gold); }
+.verdict.review { background:rgba(79,124,255,0.12); color:var(--violet); }
+.rp-curve { margin-bottom:12px; }
+.rp-curve-title { font-family:var(--display); font-size:0.7rem; font-weight:600; margin-bottom:6px; }
+
 @media (max-width:1100px) {
   .grid-2 { grid-template-columns:1fr; }
   .stat-cells { grid-template-columns:repeat(2,1fr); }
@@ -388,6 +412,100 @@ body { background:var(--bg); color:var(--text); font-family:var(--body); font-si
         </div>
       </div>
     </div>
+
+    <!-- RISKPILOT: risk-aware DeFi execution agent (ETHGlobal build) -->
+    <section id="riskpilot">
+      <div class="rp-head">
+        <h2>RiskPilot: risk-aware DeFi execution</h2>
+        <span class="badge gold">ETHGlobal build</span>
+        <span class="badge sim">Mainnet fork · no real funds</span>
+      </div>
+      <p class="rp-lede">Every on-chain action traces back to a decision. The engine prices an ETH/USDC opportunity net of gas, slippage, fees, hedge cost and a risk charge. It then stress-tests the post-trade book across 14 spot × volatility scenarios and returns <b>APPROVE</b>, <b>REJECT</b>, <b>REQUOTE</b> or <b>REQUIRE_REVIEW</b> with a one-sentence reason. The same inputs always give the same verdict. There is no AI and no randomness in the decision path.</p>
+
+      <div class="rp-flow">
+        <div class="rp-step"><div class="n">Scan</div><div class="d">quotes, capped at real balances</div></div>
+        <div class="rp-step"><div class="n">Quantify</div><div class="d">edge, costs, Black-Scholes</div></div>
+        <div class="rp-step"><div class="n">Decide</div><div class="d">6 rules, in order</div></div>
+        <div class="rp-step"><div class="n">Approve</div><div class="d">user signs, 30 s expiry</div></div>
+        <div class="rp-step"><div class="n">Execute</div><div class="d">1inch Aqua / Uniswap v4</div></div>
+        <div class="rp-step"><div class="n">Settle</div><div class="d">USDC on Arc</div></div>
+        <div class="rp-step"><div class="n">Record</div><div class="d">decision_id → tx</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-head">
+          <div class="card-title">Decisions from the engine's test fixtures</div>
+          <span class="head-note">balanced profile · λ 0.5 · stress budget $250 · min edge $5</span>
+        </div>
+        <div class="card-body rp-scroll">
+          <table class="rp-table">
+            <thead><tr><th>Opportunity</th><th>Verdict</th><th class="num">Gross</th><th class="num">Costs</th><th class="num">Risk charge</th><th class="num">Net edge</th><th class="num">Stress before → after</th><th>Reason</th></tr></thead>
+            <tbody>
+              <tr><td>Price gap, $10k, L2 gas</td><td><span class="verdict approve">APPROVE</span></td><td class="num">41.35</td><td class="num">11.27</td><td class="num">10.00</td><td class="num">20.08</td><td class="num">27.09 → 47.09</td><td class="why">Net edge $20.08 clears $5.00 hurdle; stress loss $47.09 within $250.00 budget</td></tr>
+              <tr><td>Price gap, $10k, mainnet gas</td><td><span class="verdict reject">REJECT</span></td><td class="num">14.77</td><td class="num">24.52</td><td class="num">10.00</td><td class="num">−19.75</td><td class="num">27.09 → 47.09</td><td class="why">Net edge −$19.75 below $5.00 hurdle ($14.77 gap, $9.14 gas, $7.38 slippage, $5.00 fees, $3.00 hedge, $10.00 risk charge)</td></tr>
+              <tr><td>Price gap, price moved</td><td><span class="verdict requote">REQUOTE</span></td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="why">Price moved 0.35% since observation (tolerance 0.30%)</td></tr>
+              <tr><td>Price gap, stale vol</td><td><span class="verdict review">REQUIRE_REVIEW</span></td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="why">Volatility input is 45 s old (limit 30 s)</td></tr>
+              <tr><td>Aqua upside curve, 1 ETH on held ETH</td><td><span class="verdict reject">REJECT</span></td><td class="num">1.29</td><td class="num">0.42</td><td class="num">0.00</td><td class="num">0.87</td><td class="num">1,360.00 → 1,353.56</td><td class="why">Net edge $0.87 below $5.00 hurdle ($1.29 premium, $0.42 gas). The covered call lowers risk, so the risk charge is zero.</td></tr>
+              <tr><td>Aqua downside curve, 3,011 USDC</td><td><span class="verdict reject">REJECT</span></td><td class="num">1.14</td><td class="num">0.42</td><td class="num">482.70</td><td class="num">−481.98</td><td class="num">0.00 → 965.39</td><td class="why">Post-trade stress loss $965.39 at −40% spot, +20 vol pts above $250.00 budget</td></tr>
+            </tbody>
+          </table>
+          <div class="section-note">Costs = gas + slippage + fees + hedge, in USD. The net edge is the gross edge minus every cost line minus the risk charge, and that sum is checked to the cent. The risk charge is λ × the increase in worst-case stress loss; wallet holdings count in the before-book.</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Options-like curves on 1inch Aqua <span class="badge live">Fork-tested</span></div>
+            <span class="head-note">w = 1.275 · spot $3,400 · vol 55%</span>
+          </div>
+          <div class="card-body">
+            <div class="rp-curve">
+              <div class="rp-curve-title">Upside: 1 ETH over $3,400–$4,335 (covered-call-like)</div>
+              <div class="stat-cells">
+                <div class="scell"><div class="sl">K_eq</div><div class="sv">$3,839</div><div class="ss">√(low × high)</div></div>
+                <div class="scell"><div class="sl">T_eq</div><div class="sv">6.99 d</div><div class="ss">equivalent term</div></div>
+                <div class="scell"><div class="sl">C_eq</div><div class="sv">$6.44</div><div class="ss">per ETH</div></div>
+                <div class="scell"><div class="sl">Fee floor</div><div class="sv" style="color:var(--green)">0.2014%</div><div class="ss">1.2 × C_eq / K_eq</div></div>
+              </div>
+            </div>
+            <div class="rp-curve">
+              <div class="rp-curve-title">Downside: 3,011.09 USDC over $2,667–$3,400 (cash-secured-put-like)</div>
+              <div class="stat-cells">
+                <div class="scell"><div class="sl">K_eq</div><div class="sv">$3,011</div><div class="ss">√(low × high)</div></div>
+                <div class="scell"><div class="sl">T_eq</div><div class="sv">6.99 d</div><div class="ss">equivalent term</div></div>
+                <div class="scell"><div class="sl">C_eq</div><div class="sv">$5.71</div><div class="ss">per ETH</div></div>
+                <div class="scell"><div class="sl">Fee floor</div><div class="sv" style="color:var(--green)">0.2274%</div><div class="ss">1.2 × C_eq / K_eq</div></div>
+              </div>
+            </div>
+            <div class="section-note">Both curves are shipped from one wallet to the <b>deployed AquaSwapVMRouter v1.0.2</b> on an Ethereum mainnet fork. On the demo chain, a taker bought 0.419 ETH from the upside curve for 1,500 USDC (an average of $3,578) and sold 0.4 ETH to the downside curve for 1,290 USDC (an average of $3,226). Shipping locks no capital, so a collateral check refuses any curve the wallet can't cover. These are options-like payoffs from swap curves, not option contracts.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">When does a covered-call curve pay?</div>
+            <span class="head-note">upside curve on held ETH · balanced profile</span>
+          </div>
+          <div class="card-body rp-scroll">
+            <table class="rp-table">
+              <thead><tr><th class="num">Size (ETH)</th><th class="num">Markup m</th><th class="num">Curve fee</th><th class="num">Net edge</th><th class="num">Hurdle</th><th>Verdict</th></tr></thead>
+              <tbody>
+                <tr><td class="num">1</td><td class="num">0.20</td><td class="num">0.2014%</td><td class="num">0.87</td><td class="num">5.00</td><td><span class="verdict reject">REJECT</span></td></tr>
+                <tr class="pick"><td class="num">5</td><td class="num">0.20</td><td class="num">0.2014%</td><td class="num">6.02</td><td class="num">5.00</td><td><span class="verdict approve">APPROVE</span></td></tr>
+                <tr><td class="num">10</td><td class="num">0.20</td><td class="num">0.2014%</td><td class="num">12.47</td><td class="num">9.42</td><td><span class="verdict approve">APPROVE</span></td></tr>
+                <tr><td class="num">1</td><td class="num">0.50</td><td class="num">0.2517%</td><td class="num">2.80</td><td class="num">5.00</td><td><span class="verdict reject">REJECT</span></td></tr>
+                <tr><td class="num">5</td><td class="num">0.50</td><td class="num">0.2517%</td><td class="num">15.69</td><td class="num">5.00</td><td><span class="verdict approve">APPROVE</span></td></tr>
+                <tr><td class="num">10</td><td class="num">0.50</td><td class="num">0.2517%</td><td class="num">31.80</td><td class="num">9.42</td><td><span class="verdict approve">APPROVE</span></td></tr>
+              </tbody>
+            </table>
+            <div class="section-note">Net edge = (fee × K_eq − C_eq) × size − ship gas ($0.42). The hurdle is the larger of the $5 minimum edge and 2 × the edge uncertainty, which grows with size. <b>The smallest curve that clears it is 5 ETH at a 20% markup.</b> Because the ETH is already held, the stress loss falls from $6,800.00 to $6,767.78, so there is no risk charge.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-note" style="margin-bottom:6px;">Source, fixtures and fork tests: <a href="https://github.com/ayush101098/nexxore-/tree/main/riskpilot" style="color:var(--cyan);text-decoration:none;">github.com/ayush101098/nexxore-/riskpilot</a>. Everything before the <code>pre-eth-global</code> tag is earlier Nexxore work.</div>
+    </section>
 
     <div class="page-footer">
       <div>Intelligence &amp; Risk Engine · paper-only</div>
