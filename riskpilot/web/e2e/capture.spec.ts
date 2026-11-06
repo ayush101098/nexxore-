@@ -9,7 +9,7 @@ const OUT = resolve(__dirname, "..", "..", "docs", "screenshots");
 
 async function open(page: Page) {
   await page.goto("/riskpilot");
-  await expect(page.locator("[data-testid=opp-row]")).toHaveCount(3);
+  await expect(page.locator("[data-testid=opp-row]")).toHaveCount(5);
   await expect(page.locator("#hook svg")).toBeVisible();
 }
 

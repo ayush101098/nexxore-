@@ -12,11 +12,11 @@ const pause = (page, s: number) => page.waitForTimeout(s * 1000);
 test("4-minute run-through", async ({ page }) => {
   const row = (label: string) => page.locator(`[data-testid=opp-row][data-label^="${label}"]`);
   await page.goto("/riskpilot");
-  await expect(page.locator("[data-testid=opp-row]")).toHaveCount(3);
+  await expect(page.locator("[data-testid=opp-row]")).toHaveCount(5);
   await expect(page.locator("#hook svg")).toBeVisible();
   await pause(page, 14); // status bar: chain, wallet, holdings, profile; three proposals
 
-  await row("Price gap").click(); await pause(page, 6);
+  await row("Price gap · v4 ETH/USDC").click(); await pause(page, 6);
   await page.locator("#decision svg .hit").nth(3).hover(); await pause(page, 14); // the hook's 1% fee and slippage eat the gap
 
   await row("Put-like").click(); await pause(page, 8);
@@ -42,8 +42,12 @@ test("4-minute run-through", async ({ page }) => {
   await page.getByTestId("ship-tx").first().getByRole("button", { name: "Verify" }).click(); await pause(page, 5);
   await page.getByTestId("fill-tx").first().getByRole("button", { name: "Verify" }).click(); await pause(page, 10);
 
-  const hook = page.locator("#hook svg .hit");
-  for (const i of [2, 6, 10, 14]) { await hook.nth(i).hover(); await pause(page, 3); } // fee rises with sigma
+  const chart = page.locator("#hook svg");
+  await chart.scrollIntoViewIfNeeded();
+  const box = (await chart.boundingBox())!;
+  for (const f of [0.12, 0.2, 0.35, 0.6, 0.9]) { // the fee rises with sigma, then decays in the calm tail
+    await page.mouse.move(box.x + box.width * f, box.y + box.height * 0.4); await pause(page, 3);
+  }
   await pause(page, 8);
 
   await page.locator("#h-hist").scrollIntoViewIfNeeded(); await pause(page, 6);
@@ -56,6 +60,6 @@ test("4-minute run-through", async ({ page }) => {
   await expect(page.locator("#opps")).toContainText("Source unavailable: engine", { timeout: 5_000 });
   await pause(page, 14);
   await startEngine(); // and it recovers on its own
-  await expect(page.locator("[data-testid=opp-row]")).toHaveCount(3, { timeout: 15_000 });
+  await expect(page.locator("[data-testid=opp-row]")).toHaveCount(5, { timeout: 15_000 });
   await pause(page, 16);
 });

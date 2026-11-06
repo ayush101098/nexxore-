@@ -233,7 +233,7 @@ const DEMO_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2
 const HEARTBEAT_MS = 2000; // "Source unavailable" within 5 s of a source stopping
 
 const S = { up: { engine: false, chain: false }, health: null, profiles: null, info: null, seed: null, sel: 0,
-  history: [], executions: [], chain: null, signer: null, log: [], at: {}, busy: false };
+  history: [], executions: [], chain: null, signer: null, log: [], at: {}, busy: false, decCache: {} };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const now = () => new Date().toISOString().replace(/\.\d+Z$/, "Z");
@@ -347,7 +347,7 @@ function renderOpps() {
   const rows = S.seed.items.map((it, i) => {
     const o = it.opportunity, d = it.decision, s = tip(`engine /evaluate · ${o.source}`, d.created_at);
     return `<tr class="pick ${i === S.sel ? "sel" : ""}" data-i="${i}" tabindex="0" aria-selected="${i === S.sel}" data-testid="opp-row" data-label="${esc(it.label)}" data-decision="${d.decision_id}">
-      <td ${s}>${esc(it.label.split(" · ")[0])}<span class="sub2">${esc(o.type)} · ${esc(o.pair)} · ${esc(o.source_venue)} → ${esc(o.target)}</span></td>
+      <td ${s}>${esc(it.label)}<span class="sub2">${esc(o.type)} · ${esc(o.pair)} · ${esc(o.source_venue)} → ${esc(o.target)}</span></td>
       <td class="num" ${s}>${usd(o.observed_price)}<span class="sub2">ref ${usd(o.reference_price)}</span></td>
       <td class="num" ${s}>${usd(o.size)}</td>
       <td class="num" ${s}>${usd(d.gross_edge)}</td>
@@ -427,7 +427,8 @@ function stressBars(d) {
 
 // ── decision panel ───────────────────────────────────────────────────────
 let timer = null;
-const adapterFor = (d) => (d.inputs.aqua ? "aqua" : d.inputs.request.opportunity.source_venue === "uniswap_v4_hooked" ? "v4" : null);
+const V4_VENUES = { uniswap_v4_hooked: "hooked v4 pool", uniswap_v4_static: "static 0.30% v4 pool" }; // tradable via the demo router
+const adapterFor = (d) => (d.inputs.aqua ? "aqua" : V4_VENUES[d.inputs.request.opportunity.source_venue] ? "v4" : null);
 function liveShipped(d) {
   const c = d.inputs.aqua && S.info ? (d.inputs.aqua.side === "call_like" ? S.info.upside : S.info.downside) : null;
   return c && S.shipped?.[c.strategy_hash];
@@ -522,13 +523,24 @@ async function approve(d, kind) {
   try {
     const signer = S.signer || (S.signer = await demoSigner());
     const ctx = { viem: V.viem, pub: V.pub, chainId: CHAIN_ID, A, signer };
-    const adapter = kind === "aqua" ? aquaAdapter({ ...ctx, info: S.info }) : v4Adapter({ ...ctx, hook: S.info?.hook });
+    const adapter = kind === "aqua" ? aquaAdapter({ ...ctx, info: S.info }) : v4Adapter({ ...ctx, hook: S.info?.hook, aquaCommitted });
     const execution = await execute(adapter, d, signer, V.pub, log);
     const position = await engine("/executions", { method: "POST", body: JSON.stringify(execution) });
     log(`verified · engine position ${position.position_id} ${position.status}`, "ok");
     S.busy = false;
     await refreshAll();
   } catch (e) { S.busy = false; log(String(e.shortMessage || e.message || e), "bad"); renderDecision(); }
+}
+
+// What live Aqua curves hold of a token: a v4 sale must leave it in the wallet.
+async function aquaCommitted(token) {
+  const rawAbi = V.viem.parseAbi(["function rawBalances(address,address,bytes32,address) view returns (uint248,uint8)"]);
+  let total = 0n;
+  for (const c of [S.info.upside, S.info.downside]) {
+    const [bal, n] = await V.pub.readContract({ address: A.AQUA, abi: rawAbi, functionName: "rawBalances", args: [S.info.maker, A.ROUTER, c.strategy_hash, token] });
+    if (n > 0) total += bal;
+  }
+  return total;
 }
 
 // ── API drawer: the exact /evaluate request and Decision for the selected item ──
@@ -635,7 +647,28 @@ async function renderHook() {
     const pts = logs.map((l) => ({ block: Number(l.blockNumber), pips: Number(l.args.fee), fee: Number(l.args.fee) / 1e4, sigma: Number(l.args.sigma) / 1e18 }));
     html += pts.length ? `<div class="sub"><span>Fee per block · ${pts.length} FeeUpdated events</span></div>${feeChart(pts, Number(h.static_fee) / 1e4)}` : `<p class="empty">No fee updates on chain yet.</p>`;
   } catch (e) { html += unavailable("FeeUpdated logs: " + (e.shortMessage || e.message)); }
+  html += await v4Swaps();
   el.innerHTML = html; bindTips(el);
+  el.querySelectorAll("[data-verify]").forEach((b) => b.addEventListener("click", () => verifyTx(b.dataset.verify)));
+}
+
+// Swaps this wallet signed through v4 pools: engine executions joined to their decisions, with the
+// fee each one actually paid, read from the PoolManager Swap event in its receipt.
+async function v4Swaps() {
+  const rows = [];
+  for (const e of S.executions) {
+    const d = S.decCache[e.decision_id] || (S.decCache[e.decision_id] = await engine(`/decisions/${e.decision_id}`).catch(() => null));
+    const venue = d?.inputs?.request?.opportunity?.source_venue;
+    if (!V4_VENUES[venue]) continue;
+    const info = await v4Adapter({ viem: V.viem, pub: V.pub, chainId: CHAIN_ID, A, signer: { address: S.info.maker }, hook: S.info.hook }).swapInfo(e.tx_hash).catch(() => null);
+    // The hook re-estimates on the first swap of each block, so the fee paid can differ from the
+    // fee quoted when the decision was made; min-out covered the difference.
+    const quoted = Math.round(Number(d.inputs.request.market.fee_rate) * 1e6);
+    const paid = info ? ` · fee paid <span data-testid="fee-paid">${feePips(info.fee)}</span>${info.fee !== quoted ? ` (quoted ${feePips(quoted)})` : ""}` : "";
+    rows.push(`<div class="line" data-testid="v4-swap-tx" data-tx="${e.tx_hash}" ${tip("chain PoolManager Swap event", e.verified_at)}>${esc(V4_VENUES[venue])} ${hashChip(e.tx_hash)}${paid}
+      <button class="btn ghost sm" type="button" data-verify="${e.tx_hash}">Verify</button> <span data-out="${e.tx_hash}"></span></div>`);
+  }
+  return rows.length ? `<div class="sub"><span>Your swaps</span></div>${rows.join("")}` : "";
 }
 
 // ── positions: Arc ───────────────────────────────────────────────────────
@@ -713,11 +746,14 @@ async function loadEngine() {
   [S.history, S.executions] = await Promise.all([engine("/decisions?limit=12"), engine("/executions")]);
 }
 
+// Re-seeding keeps the opportunity the user had selected; a first load selects the first APPROVE.
 async function seed() {
+  const keep = S.seed?.items[S.sel]?.label;
   try { S.seed = await engine("/demo/seed", { method: "POST" }); S.seedErr = null; }
   catch (e) { S.seed = null; S.seedErr = "engine"; }
+  const kept = keep ? S.seed?.items.findIndex((i) => i.label === keep) : -1;
   const approved = S.seed?.items.findIndex((i) => i.decision.verdict === "APPROVE");
-  if (approved >= 0) S.sel = approved;
+  if (kept >= 0) S.sel = kept; else if (approved >= 0) S.sel = approved;
 }
 
 async function refreshAll() {

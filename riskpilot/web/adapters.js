@@ -127,18 +127,25 @@ export function aquaAdapter({ viem, pub, chainId, info, A, signer }) {
   return adapter;
 }
 
-// ── Uniswap v4 hooked pool (PRD 4) ────────────────────────────────────────
-export function v4Adapter({ viem, pub, chainId, hook, A, signer }) {
+// ── Uniswap v4 (PRD 4): the hooked pool, and the static 0.30% pool for comparison ─────────
+export function v4Adapter({ viem, pub, chainId, hook, A, signer, aquaCommitted = async () => 0n }) {
   const abi = viem.parseAbi([
     "function allowance(address,address) view returns (uint256)",
+    "function balanceOf(address) view returns (uint256)",
     "function approve(address,uint256) returns (bool)",
     "function swap((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, (bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) params, (bool takeClaims, bool settleUsingBurn) testSettings, bytes hookData) payable returns (int256 delta)",
+    "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)",
   ]);
   const MIN_SQRT = 4295128739n + 1n, MAX_SQRT = 1461446703485210103287273052203988822378723970342n - 1n;
-  const key = { currency0: A.USDC, currency1: A.WETH, fee: 0x800000, tickSpacing: 60, hooks: hook?.hook };
+  // USDC/WETH pools the demo's PoolSwapTest router can trade (currency0 = USDC, currency1 = WETH).
+  const KEYS = hook ? {
+    uniswap_v4_hooked: { key: { currency0: A.USDC, currency1: A.WETH, fee: 0x800000, tickSpacing: 60, hooks: hook.hook }, id: hook.hooked_pool_id },
+    uniswap_v4_static: { key: { currency0: A.USDC, currency1: A.WETH, fee: 3000, tickSpacing: 20, hooks: "0x0000000000000000000000000000000000000000" }, id: hook.flat_pool_id },
+  } : {};
   let current = null;
+  const pool = (d) => KEYS[d.inputs.request.opportunity.source_venue];
 
-  // The decision's trade: sell (or buy) q ETH through the hooked pool; min-out from its tolerance.
+  // The decision's trade: sell (or buy) q ETH through the pool; min-out from its quote, fee and tolerance.
   function trade(d) {
     const m = d.inputs.request.market, tol = Number(d.inputs.request.tolerance), fee = Number(m.fee_rate);
     const ethDelta = Number(d.inputs.proposed_position.params.trade_eth); // + buy ETH, - sell ETH
@@ -149,20 +156,27 @@ export function v4Adapter({ viem, pub, chainId, hook, A, signer }) {
     return { sell, tokenIn: sell ? A.WETH : A.USDC, amountIn, minOut,
       params: { zeroForOne: !sell, amountSpecified: -amountIn, sqrtPriceLimitX96: sell ? MAX_SQRT : MIN_SQRT } };
   }
-  const swapRequest = (t) => ({ address: hook.swap_router, abi, functionName: "swap",
-    args: [key, t.params, { takeClaims: false, settleUsingBurn: false }, "0x"] });
+  const swapRequest = (d, t) => ({ address: hook.swap_router, abi, functionName: "swap",
+    args: [pool(d).key, t.params, { takeClaims: false, settleUsingBurn: false }, "0x"] });
 
   return {
     name: "v4",
     async validate(d) {
       requireLiveApprove(d);
-      if (!hook) throw new AdapterRefused("no hooked pool deployed (make hook-pool)");
-      if (d.inputs.request.opportunity.source_venue !== "uniswap_v4_hooked") throw new AdapterRefused("not a hooked v4 pool decision");
+      if (!hook) throw new AdapterRefused("no v4 pools deployed (make hook-pool)");
+      if (!pool(d)) throw new AdapterRefused(`no adapter for ${d.inputs.request.opportunity.source_venue}`);
+      const t = trade(d);
+      // Cross-primitive collateral: a WETH sale must leave what live Aqua curves have promised.
+      const held = await pub.readContract({ address: t.tokenIn, abi, functionName: "balanceOf", args: [signer.address] });
+      const promised = await aquaCommitted(t.tokenIn);
+      if (held < t.amountIn + promised) {
+        throw new AdapterRefused(`collateral check refused: selling ${t.amountIn} would leave less than the ${promised} live Aqua curves hold`);
+      }
       current = d;
     },
     async simulate(d) {
       const t = trade(d);
-      const { result } = await pub.simulateContract({ account: signer.address, ...swapRequest(t) });
+      const { result } = await pub.simulateContract({ account: signer.address, ...swapRequest(d, t) });
       const delta = BigInt.asIntN(256, result);
       const amount0 = BigInt.asIntN(128, delta >> 128n), amount1 = BigInt.asIntN(128, delta);
       const out = t.sell ? amount0 : amount1; // positive = received
@@ -174,13 +188,20 @@ export function v4Adapter({ viem, pub, chainId, hook, A, signer }) {
       const allowance = await pub.readContract({ address: t.tokenIn, abi, functionName: "allowance", args: [signer.address, hook.swap_router] });
       if (allowance < t.amountIn) txs.push({ label: "approve for the v4 router", prep: true,
         request: { address: t.tokenIn, abi, functionName: "approve", args: [hook.swap_router, t.amountIn] } });
-      txs.push({ label: "swap through the hooked pool", prep: false, request: swapRequest(t) });
+      txs.push({ label: "swap through the v4 pool", prep: false, request: swapRequest(d, t) });
       return txs;
     },
     async verify(hash) {
       const rc = await pub.getTransactionReceipt({ hash });
-      if (rc.status !== "success") throw new Error("swap receipt did not verify");
+      const swapped = viem.parseEventLogs({ abi, eventName: "Swap", logs: rc.logs }).some((l) => l.args.id === pool(current).id);
+      if (rc.status !== "success" || !swapped) throw new Error("swap receipt did not verify");
       return { decision_id: current.decision_id, chain_id: chainId, tx_hash: hash, status: "confirmed", verified_at: nowIso(), settlement_tx: null };
+    },
+    /** The fee and amounts a v4 swap actually paid, from the PoolManager Swap event in its receipt. */
+    async swapInfo(hash) {
+      const rc = await pub.getTransactionReceipt({ hash });
+      const [log] = viem.parseEventLogs({ abi, eventName: "Swap", logs: rc.logs });
+      return log ? { status: rc.status, block: rc.blockNumber, fee: Number(log.args.fee), amount0: log.args.amount0, amount1: log.args.amount1, pool: log.args.id } : null;
     },
   };
 }
