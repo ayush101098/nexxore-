@@ -1,0 +1,71 @@
+{
+  "description": "Volatility estimate is 45 s old, past the 30 s staleness limit (rule 1).",
+  "request": {
+    "opportunity": {
+      "opportunity_id": "opp_07",
+      "type": "price_gap",
+      "pair": "ETH/USDC",
+      "source_venue": "uniswap_v4_hooked",
+      "target": "v4_swap",
+      "observed_price": "3385.00",
+      "reference_price": "3400.00",
+      "size": "10000.00",
+      "observed_at": "2026-11-06T09:29:58Z",
+      "source": "recorded:uniswap_v4_hooked"
+    },
+    "size": "10000.00",
+    "profile": "balanced",
+    "as_of": "2026-11-06T09:30:00Z",
+    "market": {
+      "quote": {
+        "price": "3386.80",
+        "mid": "3386.00",
+        "quoted_at": "2026-11-06T09:29:59Z",
+        "expires_at": "2026-11-06T09:30:20Z",
+        "latency_seconds": "2",
+        "source": "recorded:uniswap_trading_api"
+      },
+      "liquidity": "250000.00",
+      "gas": {
+        "units": "180000",
+        "price_gwei": "1.5",
+        "observed_at": "2026-11-06T09:29:59Z",
+        "source": "recorded:rpc_gas_price"
+      },
+      "fee_rate": "0.0005",
+      "volatility": {
+        "annualized": "0.65",
+        "observed_at": "2026-11-06T09:29:15Z",
+        "source": "recorded:hook_ewma"
+      },
+      "hedge": {
+        "ratio": "0.995",
+        "cost": "3.00"
+      }
+    },
+    "book": [
+      {
+        "position_id": "pos_00",
+        "decision_id": "dec_00",
+        "primitive": "v4_swap",
+        "params": {},
+        "collateral": "68.00",
+        "entry": {
+          "price": "3400.00",
+          "at": "2026-11-06T08:00:00Z"
+        },
+        "greeks": {
+          "delta": "0.02",
+          "gamma": "0",
+          "vega": "0",
+          "theta": "0"
+        },
+        "status": "open"
+      }
+    ]
+  },
+  "expected": {
+    "verdict": "REQUIRE_REVIEW",
+    "reason": "Review: volatility input is 45 s old (limit 30 s)"
+  }
+}
