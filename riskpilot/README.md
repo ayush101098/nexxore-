@@ -58,14 +58,11 @@ Position.
 
 ## Contracts and lines
 
-TODO: deployed addresses and links to the key lines for each sponsor
-integration.
-
 | Component | Chain | Address | Key lines |
 |---|---|---|---|
-| VolatilityFeeHook | TODO (Uniswap v4 testnet) | TODO | TODO |
-| Aqua Options curves | TODO (Anvil fork; confirm chain in 1inch docs) | AquaSwapVMRouter v1.0.2 | TODO |
-| RiskPilotEscrow | Arc testnet | TODO | TODO |
+| VolatilityFeeHook | Demo chain (mainnet fork @ 26,354,292); Unichain Sepolia pending a funded key | demo: `0x3be8…1080`; Sepolia (mined, not deployed): `0xf987…9080` | `contracts/hook/src/VolatilityFeeHook.sol`: `beforeSwap` 114–126, fee rule 101–105, estimator 128–155 |
+| Aqua Options curves | Demo chain, deployed AquaSwapVMRouter v1.0.2 `0x1111…0de` | strategy hashes in `contracts/aqua/demo/curves.json` | `contracts/aqua/src/AquaCurves.sol`, `AquaCollateral.sol` |
+| RiskPilotEscrow | Arc testnet (5042002), pending a funded key | dry run: `0xa4dd…1AdC` | `contracts/arc/src/RiskPilotEscrow.sol` |
 
 ## Setup
 
@@ -80,7 +77,15 @@ cd engine                     # quant engine, see engine/README.md
 ../.venv/bin/uvicorn main:app --reload
 ```
 
-TODO: contracts and web setup.
+```bash
+export AQUA_FORK_RPC_URL=<Ethereum mainnet archive RPC>
+cd contracts/aqua && make demo-chain      # demo chain on :8545 (Anvil fork, chain 31337)
+cd contracts/hook && make hook-pool       # VolatilityFeeHook + live pools on the demo chain
+cd engine && DEMO_RPC_URL=http://127.0.0.1:8545 ../.venv/bin/uvicorn main:app
+open http://localhost:8000/riskpilot      # the demo page (also served at nexxore.xyz/riskpilot)
+cd contracts/hook && make test hook-demo  # 6 tests; fee per block vs a static 0.30% pool
+cd contracts/arc && make test             # 7 tests; make deploy-arc-testnet once the key is funded
+```
 
 ## Demo
 
