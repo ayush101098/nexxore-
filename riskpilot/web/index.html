@@ -205,6 +205,7 @@ async function loadViem() {
   const events = {
     shipped: viem.parseAbiItem("event Shipped(address maker, address app, bytes32 strategyHash, bytes strategy)"),
     swapped: viem.parseAbiItem("event Swapped(bytes32 orderHash, address maker, address taker, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut)"),
+    feeUpdated: viem.parseAbiItem("event FeeUpdated(bytes32 indexed poolId, uint256 sigma, uint24 fee)"),
   };
   V = { viem, chain, pub, abi, events, accounts };
 }
@@ -511,9 +512,50 @@ async function renderHistory() {
   }));
 }
 
+// ── positions: v4 hook ───────────────────────────────────────────────────
+// Fee per block from the hook's FeeUpdated events, against the static 0.30% pool.
+function feeChart(points, flatPct) {
+  const W = 420, H = 170, L = 44, R = 10, top = 10, bot = 24;
+  const fees = points.map((p) => p.fee);
+  const hi = Math.max(1, Math.ceil(Math.max(...fees, flatPct) * 4) / 4);
+  const n = points.length, x = (i) => L + (n === 1 ? 0 : (i / (n - 1)) * (W - L - R)), y = (v) => top + (1 - v / hi) * (H - top - bot);
+  let g = "";
+  for (let t = 0; t <= hi + 1e-9; t += hi / 4) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 6}" y="${y(t) + 3}" text-anchor="end">${t.toFixed(2)}%</text>`;
+  g += `<line class="ref" x1="${L}" x2="${W - R}" y1="${y(flatPct)}" y2="${y(flatPct)}"/><text x="${W - R}" y="${y(flatPct) - 4}" text-anchor="end" style="fill:var(--text)">static pool ${flatPct.toFixed(2)}%</text>`;
+  const d = points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.fee).toFixed(1)}`).join(" ");
+  g += `<path d="${d}" fill="none" stroke="var(--c-edge)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  points.forEach((p, i) => {
+    g += `<circle cx="${x(i)}" cy="${y(p.fee)}" r="4" fill="var(--c-edge)" stroke="var(--surface)" stroke-width="2"/>`;
+    g += `<rect class="hit" x="${x(i) - 8}" y="${top}" width="16" height="${H - top - bot}" data-tip="${esc(`block ${p.block}<br>fee ${p.fee.toFixed(3)}% · σ_ann ${(p.sigma * 100).toFixed(1)}%`)}"/>`;
+  });
+  g += `<text x="${L}" y="${H - 6}">block ${points[0].block}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${points[n - 1].block}</text>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Hook fee per block against the static 0.30% pool">${g}</svg>
+    <div class="legend"><span><i style="background:var(--c-edge)"></i>hook fee (σ in tooltip)</span><span><i class="line"></i>static 0.30% pool</span></div>`;
+}
+
+async function renderHook() {
+  const el = $("hook"), h = S.info?.hook;
+  if (!h) { el.innerHTML = unavailable("v4 hook (run make hook-pool in contracts/hook)"); return; }
+  const live = h.live || {};
+  let html = live.error ? unavailable("demo chain: " + live.error) : `<div class="cells">
+      <div class="cell"><div class="k">Hook fee now</div><div class="v" ${src("hook.getFee · " + RPC, S.infoAt)}>${num(live.fee_pips / 1e4, 3)}%</div></div>
+      <div class="cell"><div class="k">σ_ann</div><div class="v" ${src("hook.getVolatility · " + RPC, S.infoAt)}>${num(live.sigma * 100, 1)}%</div></div>
+      <div class="cell"><div class="k">Hooked pool</div><div class="v" ${src("StateView.getSlot0 hooked pool · " + RPC, S.infoAt)}>${usd(live.hooked_price)}</div></div>
+      <div class="cell"><div class="k">Gap vs main pool</div><div class="v" ${src("StateView.getSlot0 main ETH/USDC pool · " + RPC, S.infoAt)}>${num(live.gap_bps, 1)} bps</div></div></div>`;
+  html += `<div class="dim hash" style="margin-top:6px">hook ${short(h.hook)} · pool ${short(h.hooked_pool_id)}</div>`;
+  if (!V || !S.chain) { el.innerHTML = html + unavailable("demo chain " + RPC); return; }
+  try {
+    const logs = await V.pub.getLogs({ address: h.hook, event: V.events.feeUpdated, args: { poolId: h.hooked_pool_id }, fromBlock: BigInt(S.info.fork_block) + 1n });
+    const points = logs.map((l) => ({ block: Number(l.blockNumber), fee: Number(l.args.fee) / 1e4, sigma: Number(l.args.sigma) / 1e18 }));
+    html += points.length ? `<div class="sub">Fee per block · ${points.length} updates</div>${feeChart(points, Number(h.static_fee) / 1e4)}`
+      : `<div class="dim" style="font-size:0.62rem;margin-top:8px">No fee updates on chain yet.</div>`;
+  } catch (e) { html += unavailable("FeeUpdated logs: " + (e.shortMessage || e.message)); }
+  el.innerHTML = html;
+  bindTips(el);
+}
+
 // ── not yet deployed ─────────────────────────────────────────────────────
 function renderPending() {
-  $("hook").innerHTML = unavailable("v4 hook (not deployed yet)") + `<div class="dim" style="font-size:0.62rem;margin-top:6px">The dynamic fee and σ_EWMA series appear here once the hook is deployed and its swaps are on the chain.</div>`;
   $("arc").innerHTML = unavailable("Arc escrow (not deployed yet)") + `<div class="dim" style="font-size:0.62rem;margin-top:6px">Fund and settle transactions for each approved decision appear here once the escrow is on Arc testnet.</div>`;
 }
 
@@ -543,6 +585,7 @@ async function main() {
   if (approved >= 0) { S.sel = approved; renderOpps(); renderDecision(); }
   renderStatus(errs);
   await renderAqua();
+  await renderHook();
   renderDecision();
 }
 main();
