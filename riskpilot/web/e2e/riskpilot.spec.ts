@@ -5,11 +5,34 @@ import { curves, engineJson, fixed, hookDeployment, rpc, startEngine, stopEngine
 const row = (page: Page, label: string) => page.locator(`[data-testid=opp-row][data-label^="${label}"]`);
 const money = (text: string) => Number(text.replace(/[$,\s]/g, "").replace("−", "-"));
 
+// A failed outage test must not take the rest of the suite down with it.
+test.afterEach(async () => {
+  const up = await fetch("http://localhost:8000/v1/health").then((r) => r.ok, () => false);
+  if (!up) await startEngine();
+});
+
 const ROWS = 5; // three live v4 gaps + the two Aqua curves
 async function open(page: Page) {
   await page.goto("/riskpilot");
+  // First connect of the wallet: choose the profile once (the engine keeps it per wallet).
+  const card = page.locator("[data-testid=profile-card][data-profile=moderate]");
+  await Promise.race([card.waitFor({ timeout: 15_000 }), page.locator("[data-testid=opp-row]").first().waitFor({ timeout: 15_000 })]);
+  if (await card.isVisible()) await card.click();
   await expect(page.locator("[data-testid=opp-row]")).toHaveCount(ROWS);
 }
+
+test("0. fresh wallet: three profile cards, none preselected; Moderate gives budget $250 (cap)", async ({ page }) => {
+  await page.goto("/riskpilot");
+  const cards = page.getByTestId("profile-card");
+  await expect(cards).toHaveCount(3);
+  await expect(cards).toHaveText([/Conservative/, /Moderate/, /Aggressive/]);
+  await expect(page.locator("[data-testid=profile-card][aria-pressed=true]")).toHaveCount(0);
+  await expect(page.locator("[data-testid=opp-row]")).toHaveCount(0); // no decisions before a profile
+  await page.locator("[data-testid=profile-card][data-profile=moderate]").click();
+  await expect(page.getByTestId("profile-status")).toHaveText("Moderate · budget $250 (cap)");
+  await expect(page.getByTestId("profile-status")).toHaveAttribute("data-tip", /min\(2\.5% x wallet value, \$250\)/);
+  await expect(page.locator("[data-testid=opp-row]")).toHaveCount(ROWS);
+});
 
 async function select(page: Page, label: string) {
   await row(page, label).click();
@@ -50,13 +73,13 @@ test("3. put-like curve: stress over budget, Approve disabled", async ({ page })
   expect(await page.getByTestId("stress-after").textContent()).toBe(usd(d.stress_loss_after));
   expect(after).toBeGreaterThan(Number(d.budget));
   await expect(page.getByTestId("approve")).toBeDisabled();
-  await expect(page.getByTestId("approve")).toHaveText("Rejected: stress over budget");
+  await expect(page.getByTestId("approve")).toHaveText("Rejected: adds $629.93 worst-case loss, limit $250");
   test.info().annotations.push({ type: "bug-list", description:
     `Spec expects stress after ≈ $971; engine reports ${usd(d.stress_loss_after)} (+${usd(Number(d.stress_loss_after) - Number(d.stress_loss_before))} from this trade). ` +
     "The $971 figure is from the $3,400 fixture; the demo is now on the fork's $2,218.55." });
 });
 
-test("4. call-like curve: Approve enabled, countdown runs to 0 and disables", async ({ page }) => {
+test("4. call-like curve: Approve enabled, counts down, requotes in place keeping the selection", async ({ page }) => {
   await open(page);
   await select(page, "Call-like");
   const btn = page.getByTestId("approve");
@@ -65,47 +88,48 @@ test("4. call-like curve: Approve enabled, countdown runs to 0 and disables", as
   const first = await secs();
   expect(first).toBeGreaterThan(0);
   expect(first).toBeLessThanOrEqual(30);
-  await page.waitForTimeout(2_100);
-  expect(await secs()).toBeLessThan(first);
-  await expect(btn).toBeDisabled({ timeout: 35_000 });
-  await expect(btn).toHaveText(/Expired/);
+  // It counts down (a requote may land meanwhile and restart it, so poll for a lower value).
+  await expect.poll(secs, { timeout: 5_000 }).toBeLessThan(first);
+  const later = await secs();
+  // Requote in place: before it runs out the engine re-issues the decision; the selection stays.
+  await expect.poll(secs, { timeout: 20_000 }).toBeGreaterThan(later);
+  await expect(page.getByTestId("decision")).toHaveAttribute("data-key", /aqua_premium:.*call_like/);
+  await expect(btn).toBeEnabled();
 });
 
-test("4b. swap through the hooked v4 pool: tx appears, Verify succeeds, fee paid = the hook's fee", async ({ page }) => {
+test("4b. swap through the hooked v4 pool: tx appears, receipt verified, fee paid = the hook's fee", async ({ page }) => {
   const snap = await rpc<string>("evm_snapshot"); // this sale would make the Aqua curve unfundable; undo it
   try {
     await open(page);
     const d = await select(page, "Price gap · hooked");
     await page.getByTestId("approve").click();
-    await expect(page.locator("#log")).toContainText("verified · engine position", { timeout: 60_000 });
+    await expect(page.locator("#log")).toContainText("verified ·", { timeout: 60_000 });
+    await expect(page.getByTestId("confirmed")).toHaveText("Confirmed · view tx");
     const swap = page.getByTestId("v4-swap-tx").first();
     await expect(swap).toBeVisible({ timeout: 20_000 });
     // The fee actually paid is the hook's fee for the swap's block (it re-estimates per block).
     const h = hookDeployment();
     const fee = Number(BigInt(await rpc<string>("eth_call", [{ to: h.hook, data: "0xe5f3d3a5" + h.hooked_pool_id.slice(2) }, "latest"])));
-    await expect(swap.getByTestId("fee-paid")).toContainText(`(${fee.toLocaleString("en-US")} pips)`);
+    await expect(swap.getByTestId("fee-paid")).toHaveAttribute("data-pips", String(fee));
+    await expect(swap).toContainText(/Quoted \d\.\d\d% · paid \d\.\d\d%/);
     test.info().annotations.push({ type: "fee", description: `quoted ${Math.round(Number(d.inputs.request.market.fee_rate) * 1e6)} pips, paid ${fee} pips` });
-    await swap.getByRole("button", { name: "Verify" }).click();
-    await expect(swap.getByTestId("verify-result")).toContainText("success");
+    await expect(swap.getByTestId("verify-result")).toContainText("success"); // read from the receipt, no button
   } finally {
     await rpc("evm_revert", [snap]);
   }
 });
 
-test("5. ship and fill: tx hashes appear and Verify reads success receipts", async ({ page }) => {
+test("5. one click ships the curve; ship and fill receipts verified automatically", async ({ page }) => {
   await open(page);
   await select(page, "Call-like");
   await page.getByTestId("approve").click();
-  await expect(page.locator("#log")).toContainText("verified · engine position", { timeout: 60_000 });
+  await expect(page.locator("#log")).toContainText("verified ·", { timeout: 60_000 });
   const ship = page.getByTestId("ship-tx").first();
   await expect(ship).toBeVisible();
   takerFill("upside");
   const fill = page.getByTestId("fill-tx").first();
   await expect(fill).toBeVisible({ timeout: 20_000 });
-  for (const tx of [ship, fill]) {
-    await tx.getByRole("button", { name: "Verify" }).click();
-    await expect(tx.getByTestId("verify-result")).toContainText("success");
-  }
+  for (const tx of [ship, fill]) await expect(tx.getByTestId("verify-result")).toContainText("success");
 });
 
 test("5c. after the curve ships, the v4 sale is refused by the cross-primitive collateral check", async ({ page }) => {
@@ -124,10 +148,10 @@ test("6. replay a REJECT: same verdict, same numbers", async ({ page }) => {
   await expect(r.getByTestId("replay-result")).toHaveText(`identical · ${d.verdict} · net ${usd(d.net_edge)}`);
 });
 
-test("7. stop the engine: every panel shows Source unavailable within 5 s", async ({ page }) => {
+test("7. kill the engine: every panel shows Source unavailable within 5 s", async ({ page }) => {
   await open(page);
-  await stopEngine();
   const t0 = Date.now();
+  await stopEngine("SIGKILL"); // a real kill, not a mocked fetch
   for (const id of ["opps", "decision", "aqua", "hook", "arc", "history"]) {
     await expect(page.locator(`#${id}`)).toContainText("Source unavailable: engine", { timeout: 5_000 - (Date.now() - t0) });
   }
@@ -135,8 +159,11 @@ test("7. stop the engine: every panel shows Source unavailable within 5 s", asyn
     expect(await page.locator(`#${id}`).textContent(), `no numbers left in #${id}`).not.toMatch(/\$\d/);
   }
   // Engine-sourced status cells drop their values too (WETH/USDC stay: live chain reads).
-  await expect(page.locator("#status")).not.toContainText("Balanced");
+  await expect(page.locator("#status")).not.toContainText("Moderate");
+  test.info().annotations.push({ type: "latency", description: `engine down to Source unavailable on every panel: ${Date.now() - t0} ms` });
   await startEngine();
+  // Recovery: the stream reconnects and the page re-renders without a reload.
+  await expect(page.locator("[data-testid=opp-row]")).toHaveCount(ROWS, { timeout: 15_000 });
 });
 
 test("8. number audit: five values match the engine and the chain exactly", async ({ page }) => {
@@ -155,4 +182,52 @@ test("8. number audit: five values match the engine and the chain exactly", asyn
   const h = hookDeployment();
   const fee = await rpc<string>("eth_call", [{ to: h.hook, data: "0xe5f3d3a5" + h.hooked_pool_id.slice(2) }, "latest"]);
   await expect(page.getByTestId("hook-fee")).toContainText(`${Number(BigInt(fee)).toLocaleString("en-US")} pips`); // chain getFee
+});
+
+test("9. the only trade control is Approve and sign", async ({ page }) => {
+  await open(page);
+  for (const label of ["Price gap · hooked", "Put-like", "Call-like"]) {
+    await select(page, label);
+    const names = await page.locator("main button").evaluateAll((bs) => bs.map((b) => b.textContent?.trim() ?? ""));
+    const trade = names.filter((n) => !/^(Copy|Replay|View API|Change|\?)$/.test(n));
+    expect(trade, label).toHaveLength(1);
+    expect(trade[0]).toMatch(/^(Approve and sign|Rejected:|Already shipped|Requoting)/);
+    for (const gone of ["Re-evaluate", "Ship", "Verify", "Fund"]) expect(names.some((n) => n.startsWith(gone)), gone).toBe(false);
+  }
+});
+
+test("10. a new block requotes in place: new decision id, same selection", async ({ page }) => {
+  await open(page);
+  await select(page, "Price gap · static");
+  const dec = page.getByTestId("decision");
+  const [id, key] = [await dec.getAttribute("data-decision"), await dec.getAttribute("data-key")];
+  const t = Date.now();
+  await rpc("evm_mine");
+  await expect(dec).not.toHaveAttribute("data-decision", id!, { timeout: 5_000 });
+  test.info().annotations.push({ type: "latency", description: `block to verdict on screen ${Date.now() - t} ms (incl. RPC)` });
+  await expect(dec).toHaveAttribute("data-key", key!);
+});
+
+test("11. Conservative: budget $150 (cap); change re-evaluates everything", async ({ page }) => {
+  await open(page);
+  await page.getByTestId("profile-change").click();
+  await page.locator("[data-testid=profile-card][data-profile=conservative]").click();
+  await expect(page.getByTestId("profile-status")).toHaveText("Conservative · budget $150 (cap)");
+  const d = await select(page, "Put-like");
+  await expect(page.getByTestId("budget")).toHaveText("$150.00");
+  expect(d.inputs.profile.name).toBe("conservative");
+  // Conservative's 50% Aqua fee margin lifts the premium floor above the curve's fee (rule 3b),
+  // so the curve is rejected before the stress rule is reached.
+  expect(d.reason).toMatch(/^Rejected: curve fee 0\.227% below premium floor/);
+  await expect(page.getByTestId("approve")).toHaveText(d.reason.split(" (")[0]);
+  await page.getByTestId("profile-change").click();
+  await page.locator("[data-testid=profile-card][data-profile=moderate]").click();
+  await expect(page.getByTestId("profile-status")).toHaveText("Moderate · budget $250 (cap)");
+});
+
+test("12. demo pools are tagged as seeded on the fork", async ({ page }) => {
+  await open(page);
+  await expect(row(page, "Price gap · hooked").getByTestId("demo-tag")).toHaveText("Demo pool · seeded on fork");
+  await expect(row(page, "Price gap · static").getByTestId("demo-tag")).toHaveText("Demo pool · seeded on fork");
+  await expect(row(page, "Price gap · v4 ETH/USDC").getByTestId("demo-tag")).toHaveCount(0);
 });

@@ -40,7 +40,7 @@ async function waitFor(check: () => Promise<boolean>, what: string, ms = 30_000)
 export async function startEngine(freshDb = false) {
   if (freshDb) rmSync(DB, { force: true });
   const py = process.env.RISKPILOT_PYTHON ?? join(ROOT, ".venv", "bin", "python");
-  const child = spawn(py, ["-m", "uvicorn", "main:app", "--port", "8000"], {
+  const child = spawn(py, ["-m", "uvicorn", "main:app", "--port", "8000", "--timeout-graceful-shutdown", "1"], {
     cwd: join(ROOT, "engine"), detached: true, stdio: "ignore",
     env: { ...process.env, RISKPILOT_DB: DB, DEMO_RPC_URL: RPC },
   });
@@ -49,9 +49,10 @@ export async function startEngine(freshDb = false) {
   await waitFor(async () => (await fetch(ENGINE_URL + "/health")).ok, "the engine");
 }
 
-export async function stopEngine() {
+/** signal "SIGKILL" is the outage test's hard kill: no shutdown, connections just drop. */
+export async function stopEngine(signal: NodeJS.Signals = "SIGTERM") {
   const { pid } = readState();
-  if (pid) { try { process.kill(-pid, "SIGTERM"); } catch { try { process.kill(pid, "SIGTERM"); } catch { /* gone */ } } }
+  if (pid) { try { process.kill(-pid, signal); } catch { try { process.kill(pid, signal); } catch { /* gone */ } } }
   writeState({ ...readState(), pid: undefined });
   await waitFor(async () => !(await fetch(ENGINE_URL + "/health").then(() => true, () => false)), "the engine to stop", 10_000);
 }

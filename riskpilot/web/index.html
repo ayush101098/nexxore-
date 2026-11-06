@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RiskPilot</title>
-<meta name="description" content="Risk and execution layer for DeFi agents">
+<title>RiskPilot: pricing liquidity risk</title>
+<meta name="description" content="Risk-aware execution engine for programmable liquidity">
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='16' fill='%23111823'/%3E%3Cpath d='M26 70V30h28a14 14 0 010 28H38m12 0l16 12' fill='none' stroke='%23E8EDF4' stroke-width='8'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -44,7 +44,8 @@ button { font-family:var(--sans); }
 .st { flex:1 1 0; min-width:0; padding:var(--s1) var(--s2); border-right:1px solid var(--border); }
 .st:last-child { border-right:none; }
 .st.wide { flex:2.2 1 0; }
-.st.prof { flex:1.3 1 0; }
+.st.prof { flex:1.9 1 0; }
+.st.prof .v { white-space:normal; overflow:visible; }
 .k { font-size:11px; color:var(--text-3); white-space:nowrap; }
 .v { font-size:13px; font-weight:600; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .v .unavail, .st.wide .v { white-space:normal; }
@@ -153,6 +154,26 @@ details table { margin-top:var(--s1); font-size:11px; }
 .drawer pre { font-family:var(--mono); font-size:11px; color:var(--text-2); background:var(--bg); border:1px solid var(--border); border-radius:var(--r); padding:var(--s1); overflow:auto; max-height:38vh; white-space:pre; }
 .endpoint { font-family:var(--mono); font-size:12px; color:var(--text); margin-bottom:var(--s1); }
 
+.tag { display:inline-block; margin-left:var(--s1); padding:0 6px; border:1px solid var(--border); border-radius:var(--r); font-size:10px; color:var(--text-2); font-weight:500; white-space:nowrap; vertical-align:1px; }
+.overlay { position:fixed; inset:0; background:rgba(5,8,12,0.78); display:flex; align-items:center; justify-content:center; z-index:40; padding:var(--s2); }
+.overlay[hidden] { display:none; }
+.picker { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:var(--s3); max-width:880px; width:100%; }
+.picker h2 { font-size:16px; font-weight:600; margin-bottom:4px; }
+.picker > p { color:var(--text-2); margin-bottom:var(--s2); }
+.cards { display:grid; grid-template-columns:repeat(3, 1fr); gap:var(--s2); }
+.card { text-align:left; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r); padding:var(--s2); color:var(--text); cursor:pointer; font-size:12px; }
+.card:hover, .card:focus-visible { border-color:var(--accent); }
+.card h3 { font-size:14px; font-weight:600; margin-bottom:var(--s1); }
+.card dl { display:grid; grid-template-columns:auto auto; gap:2px var(--s1); color:var(--text-2); }
+.card dd { text-align:right; color:var(--text); font-variant-numeric:tabular-nums; }
+.card .blurb { color:var(--text-2); margin-bottom:var(--s1); }
+.picker .err { color:var(--reject); margin-top:var(--s1); min-height:1em; }
+.debug { position:fixed; right:var(--s2); bottom:var(--s2); width:420px; max-height:60vh; overflow:auto; background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:var(--s2); font-family:var(--mono); font-size:11px; color:var(--text-2); z-index:30; white-space:pre-wrap; }
+.debug[hidden] { display:none; }
+.settle { display:inline-block; padding:0 6px; border-radius:var(--r); border:1px solid var(--border); font-size:11px; }
+.settle.Settled { color:var(--approve); border-color:var(--approve); }
+.settle.Failed { color:var(--reject); border-color:var(--reject); }
+@media (max-width:760px) { .cards { grid-template-columns:1fr; } }
 @media (max-width:1100px) {
   .span-7, .span-5, .span-4 { grid-column:span 12; }
   .top { flex-direction:column; } .status { flex-wrap:wrap; } .st { flex:1 1 45%; }
@@ -162,7 +183,7 @@ details table { margin-top:var(--s1); font-size:11px; }
 <body>
 <div class="page">
   <header class="top">
-    <div class="brand"><h1>RiskPilot</h1><p>Risk and execution layer for DeFi agents</p></div>
+    <div class="brand"><h1>RiskPilot: pricing liquidity risk</h1><p>Risk-aware execution engine for programmable liquidity</p></div>
     <div class="status" id="status" aria-label="Status"></div>
   </header>
   <p class="tagline">Agents propose. RiskPilot prices, stress-tests and gates. You sign.</p>
@@ -211,9 +232,18 @@ details table { margin-top:var(--s1); font-size:11px; }
   <div class="drawer-b" id="drawerBody"></div>
 </aside>
 <div id="tip" role="tooltip"></div>
+<div class="overlay" id="profilePick" hidden role="dialog" aria-modal="true" aria-labelledby="h-prof">
+  <div class="picker">
+    <h2 id="h-prof">Choose a risk profile</h2>
+    <p>Chosen once for this wallet and signed by it. Every limit below is fixed by the profile; the engine derives the rest each block.</p>
+    <div class="cards" id="profileCards"></div>
+    <p class="err" id="profileErr" aria-live="polite"></p>
+  </div>
+</div>
+<div class="debug" id="debug" hidden aria-label="Debug panel"></div>
 
 <script type="module">
-import { execute, aquaAdapter, v4Adapter, arcAdapter } from "/riskpilot/web/adapters.js";
+import { execute, supportsBatch, aquaAdapter, v4Adapter, arcAdapter, AdapterRefused } from "/riskpilot/web/adapters.js";
 
 // ── config ────────────────────────────────────────────────────────────────
 const qs = new URLSearchParams(location.search);
@@ -230,10 +260,13 @@ const A = {
 };
 // Anvil account #0 (public test key) signs on the demo chain only when no browser wallet is on 31337.
 const DEMO_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
-const HEARTBEAT_MS = 2000; // "Source unavailable" within 5 s of a source stopping
+const API = ENGINE + "/v1";
+// Arc testnet, or the local Arc stand-in (make arc-rehearsal) when arcRpc points at localhost.
+const ARC_LOCAL = /localhost|127\.0\.0\.1/.test(ARC.rpc);
 
-const S = { up: { engine: false, chain: false }, health: null, profiles: null, info: null, seed: null, sel: 0,
-  history: [], executions: [], chain: null, signer: null, log: [], at: {}, busy: false, decCache: {} };
+const S = { up: { engine: false, chain: false }, health: null, profiles: null, info: null, seed: null, sel: 0, selKey: null,
+  history: [], executions: [], chain: null, signer: null, log: [], at: {}, busy: false, decCache: {}, profile: null,
+  settlements: {}, lastTx: {}, receipts: {}, providers: [], perf: {} };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const now = () => new Date().toISOString().replace(/\.\d+Z$/, "Z");
@@ -251,8 +284,8 @@ const tip = (source, at) => `data-src="${esc(`${source} · ${hms(at || now())}${
 const hashChip = (h, explorer) => `<span class="hashchip"><span title="${esc(h)}">${short(h)}</span><button type="button" data-copy="${esc(h)}" aria-label="Copy ${esc(h)}">Copy</button>${explorer ? `<a href="${explorer}" target="_blank" rel="noopener" aria-label="Open ${esc(short(h))} in the explorer">Explorer</a>` : ""}</span>`;
 
 async function engine(path, opts = {}) {
-  const r = await fetch(ENGINE + path, { ...opts, headers: { "content-type": "application/json" } });
-  if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 160)}`);
+  const r = await fetch(API + path, { ...opts, headers: { "content-type": "application/json" } });
+  if (!r.ok) { const e = new Error(`${r.status} ${(await r.text()).slice(0, 200)}`); e.status = r.status; throw e; }
   return r.json();
 }
 
@@ -279,24 +312,50 @@ async function loadViem() {
     } };
 }
 
+// EIP-6963: every injected wallet announces itself; window.ethereum is the fallback.
+window.addEventListener("eip6963:announceProvider", (e) => { if (!S.providers.some((p) => p.info.uuid === e.detail.info.uuid)) S.providers.push(e.detail); });
+window.dispatchEvent(new Event("eip6963:requestProvider"));
+const injected = () => S.providers[0]?.provider || window.ethereum || null;
+
+// Switch the wallet to a chain, adding it first if the wallet does not know it.
+async function switchTo(provider, chainId, params) {
+  const hex = "0x" + chainId.toString(16);
+  try { await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: hex }] }); }
+  catch (e) {
+    if (e.code !== 4902 && !/unrecognized|not added|unknown chain/i.test(e.message || "")) throw e;
+    await provider.request({ method: "wallet_addEthereumChain", params: [{ chainId: hex, ...params }] });
+  }
+}
+
 async function demoSigner() {
-  if (window.ethereum) {
+  const provider = injected();
+  if (provider && !qs.has("demoKey")) {
     try {
-      if (parseInt(await window.ethereum.request({ method: "eth_chainId" }), 16) === CHAIN_ID) {
-        const [address] = await window.ethereum.request({ method: "eth_requestAccounts" });
-        return { kind: "browser wallet", address, client: V.viem.createWalletClient({ account: address, chain: V.chain, transport: V.viem.custom(window.ethereum) }) };
-      }
+      await switchTo(provider, CHAIN_ID, { chainName: "RiskPilot demo chain (mainnet fork)", rpcUrls: [RPC], nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 } });
+      const [address] = await provider.request({ method: "eth_requestAccounts" });
+      return { kind: S.providers[0]?.info.name || "browser wallet", address, provider, chainId: CHAIN_ID, viem: V.viem,
+        batch: await supportsBatch(provider, address, CHAIN_ID),
+        client: V.viem.createWalletClient({ account: address, chain: V.chain, transport: V.viem.custom(provider) }) };
     } catch { /* use the demo key */ }
   }
   const account = V.accounts.privateKeyToAccount(DEMO_KEY);
-  return { kind: "Anvil #0 (public test key)", address: account.address, client: V.viem.createWalletClient({ account, chain: V.chain, transport: V.viem.http(RPC) }) };
+  return { kind: "Anvil #0 (public test key)", address: account.address, account, chainId: CHAIN_ID, viem: V.viem,
+    client: V.viem.createWalletClient({ account, chain: V.chain, transport: V.viem.http(RPC) }) };
 }
 
 async function arcSigner() {
-  if (!window.ethereum) throw new Error("no browser wallet for Arc testnet");
-  await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x" + ARC.id.toString(16) }] });
-  const [address] = await window.ethereum.request({ method: "eth_requestAccounts" });
-  return { kind: "browser wallet", address, client: V.viem.createWalletClient({ account: address, chain: V.arcChain, transport: V.viem.custom(window.ethereum) }) };
+  if (ARC_LOCAL) { // local Arc stand-in: the same public test key, no wallet
+    const account = V.accounts.privateKeyToAccount(DEMO_KEY);
+    return { kind: "Anvil #0 (Arc stand-in)", address: account.address, chainId: ARC.id, viem: V.viem,
+      client: V.viem.createWalletClient({ account, chain: V.arcChain, transport: V.viem.http(ARC.rpc) }) };
+  }
+  const provider = injected();
+  if (!provider) throw new AdapterRefused("no browser wallet for Arc testnet");
+  await switchTo(provider, ARC.id, { chainName: "Arc Testnet", rpcUrls: [ARC.rpc], blockExplorerUrls: [ARC.explorer],
+    nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 } });
+  const [address] = await provider.request({ method: "eth_requestAccounts" });
+  return { kind: "browser wallet", address, provider, chainId: ARC.id, viem: V.viem, batch: await supportsBatch(provider, address, ARC.id),
+    client: V.viem.createWalletClient({ account: address, chain: V.arcChain, transport: V.viem.custom(provider) }) };
 }
 
 // ── tooltips, copy ───────────────────────────────────────────────────────
@@ -321,44 +380,108 @@ document.addEventListener("click", async (e) => {
 });
 
 // ── status bar ────────────────────────────────────────────────────────────
+const PROFILE_BLURB = {
+  conservative: "Small positions, large edge required, tight slippage.",
+  moderate: "The default: a $250 stress budget for most wallets.",
+  aggressive: "Larger positions and budget, thinner edge accepted.",
+};
+function budgetLine(pr) {
+  if (!pr || !pr.budget) return "";
+  return `budget ${usd(pr.budget).replace(/\.00$/, "")} (${pr.budget_bound === "cap" ? "cap" : `${num(Number(pr.budget_rule?.match(/([\d.]+)%/)?.[1] || 0), 1)}% of wallet`})`;
+}
+function derivationTip(pr) {
+  if (!pr) return "";
+  const lines = [`stress budget = ${pr.budget_rule} = ${usd(pr.budget)}${pr.budget_bound === "cap" ? " (cap binds)" : ""}`,
+    pr.wallet_value ? `wallet value ${usd(pr.wallet_value)} at block ${Number(pr.block).toLocaleString("en-US")}` : "wallet value unavailable: the cap applies",
+    pr.max_position ? `max position ${usd(pr.max_position)}` : null,
+    pr.slippage_tolerance ? `slippage limit min(profile max, impact + 5 bp) = ${pct(pr.slippage_tolerance, 2)}` : null,
+    pr.gas_ceiling_gwei ? `gas ceiling 2 × base fee + tip = ${pr.gas_ceiling_gwei} gwei` : null,
+    `TTL ${pr.ttl_s} s · staleness ${pr.staleness_s} s · requote at ${pct(pr.requote_move, 1)}`];
+  return lines.filter(Boolean).join("\n");
+}
 function renderStatus() {
-  const c = S.chain, p = S.profiles?.balanced, info = S.info;
+  const c = S.chain, info = S.info, pr = S.seed?.profile;
   const cell = (k, v, cls = "") => `<div class="st ${cls}"><div class="k">${k}</div><div class="v">${v}</div></div>`;
   const tok = (raw, dec, unit, d) => (c && raw !== undefined
     ? `<span data-testid="hold-${unit}" ${tip(`chain balanceOf ${unit}`, c.at)} tabindex="0">${num(Number(raw) / 10 ** dec, d)} ${unit}</span>` : unavailable("demo chain"));
   const eng = S.up.engine; // engine-sourced cells drop their values while the engine is down
+  const wallet = S.signer?.address;
   $("status").innerHTML = [
     cell("Chain", !c ? unavailable("demo chain")
       : eng && info ? `<span ${tip("chain eth_chainId · fork block from demo/curves.json", c.at)} tabindex="0">Ethereum mainnet fork · block ${Number(info.fork_block).toLocaleString("en-US")}</span>`
       : `<span ${tip("chain eth_chainId, eth_blockNumber", c.at)} tabindex="0">chain ${c.chainId} · head ${c.block.toLocaleString("en-US")}</span>`, "wide"),
-    cell("Wallet", eng && info ? `<span class="mono" ${tip("demo/curves.json maker", S.at.info)} tabindex="0">${short(info.maker)}</span>` : unavailable("engine")),
+    cell("Wallet", wallet ? `<span class="mono" ${tip(`signer: ${S.signer.kind}`, c?.at)} tabindex="0">${short(wallet)}</span>` : unavailable("wallet")),
     cell("WETH", tok(c?.weth, 18, "WETH", 4)),
     cell("USDC", tok(c?.usdc, 6, "USDC", 2)),
-    cell("Profile", eng && p ? `<span ${tip("engine /profiles", S.at.profiles)} tabindex="0">Balanced · ${usd(p.budget)}</span>` : unavailable("engine"), "prof"),
-    cell("Engine", S.up.engine && S.health ? `<span ${tip("engine /health", S.at.health)} tabindex="0">${esc(S.health.model_version)}</span>` : unavailable("engine")),
+    cell("Profile", eng && S.profile ? `<span data-testid="profile-status" data-tip="${esc(derivationTip(pr))}" tabindex="0">${esc(S.profiles?.[S.profile]?.label || S.profile)}${pr ? ` · ${budgetLine(pr)}` : ""}</span> <button type="button" class="linkbtn" id="profileChange" data-testid="profile-change">Change</button>`
+      : eng && S.needsProfile ? `<span class="unavail">Choose a profile</span>` : unavailable("engine"), "prof"),
+    cell("Engine", eng && S.health ? `<span data-tip="${esc(`engine /v1/health · signed by engine ${S.health.engine_signer}${S.health.warnings?.length ? "\n" + S.health.warnings.join("\n") : ""}`)}" tabindex="0">${esc(S.health.model_version)}</span>` : unavailable("engine")),
   ].join("");
+  if ($("profileChange")) $("profileChange").onclick = () => showPicker(true);
   bindTips($("status"));
+}
+
+// ── profile, chosen once per wallet, signed by it (EIP-191) ───────────────
+const profileMessage = (wallet, profile, setAt) => `RiskPilot profile\nwallet: ${wallet.toLowerCase()}\nprofile: ${profile}\nset_at: ${setAt}`;
+function showPicker(changing = false) {
+  const P = S.profiles || {};
+  $("profileCards").innerHTML = ["conservative", "moderate", "aggressive"].filter((n) => P[n]).map((n) => {
+    const p = P[n];
+    return `<button type="button" class="card" data-testid="profile-card" data-profile="${n}"><h3>${esc(p.label)}</h3><p class="blurb">${esc(PROFILE_BLURB[n])}</p><dl>
+      <dt>Stress budget</dt><dd>${pct(p.budget_share, 1)} of wallet, cap ${usd(p.budget_cap).replace(/\.00$/, "")}</dd>
+      <dt>Minimum net edge</dt><dd>${usd(p.min_edge)}</dd><dt>Edge / uncertainty k</dt><dd>${num(p.k, 1)}</dd>
+      <dt>Risk price λ</dt><dd>${num(p.lambda, 2)}</dd><dt>Aqua fee margin</dt><dd>${pct(p.aqua_margin, 0)}</dd>
+      <dt>Max slippage</dt><dd>${pct(p.max_slippage, 2)}</dd><dt>Max position</dt><dd>${pct(p.max_position_share, 0)} of wallet</dd></dl></button>`;
+  }).join("");
+  $("profileErr").textContent = changing ? "Changing cancels any live approval; everything is re-evaluated under the new profile." : "";
+  $("profilePick").hidden = false;
+  $("profileCards").querySelectorAll("[data-profile]").forEach((b) => { b.onclick = () => chooseProfile(b.dataset.profile); });
+  $("profileCards").querySelector("button")?.focus();
+}
+async function chooseProfile(name) {
+  const wallet = S.signer.address, setAt = now();
+  try {
+    const message = profileMessage(wallet, name, setAt);
+    const signature = S.signer.account ? await S.signer.account.signMessage({ message }) : await S.signer.client.signMessage({ account: wallet, message });
+    // Changing cancels live approvals: nothing stays signable until the engine re-evaluates.
+    S.seed = null; S.lastTx = {};
+    await engine("/profile", { method: "PUT", body: JSON.stringify({ wallet, profile: name, set_at: setAt, signature }) });
+    S.profile = name; S.needsProfile = false;
+    $("profilePick").hidden = true;
+    renderStatus(); renderOpps(); renderDecision();
+  } catch (e) { $("profileErr").textContent = `Not set: ${e.shortMessage || e.message}`; }
 }
 
 // ── opportunities ────────────────────────────────────────────────────────
 const age = (iso) => Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));
+const DEMO_POOLS = new Set(["uniswap_v4_hooked", "uniswap_v4_static"]); // seeded by make hook-pool
+// Selection follows the opportunity key across blocks and reseeds; decision ids change, keys do not.
+function selectIndex() {
+  const items = S.seed?.items || [];
+  let i = S.selKey ? items.findIndex((it) => it.key === S.selKey) : -1;
+  if (i < 0) i = Math.max(0, items.findIndex((it) => it.decision.verdict === "APPROVE"));
+  S.sel = i; S.selKey = items[i]?.key ?? null;
+  return i;
+}
 function renderOpps() {
-  if (!S.up.engine || !S.seed) { $("opps").innerHTML = unavailable(S.seedErr || "engine"); $("oppNote").textContent = ""; return; }
+  if (!S.up.engine || !S.seed) { $("opps").innerHTML = S.up.engine && S.needsProfile ? `<p class="empty">Choose a risk profile to evaluate opportunities.</p>` : unavailable(S.seedErr || "engine"); $("oppNote").textContent = ""; return; }
+  selectIndex();
   const rows = S.seed.items.map((it, i) => {
-    const o = it.opportunity, d = it.decision, s = tip(`engine /evaluate · ${o.source}`, d.created_at);
-    return `<tr class="pick ${i === S.sel ? "sel" : ""}" data-i="${i}" tabindex="0" aria-selected="${i === S.sel}" data-testid="opp-row" data-label="${esc(it.label)}" data-decision="${d.decision_id}">
-      <td ${s}>${esc(it.label)}<span class="sub2">${esc(o.type)} · ${esc(o.pair)} · ${esc(o.source_venue)} → ${esc(o.target)}</span></td>
+    const o = it.opportunity, d = it.decision, s = tip(`engine /v1/evaluate · ${o.source}`, d.created_at);
+    const tag = DEMO_POOLS.has(o.source_venue) ? `<span class="tag" data-testid="demo-tag" data-tip="Deployed and seeded by make hook-pool on the mainnet fork; not a mainnet pool.">Demo pool · seeded on fork</span>` : "";
+    return `<tr class="pick ${i === S.sel ? "sel" : ""}" data-i="${i}" tabindex="0" aria-selected="${i === S.sel}" data-testid="opp-row" data-label="${esc(it.label)}" data-key="${esc(it.key)}" data-decision="${d.decision_id}">
+      <td ${s}>${esc(it.label)}${tag}<span class="sub2">${esc(o.type)} · ${esc(o.pair)} · ${esc(o.source_venue)} → ${esc(o.target)}</span></td>
       <td class="num" ${s}>${usd(o.observed_price)}<span class="sub2">ref ${usd(o.reference_price)}</span></td>
-      <td class="num" ${s}>${usd(o.size)}</td>
+      <td class="num" ${s}>${usd(d.inputs.request.size)}</td>
       <td class="num" ${s}>${usd(d.gross_edge)}</td>
       <td class="num" ${s}>${usd(d.net_edge)}</td>
       <td><span class="chip ${d.verdict}" data-testid="opp-verdict">${d.verdict}</span></td>
       <td class="num" data-age="${o.observed_at}" ${tip("now − observed_at", o.observed_at)}>${age(o.observed_at)} s</td></tr>`;
   }).join("");
   $("opps").innerHTML = `<table><thead><tr><th scope="col">Opportunity</th><th scope="col" class="num">Observed / ref</th><th scope="col" class="num">Size</th><th scope="col" class="num">Gross edge</th><th scope="col" class="num">Net edge</th><th scope="col">Verdict</th><th scope="col" class="num">Age</th></tr></thead><tbody>${rows}</tbody></table>`;
-  $("oppNote").textContent = `seeded ${hms(S.seed.as_of)}`;
+  $("oppNote").textContent = `block ${S.seed.block ? Number(S.seed.block).toLocaleString("en-US") : "—"} · evaluated ${hms(S.seed.as_of)}`;
   document.querySelectorAll("#opps tr.pick").forEach((tr) => {
-    const go = () => { S.sel = Number(tr.dataset.i); renderOpps(); renderDecision(); renderArc(); };
+    const go = () => { S.selKey = tr.dataset.key; renderOpps(); renderDecision(); renderArc(); };
     tr.addEventListener("click", go);
     tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
   });
@@ -434,21 +557,12 @@ function liveShipped(d) {
   return c && S.shipped?.[c.strategy_hash];
 }
 
-// Why "Approve and sign" is disabled, from the decision's own verdict and reason.
+// Why "Approve and sign" is disabled: the engine's own reason, up to its detail in brackets.
 function whyDisabled(d, shipped, kind) {
   if (shipped) return "Already shipped";
   if (!S.up.chain) return "Demo chain unavailable";
-  if (d.verdict === "APPROVE") return Date.parse(d.expires_at) <= Date.now() ? "Expired: request a new decision" : kind ? "Approve and sign" : "No adapter for this venue";
-  const r = d.reason;
-  if (/post-trade stress/.test(r)) return "Rejected: stress over budget";
-  if (/net edge/.test(r)) return "Rejected: net edge below hurdle";
-  if (/premium floor/.test(r)) return "Rejected: fee below premium floor";
-  if (/liquidity/.test(r)) return "Rejected: liquidity below size";
-  if (/gas/.test(r)) return "Rejected: gas over budget";
-  if (/curve needs/.test(r)) return "Rejected: holdings cannot fund the curve";
-  if (d.verdict === "REQUOTE") return "Requote: quote expired or moved";
-  if (d.verdict === "REQUIRE_REVIEW") return "Review: input stale or out of range";
-  return d.verdict;
+  if (d.verdict === "APPROVE") return Date.parse(d.expires_at) <= Date.now() ? "Requoting…" : kind ? "Approve and sign" : "No adapter for this venue";
+  return d.reason.split(" (")[0].replace("; limit", ", limit");
 }
 
 const TERMS = {
@@ -477,19 +591,30 @@ function aquaBlock(d) {
     ${kv("f_min", pct(aq.f_min, 4))}${kv("Fee", pct(aq.fee_rate, 4))}</dl>`;
 }
 
+function settleChip(id) {
+  const st = S.settlements[id];
+  if (!st) return "";
+  const tx = st.tx ? ` · ${ARC_LOCAL ? `<span class="mono">${short(st.tx)}</span>` : `<a href="${ARC.explorer}/tx/${st.tx}" target="_blank" rel="noopener">view tx</a>`}` : "";
+  const text = st.status === "Failed" ? `Settlement failed: ${esc(st.reason || "unknown")}`
+    : st.status === "Funded" && st.waiting ? `Funded · waiting for ${esc(st.waiting)}` : esc(st.status);
+  return `<span class="settle ${st.status}" data-testid="settle-chip" data-status="${st.status}">${text}${st.status === "Settled" ? tx : ""}</span>`;
+}
+
 function renderDecision() {
   clearInterval(timer);
   $("viewApi").disabled = !(S.up.engine && S.seed);
-  if (!S.up.engine || !S.seed) { $("decision").innerHTML = unavailable(S.seedErr || "engine"); return; }
-  const it = S.seed.items[S.sel], d = it.decision, inp = d.inputs, ds = tip(`engine /evaluate · ${d.model_version}`, d.created_at);
+  if (!S.up.engine || !S.seed) { $("decision").innerHTML = S.up.engine && S.needsProfile ? `<p class="empty">No decisions until a profile is chosen.</p>` : unavailable(S.seedErr || "engine"); return; }
+  if (S.busy) return; // the stepper owns the button until the signature flow ends
+  const it = S.seed.items[selectIndex()], d = it.decision, inp = d.inputs, ds = tip(`engine /v1/evaluate · ${d.model_version}`, d.created_at);
   const shipped = liveShipped(d), kind = adapterFor(d);
   const live = d.verdict === "APPROVE" && Date.parse(d.expires_at) > Date.now() && !shipped && kind && S.up.chain;
-  let h = `<div class="dec-head" data-testid="decision" data-decision="${d.decision_id}"><span class="chip ${d.verdict}" data-testid="dec-verdict">${d.verdict}</span>
-      <span class="dec-id" ${ds} tabindex="0">${esc(it.label)} · ${d.decision_id}</span></div>
+  const signed = d.signature ? `Signed by engine ${d.signature.signer}` : "Unsigned";
+  const last = S.lastTx[it.key];
+  let h = `<div class="dec-head" data-testid="decision" data-decision="${d.decision_id}" data-key="${esc(it.key)}"><span class="chip ${d.verdict}" data-testid="dec-verdict">${d.verdict}</span>
+      <span class="dec-id" data-tip="${esc(`${signed} (EIP-712 RiskPilotDecision)\nblock ${inp.request.block ?? "—"} · ${d.model_version} · ${hms(d.created_at)}`)}" data-testid="dec-id" tabindex="0">${esc(it.label)} · ${d.decision_id}</span></div>
     <p class="reason" data-testid="dec-reason" ${ds}>${esc(d.reason)}</p>
     <div class="act"><button class="btn" id="approve" data-testid="approve" type="button" ${live ? "" : "disabled"}>${live ? "Approve and sign" : esc(whyDisabled(d, shipped, kind))}</button>
-      <span class="signer" id="signerNote">${live ? "signer: " + esc(S.signer?.kind || "") : ""}</span>
-      <button type="button" class="linkbtn" id="reeval" ${d.verdict === "APPROVE" && !live && !shipped && Date.parse(d.expires_at) <= Date.now() ? "" : "hidden"}>Re-evaluate</button></div>
+      <span class="signer" id="signerNote">${last ? `<a href="#tx-${last.hash}" data-testid="confirmed">Confirmed · view tx</a> ${settleChip(last.decision_id)}` : live ? "signer: " + esc(S.signer?.kind || "") : ""}</span></div>
     <div class="log" id="log" aria-live="polite">${S.log.join("<br>")}</div>`;
   h += `<div class="sub"><span>Net edge, USD</span></div>${waterfall(d)}`;
   h += `<div class="sub"><span>Stress test, worst of 14 scenarios · <span data-testid="stress-before">${usd(d.stress_loss_before)}</span> → <span data-testid="stress-after">${usd(d.stress_loss_after)}</span> · budget <span data-testid="budget">${usd(d.budget)}</span></span></div>${stressBars(d)}`;
@@ -497,6 +622,7 @@ function renderDecision() {
   const tsOf = (k) => inp.timestamps?.[k];
   const lines = Object.entries(inp.sources || {}).map(([k, v]) => `${k}: ${esc(v)}${tsOf(k) ? ` · ${hms(tsOf(k))}` : ""}`);
   if (inp.request?.holdings) lines.push(`holdings: ${num(inp.request.holdings.weth, 4)} WETH, ${usd(inp.request.holdings.usdc).slice(1)} USDC`);
+  if (kind === "v4" && inp.profile?.slippage_tolerance) lines.push(`<span data-tip="The demo router has no on-chain amountOutMinimum: the slippage limit is checked by simulation before sending, and again before each transaction.">slippage limit ${pct(inp.profile.slippage_tolerance, 2)} · checked before sending</span>`);
   // On short viewports (< 880 px) the inputs collapse so the decision still fits without scrolling.
   h += `<details class="inputs-d" ${innerHeight >= 880 ? "open" : ""}><summary>Inputs · ${lines.length} sources</summary><div class="inputs">${lines.join("<br>")}</div></details>`;
   $("decision").innerHTML = h;
@@ -504,32 +630,57 @@ function renderDecision() {
   if ($("drawer").classList.contains("open")) renderDrawer();
   const tick = () => {
     const btn = $("approve");
-    if (!btn || !live) return clearInterval(timer);
+    if (!btn || !live || S.busy) return clearInterval(timer);
     const left = Math.max(0, Math.ceil((Date.parse(d.expires_at) - Date.now()) / 1000));
-    if (left > 0) { if (!btn.dataset.busy) btn.textContent = `Approve and sign · ${left}s`; }
-    else { btn.disabled = true; btn.textContent = "Expired: request a new decision"; $("signerNote").textContent = ""; $("reeval").hidden = false; clearInterval(timer); }
+    // At 0 the engine has already re-issued it (every 15 s, or on the next block): it requotes in place.
+    if (left > 0) btn.textContent = `Approve and sign · ${left}s`;
+    else { btn.disabled = true; btn.textContent = "Requoting…"; $("signerNote").textContent = ""; clearInterval(timer); }
   };
   tick(); timer = setInterval(tick, 250);
-  if (live) $("approve").onclick = () => approve(d, kind);
-  $("reeval").onclick = async () => { await seed(); renderOpps(); renderDecision(); renderArc(); };
+  if (live) $("approve").onclick = () => approve(d, kind, it.key);
 }
 
 function log(msg, cls = "") { S.log.push(`<span class="${cls}">${esc(new Date().toISOString().slice(11, 19))} ${esc(msg)}</span>`); const el = $("log"); if (el) { el.innerHTML = S.log.join("<br>"); el.scrollTop = el.scrollHeight; } }
 
-async function approve(d, kind) {
-  const btn = $("approve");
-  btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = "Signing…";
-  S.busy = true;
+// One click: every transaction the decision needs, as one stepper (or one EIP-5792 batch),
+// then the Arc escrow funding when Arc is deployed. The arc-worker settles on its own.
+async function approve(d, kind, key) {
+  const btn = $("approve"), set = (t) => { btn.textContent = t; };
+  btn.disabled = true; S.busy = true; S.perf.click = performance.now(); S.perf.firstPrompt = null;
+  set("Preparing…");
   try {
     const signer = S.signer || (S.signer = await demoSigner());
     const ctx = { viem: V.viem, pub: V.pub, chainId: CHAIN_ID, A, signer };
     const adapter = kind === "aqua" ? aquaAdapter({ ...ctx, info: S.info }) : v4Adapter({ ...ctx, hook: S.info?.hook, aquaCommitted });
-    const execution = await execute(adapter, d, signer, V.pub, log);
-    const position = await engine("/executions", { method: "POST", body: JSON.stringify(execution) });
-    log(`verified · engine position ${position.position_id} ${position.status}`, "ok");
+    await adapter.validate(d);
+    const execN = signer.batch ? 1 : (await adapter.buildTx(d)).length;
+    const dep = S.info?.arc, arcN = dep ? 2 : 0, n = execN + arcN;
+    const pr = d.inputs.profile, gas = pr?.gas_ceiling_gwei && Number(pr.gas_ceiling_gwei) > 0
+      ? { maxFeePerGas: V.viem.parseGwei(pr.gas_ceiling_gwei), maxPriorityFeePerGas: V.viem.parseGwei(pr.tip_gwei || "0") } : null;
+    const onStep = ({ i, n, label, phase }) => {
+      if (phase === "sign" && S.perf.firstPrompt === null) S.perf.firstPrompt = performance.now() - S.perf.click;
+      set(phase === "sign" ? `Signing ${i} of ${n}: ${label}…` : `Confirming ${i} of ${n}…`);
+    };
+    const execution = await execute(adapter, d, signer, V.pub, log, { onStep, gas, total: n });
+    await engine("/executions", { method: "POST", body: JSON.stringify(execution) });
+    S.lastTx[key] = { hash: execution.tx_hash, decision_id: d.decision_id };
+    log(`verified · ${short(execution.tx_hash)}`, "ok");
+    if (dep) {
+      set(ARC_LOCAL ? "Switching to Arc (local stand-in)…" : "Switching to Arc testnet…");
+      const arcS = await arcSigner();
+      const arc = arcAdapter({ viem: V.viem, arcPub: V.arcPub, dep, usdc: dep.usdc || ARC.usdc, stakeUnits: V.viem.parseUnits(String(dep.stake_usdc), 6), signer: arcS, executed: true });
+      const funded = await execute(arc, d, arcS, V.arcPub, log, { onStep, offset: execN, total: n });
+      S.settlements[d.decision_id] = { decision_id: d.decision_id, status: "Funded", fund_tx: funded.tx_hash };
+      log(`funded on Arc · ${short(funded.tx_hash)} · the arc-worker settles it`, "ok");
+    }
     S.busy = false;
+    btn.textContent = "Confirmed · view tx";
     await refreshAll();
-  } catch (e) { S.busy = false; log(String(e.shortMessage || e.message || e), "bad"); renderDecision(); }
+  } catch (e) {
+    S.busy = false;
+    log(`${e instanceof AdapterRefused ? "Refused" : "Stopped"}: ${String(e.shortMessage || e.message || e)}`, "bad");
+    renderDecision();
+  }
 }
 
 // What live Aqua curves hold of a token: a v4 sale must leave it in the wallet.
@@ -591,26 +742,25 @@ async function renderAqua() {
         h += `<div class="line" ${tip("chain router.quote(), capped at Aqua.rawBalances", at)}>quote ${call ? `100.00 USDC → ${num(fill, 4)} WETH` : `0.0100 WETH → ${num(fill, 2)} USDC`}${q.capped ? " · capped at balance" : ""}</div>`;
       }
       const ship = ships.find((l) => l.args.strategyHash === c.strategy_hash);
-      if (ship) h += `<div class="line" data-testid="ship-tx" data-tx="${ship.transactionHash}">ship ${hashChip(ship.transactionHash)} block ${ship.blockNumber.toLocaleString("en-US")} <button class="btn ghost sm" type="button" data-verify="${ship.transactionHash}">Verify</button> <span data-out="${ship.transactionHash}"></span></div>`;
+      if (ship) h += `<div class="line" id="tx-${ship.transactionHash}" data-testid="ship-tx" data-tx="${ship.transactionHash}">ship ${hashChip(ship.transactionHash)} ${await receiptText(ship.transactionHash)}</div>`;
       for (const f of swaps.filter((l) => l.args.orderHash === c.strategy_hash)) {
         const buy = f.args.tokenOut.toLowerCase() === A.WETH.toLowerCase();
         const eth = Number(buy ? f.args.amountOut : f.args.amountIn) / 1e18, usdc = Number(buy ? f.args.amountIn : f.args.amountOut) / 1e6;
-        h += `<div class="line" data-testid="fill-tx" data-tx="${f.transactionHash}">fill ${hashChip(f.transactionHash)} ${buy ? "bought" : "sold"} ${num(eth, 4)} WETH for ${num(usdc, 2)} USDC <button class="btn ghost sm" type="button" data-verify="${f.transactionHash}">Verify</button> <span data-out="${f.transactionHash}"></span></div>`;
+        h += `<div class="line" id="tx-${f.transactionHash}" data-testid="fill-tx" data-tx="${f.transactionHash}">fill ${hashChip(f.transactionHash)} ${buy ? "bought" : "sold"} ${num(eth, 4)} WETH for ${num(usdc, 2)} USDC ${await receiptText(f.transactionHash)}</div>`;
       }
       h += `</div>`;
     }
     el.innerHTML = h + `<p class="empty">Options-like payoffs from swap curves, not option contracts.</p>`;
-    el.querySelectorAll("[data-verify]").forEach((b) => b.addEventListener("click", () => verifyTx(b.dataset.verify)));
     bindTips(el);
   } catch (e) { el.innerHTML = unavailable("demo chain: " + (e.shortMessage || e.message)); }
 }
 
-async function verifyTx(hash) {
-  const out = document.querySelector(`[data-out="${hash}"]`);
+// Every transaction on the page is verified from its receipt automatically (receipts are final, so cached).
+async function receiptText(hash) {
   try {
-    const rc = await V.pub.getTransactionReceipt({ hash });
-    out.innerHTML = `<span data-testid="verify-result" class="${rc.status === "success" ? "ok-text" : "bad-text"}">${rc.status} · block ${rc.blockNumber.toLocaleString("en-US")} · ${rc.gasUsed.toLocaleString("en-US")} gas</span>`;
-  } catch { out.innerHTML = unavailable("receipt"); }
+    const rc = S.receipts[hash] || (S.receipts[hash] = await V.pub.getTransactionReceipt({ hash }));
+    return `<span data-testid="verify-result" class="${rc.status === "success" ? "ok-text" : "bad-text"}" ${tip("chain eth_getTransactionReceipt", now())}>${rc.status} · block ${rc.blockNumber.toLocaleString("en-US")} · ${rc.gasUsed.toLocaleString("en-US")} gas</span>`;
+  } catch { return unavailable("receipt"); }
 }
 
 // ── positions: v4 hook ───────────────────────────────────────────────────
@@ -649,7 +799,6 @@ async function renderHook() {
   } catch (e) { html += unavailable("FeeUpdated logs: " + (e.shortMessage || e.message)); }
   html += await v4Swaps();
   el.innerHTML = html; bindTips(el);
-  el.querySelectorAll("[data-verify]").forEach((b) => b.addEventListener("click", () => verifyTx(b.dataset.verify)));
 }
 
 // Swaps this wallet signed through v4 pools: engine executions joined to their decisions, with the
@@ -664,50 +813,58 @@ async function v4Swaps() {
     // The hook re-estimates on the first swap of each block, so the fee paid can differ from the
     // fee quoted when the decision was made; min-out covered the difference.
     const quoted = Math.round(Number(d.inputs.request.market.fee_rate) * 1e6);
-    const paid = info ? ` · fee paid <span data-testid="fee-paid">${feePips(info.fee)}</span>${info.fee !== quoted ? ` (quoted ${feePips(quoted)})` : ""}` : "";
-    rows.push(`<div class="line" data-testid="v4-swap-tx" data-tx="${e.tx_hash}" ${tip("chain PoolManager Swap event", e.verified_at)}>${esc(V4_VENUES[venue])} ${hashChip(e.tx_hash)}${paid}
-      <button class="btn ghost sm" type="button" data-verify="${e.tx_hash}">Verify</button> <span data-out="${e.tx_hash}"></span></div>`);
+    const paid = info ? ` · <span data-tip="Quoted: the hook's fee when the engine decided. Paid: the fee in the PoolManager Swap event (the hook re-estimates on the first swap of each block).">Quoted ${pct(quoted / 1e6, 2)} · paid <span data-testid="fee-paid" data-pips="${info.fee}">${pct(info.fee / 1e6, 2)}</span></span>` : "";
+    rows.push(`<div class="line" id="tx-${e.tx_hash}" data-testid="v4-swap-tx" data-tx="${e.tx_hash}" ${tip("chain PoolManager Swap event", e.verified_at)}>${esc(V4_VENUES[venue])} ${hashChip(e.tx_hash)}${paid} ${await receiptText(e.tx_hash)}</div>`);
   }
   return rows.length ? `<div class="sub"><span>Your swaps</span></div>${rows.join("")}` : "";
 }
 
 // ── positions: Arc ───────────────────────────────────────────────────────
+const REFUND_AFTER_S = 24 * 3600;
 async function renderArc() {
   const el = $("arc"), dep = S.info?.arc;
   if (!S.up.engine) { el.innerHTML = unavailable("engine"); return; }
-  if (!dep) { el.innerHTML = unavailable("Arc escrow (not deployed)"); return; }
+  if (!dep) { el.innerHTML = unavailable("Arc escrow (not deployed: make arc-deploy)"); return; }
   try {
-    const abi = V.viem.parseAbi(["function reserve() view returns (uint256)"]), from = BigInt(dep.deployed_block), at = now();
+    const abi = V.viem.parseAbi(["function reserve() view returns (uint256)", "function deposits(bytes32) view returns (address depositor, uint64 fundedAt, uint256 amount, uint8 status)"]);
+    const from = BigInt(dep.deployed_block), at = now(), explorer = ARC_LOCAL ? null : ARC.explorer;
     const [reserve, f, st] = await Promise.all([
       V.arcPub.readContract({ address: dep.escrow, abi, functionName: "reserve" }),
       V.arcPub.getLogs({ address: dep.escrow, event: V.events.funded, fromBlock: from }),
       V.arcPub.getLogs({ address: dep.escrow, event: V.events.settled, fromBlock: from }),
     ]);
-    const ids = [...S.history.map((d) => d.decision_id), ...(S.seed?.items || []).map((i) => i.decision.decision_id)];
+    const ids = [...S.history.map((d) => d.decision_id), ...(S.seed?.items || []).map((i) => i.decision.decision_id), ...Object.keys(S.settlements)];
     const byKey = new Map(ids.map((id) => [V.viem.keccak256(V.viem.toHex(id)), id])), name = (k) => byKey.get(k) || short(k);
-    let h = `<div class="cells"><div class="cell"><div class="k">Escrow</div><div class="v">${hashChip(dep.escrow, `${ARC.explorer}/address/${dep.escrow}`)}</div></div>
-      <div class="cell"><div class="k">Reserve</div><div class="v" ${tip("Arc testnet RiskPilotEscrow.reserve", at)} tabindex="0">${num(Number(reserve) / 1e6, 2)} USDC</div></div></div>`;
-    const rows = [...f.map((l) => ({ b: l.blockNumber, t: `fund ${name(l.args.decisionId)} · ${num(Number(l.args.amount) / 1e6, 2)} USDC`, tx: l.transactionHash })),
-      ...st.map((l) => ({ b: l.blockNumber, t: `settle ${name(l.args.decisionId)} · paid ${num(Number(l.args.payout) / 1e6, 2)} USDC`, tx: l.transactionHash }))].sort((a, b) => Number(a.b - b.b));
-    h += rows.length ? rows.map((r) => `<div class="line" ${tip("Arc testnet Funded / Settled logs", at)}>${esc(r.t)} ${hashChip(r.tx, `${ARC.explorer}/tx/${r.tx}`)}</div>`).join("") : `<p class="empty">No escrow transactions yet.</p>`;
-    const d = S.seed?.items[S.sel]?.decision;
-    if (d?.verdict === "APPROVE" && Date.parse(d.expires_at) > Date.now()) {
-      h += `<div class="act"><button class="btn ghost sm" type="button" id="arcFund">Fund ${esc(dep.stake_usdc)} USDC</button><span class="signer" id="arcOut"></span></div>`;
+    let h = `<div class="cells"><div class="cell"><div class="k">Escrow${ARC_LOCAL ? " (local Arc stand-in)" : ""}</div><div class="v">${hashChip(dep.escrow, explorer && `${explorer}/address/${dep.escrow}`)}</div></div>
+      <div class="cell"><div class="k">Reserve</div><div class="v" ${tip("Arc RiskPilotEscrow.reserve", at)} tabindex="0">${num(Number(reserve) / 1e6, 2)} USDC</div></div></div>`;
+    const settled = new Set(st.map((l) => l.args.decisionId));
+    const rows = [];
+    for (const l of f) {
+      const id = name(l.args.decisionId);
+      let refund = "";
+      if (!settled.has(l.args.decisionId)) {
+        const [, fundedAt, , status] = await V.arcPub.readContract({ address: dep.escrow, abi, functionName: "deposits", args: [l.args.decisionId] });
+        if (status === 1 && Date.now() / 1000 > Number(fundedAt) + REFUND_AFTER_S) refund = ` <button class="btn ghost sm" type="button" data-refund="${l.args.decisionId}">Refund</button> <span class="ok-text">Refund available</span>`;
+      }
+      rows.push({ b: l.blockNumber, t: `fund ${id} · ${num(Number(l.args.amount) / 1e6, 2)} USDC`, tx: l.transactionHash, extra: (S.settlements[id] ? " " + settleChip(id) : "") + refund });
     }
+    for (const l of st) rows.push({ b: l.blockNumber, t: `settle ${name(l.args.decisionId)} · paid ${num(Number(l.args.payout) / 1e6, 6)} USDC`, tx: l.transactionHash, extra: "" });
+    rows.sort((a, b) => Number(a.b - b.b));
+    h += rows.length ? rows.map((r) => `<div class="line" data-testid="arc-row" ${tip("Arc Funded / Settled logs", at)}>${esc(r.t)} ${hashChip(r.tx, explorer && `${explorer}/tx/${r.tx}`)}${r.extra}</div>`).join("")
+      : `<p class="empty">Funded inside Approve and sign; the arc-worker settles each one.</p>`;
     el.innerHTML = h; bindTips(el);
-    if ($("arcFund")) $("arcFund").onclick = () => fundArc(d, dep);
-  } catch (e) { el.innerHTML = unavailable("Arc testnet: " + (e.shortMessage || e.message)); }
+    el.querySelectorAll("[data-refund]").forEach((b) => { b.onclick = () => refundArc(b.dataset.refund, dep); });
+  } catch (e) { el.innerHTML = unavailable("Arc: " + (e.shortMessage || e.message)); }
 }
 
-async function fundArc(d, dep) {
-  const out = $("arcOut");
+async function refundArc(key, dep) {
   try {
     const signer = await arcSigner();
-    const adapter = arcAdapter({ viem: V.viem, arcPub: V.arcPub, dep, usdc: ARC.usdc, stakeUnits: V.viem.parseUnits(String(dep.stake_usdc), 6), signer });
-    const rec = await execute(adapter, d, signer, V.arcPub, (m) => { out.textContent = m; });
-    out.innerHTML = `funded ${hashChip(rec.tx_hash, `${ARC.explorer}/tx/${rec.tx_hash}`)}`;
+    const abi = V.viem.parseAbi(["function refund(bytes32)"]);
+    const hash = await signer.client.writeContract({ address: dep.escrow, abi, functionName: "refund", args: [key] });
+    await V.arcPub.waitForTransactionReceipt({ hash });
     await renderArc();
-  } catch (e) { out.innerHTML = `<span class="unavail">${esc(e.shortMessage || e.message)}</span>`; }
+  } catch (e) { log(`Refund stopped: ${e.shortMessage || e.message}`, "bad"); }
 }
 
 // ── history ──────────────────────────────────────────────────────────────
@@ -732,64 +889,126 @@ function renderHistory() {
   }));
 }
 
-// ── data + heartbeat ─────────────────────────────────────────────────────
+// ── data + stream ────────────────────────────────────────────────────────
 async function readChain() {
-  const maker = S.info?.maker, [block, chainId] = await Promise.all([V.pub.getBlockNumber(), V.pub.getChainId()]);
+  const who = S.signer?.address || S.info?.maker, [block, chainId] = await Promise.all([V.pub.getBlockNumber(), V.pub.getChainId()]);
   const out = { block, chainId, at: now() };
-  if (maker) [out.weth, out.usdc] = await Promise.all([A.WETH, A.USDC].map((t) => V.pub.readContract({ address: t, abi: V.erc20, functionName: "balanceOf", args: [maker] })));
+  if (who) [out.weth, out.usdc] = await Promise.all([A.WETH, A.USDC].map((t) => V.pub.readContract({ address: t, abi: V.erc20, functionName: "balanceOf", args: [who] })));
   return out;
 }
 
 async function loadEngine() {
   const [health, profiles, info] = await Promise.all([engine("/health"), engine("/profiles"), engine("/demo/info").catch(() => null)]);
   S.health = health; S.profiles = profiles; S.info = info; S.at.health = S.at.profiles = S.at.info = now();
+  const settlements = await engine("/settlements").catch(() => []);
+  for (const st of settlements) S.settlements[st.decision_id] = st;
   [S.history, S.executions] = await Promise.all([engine("/decisions?limit=12"), engine("/executions")]);
 }
 
-// Re-seeding keeps the opportunity the user had selected; a first load selects the first APPROVE.
-async function seed() {
-  const keep = S.seed?.items[S.sel]?.label;
-  try { S.seed = await engine("/demo/seed", { method: "POST" }); S.seedErr = null; }
-  catch (e) { S.seed = null; S.seedErr = "engine"; }
-  const kept = keep ? S.seed?.items.findIndex((i) => i.label === keep) : -1;
-  const approved = S.seed?.items.findIndex((i) => i.decision.verdict === "APPROVE");
-  if (kept >= 0) S.sel = kept; else if (approved >= 0) S.sel = approved;
+async function loadProfile() {
+  if (!S.signer) return;
+  try { S.profile = (await engine(`/profile?wallet=${S.signer.address}`)).profile; S.needsProfile = false; }
+  catch (e) { if (e.status === 404) { S.profile = null; S.needsProfile = true; } else throw e; }
+}
+
+// One render at a time; a request during a render runs once more after it, so the last state always lands.
+let positionsRun = null, positionsAgain = false;
+async function renderPositions() {
+  if (positionsRun) { positionsAgain = true; return positionsRun; }
+  positionsRun = (async () => {
+    do { positionsAgain = false; await Promise.all([renderAqua(), renderHook(), renderArc()]); } while (positionsAgain);
+  })().finally(() => { positionsRun = null; });
+  return positionsRun;
 }
 
 async function refreshAll() {
   try { await loadEngine(); S.up.engine = true; } catch { S.up.engine = false; S.seed = null; }
   try { if (!V) await loadViem(); S.chain = await readChain(); S.up.chain = true; } catch { S.up.chain = false; S.chain = null; }
   renderStatus(); renderOpps(); renderDecision(); renderHistory();
-  await Promise.all([renderAqua(), renderHook(), renderArc()]);
+  await renderPositions();
   renderDecision();
 }
 
-let lastBlock = null;
-async function heartbeat() {
-  const was = { ...S.up };
-  try { S.health = await engine("/health"); S.at.health = now(); S.up.engine = true; } catch { S.up.engine = false; }
-  try { S.chain = await readChain(); S.up.chain = true; } catch { S.up.chain = false; S.chain = null; }
-  if (was.engine !== S.up.engine || was.chain !== S.up.chain) {
-    // A source came back: reseed so nothing on screen predates the outage.
-    if (S.up.engine && !was.engine) await seed();
-    if (!S.up.engine) { S.seed = null; S.seedErr = "engine"; }
-    await refreshAll();
-  } else {
-    renderStatus();
-    if (S.up.chain && S.chain.block !== lastBlock) { await Promise.all([renderAqua(), renderHook()]); if (!S.busy) renderDecision(); }
-  }
-  if (S.chain) lastBlock = S.chain.block;
-  document.querySelectorAll("[data-age]").forEach((el) => { el.textContent = `${age(el.dataset.age)} s`; });
+function engineDown() {
+  if (!S.up.engine && !S.seed) return;
+  S.up.engine = false; S.seed = null; S.seedErr = "engine"; S.perf.downAt = performance.now();
+  renderStatus(); renderOpps(); renderDecision(); renderHistory(); renderPositions();
 }
 
+// Push, not polling: the engine streams block, opportunity, decision, health and settlement events.
+let es = null;
+function connect() {
+  if (es) es.close();
+  es = new EventSource(`${API}/stream${S.signer ? `?wallet=${S.signer.address}` : ""}`);
+  es.onopen = async () => {
+    if (!S.up.engine) { // back after an outage: reload so nothing on screen predates it
+      try { await loadEngine(); await loadProfile(); S.up.engine = true; } catch { return; }
+      if (S.needsProfile) showPicker();
+      await refreshAll();
+    }
+  };
+  es.onerror = () => engineDown(); // the stream drops the moment the engine does
+  es.addEventListener("health", (e) => {
+    S.health = JSON.parse(e.data); S.at.health = now(); S.up.engine = true;
+    const chainUp = S.health.dependencies?.chain?.up;
+    if (chainUp === false && S.up.chain) { S.up.chain = false; S.chain = null; renderStatus(); renderDecision(); renderPositions(); }
+    else if (chainUp && !S.up.chain) onBlock();
+    else renderStatus();
+    renderDebug();
+  });
+  es.addEventListener("block", (e) => { S.perf.blockAt = performance.now(); S.perf.block = JSON.parse(e.data).block; onBlock(); });
+  es.addEventListener("opportunity", (e) => {
+    S.seed = JSON.parse(e.data); S.seedErr = null; S.at.seed = now();
+    renderStatus(); renderOpps(); renderDecision();
+    if (S.perf.blockAt && S.perf.block === S.seed.block) { S.perf.blockToVerdict = performance.now() - S.perf.blockAt; S.perf.blockAt = null; }
+    S.perf.firstRender ??= performance.now();
+    renderDebug();
+  });
+  es.addEventListener("decision", async () => {
+    [S.history, S.executions] = await Promise.all([engine("/decisions?limit=12"), engine("/executions")]);
+    renderHistory(); renderPositions();
+  });
+  es.addEventListener("settlement", (e) => {
+    const st = JSON.parse(e.data); S.settlements[st.decision_id] = st;
+    renderDecision(); renderArc();
+  });
+}
+
+async function onBlock() {
+  try { S.chain = await readChain(); S.up.chain = true; } catch { S.up.chain = false; S.chain = null; }
+  renderStatus(); renderPositions();
+  if (!S.busy) renderDecision();
+}
+
+// Debug panel: press d.
+function renderDebug() {
+  const el = $("debug");
+  if (el.hidden) return;
+  const ms = (v) => (v == null ? "—" : `${Math.round(v)} ms`);
+  engine("/metrics").then((m) => {
+    el.textContent = [`stream: ${S.health?.dependencies?.chain?.stream ?? "—"} · block ${S.perf.block ?? S.chain?.block ?? "—"}`,
+      `page load → first full render: ${ms(S.perf.loaded)}`, `block → verdict on screen: ${ms(S.perf.blockToVerdict)}`,
+      `click → first wallet prompt: ${ms(S.perf.firstPrompt)}`, `engine evaluated block in: ${ms(S.seed?.evaluated_ms)}`,
+      `signer: ${S.signer?.kind ?? "—"}${S.signer?.batch ? " · EIP-5792 batch" : ""}`,
+      `unavailable sources: ${(S.seed?.unavailable || []).join(", ") || "none"}`,
+      "", "engine /v1/metrics", ...Object.entries(m).map(([k, v]) => `${k}  p50 ${v.p50_ms} · p95 ${v.p95_ms} (${v.count})`),
+      "", "engine /v1/health", JSON.stringify(S.health, null, 1)].join("\n");
+  }).catch(() => { el.textContent = "engine unavailable"; });
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key === "d" && !e.metaKey && !e.ctrlKey && !/INPUT|TEXTAREA/.test(document.activeElement?.tagName)) { $("debug").hidden = !$("debug").hidden; renderDebug(); }
+});
+
 async function main() {
+  const t0 = performance.now();
   try { await loadViem(); } catch { /* chain panels report the CDN as unavailable */ }
-  try { await loadEngine(); S.up.engine = true; } catch { S.up.engine = false; }
-  if (V) { try { S.chain = await readChain(); S.up.chain = true; S.signer = await demoSigner(); } catch { S.up.chain = false; } }
-  if (S.up.engine) await seed();
+  if (V) { try { S.signer = await demoSigner(); S.chain = await readChain(); S.up.chain = true; } catch { S.up.chain = false; } }
+  try { await loadEngine(); await loadProfile(); S.up.engine = true; } catch { S.up.engine = false; }
+  if (S.up.engine && S.needsProfile) showPicker();
+  connect();
   await refreshAll();
-  if (S.chain) lastBlock = S.chain.block;
-  setInterval(heartbeat, HEARTBEAT_MS);
+  S.perf.loaded = performance.now() - t0;
+  window.__riskpilot = S; // read by the e2e bench
   setInterval(() => document.querySelectorAll("[data-age]").forEach((el) => { el.textContent = `${age(el.dataset.age)} s`; }), 1000);
 }
 main();

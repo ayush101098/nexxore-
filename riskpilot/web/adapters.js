@@ -16,23 +16,69 @@ function requireLiveApprove(d) {
   if (Date.parse(d.expires_at) <= Date.now()) throw new AdapterRefused(`decision expired at ${d.expires_at}`);
 }
 
-/** validate -> prep txs (approvals) -> simulate -> main tx -> verify. Returns the Execution. */
-export async function execute(adapter, decision, signer, pub, log = () => {}) {
+/**
+ * One click: validate -> build -> (validate + simulate, sign, confirm) per transaction -> verify.
+ * onStep({ i, n, label, phase }) drives the button ("Signing 1 of 2: approve WETH…").
+ * With a wallet that supports EIP-5792 atomic batches, the transactions go as one wallet_sendCalls.
+ * gas: { maxFeePerGas, maxPriorityFeePerGas } from the engine's derived ceiling, when given.
+ * Returns the Execution.
+ */
+export async function execute(adapter, decision, signer, pub, log = () => {}, { onStep = () => {}, gas = null, offset = 0, total = null } = {}) {
   await adapter.validate(decision);
   const txs = await adapter.buildTx(decision);
+  const n = total ?? txs.length;
+  if (signer.batch && txs.length > 1) return adapter.verify(await sendBatch(adapter, decision, signer, pub, txs, log, onStep, offset, n));
   let hash;
-  for (const tx of txs) {
-    if (!tx.prep) {
-      const sim = await adapter.simulate(decision);
-      log(`simulated: ${sim.summary}`);
-    }
-    log(`${tx.label} · sign`);
-    hash = await signer.client.writeContract(tx.request);
+  for (const [j, tx] of txs.entries()) {
+    const i = offset + j + 1;
+    // Re-check before every transaction: the decision can expire, or the chain move, between steps.
+    if (j > 0) await adapter.validate(decision);
+    if (!tx.prep) log(`simulated: ${(await adapter.simulate(decision)).summary}`);
+    onStep({ i, n, label: tx.label, phase: "sign" });
+    log(`${i} of ${n}: ${tx.label} · sign`);
+    hash = await signer.client.writeContract({ ...tx.request, ...(gas || {}) });
+    onStep({ i, n, label: tx.label, phase: "confirm" });
     const rc = await pub.waitForTransactionReceipt({ hash });
     if (rc.status !== "success") throw new Error(`${tx.label} reverted (${hash})`);
     log(`${tx.label} confirmed in block ${rc.blockNumber}`, "ok");
   }
   return adapter.verify(hash);
+}
+
+/** Does this wallet offer atomic batches (EIP-5792) on chainId? */
+export async function supportsBatch(provider, address, chainId) {
+  try {
+    const caps = await provider.request({ method: "wallet_getCapabilities", params: [address] });
+    const c = caps?.["0x" + chainId.toString(16)] || caps?.[chainId];
+    return Boolean(c?.atomicBatch?.supported || c?.atomic?.status === "supported" || c?.atomic?.status === "ready");
+  } catch { return false; }
+}
+
+async function sendBatch(adapter, decision, signer, pub, txs, log, onStep, offset, n) {
+  const { viem } = signer;
+  const main = txs.find((t) => !t.prep);
+  log(`simulated: ${(await adapter.simulate(decision)).summary}`);
+  const calls = txs.map((t) => ({ to: t.request.address, data: viem.encodeFunctionData(t.request), value: "0x0" }));
+  onStep({ i: offset + 1, n, label: `${txs.length} calls in one batch`, phase: "sign" });
+  log(`wallet_sendCalls · ${txs.map((t) => t.label).join(", ")}`);
+  const res = await signer.provider.request({ method: "wallet_sendCalls", params: [{
+    version: "1.0", chainId: "0x" + signer.chainId.toString(16), from: signer.address, atomicRequired: true, calls }] });
+  const id = typeof res === "string" ? res : res.id;
+  onStep({ i: offset + txs.length, n, label: main.label, phase: "confirm" });
+  for (;;) {
+    const st = await signer.provider.request({ method: "wallet_getCallsStatus", params: [id] });
+    const done = st.status === "CONFIRMED" || st.status === 200;
+    if (done) {
+      const receipts = st.receipts || [];
+      if (receipts.some((r) => r.status !== "0x1" && r.status !== "success")) throw new Error("batch reverted");
+      const last = receipts[receipts.length - 1];
+      log(`batch confirmed in block ${Number(last.blockNumber)}`, "ok");
+      await pub.waitForTransactionReceipt({ hash: last.transactionHash });
+      return last.transactionHash;
+    }
+    if (st.status >= 400) throw new Error(`batch failed (${st.status})`);
+    await new Promise((r) => setTimeout(r, 500));
+  }
 }
 
 // ── Aqua (PRD 3) ──────────────────────────────────────────────────────────
@@ -147,7 +193,9 @@ export function v4Adapter({ viem, pub, chainId, hook, A, signer, aquaCommitted =
 
   // The decision's trade: sell (or buy) q ETH through the pool; min-out from its quote, fee and tolerance.
   function trade(d) {
-    const m = d.inputs.request.market, tol = Number(d.inputs.request.tolerance), fee = Number(m.fee_rate);
+    // Slippage limit: the profile's derived tolerance (min(profile max, simulated impact + 5 bp)).
+    const m = d.inputs.request.market, fee = Number(m.fee_rate);
+    const tol = Number(d.inputs.profile?.slippage_tolerance ?? d.inputs.request.tolerance);
     const ethDelta = Number(d.inputs.proposed_position.params.trade_eth); // + buy ETH, - sell ETH
     const sell = ethDelta < 0, price = Number(m.quote.price);
     const amountIn = sell ? viem.parseUnits(Math.abs(ethDelta).toFixed(18), 18) : viem.parseUnits(Number(d.inputs.request.size).toFixed(6), 6);
@@ -207,7 +255,8 @@ export function v4Adapter({ viem, pub, chainId, hook, A, signer, aquaCommitted =
 }
 
 // ── Arc escrow (PRD 5) ────────────────────────────────────────────────────
-export function arcAdapter({ viem, arcPub, dep, usdc, stakeUnits, signer }) {
+// executed: the decision's trade is already verified, so funding it after its 30 s TTL is fine.
+export function arcAdapter({ viem, arcPub, dep, usdc, stakeUnits, signer, executed = false }) {
   const abi = viem.parseAbi([
     "function approve(address,uint256) returns (bool)",
     "function balanceOf(address) view returns (uint256)",
@@ -220,7 +269,8 @@ export function arcAdapter({ viem, arcPub, dep, usdc, stakeUnits, signer }) {
   return {
     name: "arc",
     async validate(d) {
-      requireLiveApprove(d);
+      if (executed) { if (d.verdict !== "APPROVE") throw new AdapterRefused(`decision is ${d.verdict}, not APPROVE`); }
+      else requireLiveApprove(d);
       if (!dep) throw new AdapterRefused("escrow not deployed on Arc");
       const [, , , status] = await arcPub.readContract({ address: dep.escrow, abi, functionName: "deposits", args: [keyOf(d)] });
       if (status !== 0) throw new AdapterRefused("this decision is already funded");
