@@ -65,6 +65,9 @@ class Store:
     def open_positions(self) -> list[dict]:
         return self._read("SELECT body FROM positions WHERE status = 'open' ORDER BY rowid")
 
+    def list_executions(self, limit: int = 100) -> list[dict]:
+        return self._read("SELECT body FROM executions ORDER BY rowid DESC LIMIT ?", (limit,))
+
     def executions_for_decision(self, decision_id: str) -> list[dict]:
         return self._read("SELECT body FROM executions WHERE decision_id = ? ORDER BY rowid", (decision_id,))
 

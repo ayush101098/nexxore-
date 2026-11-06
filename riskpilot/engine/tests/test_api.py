@@ -170,3 +170,11 @@ def test_evaluate_reads_holdings_for_a_wallet():
     assert wallets == [body["wallet"]]
     assert decision["inputs"]["request"]["holdings"] == {"weth": "1.0", "usdc": "0"}
     assert decision["risk_charge"] == "0.00"
+
+
+def test_executions_list(client):
+    decision = client.post("/evaluate", json=fixture_request("approve")).json()
+    client.post("/executions", json={"decision_id": decision["decision_id"], "chain_id": 31337, "tx_hash": TX,
+                                     "status": "confirmed", "verified_at": None, "settlement_tx": None})
+    [e] = client.get("/executions").json()
+    assert e["decision_id"] == decision["decision_id"] and e["tx_hash"] == TX

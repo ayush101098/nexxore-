@@ -142,7 +142,10 @@ def seed_requests(
         if spot is not None:
             for k in ("observed_price", "reference_price"):
                 r["opportunity"][k] = f"{spot:.2f}"
-            r["market"]["quote"].update(price=f"{spot:.2f}", mid=f"{spot:.2f}")
+            label = sources["spot"]
+            r["opportunity"]["source"] = label
+            # The maker quotes the curve at spot: no taker quote at size for a curve not yet shipped.
+            r["market"]["quote"].update(price=f"{spot:.2f}", mid=f"{spot:.2f}", source=f"{label} (curve priced at spot)")
             r["market"]["volatility"]["source"] = "stated: 55% implied volatility"
     if spot is not None and up:
         call["size"] = call["opportunity"]["size"] = f"{q * spot:.2f}"

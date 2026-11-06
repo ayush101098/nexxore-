@@ -11,6 +11,7 @@ import pydantic
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from decision import MODEL_VERSION, generate_execution_decision, iso, usd
 from demo import load_arc, load_curves, seed_requests
@@ -270,7 +271,8 @@ def create_app(
             info["hook"] = {**hook, "live": live}
         arc = load_arc()
         if arc is not None:
-            info["arc"] = arc
+            # The escrow stake is engine config (nothing is typed into the page).
+            info["arc"] = {**arc, "stake_usdc": os.environ.get("ARC_DEMO_STAKE_USDC", "5")}
         return info
 
     @app.post("/decisions/{decision_id}/replay")
@@ -324,9 +326,16 @@ def create_app(
         store.save_execution(execution)
         return execution
 
+    @app.get("/executions")
+    def get_executions(limit: int = 100) -> list[dict]:
+        return store.list_executions(limit)
+
     @app.get("/riskpilot", include_in_schema=False)
     def get_page() -> FileResponse:
         return FileResponse(PAGE, media_type="text/html")
+
+    # The page imports /riskpilot/web/adapters.js, the same path Vercel serves.
+    app.mount("/riskpilot/web", StaticFiles(directory=os.path.dirname(PAGE)), name="web")
 
     @app.get("/health")
     def health() -> dict:
