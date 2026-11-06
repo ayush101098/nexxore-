@@ -241,7 +241,9 @@ def create_app(
         curves = load_curves()
         if curves is None:
             raise HTTPException(404, "no demo/curves.json; run make demo-chain in contracts/aqua")
-        return curves
+        # Wei amounts exceed JS's safe-integer range: send them as strings.
+        big = lambda v: {k: big(x) for k, x in v.items()} if isinstance(v, dict) else (str(v) if isinstance(v, int) and abs(v) > 2**53 else v)
+        return big(curves)
 
     @app.post("/decisions/{decision_id}/replay")
     def post_replay(decision_id: str) -> dict:
