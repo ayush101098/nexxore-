@@ -294,7 +294,7 @@ contract AquaOptionsForkTest is Test, AquaCurves {
     }
 
     function test_DemoCurvesShipAndPriceInRange() public {
-        deal(WETH, maker, 2 ether);
+        deal(WETH, maker, 6 ether);
         deal(USDC, maker, 5_000e6);
         Curve memory up = upsideCurve(maker, DemoParams.SPOT, DemoParams.WIDTH_BPS, DemoParams.CALL_ETH, DemoParams.UPSIDE_FEE);
         Curve memory down =
@@ -304,7 +304,7 @@ contract AquaOptionsForkTest is Test, AquaCurves {
         assertEq(equivalentStrike(down.range) / 1e4, 3011_09, "downside K_eq 3,011.09");
         _shipChecked(up, down);
 
-        // Wider range, same 1 ETH: thinner liquidity, so probe with small sizes for the marginal price.
+        // Wide range: probe with small sizes for the marginal price.
         uint256 ask = _price(10e6, _quote(up.order, USDC, WETH, 10e6));
         uint256 bid = _price(_quote(down.order, WETH, USDC, 0.001 ether), 0.001 ether);
         assertApproxEqRel(ask, DemoParams.SPOT * (1e9 + DemoParams.UPSIDE_FEE) / 1e9, 0.002e18, "demo ask");

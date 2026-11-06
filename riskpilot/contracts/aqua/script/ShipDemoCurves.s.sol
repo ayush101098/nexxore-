@@ -9,8 +9,11 @@ import { AquaCollateral } from "../src/AquaCollateral.sol";
 import { AquaCurves } from "../src/AquaCurves.sol";
 import { DemoParams } from "../src/DemoParams.sol";
 
-/// @notice Ships both demo curves (w = 1.275) from MAKER_PRIVATE_KEY's wallet on the demo
-///         chain, after the per-token collateral check, and writes demo/curves.json.
+/// @notice Builds both demo curves (w = 1.275) for MAKER_PRIVATE_KEY's wallet and writes
+///         demo/curves.json (orders, strategy hashes, ranges, fees) for the /riskpilot page.
+///         SHIP=none (default) only writes the file: the page ships the approved curve when the
+///         user signs. SHIP=upside or SHIP=both ships from the command line instead, after the
+///         per-token collateral check.
 contract ShipDemoCurves is Script, AquaCurves {
     constructor() AquaCurves(DemoParams.AQUA, DemoParams.WETH, DemoParams.USDC) { }
 
@@ -23,20 +26,23 @@ contract ShipDemoCurves is Script, AquaCurves {
         Curve memory down =
             downsideCurve(maker, DemoParams.SPOT, DemoParams.WIDTH_BPS, DemoParams.PUT_USDC, DemoParams.DOWNSIDE_FEE);
 
-        vm.startBroadcast(pk);
-        IERC20(WETH).approve(DemoParams.AQUA, type(uint256).max);
-        IERC20(USDC).approve(DemoParams.AQUA, type(uint256).max);
-
-        // Refuse to ship if the two curves promise more of a token than the wallet can cover.
-        AquaCollateral.Shipment[] memory plan = new AquaCollateral.Shipment[](2);
-        plan[0] = AquaCollateral.Shipment(up.tokens, up.amounts);
-        plan[1] = AquaCollateral.Shipment(down.tokens, down.amounts);
-        AquaCollateral.check(plan, maker, DemoParams.AQUA);
-
-        bytes32 hUp = IAqua(DemoParams.AQUA).ship(DemoParams.ROUTER, abi.encode(up.order), up.tokens, up.amounts);
-        bytes32 hDown =
-            IAqua(DemoParams.AQUA).ship(DemoParams.ROUTER, abi.encode(down.order), down.tokens, down.amounts);
-        vm.stopBroadcast();
+        bytes32 hUp = keccak256(abi.encode(up.order)); // == router.hash(order) for Aqua orders
+        bytes32 hDown = keccak256(abi.encode(down.order));
+        string memory ship = vm.envOr("SHIP", string("none"));
+        bool both = keccak256(bytes(ship)) == keccak256("both");
+        if (both || keccak256(bytes(ship)) == keccak256("upside")) {
+            vm.startBroadcast(pk);
+            IERC20(WETH).approve(DemoParams.AQUA, type(uint256).max);
+            IERC20(USDC).approve(DemoParams.AQUA, type(uint256).max);
+            // Refuse to ship if the curves promise more of a token than the wallet can cover.
+            AquaCollateral.Shipment[] memory plan = new AquaCollateral.Shipment[](both ? 2 : 1);
+            plan[0] = AquaCollateral.Shipment(up.tokens, up.amounts);
+            if (both) plan[1] = AquaCollateral.Shipment(down.tokens, down.amounts);
+            AquaCollateral.check(plan, maker, DemoParams.AQUA);
+            IAqua(DemoParams.AQUA).ship(DemoParams.ROUTER, abi.encode(up.order), up.tokens, up.amounts);
+            if (both) IAqua(DemoParams.AQUA).ship(DemoParams.ROUTER, abi.encode(down.order), down.tokens, down.amounts);
+            vm.stopBroadcast();
+        }
 
         console.log("maker", maker);
         console.log("upside   strategy", vm.toString(hUp));

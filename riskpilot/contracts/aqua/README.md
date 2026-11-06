@@ -32,9 +32,13 @@ make demo-reset   # forget the saved demo state
    `script/find_usdc_holder.py` picks the ordinary wallet (not a contract) with
    the largest balance among recent USDC transfer counterparties at the pinned
    block.
-4. Run `script/ShipDemoCurves.s.sol`, which applies the collateral check, ships
-   both curves, and writes `demo/curves.json` (orders, strategy hashes,
-   ranges, fees).
+4. Run `script/ShipDemoCurves.s.sol` with `SHIP=none`. It writes
+   `demo/curves.json` (orders, strategy hashes, ranges, fees) and doesn't ship
+   anything: the `/riskpilot` page ships the approved call-like curve when the
+   user signs. `make demo-ship` ships it from the command line instead.
+
+The fork runs as chain ID 31337, so a browser wallet can't confuse it with
+mainnet. The maker holds 6 WETH, which covers the 5 ETH call-like curve.
 
 State is dumped to `demo/anvil-state.json` every 10 s and on Ctrl-C, and the
 next run reloads it with `--state`. If setup fails partway, the half-built
@@ -44,7 +48,7 @@ Demo curves (w = 1.275, `src/DemoParams.sol`):
 
 | Curve | Range | K_eq | T_eq @ 55% vol | Fee instruction (1e9 = 100%) |
 |---|---|---|---|---|
-| upside, call-like, 1 ETH | 3,400–4,335 | 3,839.14 | 6.99 d | **2,013,952** (0.2014% = engine f_min, rounded up) |
+| upside, call-like, 5 ETH | 3,400–4,335 | 3,839.14 | 6.99 d | **2,013,952** (0.2014% = engine f_min, rounded up) |
 | downside, put-like, 3,011.09 USDC | 2,666.67–3,400 | 3,011.09 | 6.99 d | **2,274,072** (0.2274%) |
 
 The fork test's own unit curves stay at w = 1.10, which is about a 1-day

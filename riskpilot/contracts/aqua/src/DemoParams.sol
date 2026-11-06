@@ -18,7 +18,8 @@ library DemoParams {
     // covered-call framing has a real answer to "what expiry?".
     uint256 internal constant SPOT = 3400e6; // USDC per ETH
     uint256 internal constant WIDTH_BPS = 12_750; // upside 3,400-4,335; downside 2,666.67-3,400
-    uint256 internal constant CALL_ETH = 1 ether;
+    // 5 ETH at m = 0.20 is the smallest call-like curve the Balanced profile approves (engine grid).
+    uint256 internal constant CALL_ETH = 5 ether;
     uint256 internal constant PUT_USDC = 3_011.09e6; // q * K_eq = 1 ETH * sqrt(2666.67 * 3400)
 
     // Fee instructions = engine f_min (Aqua premium rule, m = 0.20, vol 55%) rounded up,

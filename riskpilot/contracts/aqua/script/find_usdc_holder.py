@@ -15,7 +15,7 @@ import urllib.request
 USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
 TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"  # Transfer(address,address,uint256)
 BALANCE_OF = "0x70a08231"
-LOOKBACK = 20
+LOOKBACK = 9  # free-tier RPCs (Alchemy) cap eth_getLogs at a 10-block range
 MAX_CANDIDATES = 15
 
 
