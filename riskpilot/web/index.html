@@ -13,7 +13,7 @@
 :root {
   --bg: #060B12; --bg2: #0B1220; --surface: #0E1626; --surface2: #121D30;
   --border: rgba(138,180,255,0.12); --border-hi: rgba(57,213,255,0.30);
-  --cyan: #39D5FF; --green: #19E6C5; --violet: #4F7CFF; --gold: #F7B955; --red: #FF5C5C; --amber: #F7B955;
+  --cyan: #39D5FF; --green: #19E6C5; --gold: #F7B955; --red: #FF5C5C; --amber: #F7B955; --grey: #9AA7BA;
   --text: #F4F8FF; --text-muted: #9FB0C7; --text-dim: #6B7A93;
   /* chart series: validated on #0E1626 (dataviz validate_palette, dark) */
   --c-edge: #1E9AC4; --c-cost: #BC8330; --c-vol0: #0FA98F; --c-vol20: #9E74E3;
@@ -22,160 +22,158 @@
 }
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 html { -webkit-font-smoothing:antialiased; }
-body { background:var(--bg); color:var(--text); font-family:var(--body); font-size:14px; line-height:1.5; overflow-x:hidden; }
+body { background:var(--bg); color:var(--text); font-family:var(--body); font-size:14px; line-height:1.45; overflow-x:hidden; }
 a { color:var(--cyan); text-decoration:none; }
 button { font-family:var(--body); }
-.wrap { max-width:1400px; margin:0 auto; padding:16px; }
-.top { display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
-.top h1 { font-size:1rem; font-weight:700; letter-spacing:0.2px; }
-.tag { font-family:var(--mono); font-size:0.62rem; color:var(--text-muted); border:1px solid var(--border); padding:2px 8px; border-radius:2px; }
+.wrap { max-width:1440px; margin:0 auto; padding:10px 16px 16px; }
 
 /* status bar */
-.status { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:14px; }
-.st { background:var(--surface); padding:9px 12px; min-width:0; }
-.st .k { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; }
-.st .v { font-family:var(--mono); font-size:0.82rem; font-weight:600; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.st .s { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.unavail { color:var(--amber) !important; font-weight:500 !important; font-size:0.68rem !important; white-space:normal !important; }
+.status { display:flex; align-items:stretch; gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; flex-wrap:wrap; }
+.st { background:var(--surface); padding:6px 12px; flex:1 1 140px; min-width:0; }
+.st.wide { flex:2 1 260px; }
+.st.brand { flex:0 0 auto; display:flex; align-items:center; font-weight:700; font-size:0.95rem; padding:0 16px; }
+.st .k { font-family:var(--mono); font-size:0.56rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; }
+.st .v { font-family:var(--mono); font-size:0.78rem; font-weight:600; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.unavail { color:var(--amber) !important; font-weight:500 !important; font-size:0.68rem !important; white-space:normal !important; font-family:var(--body); }
 [data-src] { cursor:help; }
 
 /* layout */
-.row { display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); gap:14px; margin-bottom:14px; }
+.row { display:grid; grid-template-columns:minmax(0,3fr) minmax(0,2fr); gap:10px; margin-bottom:10px; }
 .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); min-width:0; }
-.card-h { padding:10px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; justify-content:space-between; flex-wrap:wrap; }
-.card-h h2 { font-size:0.8rem; font-weight:600; }
-.card-h .note { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); }
-.card-b { padding:12px 14px; }
-.sub { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; margin:14px 0 6px; }
-.sub:first-child { margin-top:0; }
+.card-h { padding:8px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; justify-content:space-between; flex-wrap:wrap; }
+.card-h h2 { font-size:0.78rem; font-weight:600; }
+.card-h .note { font-family:var(--mono); font-size:0.56rem; color:var(--text-dim); }
+.card-b { padding:10px 12px; }
+.sub { font-family:var(--mono); font-size:0.56rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; margin:10px 0 4px; }
 
 /* tables */
 .tscroll { overflow-x:auto; }
-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:0.68rem; }
-th { text-align:left; font-weight:500; font-size:0.56rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; padding:6px 8px; border-bottom:1px solid var(--border); white-space:nowrap; }
-td { padding:8px; border-bottom:1px solid var(--border); vertical-align:top; }
+table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:0.66rem; }
+th { text-align:left; font-weight:500; font-size:0.54rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; padding:5px 7px; border-bottom:1px solid var(--border); white-space:nowrap; }
+td { padding:7px; border-bottom:1px solid var(--border); vertical-align:top; }
 td.num, th.num { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
 tbody tr.pick { cursor:pointer; }
 tbody tr.pick:hover td { background:var(--surface2); }
 tbody tr.sel td { background:rgba(57,213,255,0.06); }
 tbody tr.sel td:first-child { box-shadow:inset 2px 0 0 var(--cyan); }
-.muted { color:var(--text-muted); }
-.dim { color:var(--text-dim); }
+.small { font-size:0.56rem; color:var(--text-dim); }
 
-.pill { font-family:var(--mono); font-size:0.56rem; font-weight:700; padding:2px 7px; border-radius:2px; white-space:nowrap; }
+.pill { font-family:var(--mono); font-size:0.54rem; font-weight:700; padding:2px 6px; border-radius:2px; white-space:nowrap; }
 .pill.APPROVE { background:rgba(25,230,197,0.12); color:var(--green); }
 .pill.REJECT { background:rgba(255,92,92,0.12); color:var(--red); }
-.pill.REQUOTE { background:rgba(247,185,85,0.12); color:var(--gold); }
-.pill.REQUIRE_REVIEW { background:rgba(79,124,255,0.14); color:#9DB4FF; }
+.pill.REQUOTE { background:rgba(247,185,85,0.12); color:var(--amber); }
+.pill.REQUIRE_REVIEW { background:rgba(154,167,186,0.14); color:var(--grey); }
+.pill.SHIPPED { background:rgba(25,230,197,0.12); color:var(--green); }
+.pill.NOT_SHIPPED { background:rgba(154,167,186,0.14); color:var(--grey); }
 
 /* decision panel */
-.dec-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-.dec-id { font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); }
-.reason { font-size:0.82rem; margin:8px 0 2px; line-height:1.45; }
-.cells { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:6px; }
-.cell { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:7px 9px; }
-.cell .k { font-family:var(--mono); font-size:0.54rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.3px; }
-.cell .v { font-family:var(--mono); font-size:0.8rem; font-weight:600; margin-top:1px; }
+.dec-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.dec-id { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); }
+.reason { font-size:0.76rem; margin:5px 0 0; line-height:1.4; }
+.act { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:8px; }
+.btn { padding:7px 14px; border:none; border-radius:var(--radius); background:var(--green); color:#04120F; font-size:0.72rem; font-weight:700; cursor:pointer; }
+.btn:disabled { background:var(--surface2); color:var(--text-dim); cursor:not-allowed; }
+.btn.ghost { background:none; border:1px solid var(--border); color:var(--text-muted); font-weight:500; }
+.btn.ghost:hover { border-color:var(--cyan); color:var(--cyan); }
+.btn.sm { padding:2px 8px; font-size:0.6rem; }
+.countdown { font-family:var(--mono); font-size:0.66rem; color:var(--text-muted); }
+.log { font-family:var(--mono); font-size:0.58rem; color:var(--text-muted); margin-top:5px; line-height:1.6; max-height:64px; overflow-y:auto; }
+.log .ok { color:var(--green); } .log .bad { color:var(--red); }
+.cells { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:5px; }
+.cells.c4 { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.cells.aq { grid-template-columns:minmax(0,1.7fr) repeat(5,minmax(0,1fr)); }
+.cells.c2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.cell { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:5px 7px; min-width:0; }
+.cell .k { font-family:var(--mono); font-size:0.5rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; }
+.cell .v { font-family:var(--mono); font-size:0.72rem; font-weight:600; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.inputs { font-family:var(--mono); font-size:0.56rem; color:var(--text-dim); line-height:1.55; }
 .chart { width:100%; display:block; }
 .chart text { font-family:var(--mono); font-size:10px; fill:var(--text-muted); }
 .chart .axis { stroke:var(--grid); stroke-width:1; }
 .chart .ref { stroke:var(--text-muted); stroke-width:1.5; }
-.chart .hit { fill:transparent; cursor:default; }
-.legend { display:flex; gap:14px; flex-wrap:wrap; font-family:var(--mono); font-size:0.6rem; color:var(--text-muted); margin-top:4px; }
-.legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
-.legend i.line { height:2px; width:14px; vertical-align:3px; background:var(--text-muted); }
-details { margin-top:6px; }
-summary { font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); cursor:pointer; }
+.chart .hit { fill:transparent; }
+.legend { display:flex; gap:12px; flex-wrap:wrap; font-family:var(--mono); font-size:0.56rem; color:var(--text-muted); margin-top:2px; }
+.legend i { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; vertical-align:-1px; }
+.legend i.line { height:2px; width:13px; vertical-align:3px; background:var(--text-muted); }
+details summary { font-family:var(--mono); font-size:0.56rem; color:var(--text-dim); cursor:pointer; margin-top:3px; }
 
-.act { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px; padding-top:12px; border-top:1px solid var(--border); }
-.btn { padding:8px 16px; border:none; border-radius:var(--radius); background:var(--green); color:#04120F; font-size:0.74rem; font-weight:700; cursor:pointer; }
-.btn:disabled { background:var(--surface2); color:var(--text-dim); cursor:not-allowed; }
-.btn.ghost { background:none; border:1px solid var(--border); color:var(--text-muted); font-weight:500; }
-.btn.ghost:hover { border-color:var(--cyan); color:var(--cyan); }
-.btn.sm { padding:3px 9px; font-size:0.62rem; }
-.countdown { font-family:var(--mono); font-size:0.7rem; color:var(--text-muted); }
-.signer { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); width:100%; }
-.log { font-family:var(--mono); font-size:0.62rem; color:var(--text-muted); margin-top:8px; line-height:1.7; }
-.log .ok { color:var(--green); } .log .bad { color:var(--red); }
-.hash { font-family:var(--mono); font-size:0.62rem; color:var(--text-muted); }
-
-.pos-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:14px; }
-.curve { padding:10px 0; border-bottom:1px solid var(--border); }
+.pos-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:10px; }
+.curve { padding:7px 0; border-bottom:1px solid var(--border); }
 .curve:last-child { border-bottom:none; }
-.curve-t { font-size:0.74rem; font-weight:600; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.curve-t { font-size:0.7rem; font-weight:600; display:flex; gap:7px; align-items:center; flex-wrap:wrap; }
+.hash { font-family:var(--mono); font-size:0.6rem; color:var(--text-muted); margin-top:4px; }
 
-#tip { position:fixed; z-index:50; pointer-events:none; background:var(--surface2); border:1px solid var(--border-hi); border-radius:var(--radius); padding:6px 9px; font-family:var(--mono); font-size:0.62rem; color:var(--text); line-height:1.6; display:none; max-width:280px; }
+#tip { position:fixed; z-index:50; pointer-events:none; background:var(--surface2); border:1px solid var(--border-hi); border-radius:var(--radius); padding:6px 9px; font-family:var(--mono); font-size:0.6rem; color:var(--text); line-height:1.6; display:none; max-width:300px; white-space:pre-line; }
 
-@media (max-width:1100px) { .row { grid-template-columns:1fr; } .pos-grid { grid-template-columns:1fr; } }
+@media (max-width:1100px) { .row, .pos-grid { grid-template-columns:1fr; } .cells { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="top">
-    <h1>RiskPilot</h1>
-    <span class="tag" id="tagChain">demo chain</span>
-    <span class="tag">ETH/USDC</span>
-  </div>
-
   <div class="status" id="status"></div>
 
   <div class="row">
     <div class="card">
-      <div class="card-h"><h2>Opportunities</h2><span class="note" id="oppNote">—</span></div>
+      <div class="card-h"><h2>Opportunities</h2><span class="note" id="oppNote"></span></div>
       <div class="card-b tscroll" id="opps"></div>
     </div>
     <div class="card">
-      <div class="card-h"><h2>Decision</h2><span class="note" id="decNote">—</span></div>
+      <div class="card-h"><h2>Decision</h2><span class="note" id="decNote"></span></div>
       <div class="card-b" id="decision"></div>
     </div>
   </div>
 
   <div class="pos-grid">
     <div class="card">
-      <div class="card-h"><h2>Aqua curves</h2><span class="note">1inch AquaSwapVMRouter v1.0.2</span></div>
+      <div class="card-h"><h2>Aqua curves</h2><span class="note">AquaSwapVMRouter v1.0.2</span></div>
       <div class="card-b" id="aqua"></div>
     </div>
     <div class="card">
-      <div class="card-h"><h2>v4 hook fee</h2><span class="note">vs flat 0.30%</span></div>
+      <div class="card-h"><h2>v4 hook</h2><span class="note">VolatilityFeeHook</span></div>
       <div class="card-b" id="hook"></div>
     </div>
     <div class="card">
-      <div class="card-h"><h2>Arc settlement</h2><span class="note">USDC escrow</span></div>
+      <div class="card-h"><h2>Arc</h2><span class="note">RiskPilotEscrow</span></div>
       <div class="card-b" id="arc"></div>
     </div>
   </div>
 
   <div class="card">
-    <div class="card-h"><h2>Decision history</h2><span class="note">replay re-runs the engine on the recorded inputs</span></div>
+    <div class="card-h"><h2>Decision history</h2><span class="note">Replay re-runs the stored inputs</span></div>
     <div class="card-b tscroll" id="history"></div>
   </div>
 </div>
 <div id="tip"></div>
 
 <script type="module">
+import { execute, aquaAdapter, v4Adapter, arcAdapter } from "/riskpilot/web/adapters.js";
+
 // ── config ────────────────────────────────────────────────────────────────
 const qs = new URLSearchParams(location.search);
 const ENGINE = qs.get("engine") || (location.port === "8000" ? location.origin : "http://localhost:8000");
 const RPC = qs.get("rpc") || "http://127.0.0.1:8545";
 const CHAIN_ID = 31337;
+const ARC = { id: 5042002, rpc: qs.get("arcRpc") || "https://rpc.testnet.arc.io", explorer: "https://explorer.testnet.arc.io",
+  usdc: "0x3600000000000000000000000000000000000000" };
 const A = {
   AQUA: "0x1111113CCf1426A8E30e2bfF5E005d929bF6a90a",
   ROUTER: "0x111111338c5091E8440b67B168bAe16a668AC0De",
   WETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
   USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
 };
-// Anvil's account #0 (public key from the standard test mnemonic). Used only when no
-// browser wallet is connected to chain 31337; it signs locally, on your click.
+// Anvil account #0 (public test key) signs on the demo chain only when no browser wallet is on 31337.
 const DEMO_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+const HEARTBEAT_MS = 5000;
 
-const S = { profiles: null, info: null, seed: null, sel: 0, history: [], chain: null, signer: null, log: [], live: {} };
+const S = { up: { engine: false, chain: false }, health: null, profiles: null, info: null, seed: null, sel: 0,
+  history: [], executions: [], chain: null, signer: null, log: [], at: {} };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const now = () => new Date().toISOString().replace(/\.\d+Z$/, "Z");
+const ts = (iso) => (iso ? String(iso).replace("T", " ").replace(/\.\d+Z$/, "Z") : "");
 const usd = (v) => { const n = Number(v); return (n < 0 ? "−$" : "$") + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
 const num = (v, d = 2) => Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
-const ts = (iso) => iso ? String(iso).replace("T", " ").replace(/\.\d+Z$/, "Z") : "—";
-const short = (h) => h ? h.slice(0, 6) + "…" + h.slice(-4) : "—";
+const short = (h) => (h ? h.slice(0, 6) + "…" + h.slice(-4) : "");
 const src = (source, at) => `data-src="${esc(`source: ${source}\nat: ${at || now()}`)}"`;
 const unavailable = (name) => `<span class="unavail">Source unavailable: ${esc(name)}</span>`;
 
@@ -185,7 +183,7 @@ async function engine(path, opts = {}) {
   return r.json();
 }
 
-// ── viem (chain reads + signing) ─────────────────────────────────────────
+// ── viem ──────────────────────────────────────────────────────────────────
 let V = null;
 async function loadViem() {
   const [viem, chains, accounts] = await Promise.all([
@@ -194,467 +192,409 @@ async function loadViem() {
     import("https://cdn.jsdelivr.net/npm/viem@2.21.0/accounts/+esm"),
   ]);
   const chain = { ...chains.foundry, rpcUrls: { default: { http: [RPC] } } };
-  const pub = viem.createPublicClient({ chain, transport: viem.http(RPC) });
-  const abi = viem.parseAbi([
-    "function balanceOf(address) view returns (uint256)",
-    "function allowance(address,address) view returns (uint256)",
-    "function approve(address,uint256) returns (bool)",
-    "function rawBalances(address maker, address app, bytes32 strategyHash, address token) view returns (uint248, uint8)",
-    "function ship(address app, bytes strategy, address[] tokens, uint256[] amounts) returns (bytes32)",
-  ]);
-  const events = {
-    shipped: viem.parseAbiItem("event Shipped(address maker, address app, bytes32 strategyHash, bytes strategy)"),
-    swapped: viem.parseAbiItem("event Swapped(bytes32 orderHash, address maker, address taker, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut)"),
-    feeUpdated: viem.parseAbiItem("event FeeUpdated(bytes32 indexed poolId, uint256 sigma, uint24 fee)"),
-  };
-  V = { viem, chain, pub, abi, events, accounts };
+  const arcChain = viem.defineChain({ id: ARC.id, name: "Arc Testnet", nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 }, rpcUrls: { default: { http: [ARC.rpc] } } });
+  V = { viem, chain, arcChain, accounts,
+    pub: viem.createPublicClient({ chain, transport: viem.http(RPC) }),
+    arcPub: viem.createPublicClient({ chain: arcChain, transport: viem.http(ARC.rpc) }),
+    erc20: viem.parseAbi(["function balanceOf(address) view returns (uint256)"]),
+    events: {
+      shipped: viem.parseAbiItem("event Shipped(address maker, address app, bytes32 strategyHash, bytes strategy)"),
+      swapped: viem.parseAbiItem("event Swapped(bytes32 orderHash, address maker, address taker, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut)"),
+      feeUpdated: viem.parseAbiItem("event FeeUpdated(bytes32 indexed poolId, uint256 sigma, uint24 fee)"),
+      funded: viem.parseAbiItem("event Funded(bytes32 indexed decisionId, address indexed depositor, uint256 amount)"),
+      settled: viem.parseAbiItem("event Settled(bytes32 indexed decisionId, address indexed depositor, uint256 amount, uint256 payout, uint256 reserve)"),
+    } };
 }
 
-async function readChain() {
-  const maker = S.info?.maker;
-  const [block, chainId] = await Promise.all([V.pub.getBlockNumber(), V.pub.getChainId()]);
-  const out = { block, chainId, at: now() };
-  if (maker) {
-    const bal = (t) => V.pub.readContract({ address: t, abi: V.abi, functionName: "balanceOf", args: [maker] });
-    [out.weth, out.usdc] = await Promise.all([bal(A.WETH), bal(A.USDC)]);
-  }
-  return out;
-}
-
-async function getSigner() {
+async function demoSigner() {
   if (window.ethereum) {
     try {
-      const id = parseInt(await window.ethereum.request({ method: "eth_chainId" }), 16);
-      if (id === CHAIN_ID) {
-        const [addr] = await window.ethereum.request({ method: "eth_requestAccounts" });
-        return { kind: "browser wallet", address: addr,
-          client: V.viem.createWalletClient({ account: addr, chain: V.chain, transport: V.viem.custom(window.ethereum) }) };
+      if (parseInt(await window.ethereum.request({ method: "eth_chainId" }), 16) === CHAIN_ID) {
+        const [address] = await window.ethereum.request({ method: "eth_requestAccounts" });
+        return { kind: "browser wallet", address, client: V.viem.createWalletClient({ account: address, chain: V.chain, transport: V.viem.custom(window.ethereum) }) };
       }
-    } catch { /* fall through to the demo signer */ }
+    } catch { /* use the demo key */ }
   }
   const account = V.accounts.privateKeyToAccount(DEMO_KEY);
-  return { kind: "demo signer: Anvil account #0 (public test key), signs in this browser", address: account.address,
-    client: V.viem.createWalletClient({ account, chain: V.chain, transport: V.viem.http(RPC) }) };
+  return { kind: "Anvil #0 (public test key)", address: account.address, client: V.viem.createWalletClient({ account, chain: V.chain, transport: V.viem.http(RPC) }) };
+}
+
+async function arcSigner() {
+  if (!window.ethereum) throw new Error("no browser wallet for Arc testnet");
+  await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x" + ARC.id.toString(16) }] });
+  const [address] = await window.ethereum.request({ method: "eth_requestAccounts" });
+  return { kind: "browser wallet", address, client: V.viem.createWalletClient({ account: address, chain: V.arcChain, transport: V.viem.custom(window.ethereum) }) };
 }
 
 // ── status bar ────────────────────────────────────────────────────────────
-function renderStatus(errs = {}) {
+function renderStatus() {
   const c = S.chain, p = S.profiles?.balanced, info = S.info;
-  const cell = (k, v, s = "") => `<div class="st"><div class="k">${k}</div><div class="v">${v}</div>${s ? `<div class="s">${s}</div>` : ""}</div>`;
-  const parts = [];
-  parts.push(cell("Fork block", info ? `<span ${src("demo/curves.json via engine", S.infoAt)}>${Number(info.fork_block).toLocaleString()}</span>` : unavailable(errs.info || "demo/curves.json"),
-    c ? `<span ${src("eth_blockNumber " + RPC, c.at)}>head ${c.block.toLocaleString()} · chain ${c.chainId}</span>` : (errs.chain ? `<span class="unavail">chain: ${esc(errs.chain)}</span>` : "")));
-  parts.push(cell("Wallet", info ? `<span ${src("demo/curves.json maker", S.infoAt)}>${short(info.maker)}</span>` : unavailable("wallet"), S.signer ? esc(S.signer.kind.split(":")[0]) : ""));
-  const tok = (raw, dec, unit, d) => c && raw !== undefined
-    ? `<span ${src(`balanceOf ${unit} · ${RPC}`, c.at)}>${num(Number(raw) / 10 ** dec, d)} ${unit}</span>` : unavailable("demo chain");
-  parts.push(cell("WETH held", tok(c?.weth, 18, "WETH", 4)));
-  parts.push(cell("USDC held", tok(c?.usdc, 6, "USDC", 2)));
-  parts.push(cell("Profile", p ? `<span ${src("engine GET /profiles", S.profilesAt)}>Balanced · ${usd(p.budget)} budget</span>` : unavailable(errs.engine || "engine"),
-    p ? `λ ${p.lambda} · min edge ${usd(p.min_edge)} · k ${p.k}` : ""));
-  parts.push(cell("Engine", S.profiles ? `<span ${src("engine " + ENGINE, S.profilesAt)}>connected</span>` : unavailable(errs.engine || "engine"), esc(ENGINE)));
-  $("status").innerHTML = parts.join("");
-  $("tagChain").textContent = c ? `demo chain · Ethereum mainnet fork @ ${info ? Number(info.fork_block).toLocaleString() : "?"}` : "demo chain";
+  const cell = (k, v, cls = "") => `<div class="st ${cls}"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  const tok = (raw, dec, unit, d) => (c && raw !== undefined ? `<span ${src(`balanceOf ${unit} · ${RPC}`, c.at)}>${num(Number(raw) / 10 ** dec, d)} ${unit}</span>` : unavailable("demo chain"));
+  $("status").innerHTML = [
+    `<div class="st brand">RiskPilot</div>`,
+    cell("Chain", c && info ? `<span ${src("eth_chainId, eth_blockNumber · " + RPC + "; fork block from demo/curves.json", c.at)}>Ethereum mainnet fork · block ${Number(info.fork_block).toLocaleString()}</span>` : unavailable("demo chain"), "wide"),
+    cell("Wallet", info ? `<span ${src("demo/curves.json maker", S.at.info)}>${short(info.maker)}</span>` : unavailable("engine")),
+    cell("WETH", tok(c?.weth, 18, "WETH", 4)),
+    cell("USDC", tok(c?.usdc, 6, "USDC", 2)),
+    cell("Profile", p ? `<span ${src("engine GET /profiles", S.at.profiles)}>Balanced · ${usd(p.budget)}</span>` : unavailable("engine")),
+    cell("Engine", S.up.engine && S.health ? `<span ${src("engine GET /health · " + ENGINE, S.at.health)}>${esc(S.health.model_version)}</span>` : unavailable("engine " + ENGINE)),
+  ].join("");
+  bindTips($("status"));
 }
 
 // ── opportunities ────────────────────────────────────────────────────────
+const age = (iso) => Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));
 function renderOpps() {
-  if (!S.seed) { $("opps").innerHTML = unavailable(S.seedErr || "engine POST /demo/seed"); return; }
+  if (!S.up.engine || !S.seed) { $("opps").innerHTML = unavailable(S.seedErr || "engine " + ENGINE); $("oppNote").textContent = ""; return; }
   const rows = S.seed.items.map((it, i) => {
-    const o = it.opportunity, d = it.decision;
-    return `<tr class="pick ${i === S.sel ? "sel" : ""}" data-i="${i}" tabindex="0" ${src("engine POST /demo/seed · " + o.source, d.created_at)}>
-      <td>${esc(it.label)}<div class="dim" style="font-size:0.58rem">${esc(o.type)} · ${esc(o.source_venue)}</div></td>
-      <td class="num">${usd(o.observed_price)}<div class="dim" style="font-size:0.58rem">ref ${usd(o.reference_price)}</div></td>
-      <td class="num">${usd(o.size)}</td>
-      <td class="num">${usd(d.net_edge)}</td>
-      <td><span class="pill ${d.verdict}">${d.verdict}</span></td></tr>`;
+    const o = it.opportunity, d = it.decision, s = src(`engine POST /demo/seed · ${o.source}`, d.created_at);
+    return `<tr class="pick ${i === S.sel ? "sel" : ""}" data-i="${i}" tabindex="0">
+      <td ${s}>${esc(o.type)} · ${esc(o.pair)}<div class="small">${esc(o.source_venue)} → ${esc(o.target)}</div></td>
+      <td class="num" ${s}>${usd(o.observed_price)}<div class="small">ref ${usd(o.reference_price)}</div></td>
+      <td class="num" ${s}>${usd(o.size)}</td>
+      <td class="num" ${s}>${usd(d.gross_edge)}</td>
+      <td class="num" ${s}>${usd(d.net_edge)}</td>
+      <td><span class="pill ${d.verdict}">${d.verdict}</span></td>
+      <td class="num" data-age="${o.observed_at}" ${src("now − opportunity.observed_at", o.observed_at)}>${age(o.observed_at)} s</td></tr>`;
   }).join("");
-  $("opps").innerHTML = `<table><thead><tr><th>Opportunity</th><th class="num">Observed</th><th class="num">Size</th><th class="num">Net edge</th><th>Verdict</th></tr></thead><tbody>${rows}</tbody></table>`;
+  $("opps").innerHTML = `<table><thead><tr><th>Type · pair</th><th class="num">Observed</th><th class="num">Size</th><th class="num">Gross</th><th class="num">Net</th><th>Verdict</th><th class="num">Age</th></tr></thead><tbody>${rows}</tbody></table>`;
   $("oppNote").textContent = `seeded ${ts(S.seed.as_of)}`;
   document.querySelectorAll("#opps tr.pick").forEach((tr) => {
-    const go = () => { S.sel = Number(tr.dataset.i); renderOpps(); renderDecision(); };
+    const go = () => { S.sel = Number(tr.dataset.i); renderOpps(); renderDecision(); renderArc(); };
     tr.addEventListener("click", go);
     tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
   });
+  bindTips($("opps"));
 }
 
 // ── charts ────────────────────────────────────────────────────────────────
 const tip = $("tip");
 function bindTips(root) {
-  root.querySelectorAll("[data-tip]").forEach((el) => {
+  root.querySelectorAll("[data-tip],[data-src]").forEach((el) => {
     el.addEventListener("mousemove", (e) => {
-      tip.innerHTML = el.dataset.tip; tip.style.display = "block";
-      const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8);
-      tip.style.left = x + "px"; tip.style.top = (e.clientY + 14) + "px";
+      tip.innerHTML = el.dataset.tip || esc(el.dataset.src); tip.style.display = "block";
+      tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + "px"; tip.style.top = (e.clientY + 14) + "px";
     });
     el.addEventListener("mouseleave", () => { tip.style.display = "none"; });
   });
 }
 const niceStep = (span) => { const raw = span / 4, p = 10 ** Math.floor(Math.log10(raw || 1)); return [1, 2, 2.5, 5, 10].map((m) => m * p).find((s) => s >= raw); };
 
-// Horizontal waterfall: gross, then each cost as a floating bar down from the running total, then net.
 function waterfall(d) {
-  const label = d.inputs.aqua ? "Premium" : "Gross edge";
-  const steps = [{ k: label, v: +d.gross_edge, kind: "edge" }];
+  const steps = [{ k: d.inputs.aqua ? "Premium" : "Gross edge", v: +d.gross_edge, kind: "edge" }];
   for (const [k, v] of Object.entries(d.costs)) steps.push({ k: k[0].toUpperCase() + k.slice(1), v: -v, kind: "cost" });
   steps.push({ k: "Risk charge", v: -d.risk_charge, kind: "cost" });
   let run = 0;
   const bars = steps.map((s) => { const a = run; run += s.v; return { ...s, a, b: run }; });
   bars.push({ k: "Net edge", v: +d.net_edge, kind: "edge", a: 0, b: +d.net_edge, net: true });
-  const hurdle = +d.inputs.hurdle;
-  const vals = bars.flatMap((b) => [b.a, b.b]).concat([0, hurdle]);
+  const hurdle = +d.inputs.hurdle, vals = bars.flatMap((b) => [b.a, b.b]).concat([0, hurdle]);
   let lo = Math.min(...vals), hi = Math.max(...vals);
   const step = niceStep(hi - lo || 1); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
-  const W = 680, L = 92, R = 60, rowH = 24, barH = 14, top = 20, H = top + bars.length * rowH + 22;
+  const W = 560, L = 84, R = 62, rowH = 17, barH = 11, top = 14, H = top + bars.length * rowH + 16;
   const x = (v) => L + ((v - lo) / (hi - lo)) * (W - L - R);
   let g = "";
-  for (let t = lo; t <= hi + 1e-9; t += step) g += `<line class="axis" x1="${x(t)}" x2="${x(t)}" y1="${top}" y2="${H - 18}"/><text x="${x(t)}" y="${H - 5}" text-anchor="middle">${t < 0 ? "−" : ""}$${Math.abs(t).toLocaleString()}</text>`;
+  for (let t = lo; t <= hi + 1e-9; t += step) g += `<line class="axis" x1="${x(t)}" x2="${x(t)}" y1="${top}" y2="${H - 14}"/><text x="${x(t)}" y="${H - 3}" text-anchor="middle">${t < 0 ? "−" : ""}$${Math.abs(t).toLocaleString()}</text>`;
   bars.forEach((b, i) => {
     const y = top + i * rowH + (rowH - barH) / 2, x0 = x(Math.min(b.a, b.b)), w = Math.max(1, Math.abs(x(b.b) - x(b.a)));
-    const fill = b.kind === "edge" ? "var(--c-edge)" : "var(--c-cost)";
-    const valX = x(Math.max(b.a, b.b)) + 6;
-    g += `<text x="${L - 8}" y="${y + barH - 3}" text-anchor="end" style="fill:var(--text)">${b.k}</text>`;
-    if (Math.abs(b.v) > 0) g += `<rect x="${x0}" y="${y}" width="${w}" height="${barH}" rx="3" fill="${fill}"/>`;
-    g += `<text x="${Math.min(valX, W - 4)}" y="${y + barH - 3}" text-anchor="${valX > W - R ? "end" : "start"}">${b.net ? usd(b.v) : (b.v < 0 ? "−" : "") + usd(Math.abs(b.v))}</text>`;
+    const valX = x(Math.max(b.a, b.b)) + 5;
+    g += `<text x="${L - 7}" y="${y + barH - 2}" text-anchor="end" style="fill:var(--text)">${b.k}</text>`;
+    if (Math.abs(b.v) > 0) g += `<rect x="${x0}" y="${y}" width="${w}" height="${barH}" rx="3" fill="var(--c-${b.kind === "edge" ? "edge" : "cost"})"/>`;
+    g += `<text x="${Math.min(valX, W - 3)}" y="${y + barH - 2}" text-anchor="${valX > W - R ? "end" : "start"}">${b.net ? usd(b.v) : (b.v < 0 ? "−" : "") + usd(Math.abs(b.v))}</text>`;
     g += `<rect class="hit" x="0" y="${top + i * rowH}" width="${W}" height="${rowH}" data-tip="${esc(`${b.k}: ${usd(b.v)}${b.net ? `<br>hurdle ${usd(hurdle)}` : ""}`)}"/>`;
   });
-  g += `<line class="ref" x1="${x(hurdle)}" x2="${x(hurdle)}" y1="${top - 4}" y2="${H - 18}"/><text x="${x(hurdle)}" y="${top - 8}" text-anchor="middle" style="fill:var(--text)">hurdle ${usd(hurdle)}</text>`;
+  g += `<line class="ref" x1="${x(hurdle)}" x2="${x(hurdle)}" y1="${top - 3}" y2="${H - 14}"/><text x="${x(hurdle)}" y="${top - 5}" text-anchor="middle" style="fill:var(--text)">hurdle ${usd(hurdle)}</text>`;
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Cost waterfall from gross edge to net edge">${g}</svg>
-    <div class="legend"><span><i style="background:var(--c-edge)"></i>edge</span><span><i style="background:var(--c-cost)"></i>cost</span><span><i class="line"></i>hurdle = max(min edge, k × uncertainty)</span></div>`;
+    <div class="legend"><span><i style="background:var(--c-edge)"></i>edge</span><span><i style="background:var(--c-cost)"></i>cost</span><span><i class="line"></i>hurdle</span></div>`;
 }
 
-// Columns: post-trade P&L per spot shock, two vol series, with the budget as a loss floor.
 function stressChart(d) {
   const grid = d.inputs.stress_grid || [];
-  if (!grid.length) return `<div class="dim" style="font-size:0.7rem">No stress grid: the decision stopped before pricing.</div>`;
-  const budget = +d.budget, spots = [...new Set(grid.map((s) => s.spot_shock))];
-  const at = (sp, vo) => grid.find((s) => s.spot_shock === sp && s.vol_shock === vo);
-  const vals = grid.flatMap((s) => [+s.pnl_after]).concat([0, -budget]);
+  if (!grid.length) return `<div class="small">No stress grid: the decision stopped before pricing.</div>`;
+  const budget = +d.budget, spots = [...new Set(grid.map((s) => s.spot_shock))], at = (sp, vo) => grid.find((s) => s.spot_shock === sp && s.vol_shock === vo);
+  const vals = grid.map((s) => +s.pnl_after).concat([0, -budget]);
   let lo = Math.min(...vals), hi = Math.max(...vals);
   const step = niceStep(hi - lo || 1); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
-  const W = 680, L = 56, R = 8, top = 8, H = 210, bot = 26, gw = (W - L - R) / spots.length, bw = Math.min(16, gw / 2 - 4);
-  const y = (v) => top + ((hi - v) / (hi - lo)) * (H - top - bot);
-  const tk = (v) => (Math.abs(v) >= 1000 ? `${(v / 1000).toLocaleString()}K` : v.toLocaleString());
+  const W = 560, L = 50, R = 6, top = 6, H = 128, bot = 18, gw = (W - L - R) / spots.length, bw = Math.min(14, gw / 2 - 4);
+  const y = (v) => top + ((hi - v) / (hi - lo)) * (H - top - bot), tk = (v) => (Math.abs(v) >= 1000 ? `${(v / 1000).toLocaleString()}K` : v.toLocaleString());
   let g = "";
-  for (let t = lo; t <= hi + 1e-9; t += step) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 6}" y="${y(t) + 3}" text-anchor="end">${t < 0 ? "−" : ""}$${tk(Math.abs(t))}</text>`;
+  for (let t = lo; t <= hi + 1e-9; t += step) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 5}" y="${y(t) + 3}" text-anchor="end">${t < 0 ? "−" : ""}$${tk(Math.abs(t))}</text>`;
   spots.forEach((sp, i) => {
     const cx = L + gw * i + gw / 2;
-    g += `<text x="${cx}" y="${H - 8}" text-anchor="middle">${(+sp > 0 ? "+" : "") + Math.round(+sp * 100)}%</text>`;
+    g += `<text x="${cx}" y="${H - 4}" text-anchor="middle">${(+sp > 0 ? "+" : "") + Math.round(+sp * 100)}%</text>`;
     ["0.00", "0.20"].forEach((vo, j) => {
       const s = at(sp, vo); if (!s) return;
-      const v = +s.pnl_after, x0 = cx + (j === 0 ? -bw - 1 : 1), y0 = y(Math.max(v, 0)), h = Math.max(1, Math.abs(y(v) - y(0)));
-      const fill = j === 0 ? "var(--c-vol0)" : "var(--c-vol20)";
-      // 4px round at the data end, square at the zero baseline
-      const r = Math.min(3, h / 2);
+      const v = +s.pnl_after, x0 = cx + (j === 0 ? -bw - 1 : 1), y0 = y(Math.max(v, 0)), h = Math.max(1, Math.abs(y(v) - y(0))), r = Math.min(3, h / 2);
       const path = v >= 0
         ? `M${x0},${y0 + h} V${y0 + r} Q${x0},${y0} ${x0 + r},${y0} H${x0 + bw - r} Q${x0 + bw},${y0} ${x0 + bw},${y0 + r} V${y0 + h} Z`
         : `M${x0},${y0} V${y0 + h - r} Q${x0},${y0 + h} ${x0 + r},${y0 + h} H${x0 + bw - r} Q${x0 + bw},${y0 + h} ${x0 + bw},${y0 + h - r} V${y0} Z`;
-      g += `<path d="${path}" fill="${fill}"/>`;
-      const tipText = `spot ${(+sp > 0 ? "+" : "") + Math.round(+sp * 100)}% · vol +${Math.round(+vo * 100)} pts<br>after ${usd(s.pnl_after)} · before ${usd(s.pnl_before)}<br>this trade ${usd(s.pnl_after - s.pnl_before)}`;
-      g += `<rect class="hit" x="${x0 - 2}" y="${top}" width="${bw + 4}" height="${H - top - bot}" data-tip="${esc(tipText)}"/>`;
+      g += `<path d="${path}" fill="var(--c-vol${j === 0 ? "0" : "20"})"/>`;
+      g += `<rect class="hit" x="${x0 - 2}" y="${top}" width="${bw + 4}" height="${H - top - bot}" data-tip="${esc(`spot ${(+sp > 0 ? "+" : "") + Math.round(+sp * 100)}% · vol +${Math.round(+vo * 100)} pts<br>after ${usd(s.pnl_after)} · before ${usd(s.pnl_before)}`)}"/>`;
     });
   });
   g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" style="stroke:var(--text-dim)"/>`;
-  g += `<line class="ref" x1="${L}" x2="${W - R}" y1="${y(-budget)}" y2="${y(-budget)}"/><text x="${L + 4}" y="${y(0) - 5}" style="fill:var(--text)">budget −${usd(budget)}</text>`;
+  g += `<line class="ref" x1="${L}" x2="${W - R}" y1="${y(-budget)}" y2="${y(-budget)}"/><text x="${L + 4}" y="${y(0) - 4}" style="fill:var(--text)">budget −${usd(budget)}</text>`;
   const table = grid.map((s) => `<tr><td>${s.spot_shock}</td><td>${s.vol_shock}</td><td class="num">${usd(s.pnl_before)}</td><td class="num">${usd(s.pnl_after)}</td></tr>`).join("");
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Post-trade P&amp;L across 14 stress scenarios against the loss budget">${g}</svg>
-    <div class="legend"><span><i style="background:var(--c-vol0)"></i>vol +0 pts</span><span><i style="background:var(--c-vol20)"></i>vol +20 pts</span><span><i class="line"></i>loss budget</span></div>
-    <details><summary>Show as table</summary><table><thead><tr><th>Spot shock</th><th>Vol shock</th><th class="num">P&amp;L before</th><th class="num">P&amp;L after</th></tr></thead><tbody>${table}</tbody></table></details>`;
+    <div class="legend"><span><i style="background:var(--c-vol0)"></i>vol +0</span><span><i style="background:var(--c-vol20)"></i>vol +20 pts</span><span><i class="line"></i>loss budget</span></div>
+    <details><summary>Table</summary><table><thead><tr><th>Spot</th><th>Vol</th><th class="num">P&amp;L before</th><th class="num">P&amp;L after</th></tr></thead><tbody>${table}</tbody></table></details>`;
 }
 
 // ── decision panel ───────────────────────────────────────────────────────
 let timer = null;
+const adapterFor = (d) => (d.inputs.aqua ? "aqua" : d.inputs.request.opportunity.source_venue === "uniswap_v4_hooked" ? "v4" : null);
+function liveShipped(d) {
+  const c = d.inputs.aqua && S.info ? (d.inputs.aqua.side === "call_like" ? S.info.upside : S.info.downside) : null;
+  return c && S.shipped?.[c.strategy_hash];
+}
+
 function renderDecision() {
   clearInterval(timer);
-  if (!S.seed) { $("decision").innerHTML = unavailable(S.seedErr || "engine"); return; }
-  const it = S.seed.items[S.sel], d = it.decision, inp = d.inputs, aq = inp.aqua;
-  const tsOf = (k) => inp.timestamps?.[k];
-  let html = `<div class="dec-head"><span class="pill ${d.verdict}">${d.verdict}</span><span class="dec-id" ${src("engine generate_execution_decision · " + d.model_version, d.created_at)}>${d.decision_id} · ${ts(d.created_at)}</span></div>
-    <div class="reason">${esc(d.reason)}</div>`;
-  html += `<div class="sub">Net edge, itemized (USD)</div>${waterfall(d)}`;
-  html += `<div class="sub">Stress test · worst loss ${usd(d.stress_loss_before)} → ${usd(d.stress_loss_after)} vs ${usd(d.budget)} budget</div>${stressChart(d)}`;
-  if (aq) {
-    const cellv = (k, v) => `<div class="cell"><div class="k">${k}</div><div class="v" ${src("engine pricing · Black-Scholes at K_eq, T_eq", d.created_at)}>${v}</div></div>`;
-    html += `<div class="sub">Aqua curve · ${aq.side.replace("_", "-")} ${usd(aq.range_low)}–${usd(aq.range_high)}</div><div class="cells">
-      ${cellv("K_eq", usd(aq.k_eq))}${cellv("T_eq", num(aq.t_eq_days, 2) + " d")}${cellv("C_eq / ETH", usd(aq.c_eq))}
-      ${cellv("Fee floor f_min", num(aq.f_min * 100, 4) + "%")}${cellv("Curve fee", num(aq.fee_rate * 100, 4) + "%")}</div>`;
-  }
-  const srcs = Object.entries(inp.sources || {}).map(([k, v]) => `${k}: ${esc(v)}${tsOf(k) ? ` @ ${ts(tsOf(k))}` : ""}`).join(" · ");
-  html += `<div class="sub">Inputs</div><div class="dim" style="font-family:var(--mono);font-size:0.6rem;line-height:1.6">${srcs}${inp.request?.holdings ? ` · holdings: ${esc(inp.request.holdings.weth)} WETH, ${esc(inp.request.holdings.usdc)} USDC (${esc(S.seed.sources.holdings)})` : ""}</div>`;
-
-  const curve = aq && S.info ? (aq.side === "call_like" ? S.info.upside : S.info.downside) : null;
-  const live = curve && S.live[curve.strategy_hash];
-  const can = d.verdict === "APPROVE" && curve && !live;
-  html += `<div class="act"><button class="btn" id="approve" ${can ? "" : "disabled"}>${live ? "Already shipped · see Aqua curves" : d.verdict === "APPROVE" ? "Approve and sign" : `Not approved · ${d.verdict}`}</button>
-    <span class="countdown" id="countdown"></span>
-    <div class="signer">${can ? esc(S.signer?.kind || "") : (d.verdict === "APPROVE" && !curve ? "No signable curve for this decision." : "")}</div></div>
+  if (!S.up.engine || !S.seed) { $("decision").innerHTML = unavailable(S.seedErr || "engine " + ENGINE); $("decNote").textContent = ""; return; }
+  const it = S.seed.items[S.sel], d = it.decision, inp = d.inputs, aq = inp.aqua, ds = src(`engine generate_execution_decision · ${d.model_version}`, d.created_at);
+  const shipped = liveShipped(d), kind = adapterFor(d);
+  const live = d.verdict === "APPROVE" && Date.parse(d.expires_at) > Date.now() && !shipped && kind && S.up.chain;
+  let h = `<div class="dec-head"><span class="pill ${d.verdict}">${d.verdict}</span><span class="dec-id" ${ds}>${d.decision_id} · ${ts(d.created_at)}</span></div>
+    <div class="reason" ${ds}>${esc(d.reason)}</div>
+    <div class="act"><button class="btn" id="approve" ${live ? "" : "disabled"}>${shipped ? "Already shipped" : "Approve and sign"}</button>
+      <span class="countdown" id="countdown"></span><span class="small">${live ? esc(S.signer?.kind || "") : ""}</span></div>
     <div class="log" id="log">${S.log.join("<br>")}</div>`;
-  $("decision").innerHTML = html;
+  h += `<div class="sub">Net edge, USD</div>${waterfall(d)}`;
+  h += `<div class="sub" ${ds}>Stress · worst loss ${usd(d.stress_loss_before)} → ${usd(d.stress_loss_after)} · budget ${usd(d.budget)}</div>${stressChart(d)}`;
+  if (aq) {
+    const cv = (k, v) => `<div class="cell"><div class="k">${k}</div><div class="v" ${src("engine: Black-Scholes at K_eq, T_eq (decision.inputs.aqua)", d.created_at)}>${v}</div></div>`;
+    h += `<div class="sub">Aqua curve · ${aq.side.replace("_", "-")}</div><div class="cells aq">
+      ${cv("Range", `${num(aq.range_low, 0)}–${num(aq.range_high, 0)}`)}${cv("K_eq", usd(aq.k_eq))}${cv("T_eq", num(aq.t_eq_days, 2) + " d")}
+      ${cv("C_eq", usd(aq.c_eq) + "/ETH")}${cv("f_min", num(aq.f_min * 100, 4) + "%")}${cv("Fee", num(aq.fee_rate * 100, 4) + "%")}</div>`;
+  }
+  const tsOf = (k) => inp.timestamps?.[k];
+  const lines = Object.entries(inp.sources || {}).map(([k, v]) => `${k}: ${esc(v)}${tsOf(k) ? ` @ ${ts(tsOf(k))}` : ""}`);
+  if (inp.request?.holdings) lines.push(`holdings: ${num(inp.request.holdings.weth, 4)} WETH, ${num(inp.request.holdings.usdc, 2)} USDC`);
+  h += `<div class="sub">Inputs</div><div class="inputs">${lines.join("<br>")}</div>`;
+  $("decision").innerHTML = h;
   $("decNote").textContent = it.label;
-  bindTips($("decision")); bindTips($("status")); bindTips($("opps"));
-  if (can) {
-    const tick = () => {
-      const left = Math.round((Date.parse(d.expires_at) - Date.now()) / 1000);
-      const btn = $("approve"); if (!btn) return clearInterval(timer);
-      if (left <= 0) {
-        clearInterval(timer);
-        btn.textContent = "Expired · re-evaluate"; btn.disabled = false; btn.onclick = () => seed();
-        $("countdown").textContent = `decision expired at ${d.expires_at}`;
-      } else $("countdown").textContent = `expires in ${left} s`;
-    };
-    tick(); timer = setInterval(tick, 1000);
-    $("approve").onclick = () => approveAndSign(d, curve);
-  }
+  bindTips($("decision"));
+  const tick = () => {
+    const left = Math.round((Date.parse(d.expires_at) - Date.now()) / 1000), el = $("countdown");
+    if (!el) return clearInterval(timer);
+    if (d.verdict !== "APPROVE") el.textContent = "";
+    else if (left > 0) el.textContent = `${left} s left`;
+    else { el.textContent = `expired ${ts(d.expires_at)}`; $("approve").disabled = true; clearInterval(timer); }
+  };
+  tick(); timer = setInterval(tick, 1000);
+  if (live) $("approve").onclick = () => approve(d, kind);
 }
 
-function log(msg, cls = "") { S.log.push(`<span class="${cls}">${esc(new Date().toLocaleTimeString())} ${esc(msg)}</span>`); const el = $("log"); if (el) el.innerHTML = S.log.join("<br>"); }
+function log(msg, cls = "") { S.log.push(`<span class="${cls}">${esc(new Date().toLocaleTimeString())} ${esc(msg)}</span>`); const el = $("log"); if (el) { el.innerHTML = S.log.join("<br>"); el.scrollTop = el.scrollHeight; } }
 
-async function approveAndSign(d, curve) {
-  const btn = $("approve"); btn.disabled = true; clearInterval(timer);
+async function approve(d, kind) {
+  $("approve").disabled = true;
   try {
-    if (Date.parse(d.expires_at) <= Date.now()) throw new Error("decision expired: re-evaluate first");
-    const sg = S.signer || (S.signer = await getSigner());
-    if (sg.address.toLowerCase() !== S.info.maker.toLowerCase()) throw new Error(`signer ${short(sg.address)} is not the curve's maker ${short(S.info.maker)}`);
-    const need = { [A.WETH]: BigInt(curve.weth_amount), [A.USDC]: BigInt(curve.usdc_amount) };
-    // Collateral check (PRD 3): Aqua pulls from the wallet on fill, so the wallet must cover the curve.
-    // Curves already live promise part of the wallet too, so they count against it.
-    for (const [token, amt] of Object.entries(need)) {
-      if (amt === 0n) continue;
-      const committed = Object.values(S.live).reduce((sum, l) => sum + (l ? BigInt(l[token]) : 0n), 0n);
-      const bal = await V.pub.readContract({ address: token, abi: V.abi, functionName: "balanceOf", args: [sg.address] });
-      if (bal < amt + committed) throw new Error(`collateral check refused: need ${amt} + ${committed} already in live curves of ${token === A.WETH ? "WETH" : "USDC"}, wallet holds ${bal}`);
-      const allowance = await V.pub.readContract({ address: token, abi: V.abi, functionName: "allowance", args: [sg.address, A.AQUA] });
-      if (allowance < amt) {
-        log(`approve ${token === A.WETH ? "WETH" : "USDC"} for Aqua · sign`);
-        const h = await sg.client.writeContract({ address: token, abi: V.abi, functionName: "approve", args: [A.AQUA, amt] });
-        await V.pub.waitForTransactionReceipt({ hash: h });
-        log(`approve confirmed ${short(h)}`, "ok");
-      }
-    }
-    log("collateral check passed · ship curve · sign");
-    const hash = await sg.client.writeContract({ address: A.AQUA, abi: V.abi, functionName: "ship",
-      args: [A.ROUTER, curve.order, [A.WETH, A.USDC], [need[A.WETH], need[A.USDC]]] });
-    const rc = await V.pub.waitForTransactionReceipt({ hash });
-    const ok = rc.status === "success" && rc.logs.some((l) => l.data.includes(curve.strategy_hash.slice(2)));
-    log(`ship ${rc.status} in block ${rc.blockNumber} ${short(hash)}${ok ? " · Shipped event matches strategy" : ""}`, ok ? "ok" : "bad");
-    if (!ok) throw new Error("ship receipt did not verify");
-    const position = await engine("/executions", { method: "POST", body: JSON.stringify({
-      decision_id: d.decision_id, chain_id: CHAIN_ID, tx_hash: hash, status: "confirmed", verified_at: now(), settlement_tx: null }) });
-    log(`engine recorded execution · position ${position.position_id} ${position.status}`, "ok");
-    await refreshChain(); await renderAqua(); await renderHistory(); renderDecision();
-  } catch (e) {
-    log(String(e.shortMessage || e.message || e), "bad");
-    btn.disabled = false;
-  }
+    const signer = S.signer || (S.signer = await demoSigner());
+    const ctx = { viem: V.viem, pub: V.pub, chainId: CHAIN_ID, A, signer };
+    const adapter = kind === "aqua" ? aquaAdapter({ ...ctx, info: S.info }) : v4Adapter({ ...ctx, hook: S.info?.hook });
+    const execution = await execute(adapter, d, signer, V.pub, log);
+    const position = await engine("/executions", { method: "POST", body: JSON.stringify(execution) });
+    log(`verified · engine position ${position.position_id} ${position.status}`, "ok");
+    await refreshAll();
+  } catch (e) { log(String(e.shortMessage || e.message || e), "bad"); renderDecision(); }
 }
 
-// ── positions: Aqua curves ───────────────────────────────────────────────
+// ── positions ────────────────────────────────────────────────────────────
 async function renderAqua() {
   const el = $("aqua");
-  if (!S.info) { el.innerHTML = unavailable("demo/curves.json"); return; }
-  if (!V || !S.chain) { el.innerHTML = unavailable("demo chain " + RPC); return; }
+  if (!S.info) { el.innerHTML = unavailable(S.up.engine ? "demo/curves.json (make demo-chain)" : "engine"); return; }
+  if (!S.up.chain) { el.innerHTML = unavailable("demo chain " + RPC); return; }
   try {
-    const from = BigInt(S.info.fork_block) + 1n;
+    const from = BigInt(S.info.fork_block) + 1n, at = now();
     const [ships, swaps] = await Promise.all([
       V.pub.getLogs({ address: A.AQUA, event: V.events.shipped, fromBlock: from }),
       V.pub.getLogs({ address: A.ROUTER, event: V.events.swapped, fromBlock: from }),
     ]);
-    const at = now();
-    const rows = [];
+    const adapter = aquaAdapter({ viem: V.viem, pub: V.pub, chainId: CHAIN_ID, A, signer: S.signer || { address: S.info.maker }, info: S.info });
+    const rawAbi = V.viem.parseAbi(["function rawBalances(address,address,bytes32,address) view returns (uint248,uint8)"]);
+    S.shipped = {};
+    let h = "";
     for (const [name, c] of [["Call-like", S.info.upside], ["Put-like", S.info.downside]]) {
-      const raw = (t) => V.pub.readContract({ address: A.AQUA, abi: V.abi, functionName: "rawBalances", args: [S.info.maker, A.ROUTER, c.strategy_hash, t] });
+      const raw = (t) => V.pub.readContract({ address: A.AQUA, abi: rawAbi, functionName: "rawBalances", args: [S.info.maker, A.ROUTER, c.strategy_hash, t] });
       const [[w, n], [u]] = await Promise.all([raw(A.WETH), raw(A.USDC)]);
-      const shipped = n > 0;
-      S.live[c.strategy_hash] = shipped ? { [A.WETH]: w, [A.USDC]: u } : null;
+      const shipped = n > 0; S.shipped[c.strategy_hash] = shipped;
+      const rs = src("Aqua.rawBalances · " + RPC, at);
+      h += `<div class="curve"><div class="curve-t">${name} · ${usd(c.range_low_usdc / 1e6)}–${num(c.range_high_usdc / 1e6, 2)}
+        <span class="pill ${shipped ? "SHIPPED" : "NOT_SHIPPED"}">${shipped ? "SHIPPED" : "NOT SHIPPED"}</span></div>
+        <div class="hash" ${rs}>holds ${num(Number(w) / 1e18, 4)} WETH · ${num(Number(u) / 1e6, 2)} USDC · fee ${num(c.fee_instruction / 1e7, 4)}%</div>`;
+      if (shipped) {
+        // A probe quote, capped at the curve's real balance of the token it pays out.
+        const call = c.side === "call_like";
+        const q = await adapter.cappedQuote(c, call ? A.USDC : A.WETH, call ? A.WETH : A.USDC, call ? 100_000_000n : 10n ** 16n);
+        const fill = Number(q.fillable) / (call ? 1e18 : 1e6);
+        h += `<div class="hash" ${src("router.quote() capped at Aqua.rawBalances · " + RPC, at)}>quote ${call ? "100 USDC → " + num(fill, 5) + " WETH" : "0.01 WETH → " + num(fill, 2) + " USDC"}${q.capped ? " (capped at balance)" : ""}</div>`;
+      }
       const ship = ships.find((l) => l.args.strategyHash === c.strategy_hash);
-      const fills = swaps.filter((l) => l.args.orderHash === c.strategy_hash);
-      let h = `<div class="curve"><div class="curve-t">${name} · ${usd(c.range_low_usdc / 1e6)}–${usd(c.range_high_usdc / 1e6)}
-        <span class="pill ${shipped ? "APPROVE" : "REQUOTE"}">${shipped ? "SHIPPED" : "NOT SHIPPED"}</span></div>`;
-      h += `<div class="dim" style="font-family:var(--mono);font-size:0.62rem;margin-top:4px" ${src("Aqua rawBalances · " + RPC, at)}>curve holds ${num(Number(w) / 1e18, 4)} WETH · ${num(Number(u) / 1e6, 2)} USDC · fee ${num(c.fee_instruction / 1e7, 4)}%</div>`;
-      if (ship) h += `<div class="hash" style="margin-top:4px">ship ${short(ship.transactionHash)} · block ${ship.blockNumber} <button class="btn ghost sm" data-verify="${ship.transactionHash}">Verify</button> <span data-out="${ship.transactionHash}"></span></div>`;
-      for (const f of fills) {
+      if (ship) h += `<div class="hash">ship ${short(ship.transactionHash)} · block ${ship.blockNumber} <button class="btn ghost sm" data-verify="${ship.transactionHash}">Verify</button> <span data-out="${ship.transactionHash}"></span></div>`;
+      for (const f of swaps.filter((l) => l.args.orderHash === c.strategy_hash)) {
         const buy = f.args.tokenOut.toLowerCase() === A.WETH.toLowerCase();
         const eth = Number(buy ? f.args.amountOut : f.args.amountIn) / 1e18, usdc = Number(buy ? f.args.amountIn : f.args.amountOut) / 1e6;
-        h += `<div class="hash" style="margin-top:4px">fill ${short(f.transactionHash)} · taker ${buy ? "bought" : "sold"} ${num(eth, 4)} WETH for ${num(usdc, 2)} USDC (${usd(usdc / eth)}) <button class="btn ghost sm" data-verify="${f.transactionHash}">Verify</button> <span data-out="${f.transactionHash}"></span></div>`;
+        h += `<div class="hash">fill ${short(f.transactionHash)} · ${buy ? "bought" : "sold"} ${num(eth, 4)} WETH for ${num(usdc, 2)} USDC <button class="btn ghost sm" data-verify="${f.transactionHash}">Verify</button> <span data-out="${f.transactionHash}"></span></div>`;
       }
-      if (shipped && !fills.length) h += `<div class="dim" style="font-size:0.62rem;margin-top:4px">No fills yet · <span class="hash">make demo-fill CURVE=${c.side === "call_like" ? "upside" : "downside"}</span></div>`;
-      rows.push(h + "</div>");
+      h += `</div>`;
     }
-    el.innerHTML = rows.join("") + `<div class="dim" style="font-size:0.6rem;margin-top:8px">Options-like payoffs from swap curves, not option contracts.</div>`;
-    el.querySelectorAll("[data-verify]").forEach((b) => b.addEventListener("click", () => verify(b.dataset.verify)));
+    el.innerHTML = h + `<div class="small" style="margin-top:6px">Options-like payoffs from swap curves, not option contracts.</div>`;
+    el.querySelectorAll("[data-verify]").forEach((b) => b.addEventListener("click", () => verifyTx(b.dataset.verify)));
     bindTips(el);
   } catch (e) { el.innerHTML = unavailable("demo chain: " + (e.shortMessage || e.message)); }
 }
 
-async function verify(hash) {
+async function verifyTx(hash) {
   const out = document.querySelector(`[data-out="${hash}"]`);
   try {
     const rc = await V.pub.getTransactionReceipt({ hash });
-    out.innerHTML = `<span style="color:var(--${rc.status === "success" ? "green" : "red"})">${rc.status} · block ${rc.blockNumber} · gas ${rc.gasUsed.toLocaleString()} · ${rc.logs.length} logs</span>`;
-  } catch (e) { out.innerHTML = unavailable("receipt"); }
+    out.innerHTML = `<span style="color:var(--${rc.status === "success" ? "green" : "red"})">${rc.status} · block ${rc.blockNumber} · gas ${rc.gasUsed.toLocaleString()}</span>`;
+  } catch { out.innerHTML = unavailable("receipt"); }
 }
 
-// ── history ──────────────────────────────────────────────────────────────
-async function renderHistory() {
-  try {
-    S.history = await engine("/decisions?limit=15");
-  } catch (e) { $("history").innerHTML = unavailable("engine GET /decisions"); return; }
-  if (!S.history.length) { $("history").innerHTML = `<div class="dim">No decisions yet.</div>`; return; }
-  const rows = S.history.map((d) => `<tr><td class="dim" style="white-space:nowrap">${ts(d.created_at)}</td><td>${esc(d.opportunity_id)}</td><td><span class="pill ${d.verdict}">${d.verdict}</span></td>
-    <td class="num">${usd(d.net_edge)}</td><td class="muted" style="font-family:var(--body);min-width:260px">${esc(d.reason)}</td>
-    <td><button class="btn ghost sm" data-replay="${d.decision_id}">Replay</button> <span data-rout="${d.decision_id}"></span></td></tr>`).join("");
-  $("history").innerHTML = `<table><thead><tr><th>Created</th><th>Opportunity</th><th>Verdict</th><th class="num">Net edge</th><th>Reason</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
-  document.querySelectorAll("[data-replay]").forEach((b) => b.addEventListener("click", async () => {
-    const out = document.querySelector(`[data-rout="${b.dataset.replay}"]`);
-    try {
-      const r = await engine(`/decisions/${b.dataset.replay}/replay`, { method: "POST" });
-      out.innerHTML = r.matches ? `<span style="color:var(--green)">identical</span>` : `<span style="color:var(--red)">differs</span>`;
-    } catch { out.innerHTML = unavailable("engine replay"); }
-  }));
-}
-
-// ── positions: v4 hook ───────────────────────────────────────────────────
-// Fee per block from the hook's FeeUpdated events, against the static 0.30% pool.
 function feeChart(points, flatPct) {
-  const W = 420, H = 170, L = 44, R = 10, top = 10, bot = 24;
-  const fees = points.map((p) => p.fee);
-  const hi = Math.max(1, Math.ceil(Math.max(...fees, flatPct) * 4) / 4);
-  const n = points.length, x = (i) => L + (n === 1 ? 0 : (i / (n - 1)) * (W - L - R)), y = (v) => top + (1 - v / hi) * (H - top - bot);
+  const W = 420, H = 140, L = 42, R = 8, top = 8, bot = 20, fees = points.map((p) => p.fee);
+  const hi = Math.max(1, Math.ceil(Math.max(...fees, flatPct) * 4) / 4), n = points.length;
+  const x = (i) => L + (n === 1 ? 0 : (i / (n - 1)) * (W - L - R)), y = (v) => top + (1 - v / hi) * (H - top - bot);
   let g = "";
-  for (let t = 0; t <= hi + 1e-9; t += hi / 4) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 6}" y="${y(t) + 3}" text-anchor="end">${t.toFixed(2)}%</text>`;
-  g += `<line class="ref" x1="${L}" x2="${W - R}" y1="${y(flatPct)}" y2="${y(flatPct)}"/><text x="${W - R}" y="${y(flatPct) - 4}" text-anchor="end" style="fill:var(--text)">static pool ${flatPct.toFixed(2)}%</text>`;
-  const d = points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.fee).toFixed(1)}`).join(" ");
-  g += `<path d="${d}" fill="none" stroke="var(--c-edge)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  for (let t = 0; t <= hi + 1e-9; t += hi / 4) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 5}" y="${y(t) + 3}" text-anchor="end">${t.toFixed(2)}%</text>`;
+  g += `<line class="ref" x1="${L}" x2="${W - R}" y1="${y(flatPct)}" y2="${y(flatPct)}"/><text x="${W - R}" y="${y(flatPct) - 4}" text-anchor="end" style="fill:var(--text)">static ${flatPct.toFixed(2)}%</text>`;
+  g += `<path d="${points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.fee).toFixed(1)}`).join(" ")}" fill="none" stroke="var(--c-edge)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
   points.forEach((p, i) => {
     g += `<circle cx="${x(i)}" cy="${y(p.fee)}" r="4" fill="var(--c-edge)" stroke="var(--surface)" stroke-width="2"/>`;
-    g += `<rect class="hit" x="${x(i) - 8}" y="${top}" width="16" height="${H - top - bot}" data-tip="${esc(`block ${p.block}<br>fee ${p.fee.toFixed(3)}% · σ_ann ${(p.sigma * 100).toFixed(1)}%`)}"/>`;
+    g += `<rect class="hit" x="${x(i) - 8}" y="${top}" width="16" height="${H - top - bot}" data-tip="${esc(`block ${p.block}<br>fee ${p.pips.toLocaleString()} pips · ${p.fee.toFixed(3)}%<br>σ_ann ${(p.sigma * 100).toFixed(1)}%`)}"/>`;
   });
-  g += `<text x="${L}" y="${H - 6}">block ${points[0].block}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${points[n - 1].block}</text>`;
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Hook fee per block against the static 0.30% pool">${g}</svg>
-    <div class="legend"><span><i style="background:var(--c-edge)"></i>hook fee (σ in tooltip)</span><span><i class="line"></i>static 0.30% pool</span></div>`;
+  g += `<text x="${L}" y="${H - 4}">block ${points[0].block}</text><text x="${W - R}" y="${H - 4}" text-anchor="end">${points[n - 1].block}</text>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Hook fee per block against a static 0.30% pool">${g}</svg>
+    <div class="legend"><span><i style="background:var(--c-edge)"></i>hook fee per block</span><span><i class="line"></i>static 0.30%</span></div>`;
 }
 
 async function renderHook() {
   const el = $("hook"), h = S.info?.hook;
-  if (!h) { el.innerHTML = unavailable("v4 hook (run make hook-pool in contracts/hook)"); return; }
-  const live = h.live || {};
-  let html = live.error ? unavailable("demo chain: " + live.error) : `<div class="cells">
-      <div class="cell"><div class="k">Hook fee now</div><div class="v" ${src("hook.getFee · " + RPC, S.infoAt)}>${num(live.fee_pips / 1e4, 3)}%</div></div>
-      <div class="cell"><div class="k">σ_ann</div><div class="v" ${src("hook.getVolatility · " + RPC, S.infoAt)}>${num(live.sigma * 100, 1)}%</div></div>
-      <div class="cell"><div class="k">Hooked pool</div><div class="v" ${src("StateView.getSlot0 hooked pool · " + RPC, S.infoAt)}>${usd(live.hooked_price)}</div></div>
-      <div class="cell"><div class="k">Gap vs main pool</div><div class="v" ${src("StateView.getSlot0 main ETH/USDC pool · " + RPC, S.infoAt)}>${num(live.gap_bps, 1)} bps</div></div></div>`;
-  html += `<div class="dim hash" style="margin-top:6px">hook ${short(h.hook)} · pool ${short(h.hooked_pool_id)}</div>`;
-  if (!V || !S.chain) { el.innerHTML = html + unavailable("demo chain " + RPC); return; }
+  if (!h) { el.innerHTML = unavailable(S.up.engine ? "v4 hook (make hook-pool)" : "engine"); return; }
+  if (h.live?.error || !S.up.chain) { el.innerHTML = unavailable("demo chain " + (h.live?.error || RPC)); return; }
+  const lv = h.live, at = S.at.info;
+  let html = `<div class="cells c4">
+    <div class="cell"><div class="k">Fee · ${Number(lv.fee_pips).toLocaleString()} pips</div><div class="v" ${src("hook.getFee · " + RPC, at)}>${num(lv.fee_pips / 1e4, 3)}%</div></div>
+    <div class="cell"><div class="k">σ_ann</div><div class="v" ${src("hook.getVolatility · " + RPC, at)}>${num(lv.sigma * 100, 1)}%</div></div>
+    <div class="cell"><div class="k">Pool</div><div class="v" ${src("StateView.getSlot0 hooked pool · " + RPC, at)}>${usd(lv.hooked_price)}</div></div>
+    <div class="cell"><div class="k">Gap</div><div class="v" ${src("StateView.getSlot0 hooked vs main ETH/USDC pool · " + RPC, at)}>${num(lv.gap_bps, 1)} bps</div></div></div>`;
   try {
     const logs = await V.pub.getLogs({ address: h.hook, event: V.events.feeUpdated, args: { poolId: h.hooked_pool_id }, fromBlock: BigInt(S.info.fork_block) + 1n });
-    const points = logs.map((l) => ({ block: Number(l.blockNumber), fee: Number(l.args.fee) / 1e4, sigma: Number(l.args.sigma) / 1e18 }));
-    html += points.length ? `<div class="sub">Fee per block · ${points.length} updates</div>${feeChart(points, Number(h.static_fee) / 1e4)}`
-      : `<div class="dim" style="font-size:0.62rem;margin-top:8px">No fee updates on chain yet.</div>`;
+    const pts = logs.map((l) => ({ block: Number(l.blockNumber), pips: Number(l.args.fee), fee: Number(l.args.fee) / 1e4, sigma: Number(l.args.sigma) / 1e18 }));
+    html += pts.length ? `<div class="sub">Fee per block · ${pts.length} FeeUpdated events</div>${feeChart(pts, Number(h.static_fee) / 1e4)}` : `<div class="small" style="margin-top:6px">No FeeUpdated events yet.</div>`;
   } catch (e) { html += unavailable("FeeUpdated logs: " + (e.shortMessage || e.message)); }
-  el.innerHTML = html;
-  bindTips(el);
+  el.innerHTML = html; bindTips(el);
 }
 
-// ── positions: Arc settlement ────────────────────────────────────────────
-// Arc testnet (docs.arc.io/arc/references/connect-to-arc). ?arcRpc= points the panel at another node.
-const ARC = { id: 5042002, rpc: qs.get("arcRpc") || "https://rpc.testnet.arc.io", explorer: "https://explorer.testnet.arc.io", usdc: "0x3600000000000000000000000000000000000000" };
 const arcLink = (h) => `<a href="${ARC.explorer}/tx/${h}" target="_blank" rel="noopener">${short(h)}</a>`;
-
-function renderPending() {
-  $("arc").innerHTML = `<div class="dim" style="font-size:0.62rem">Loading…</div>`;
-}
-
 async function renderArc() {
   const el = $("arc"), dep = S.info?.arc;
-  if (!dep) {
-    el.innerHTML = unavailable("Arc escrow (not deployed yet: make deploy-arc-testnet)") +
-      `<div class="dim" style="font-size:0.62rem;margin-top:6px">Each approved decision is funded in USDC on Arc and settled by the operator after the trade is verified.</div>`;
-    return;
-  }
-  if (!V) { el.innerHTML = unavailable("viem (CDN)"); return; }
-  const arc = V.viem.createPublicClient({ transport: V.viem.http(ARC.rpc) });
-  const abi = V.viem.parseAbi(["function reserve() view returns (uint256)"]);
-  const funded = V.viem.parseAbiItem("event Funded(bytes32 indexed decisionId, address indexed depositor, uint256 amount)");
-  const settled = V.viem.parseAbiItem("event Settled(bytes32 indexed decisionId, address indexed depositor, uint256 amount, uint256 payout, uint256 reserve)");
+  if (!dep) { el.innerHTML = unavailable(S.up.engine ? "Arc escrow (make deploy-arc-testnet)" : "engine"); return; }
   try {
-    const from = BigInt(dep.deployed_block);
+    const abi = V.viem.parseAbi(["function reserve() view returns (uint256)"]), from = BigInt(dep.deployed_block), at = now();
     const [reserve, f, st] = await Promise.all([
-      arc.readContract({ address: dep.escrow, abi, functionName: "reserve" }),
-      arc.getLogs({ address: dep.escrow, event: funded, fromBlock: from }),
-      arc.getLogs({ address: dep.escrow, event: settled, fromBlock: from }),
+      V.arcPub.readContract({ address: dep.escrow, abi, functionName: "reserve" }),
+      V.arcPub.getLogs({ address: dep.escrow, event: V.events.funded, fromBlock: from }),
+      V.arcPub.getLogs({ address: dep.escrow, event: V.events.settled, fromBlock: from }),
     ]);
-    const at = now();
-    const byKey = new Map(S.history.map((d) => [V.viem.keccak256(V.viem.toHex(d.decision_id)), d.decision_id]));
-    const name = (k) => byKey.get(k) || short(k);
-    let h = `<div class="cells"><div class="cell"><div class="k">Escrow</div><div class="v"><a href="${ARC.explorer}/address/${dep.escrow}" target="_blank" rel="noopener">${short(dep.escrow)}</a></div></div>
+    const ids = [...S.history.map((d) => d.decision_id), ...(S.seed?.items || []).map((i) => i.decision.decision_id)];
+    const byKey = new Map(ids.map((id) => [V.viem.keccak256(V.viem.toHex(id)), id])), name = (k) => byKey.get(k) || short(k);
+    let h = `<div class="cells c2"><div class="cell"><div class="k">Escrow</div><div class="v"><a href="${ARC.explorer}/address/${dep.escrow}" target="_blank" rel="noopener">${short(dep.escrow)}</a></div></div>
       <div class="cell"><div class="k">Reserve</div><div class="v" ${src("RiskPilotEscrow.reserve · Arc testnet", at)}>${num(Number(reserve) / 1e6, 4)} USDC</div></div></div>`;
-    const rows = [
-      ...f.map((l) => ({ b: l.blockNumber, t: `fund ${name(l.args.decisionId)} · ${num(Number(l.args.amount) / 1e6, 2)} USDC`, tx: l.transactionHash })),
-      ...st.map((l) => ({ b: l.blockNumber, t: `settle ${name(l.args.decisionId)} · paid ${num(Number(l.args.payout) / 1e6, 6)} USDC`, tx: l.transactionHash })),
-    ].sort((x, y) => Number(x.b - y.b));
-    h += rows.length ? rows.map((r) => `<div class="hash" style="margin-top:5px">${esc(r.t)} · ${arcLink(r.tx)}</div>`).join("")
-      : `<div class="dim" style="font-size:0.62rem;margin-top:8px">No escrow transactions yet.</div>`;
+    const rows = [...f.map((l) => ({ b: l.blockNumber, t: `fund ${name(l.args.decisionId)} · ${num(Number(l.args.amount) / 1e6, 2)} USDC`, tx: l.transactionHash })),
+      ...st.map((l) => ({ b: l.blockNumber, t: `settle ${name(l.args.decisionId)} · paid ${num(Number(l.args.payout) / 1e6, 6)} USDC`, tx: l.transactionHash }))].sort((a, b) => Number(a.b - b.b));
+    h += rows.length ? rows.map((r) => `<div class="hash" ${src("Funded/Settled logs · Arc testnet", at)}>${esc(r.t)} · ${arcLink(r.tx)}</div>`).join("") : `<div class="small" style="margin-top:6px">No escrow transactions yet.</div>`;
     const d = S.seed?.items[S.sel]?.decision;
-    if (d?.verdict === "APPROVE") {
-      h += `<div class="act" style="margin-top:10px"><input id="arcAmt" value="5.00" inputmode="decimal" aria-label="USDC to escrow" style="width:80px;padding:6px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--mono);font-size:0.7rem">
-        <button class="btn ghost sm" id="arcFund">Fund on Arc</button><span class="countdown" id="arcOut"></span>
-        <div class="signer">browser wallet on Arc testnet (chain ${ARC.id}); USDC, 6 decimals</div></div>`;
+    if (d?.verdict === "APPROVE" && Date.parse(d.expires_at) > Date.now()) {
+      h += `<div class="act"><button class="btn ghost sm" id="arcFund">Fund ${esc(dep.stake_usdc)} USDC</button><span class="countdown" id="arcOut"></span></div>`;
     }
     el.innerHTML = h; bindTips(el);
-    if ($("arcFund")) $("arcFund").onclick = () => fundOnArc(d, dep);
+    if ($("arcFund")) $("arcFund").onclick = () => fundArc(d, dep);
   } catch (e) { el.innerHTML = unavailable("Arc testnet: " + (e.shortMessage || e.message)); }
 }
 
-async function fundOnArc(d, dep) {
+async function fundArc(d, dep) {
   const out = $("arcOut");
   try {
-    if (!window.ethereum) throw new Error("no browser wallet: connect one on Arc testnet to fund");
-    await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x" + ARC.id.toString(16) }] });
-    const [addr] = await window.ethereum.request({ method: "eth_requestAccounts" });
-    const chain = V.viem.defineChain({ id: ARC.id, name: "Arc Testnet", nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 }, rpcUrls: { default: { http: [ARC.rpc] } } });
-    const wallet = V.viem.createWalletClient({ account: addr, chain, transport: V.viem.custom(window.ethereum) });
-    const arc = V.viem.createPublicClient({ chain, transport: V.viem.http(ARC.rpc) });
-    const amount = V.viem.parseUnits($("arcAmt").value, 6);
-    const erc20 = V.viem.parseAbi(["function approve(address,uint256) returns (bool)"]);
-    const escrowAbi = V.viem.parseAbi(["function fund(bytes32 decisionId, uint256 amount)"]);
-    out.textContent = "approve · sign";
-    await arc.waitForTransactionReceipt({ hash: await wallet.writeContract({ address: ARC.usdc, abi: erc20, functionName: "approve", args: [dep.escrow, amount] }) });
-    out.textContent = "fund · sign";
-    const hash = await wallet.writeContract({ address: dep.escrow, abi: escrowAbi, functionName: "fund", args: [V.viem.keccak256(V.viem.toHex(d.decision_id)), amount] });
-    await arc.waitForTransactionReceipt({ hash });
-    out.innerHTML = `funded ${arcLink(hash)}`;
+    const signer = await arcSigner();
+    const adapter = arcAdapter({ viem: V.viem, arcPub: V.arcPub, dep, usdc: ARC.usdc, stakeUnits: V.viem.parseUnits(String(dep.stake_usdc), 6), signer });
+    const rec = await execute(adapter, d, signer, V.arcPub, (m) => { out.textContent = m; });
+    out.innerHTML = `funded ${arcLink(rec.tx_hash)}`;
     await renderArc();
   } catch (e) { out.innerHTML = `<span class="unavail">${esc(e.shortMessage || e.message)}</span>`; }
 }
 
-// ── load ─────────────────────────────────────────────────────────────────
-async function refreshChain(errs) {
-  try { S.chain = await readChain(); } catch (e) { S.chain = null; if (errs) errs.chain = e.shortMessage || e.message; }
+// ── history ──────────────────────────────────────────────────────────────
+function renderHistory() {
+  if (!S.up.engine) { $("history").innerHTML = unavailable("engine " + ENGINE); return; }
+  const txs = new Map(S.executions.map((e) => [e.decision_id, e]));
+  const rows = S.history.map((d) => {
+    const e = txs.get(d.decision_id);
+    return `<tr><td class="small" style="white-space:nowrap">${ts(d.created_at)}</td><td>${esc(d.opportunity_id)}</td><td><span class="pill ${d.verdict}">${d.verdict}</span></td>
+      <td style="font-family:var(--body);color:var(--text-muted);min-width:260px">${esc(d.reason)}</td>
+      <td class="hash" style="white-space:nowrap">${e ? `${short(e.tx_hash)}${e.settlement_tx ? ` · settle ${arcLink(e.settlement_tx)}` : ""}` : ""}</td>
+      <td style="white-space:nowrap"><button class="btn ghost sm" data-replay="${d.decision_id}">Replay</button> <span data-rout="${d.decision_id}"></span></td></tr>`;
+  }).join("");
+  $("history").innerHTML = `<table><thead><tr><th>Time</th><th>Opportunity</th><th>Verdict</th><th>Reason</th><th>Transaction</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  document.querySelectorAll("[data-replay]").forEach((b) => b.addEventListener("click", async () => {
+    const out = document.querySelector(`[data-rout="${b.dataset.replay}"]`);
+    try { const r = await engine(`/decisions/${b.dataset.replay}/replay`, { method: "POST" }); out.innerHTML = r.matches ? `<span style="color:var(--green)">identical</span>` : `<span style="color:var(--red)">differs</span>`; }
+    catch { out.innerHTML = unavailable("engine replay"); }
+  }));
 }
+
+// ── data + heartbeat ─────────────────────────────────────────────────────
+async function readChain() {
+  const maker = S.info?.maker, [block, chainId] = await Promise.all([V.pub.getBlockNumber(), V.pub.getChainId()]);
+  const out = { block, chainId, at: now() };
+  if (maker) [out.weth, out.usdc] = await Promise.all([A.WETH, A.USDC].map((t) => V.pub.readContract({ address: t, abi: V.erc20, functionName: "balanceOf", args: [maker] })));
+  return out;
+}
+
+async function loadEngine() {
+  const [health, profiles, info] = await Promise.all([engine("/health"), engine("/profiles"), engine("/demo/info").catch(() => null)]);
+  S.health = health; S.profiles = profiles; S.info = info; S.at.health = S.at.profiles = S.at.info = now();
+  [S.history, S.executions] = await Promise.all([engine("/decisions?limit=12"), engine("/executions")]);
+}
+
 async function seed() {
   try { S.seed = await engine("/demo/seed", { method: "POST" }); S.seedErr = null; }
   catch (e) { S.seed = null; S.seedErr = "engine POST /demo/seed: " + e.message; }
-  renderOpps(); renderDecision(); renderHistory();
+  const approved = S.seed?.items.findIndex((i) => i.decision.verdict === "APPROVE");
+  if (approved >= 0) S.sel = approved;
+}
+
+async function refreshAll() {
+  try { await loadEngine(); S.up.engine = true; } catch { S.up.engine = false; S.seed = null; }
+  try { if (!V) await loadViem(); S.chain = await readChain(); S.up.chain = true; } catch { S.up.chain = false; S.chain = null; }
+  renderStatus(); renderOpps(); renderDecision(); renderHistory();
+  await Promise.all([renderAqua(), renderHook(), renderArc()]);
+  renderDecision();
+}
+
+async function heartbeat() {
+  const was = { ...S.up };
+  try { S.health = await engine("/health"); S.at.health = now(); S.up.engine = true; } catch { S.up.engine = false; }
+  try { S.chain = await readChain(); S.up.chain = true; } catch { S.up.chain = false; S.chain = null; }
+  if (was.engine !== S.up.engine || was.chain !== S.up.chain) {
+    // A source came back: reseed so nothing on screen predates the outage.
+    if (S.up.engine && !was.engine) await seed();
+    if (!S.up.engine) { S.seed = null; S.seedErr = "engine " + ENGINE; }
+    await refreshAll();
+  } else renderStatus();
+  document.querySelectorAll("[data-age]").forEach((el) => { el.textContent = `${age(el.dataset.age)} s`; });
 }
 
 async function main() {
-  const errs = {};
-  renderPending();
-  await Promise.all([
-    engine("/profiles").then((p) => { S.profiles = p; S.profilesAt = now(); }).catch(() => { errs.engine = "engine " + ENGINE; }),
-    engine("/demo/info").then((i) => { S.info = i; S.infoAt = now(); }).catch((e) => { errs.info = e.message.startsWith("404") ? "demo/curves.json (run make demo-chain)" : "engine " + ENGINE; }),
-    loadViem().catch(() => { errs.chain = "viem (CDN)"; }),
-  ]);
-  if (V) { await refreshChain(errs); if (S.chain) S.signer = await getSigner().catch(() => null); }
-  renderStatus(errs);
-  // Seed the three demo opportunities; pick the approved one if there is one.
-  await seed();
-  const approved = S.seed?.items.findIndex((i) => i.decision.verdict === "APPROVE");
-  if (approved >= 0) { S.sel = approved; renderOpps(); renderDecision(); }
-  renderStatus(errs);
-  await renderAqua();
-  await renderHook();
-  await renderArc();
-  renderDecision();
+  try { await loadViem(); } catch { /* chain panels report the CDN as unavailable */ }
+  try { await loadEngine(); S.up.engine = true; } catch { S.up.engine = false; }
+  if (V) { try { S.chain = await readChain(); S.up.chain = true; S.signer = await demoSigner(); } catch { S.up.chain = false; } }
+  if (S.up.engine) await seed();
+  await refreshAll();
+  setInterval(heartbeat, HEARTBEAT_MS);
+  setInterval(() => document.querySelectorAll("[data-age]").forEach((el) => { el.textContent = `${age(el.dataset.age)} s`; }), 1000);
 }
 main();
 </script>

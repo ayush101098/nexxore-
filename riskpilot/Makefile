@@ -5,7 +5,7 @@
 # Needs the demo chain and engine running (the settle step asks the engine for the payout).
 SENDER ?=
 WALLET ?= --interactive
-DECISION ?= dec_c30a51bd0724adcb
+DECISION ?= dec_ffa0da20dd2a6c09
 AMOUNT ?= 5
 ARC_RPC = https://rpc.testnet.arc.io
 ARC_USDC = 0x3600000000000000000000000000000000000000
