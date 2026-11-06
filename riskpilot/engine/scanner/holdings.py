@@ -41,3 +41,28 @@ def read_holdings(rpc_url: str, wallet: str, post: Callable[[str, list], list] =
             raise RuntimeError(f"rpc error reading holdings: {r['error']}")
     weth, usdc = (int(r["result"], 16) for r in replies)
     return Holdings(weth=Decimal(weth) / Decimal(10**18), usdc=Decimal(usdc) / Decimal(10**6))
+
+
+def read_chain_context(rpc_url: str, wallet: str | None, post: Callable[[str, list], list] = _post) -> dict:
+    """One batched read per block: head block, the wallet's native ETH, and eth_feeHistory
+    (last block's base fee and median priority fee) for the gas ceiling."""
+    calls = [
+        {"jsonrpc": "2.0", "id": 0, "method": "eth_blockNumber", "params": []},
+        {"jsonrpc": "2.0", "id": 1, "method": "eth_feeHistory", "params": ["0x1", "latest", [50]]},
+    ]
+    if wallet:
+        calls.append({"jsonrpc": "2.0", "id": 2, "method": "eth_getBalance", "params": [wallet, "latest"]})
+    replies = {r["id"]: r for r in post(rpc_url, calls)}
+    for r in replies.values():
+        if "error" in r:
+            raise RuntimeError(f"rpc error reading chain context: {r['error']}")
+    fh = replies[1]["result"]
+    gwei = lambda h: (Decimal(int(h, 16)) / Decimal(10**9)).quantize(Decimal("0.000000001"))
+    reward = (fh.get("reward") or [["0x0"]])[-1]
+    return {
+        "block": int(replies[0]["result"], 16),
+        # baseFeePerGas has one more entry than blocks: the last is the next block's base fee.
+        "base_fee_gwei": gwei(fh["baseFeePerGas"][-1]),
+        "tip_gwei": gwei(reward[0] if reward else "0x0"),
+        "eth": None if not wallet else Decimal(int(replies[2]["result"], 16)) / Decimal(10**18),
+    }
