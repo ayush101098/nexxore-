@@ -8,11 +8,47 @@ fill is a real token transfer.
 These are options-like payoffs from swap curves, not option contracts.
 
 ```bash
-make test        # init pinned submodules, fork mainnet, run the whole flow (~7 s)
-# or: AQUA_FORK_RPC_URL=<your mainnet rpc> forge test -vv
+export AQUA_FORK_RPC_URL=<Ethereum mainnet archive RPC>
+make test         # init pinned submodules, fork at the pinned block, run the whole flow
+make demo-chain   # persistent Anvil fork with both demo curves shipped (state survives restarts)
+make demo-fill CURVE=upside    # scripted taker; CURVE=downside sells ETH to the put-like curve
+make demo-reset   # forget the saved demo state
 ```
 
-`AQUA_FORK_RPC_URL` defaults to `https://ethereum-rpc.publicnode.com`.
+- **Pinned block:** forks are pinned to `DemoParams.FORK_BLOCK` (26,354,292).
+  Override it with `AQUA_FORK_BLOCK`.
+- **RPC:** the public default RPC only keeps about 100 recent blocks, so after
+  that the pinned block needs a dedicated archive RPC.
+
+## Demo chain
+
+`make demo-chain` runs `script/demo-chain.sh`:
+
+1. Start `anvil --fork-block-number <pinned>`.
+2. Fund the maker (Anvil account #0) and the taker (#1) with ETH using
+   `anvil_setBalance`, then wrap it to WETH.
+3. Fund USDC by impersonating a large USDC holder (`anvil_impersonateAccount`)
+   and transferring from it. The holder isn't hardcoded:
+   `script/find_usdc_holder.py` picks the ordinary wallet (not a contract) with
+   the largest balance among recent USDC transfer counterparties at the pinned
+   block.
+4. Run `script/ShipDemoCurves.s.sol`, which applies the collateral check, ships
+   both curves, and writes `demo/curves.json` (orders, strategy hashes,
+   ranges, fees).
+
+State is dumped to `demo/anvil-state.json` every 10 s and on Ctrl-C, and the
+next run reloads it with `--state`. If setup fails partway, the half-built
+state is deleted.
+
+Demo curves (w = 1.275, `src/DemoParams.sol`):
+
+| Curve | Range | K_eq | T_eq @ 55% vol | Fee instruction (1e9 = 100%) |
+|---|---|---|---|---|
+| upside, call-like, 1 ETH | 3,400–4,335 | 3,839.14 | 6.99 d | **2,013,952** (0.2014% = engine f_min, rounded up) |
+| downside, put-like, 3,011.09 USDC | 2,666.67–3,400 | 3,011.09 | 6.99 d | **2,274,072** (0.2274%) |
+
+The fork test's own unit curves stay at w = 1.10, which is about a 1-day
+equivalent term.
 
 ## Gate 1: can XYCConcentrate sit entirely above or below spot? Yes.
 
@@ -78,6 +114,8 @@ locked in a pool.** We don't claim that the two curves share capital.
 |---|---|
 | Both curves shipped from one wallet | `test_BothCurvesShipFromOneWallet`. The strategy hashes match `router.hash`, the Aqua balances are as shipped, and the wallet is untouched. |
 | Taker fill moves tokens, balances printed | `test_TakerFillMovesTokens`. Every transfer is asserted, and the results are written to `out/aqua-fill.json` for the UI. |
+| Downside fill | `test_DownsideFillMovesTokens`. The taker sells WETH to the put-like curve, and every transfer is asserted. |
+| Demo curves price in range | `test_DemoCurvesShipAndPriceInRange`. The ask is 3,408.01 (spot + 0.2014%) and the bid is 3,391.83 (spot − 0.2274%). |
 | `quote()` is consistent with the range | `test_QuoteIsConsistentWithTheRange`. A small buy prices at spot plus the fee; a large buy prices above that but below the range top. |
 | Collateral check refuses over-allocation | `test_CollateralCheck*`: single curve, two curves on one token, live strategies, allowance |
 | Whole flow from a clean fork in one command | `make test` |
