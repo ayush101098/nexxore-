@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RiskPilot</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%2339D5FF'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060B12; --bg2: #0B1220; --surface: #0E1626; --surface2: #121D30;
+  --border: rgba(138,180,255,0.12); --border-hi: rgba(57,213,255,0.30);
+  --cyan: #39D5FF; --green: #19E6C5; --violet: #4F7CFF; --gold: #F7B955; --red: #FF5C5C; --amber: #F7B955;
+  --text: #F4F8FF; --text-muted: #9FB0C7; --text-dim: #6B7A93;
+  /* chart series: validated on #0E1626 (dataviz validate_palette, dark) */
+  --c-edge: #1E9AC4; --c-cost: #BC8330; --c-vol0: #0FA98F; --c-vol20: #9E74E3;
+  --grid: rgba(138,180,255,0.10);
+  --body: 'Inter', sans-serif; --mono: 'IBM Plex Mono', monospace; --radius: 3px;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { -webkit-font-smoothing:antialiased; }
+body { background:var(--bg); color:var(--text); font-family:var(--body); font-size:14px; line-height:1.5; overflow-x:hidden; }
+a { color:var(--cyan); text-decoration:none; }
+button { font-family:var(--body); }
+.wrap { max-width:1400px; margin:0 auto; padding:16px; }
+.top { display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+.top h1 { font-size:1rem; font-weight:700; letter-spacing:0.2px; }
+.tag { font-family:var(--mono); font-size:0.62rem; color:var(--text-muted); border:1px solid var(--border); padding:2px 8px; border-radius:2px; }
+
+/* status bar */
+.status { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:14px; }
+.st { background:var(--surface); padding:9px 12px; min-width:0; }
+.st .k { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; }
+.st .v { font-family:var(--mono); font-size:0.82rem; font-weight:600; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.st .s { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.unavail { color:var(--amber) !important; font-weight:500 !important; font-size:0.68rem !important; white-space:normal !important; }
+[data-src] { cursor:help; }
+
+/* layout */
+.row { display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); gap:14px; margin-bottom:14px; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); min-width:0; }
+.card-h { padding:10px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; justify-content:space-between; flex-wrap:wrap; }
+.card-h h2 { font-size:0.8rem; font-weight:600; }
+.card-h .note { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); }
+.card-b { padding:12px 14px; }
+.sub { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; margin:14px 0 6px; }
+.sub:first-child { margin-top:0; }
+
+/* tables */
+.tscroll { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:0.68rem; }
+th { text-align:left; font-weight:500; font-size:0.56rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; padding:6px 8px; border-bottom:1px solid var(--border); white-space:nowrap; }
+td { padding:8px; border-bottom:1px solid var(--border); vertical-align:top; }
+td.num, th.num { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+tbody tr.pick { cursor:pointer; }
+tbody tr.pick:hover td { background:var(--surface2); }
+tbody tr.sel td { background:rgba(57,213,255,0.06); }
+tbody tr.sel td:first-child { box-shadow:inset 2px 0 0 var(--cyan); }
+.muted { color:var(--text-muted); }
+.dim { color:var(--text-dim); }
+
+.pill { font-family:var(--mono); font-size:0.56rem; font-weight:700; padding:2px 7px; border-radius:2px; white-space:nowrap; }
+.pill.APPROVE { background:rgba(25,230,197,0.12); color:var(--green); }
+.pill.REJECT { background:rgba(255,92,92,0.12); color:var(--red); }
+.pill.REQUOTE { background:rgba(247,185,85,0.12); color:var(--gold); }
+.pill.REQUIRE_REVIEW { background:rgba(79,124,255,0.14); color:#9DB4FF; }
+
+/* decision panel */
+.dec-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.dec-id { font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); }
+.reason { font-size:0.82rem; margin:8px 0 2px; line-height:1.45; }
+.cells { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:6px; }
+.cell { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:7px 9px; }
+.cell .k { font-family:var(--mono); font-size:0.54rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.3px; }
+.cell .v { font-family:var(--mono); font-size:0.8rem; font-weight:600; margin-top:1px; }
+.chart { width:100%; display:block; }
+.chart text { font-family:var(--mono); font-size:10px; fill:var(--text-muted); }
+.chart .axis { stroke:var(--grid); stroke-width:1; }
+.chart .ref { stroke:var(--text-muted); stroke-width:1.5; }
+.chart .hit { fill:transparent; cursor:default; }
+.legend { display:flex; gap:14px; flex-wrap:wrap; font-family:var(--mono); font-size:0.6rem; color:var(--text-muted); margin-top:4px; }
+.legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+.legend i.line { height:2px; width:14px; vertical-align:3px; background:var(--text-muted); }
+details { margin-top:6px; }
+summary { font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); cursor:pointer; }
+
+.act { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px; padding-top:12px; border-top:1px solid var(--border); }
+.btn { padding:8px 16px; border:none; border-radius:var(--radius); background:var(--green); color:#04120F; font-size:0.74rem; font-weight:700; cursor:pointer; }
+.btn:disabled { background:var(--surface2); color:var(--text-dim); cursor:not-allowed; }
+.btn.ghost { background:none; border:1px solid var(--border); color:var(--text-muted); font-weight:500; }
+.btn.ghost:hover { border-color:var(--cyan); color:var(--cyan); }
+.btn.sm { padding:3px 9px; font-size:0.62rem; }
+.countdown { font-family:var(--mono); font-size:0.7rem; color:var(--text-muted); }
+.signer { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); width:100%; }
+.log { font-family:var(--mono); font-size:0.62rem; color:var(--text-muted); margin-top:8px; line-height:1.7; }
+.log .ok { color:var(--green); } .log .bad { color:var(--red); }
+.hash { font-family:var(--mono); font-size:0.62rem; color:var(--text-muted); }
+
+.pos-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:14px; }
+.curve { padding:10px 0; border-bottom:1px solid var(--border); }
+.curve:last-child { border-bottom:none; }
+.curve-t { font-size:0.74rem; font-weight:600; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+#tip { position:fixed; z-index:50; pointer-events:none; background:var(--surface2); border:1px solid var(--border-hi); border-radius:var(--radius); padding:6px 9px; font-family:var(--mono); font-size:0.62rem; color:var(--text); line-height:1.6; display:none; max-width:280px; }
+
+@media (max-width:1100px) { .row { grid-template-columns:1fr; } .pos-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>RiskPilot</h1>
+    <span class="tag" id="tagChain">demo chain</span>
+    <span class="tag">ETH/USDC</span>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="row">
+    <div class="card">
+      <div class="card-h"><h2>Opportunities</h2><span class="note" id="oppNote">—</span></div>
+      <div class="card-b tscroll" id="opps"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>Decision</h2><span class="note" id="decNote">—</span></div>
+      <div class="card-b" id="decision"></div>
+    </div>
+  </div>
+
+  <div class="pos-grid">
+    <div class="card">
+      <div class="card-h"><h2>Aqua curves</h2><span class="note">1inch AquaSwapVMRouter v1.0.2</span></div>
+      <div class="card-b" id="aqua"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>v4 hook fee</h2><span class="note">vs flat 0.30%</span></div>
+      <div class="card-b" id="hook"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>Arc settlement</h2><span class="note">USDC escrow</span></div>
+      <div class="card-b" id="arc"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h2>Decision history</h2><span class="note">replay re-runs the engine on the recorded inputs</span></div>
+    <div class="card-b tscroll" id="history"></div>
+  </div>
+</div>
+<div id="tip"></div>
+
+<script type="module">
+// ── config ────────────────────────────────────────────────────────────────
+const qs = new URLSearchParams(location.search);
+const ENGINE = qs.get("engine") || (location.port === "8000" ? location.origin : "http://localhost:8000");
+const RPC = qs.get("rpc") || "http://127.0.0.1:8545";
+const CHAIN_ID = 31337;
+const A = {
+  AQUA: "0x1111113CCf1426A8E30e2bfF5E005d929bF6a90a",
+  ROUTER: "0x111111338c5091E8440b67B168bAe16a668AC0De",
+  WETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+  USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+};
+// Anvil's account #0 (public key from the standard test mnemonic). Used only when no
+// browser wallet is connected to chain 31337; it signs locally, on your click.
+const DEMO_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+
+const S = { profiles: null, info: null, seed: null, sel: 0, history: [], chain: null, signer: null, log: [], live: {} };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const now = () => new Date().toISOString().replace(/\.\d+Z$/, "Z");
+const usd = (v) => { const n = Number(v); return (n < 0 ? "−$" : "$") + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+const num = (v, d = 2) => Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+const ts = (iso) => iso ? String(iso).replace("T", " ").replace(/\.\d+Z$/, "Z") : "—";
+const short = (h) => h ? h.slice(0, 6) + "…" + h.slice(-4) : "—";
+const src = (source, at) => `data-src="${esc(`source: ${source}\nat: ${at || now()}`)}"`;
+const unavailable = (name) => `<span class="unavail">Source unavailable: ${esc(name)}</span>`;
+
+async function engine(path, opts = {}) {
+  const r = await fetch(ENGINE + path, { ...opts, headers: { "content-type": "application/json" } });
+  if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 160)}`);
+  return r.json();
+}
+
+// ── viem (chain reads + signing) ─────────────────────────────────────────
+let V = null;
+async function loadViem() {
+  const [viem, chains, accounts] = await Promise.all([
+    import("https://cdn.jsdelivr.net/npm/viem@2.21.0/+esm"),
+    import("https://cdn.jsdelivr.net/npm/viem@2.21.0/chains/+esm"),
+    import("https://cdn.jsdelivr.net/npm/viem@2.21.0/accounts/+esm"),
+  ]);
+  const chain = { ...chains.foundry, rpcUrls: { default: { http: [RPC] } } };
+  const pub = viem.createPublicClient({ chain, transport: viem.http(RPC) });
+  const abi = viem.parseAbi([
+    "function balanceOf(address) view returns (uint256)",
+    "function allowance(address,address) view returns (uint256)",
+    "function approve(address,uint256) returns (bool)",
+    "function rawBalances(address maker, address app, bytes32 strategyHash, address token) view returns (uint248, uint8)",
+    "function ship(address app, bytes strategy, address[] tokens, uint256[] amounts) returns (bytes32)",
+  ]);
+  const events = {
+    shipped: viem.parseAbiItem("event Shipped(address maker, address app, bytes32 strategyHash, bytes strategy)"),
+    swapped: viem.parseAbiItem("event Swapped(bytes32 orderHash, address maker, address taker, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut)"),
+  };
+  V = { viem, chain, pub, abi, events, accounts };
+}
+
+async function readChain() {
+  const maker = S.info?.maker;
+  const [block, chainId] = await Promise.all([V.pub.getBlockNumber(), V.pub.getChainId()]);
+  const out = { block, chainId, at: now() };
+  if (maker) {
+    const bal = (t) => V.pub.readContract({ address: t, abi: V.abi, functionName: "balanceOf", args: [maker] });
+    [out.weth, out.usdc] = await Promise.all([bal(A.WETH), bal(A.USDC)]);
+  }
+  return out;
+}
+
+async function getSigner() {
+  if (window.ethereum) {
+    try {
+      const id = parseInt(await window.ethereum.request({ method: "eth_chainId" }), 16);
+      if (id === CHAIN_ID) {
+        const [addr] = await window.ethereum.request({ method: "eth_requestAccounts" });
+        return { kind: "browser wallet", address: addr,
+          client: V.viem.createWalletClient({ account: addr, chain: V.chain, transport: V.viem.custom(window.ethereum) }) };
+      }
+    } catch { /* fall through to the demo signer */ }
+  }
+  const account = V.accounts.privateKeyToAccount(DEMO_KEY);
+  return { kind: "demo signer: Anvil account #0 (public test key), signs in this browser", address: account.address,
+    client: V.viem.createWalletClient({ account, chain: V.chain, transport: V.viem.http(RPC) }) };
+}
+
+// ── status bar ────────────────────────────────────────────────────────────
+function renderStatus(errs = {}) {
+  const c = S.chain, p = S.profiles?.balanced, info = S.info;
+  const cell = (k, v, s = "") => `<div class="st"><div class="k">${k}</div><div class="v">${v}</div>${s ? `<div class="s">${s}</div>` : ""}</div>`;
+  const parts = [];
+  parts.push(cell("Fork block", info ? `<span ${src("demo/curves.json via engine", S.infoAt)}>${Number(info.fork_block).toLocaleString()}</span>` : unavailable(errs.info || "demo/curves.json"),
+    c ? `<span ${src("eth_blockNumber " + RPC, c.at)}>head ${c.block.toLocaleString()} · chain ${c.chainId}</span>` : (errs.chain ? `<span class="unavail">chain: ${esc(errs.chain)}</span>` : "")));
+  parts.push(cell("Wallet", info ? `<span ${src("demo/curves.json maker", S.infoAt)}>${short(info.maker)}</span>` : unavailable("wallet"), S.signer ? esc(S.signer.kind.split(":")[0]) : ""));
+  const tok = (raw, dec, unit, d) => c && raw !== undefined
+    ? `<span ${src(`balanceOf ${unit} · ${RPC}`, c.at)}>${num(Number(raw) / 10 ** dec, d)} ${unit}</span>` : unavailable("demo chain");
+  parts.push(cell("WETH held", tok(c?.weth, 18, "WETH", 4)));
+  parts.push(cell("USDC held", tok(c?.usdc, 6, "USDC", 2)));
+  parts.push(cell("Profile", p ? `<span ${src("engine GET /profiles", S.profilesAt)}>Balanced · ${usd(p.budget)} budget</span>` : unavailable(errs.engine || "engine"),
+    p ? `λ ${p.lambda} · min edge ${usd(p.min_edge)} · k ${p.k}` : ""));
+  parts.push(cell("Engine", S.profiles ? `<span ${src("engine " + ENGINE, S.profilesAt)}>connected</span>` : unavailable(errs.engine || "engine"), esc(ENGINE)));
+  $("status").innerHTML = parts.join("");
+  $("tagChain").textContent = c ? `demo chain · Ethereum mainnet fork @ ${info ? Number(info.fork_block).toLocaleString() : "?"}` : "demo chain";
+}
+
+// ── opportunities ────────────────────────────────────────────────────────
+function renderOpps() {
+  if (!S.seed) { $("opps").innerHTML = unavailable(S.seedErr || "engine POST /demo/seed"); return; }
+  const rows = S.seed.items.map((it, i) => {
+    const o = it.opportunity, d = it.decision;
+    return `<tr class="pick ${i === S.sel ? "sel" : ""}" data-i="${i}" tabindex="0" ${src("engine POST /demo/seed · " + o.source, d.created_at)}>
+      <td>${esc(it.label)}<div class="dim" style="font-size:0.58rem">${esc(o.type)} · ${esc(o.source_venue)}</div></td>
+      <td class="num">${usd(o.observed_price)}<div class="dim" style="font-size:0.58rem">ref ${usd(o.reference_price)}</div></td>
+      <td class="num">${usd(o.size)}</td>
+      <td class="num">${usd(d.net_edge)}</td>
+      <td><span class="pill ${d.verdict}">${d.verdict}</span></td></tr>`;
+  }).join("");
+  $("opps").innerHTML = `<table><thead><tr><th>Opportunity</th><th class="num">Observed</th><th class="num">Size</th><th class="num">Net edge</th><th>Verdict</th></tr></thead><tbody>${rows}</tbody></table>`;
+  $("oppNote").textContent = `seeded ${ts(S.seed.as_of)}`;
+  document.querySelectorAll("#opps tr.pick").forEach((tr) => {
+    const go = () => { S.sel = Number(tr.dataset.i); renderOpps(); renderDecision(); };
+    tr.addEventListener("click", go);
+    tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  });
+}
+
+// ── charts ────────────────────────────────────────────────────────────────
+const tip = $("tip");
+function bindTips(root) {
+  root.querySelectorAll("[data-tip]").forEach((el) => {
+    el.addEventListener("mousemove", (e) => {
+      tip.innerHTML = el.dataset.tip; tip.style.display = "block";
+      const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8);
+      tip.style.left = x + "px"; tip.style.top = (e.clientY + 14) + "px";
+    });
+    el.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+  });
+}
+const niceStep = (span) => { const raw = span / 4, p = 10 ** Math.floor(Math.log10(raw || 1)); return [1, 2, 2.5, 5, 10].map((m) => m * p).find((s) => s >= raw); };
+
+// Horizontal waterfall: gross, then each cost as a floating bar down from the running total, then net.
+function waterfall(d) {
+  const label = d.inputs.aqua ? "Premium" : "Gross edge";
+  const steps = [{ k: label, v: +d.gross_edge, kind: "edge" }];
+  for (const [k, v] of Object.entries(d.costs)) steps.push({ k: k[0].toUpperCase() + k.slice(1), v: -v, kind: "cost" });
+  steps.push({ k: "Risk charge", v: -d.risk_charge, kind: "cost" });
+  let run = 0;
+  const bars = steps.map((s) => { const a = run; run += s.v; return { ...s, a, b: run }; });
+  bars.push({ k: "Net edge", v: +d.net_edge, kind: "edge", a: 0, b: +d.net_edge, net: true });
+  const hurdle = +d.inputs.hurdle;
+  const vals = bars.flatMap((b) => [b.a, b.b]).concat([0, hurdle]);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const step = niceStep(hi - lo || 1); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  const W = 680, L = 92, R = 60, rowH = 24, barH = 14, top = 20, H = top + bars.length * rowH + 22;
+  const x = (v) => L + ((v - lo) / (hi - lo)) * (W - L - R);
+  let g = "";
+  for (let t = lo; t <= hi + 1e-9; t += step) g += `<line class="axis" x1="${x(t)}" x2="${x(t)}" y1="${top}" y2="${H - 18}"/><text x="${x(t)}" y="${H - 5}" text-anchor="middle">${t < 0 ? "−" : ""}$${Math.abs(t).toLocaleString()}</text>`;
+  bars.forEach((b, i) => {
+    const y = top + i * rowH + (rowH - barH) / 2, x0 = x(Math.min(b.a, b.b)), w = Math.max(1, Math.abs(x(b.b) - x(b.a)));
+    const fill = b.kind === "edge" ? "var(--c-edge)" : "var(--c-cost)";
+    const valX = x(Math.max(b.a, b.b)) + 6;
+    g += `<text x="${L - 8}" y="${y + barH - 3}" text-anchor="end" style="fill:var(--text)">${b.k}</text>`;
+    if (Math.abs(b.v) > 0) g += `<rect x="${x0}" y="${y}" width="${w}" height="${barH}" rx="3" fill="${fill}"/>`;
+    g += `<text x="${Math.min(valX, W - 4)}" y="${y + barH - 3}" text-anchor="${valX > W - R ? "end" : "start"}">${b.net ? usd(b.v) : (b.v < 0 ? "−" : "") + usd(Math.abs(b.v))}</text>`;
+    g += `<rect class="hit" x="0" y="${top + i * rowH}" width="${W}" height="${rowH}" data-tip="${esc(`${b.k}: ${usd(b.v)}${b.net ? `<br>hurdle ${usd(hurdle)}` : ""}`)}"/>`;
+  });
+  g += `<line class="ref" x1="${x(hurdle)}" x2="${x(hurdle)}" y1="${top - 4}" y2="${H - 18}"/><text x="${x(hurdle)}" y="${top - 8}" text-anchor="middle" style="fill:var(--text)">hurdle ${usd(hurdle)}</text>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Cost waterfall from gross edge to net edge">${g}</svg>
+    <div class="legend"><span><i style="background:var(--c-edge)"></i>edge</span><span><i style="background:var(--c-cost)"></i>cost</span><span><i class="line"></i>hurdle = max(min edge, k × uncertainty)</span></div>`;
+}
+
+// Columns: post-trade P&L per spot shock, two vol series, with the budget as a loss floor.
+function stressChart(d) {
+  const grid = d.inputs.stress_grid || [];
+  if (!grid.length) return `<div class="dim" style="font-size:0.7rem">No stress grid: the decision stopped before pricing.</div>`;
+  const budget = +d.budget, spots = [...new Set(grid.map((s) => s.spot_shock))];
+  const at = (sp, vo) => grid.find((s) => s.spot_shock === sp && s.vol_shock === vo);
+  const vals = grid.flatMap((s) => [+s.pnl_after]).concat([0, -budget]);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const step = niceStep(hi - lo || 1); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  const W = 680, L = 56, R = 8, top = 8, H = 210, bot = 26, gw = (W - L - R) / spots.length, bw = Math.min(16, gw / 2 - 4);
+  const y = (v) => top + ((hi - v) / (hi - lo)) * (H - top - bot);
+  const tk = (v) => (Math.abs(v) >= 1000 ? `${(v / 1000).toLocaleString()}K` : v.toLocaleString());
+  let g = "";
+  for (let t = lo; t <= hi + 1e-9; t += step) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 6}" y="${y(t) + 3}" text-anchor="end">${t < 0 ? "−" : ""}$${tk(Math.abs(t))}</text>`;
+  spots.forEach((sp, i) => {
+    const cx = L + gw * i + gw / 2;
+    g += `<text x="${cx}" y="${H - 8}" text-anchor="middle">${(+sp > 0 ? "+" : "") + Math.round(+sp * 100)}%</text>`;
+    ["0.00", "0.20"].forEach((vo, j) => {
+      const s = at(sp, vo); if (!s) return;
+      const v = +s.pnl_after, x0 = cx + (j === 0 ? -bw - 1 : 1), y0 = y(Math.max(v, 0)), h = Math.max(1, Math.abs(y(v) - y(0)));
+      const fill = j === 0 ? "var(--c-vol0)" : "var(--c-vol20)";
+      // 4px round at the data end, square at the zero baseline
+      const r = Math.min(3, h / 2);
+      const path = v >= 0
+        ? `M${x0},${y0 + h} V${y0 + r} Q${x0},${y0} ${x0 + r},${y0} H${x0 + bw - r} Q${x0 + bw},${y0} ${x0 + bw},${y0 + r} V${y0 + h} Z`
+        : `M${x0},${y0} V${y0 + h - r} Q${x0},${y0 + h} ${x0 + r},${y0 + h} H${x0 + bw - r} Q${x0 + bw},${y0 + h} ${x0 + bw},${y0 + h - r} V${y0} Z`;
+      g += `<path d="${path}" fill="${fill}"/>`;
+      const tipText = `spot ${(+sp > 0 ? "+" : "") + Math.round(+sp * 100)}% · vol +${Math.round(+vo * 100)} pts<br>after ${usd(s.pnl_after)} · before ${usd(s.pnl_before)}<br>this trade ${usd(s.pnl_after - s.pnl_before)}`;
+      g += `<rect class="hit" x="${x0 - 2}" y="${top}" width="${bw + 4}" height="${H - top - bot}" data-tip="${esc(tipText)}"/>`;
+    });
+  });
+  g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" style="stroke:var(--text-dim)"/>`;
+  g += `<line class="ref" x1="${L}" x2="${W - R}" y1="${y(-budget)}" y2="${y(-budget)}"/><text x="${L + 4}" y="${y(0) - 5}" style="fill:var(--text)">budget −${usd(budget)}</text>`;
+  const table = grid.map((s) => `<tr><td>${s.spot_shock}</td><td>${s.vol_shock}</td><td class="num">${usd(s.pnl_before)}</td><td class="num">${usd(s.pnl_after)}</td></tr>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Post-trade P&amp;L across 14 stress scenarios against the loss budget">${g}</svg>
+    <div class="legend"><span><i style="background:var(--c-vol0)"></i>vol +0 pts</span><span><i style="background:var(--c-vol20)"></i>vol +20 pts</span><span><i class="line"></i>loss budget</span></div>
+    <details><summary>Show as table</summary><table><thead><tr><th>Spot shock</th><th>Vol shock</th><th class="num">P&amp;L before</th><th class="num">P&amp;L after</th></tr></thead><tbody>${table}</tbody></table></details>`;
+}
+
+// ── decision panel ───────────────────────────────────────────────────────
+let timer = null;
+function renderDecision() {
+  clearInterval(timer);
+  if (!S.seed) { $("decision").innerHTML = unavailable(S.seedErr || "engine"); return; }
+  const it = S.seed.items[S.sel], d = it.decision, inp = d.inputs, aq = inp.aqua;
+  const tsOf = (k) => inp.timestamps?.[k];
+  let html = `<div class="dec-head"><span class="pill ${d.verdict}">${d.verdict}</span><span class="dec-id" ${src("engine generate_execution_decision · " + d.model_version, d.created_at)}>${d.decision_id} · ${ts(d.created_at)}</span></div>
+    <div class="reason">${esc(d.reason)}</div>`;
+  html += `<div class="sub">Net edge, itemized (USD)</div>${waterfall(d)}`;
+  html += `<div class="sub">Stress test · worst loss ${usd(d.stress_loss_before)} → ${usd(d.stress_loss_after)} vs ${usd(d.budget)} budget</div>${stressChart(d)}`;
+  if (aq) {
+    const cellv = (k, v) => `<div class="cell"><div class="k">${k}</div><div class="v" ${src("engine pricing · Black-Scholes at K_eq, T_eq", d.created_at)}>${v}</div></div>`;
+    html += `<div class="sub">Aqua curve · ${aq.side.replace("_", "-")} ${usd(aq.range_low)}–${usd(aq.range_high)}</div><div class="cells">
+      ${cellv("K_eq", usd(aq.k_eq))}${cellv("T_eq", num(aq.t_eq_days, 2) + " d")}${cellv("C_eq / ETH", usd(aq.c_eq))}
+      ${cellv("Fee floor f_min", num(aq.f_min * 100, 4) + "%")}${cellv("Curve fee", num(aq.fee_rate * 100, 4) + "%")}</div>`;
+  }
+  const srcs = Object.entries(inp.sources || {}).map(([k, v]) => `${k}: ${esc(v)}${tsOf(k) ? ` @ ${ts(tsOf(k))}` : ""}`).join(" · ");
+  html += `<div class="sub">Inputs</div><div class="dim" style="font-family:var(--mono);font-size:0.6rem;line-height:1.6">${srcs}${inp.request?.holdings ? ` · holdings: ${esc(inp.request.holdings.weth)} WETH, ${esc(inp.request.holdings.usdc)} USDC (${esc(S.seed.sources.holdings)})` : ""}</div>`;
+
+  const curve = aq && S.info ? (aq.side === "call_like" ? S.info.upside : S.info.downside) : null;
+  const live = curve && S.live[curve.strategy_hash];
+  const can = d.verdict === "APPROVE" && curve && !live;
+  html += `<div class="act"><button class="btn" id="approve" ${can ? "" : "disabled"}>${live ? "Already shipped · see Aqua curves" : d.verdict === "APPROVE" ? "Approve and sign" : `Not approved · ${d.verdict}`}</button>
+    <span class="countdown" id="countdown"></span>
+    <div class="signer">${can ? esc(S.signer?.kind || "") : (d.verdict === "APPROVE" && !curve ? "No signable curve for this decision." : "")}</div></div>
+    <div class="log" id="log">${S.log.join("<br>")}</div>`;
+  $("decision").innerHTML = html;
+  $("decNote").textContent = it.label;
+  bindTips($("decision")); bindTips($("status")); bindTips($("opps"));
+  if (can) {
+    const tick = () => {
+      const left = Math.round((Date.parse(d.expires_at) - Date.now()) / 1000);
+      const btn = $("approve"); if (!btn) return clearInterval(timer);
+      if (left <= 0) {
+        clearInterval(timer);
+        btn.textContent = "Expired · re-evaluate"; btn.disabled = false; btn.onclick = () => seed();
+        $("countdown").textContent = `decision expired at ${d.expires_at}`;
+      } else $("countdown").textContent = `expires in ${left} s`;
+    };
+    tick(); timer = setInterval(tick, 1000);
+    $("approve").onclick = () => approveAndSign(d, curve);
+  }
+}
+
+function log(msg, cls = "") { S.log.push(`<span class="${cls}">${esc(new Date().toLocaleTimeString())} ${esc(msg)}</span>`); const el = $("log"); if (el) el.innerHTML = S.log.join("<br>"); }
+
+async function approveAndSign(d, curve) {
+  const btn = $("approve"); btn.disabled = true; clearInterval(timer);
+  try {
+    if (Date.parse(d.expires_at) <= Date.now()) throw new Error("decision expired: re-evaluate first");
+    const sg = S.signer || (S.signer = await getSigner());
+    if (sg.address.toLowerCase() !== S.info.maker.toLowerCase()) throw new Error(`signer ${short(sg.address)} is not the curve's maker ${short(S.info.maker)}`);
+    const need = { [A.WETH]: BigInt(curve.weth_amount), [A.USDC]: BigInt(curve.usdc_amount) };
+    // Collateral check (PRD 3): Aqua pulls from the wallet on fill, so the wallet must cover the curve.
+    // Curves already live promise part of the wallet too, so they count against it.
+    for (const [token, amt] of Object.entries(need)) {
+      if (amt === 0n) continue;
+      const committed = Object.values(S.live).reduce((sum, l) => sum + (l ? BigInt(l[token]) : 0n), 0n);
+      const bal = await V.pub.readContract({ address: token, abi: V.abi, functionName: "balanceOf", args: [sg.address] });
+      if (bal < amt + committed) throw new Error(`collateral check refused: need ${amt} + ${committed} already in live curves of ${token === A.WETH ? "WETH" : "USDC"}, wallet holds ${bal}`);
+      const allowance = await V.pub.readContract({ address: token, abi: V.abi, functionName: "allowance", args: [sg.address, A.AQUA] });
+      if (allowance < amt) {
+        log(`approve ${token === A.WETH ? "WETH" : "USDC"} for Aqua · sign`);
+        const h = await sg.client.writeContract({ address: token, abi: V.abi, functionName: "approve", args: [A.AQUA, amt] });
+        await V.pub.waitForTransactionReceipt({ hash: h });
+        log(`approve confirmed ${short(h)}`, "ok");
+      }
+    }
+    log("collateral check passed · ship curve · sign");
+    const hash = await sg.client.writeContract({ address: A.AQUA, abi: V.abi, functionName: "ship",
+      args: [A.ROUTER, curve.order, [A.WETH, A.USDC], [need[A.WETH], need[A.USDC]]] });
+    const rc = await V.pub.waitForTransactionReceipt({ hash });
+    const ok = rc.status === "success" && rc.logs.some((l) => l.data.includes(curve.strategy_hash.slice(2)));
+    log(`ship ${rc.status} in block ${rc.blockNumber} ${short(hash)}${ok ? " · Shipped event matches strategy" : ""}`, ok ? "ok" : "bad");
+    if (!ok) throw new Error("ship receipt did not verify");
+    const position = await engine("/executions", { method: "POST", body: JSON.stringify({
+      decision_id: d.decision_id, chain_id: CHAIN_ID, tx_hash: hash, status: "confirmed", verified_at: now(), settlement_tx: null }) });
+    log(`engine recorded execution · position ${position.position_id} ${position.status}`, "ok");
+    await refreshChain(); await renderAqua(); await renderHistory(); renderDecision();
+  } catch (e) {
+    log(String(e.shortMessage || e.message || e), "bad");
+    btn.disabled = false;
+  }
+}
+
+// ── positions: Aqua curves ───────────────────────────────────────────────
+async function renderAqua() {
+  const el = $("aqua");
+  if (!S.info) { el.innerHTML = unavailable("demo/curves.json"); return; }
+  if (!V || !S.chain) { el.innerHTML = unavailable("demo chain " + RPC); return; }
+  try {
+    const from = BigInt(S.info.fork_block) + 1n;
+    const [ships, swaps] = await Promise.all([
+      V.pub.getLogs({ address: A.AQUA, event: V.events.shipped, fromBlock: from }),
+      V.pub.getLogs({ address: A.ROUTER, event: V.events.swapped, fromBlock: from }),
+    ]);
+    const at = now();
+    const rows = [];
+    for (const [name, c] of [["Call-like", S.info.upside], ["Put-like", S.info.downside]]) {
+      const raw = (t) => V.pub.readContract({ address: A.AQUA, abi: V.abi, functionName: "rawBalances", args: [S.info.maker, A.ROUTER, c.strategy_hash, t] });
+      const [[w, n], [u]] = await Promise.all([raw(A.WETH), raw(A.USDC)]);
+      const shipped = n > 0;
+      S.live[c.strategy_hash] = shipped ? { [A.WETH]: w, [A.USDC]: u } : null;
+      const ship = ships.find((l) => l.args.strategyHash === c.strategy_hash);
+      const fills = swaps.filter((l) => l.args.orderHash === c.strategy_hash);
+      let h = `<div class="curve"><div class="curve-t">${name} · ${usd(c.range_low_usdc / 1e6)}–${usd(c.range_high_usdc / 1e6)}
+        <span class="pill ${shipped ? "APPROVE" : "REQUOTE"}">${shipped ? "SHIPPED" : "NOT SHIPPED"}</span></div>`;
+      h += `<div class="dim" style="font-family:var(--mono);font-size:0.62rem;margin-top:4px" ${src("Aqua rawBalances · " + RPC, at)}>curve holds ${num(Number(w) / 1e18, 4)} WETH · ${num(Number(u) / 1e6, 2)} USDC · fee ${num(c.fee_instruction / 1e7, 4)}%</div>`;
+      if (ship) h += `<div class="hash" style="margin-top:4px">ship ${short(ship.transactionHash)} · block ${ship.blockNumber} <button class="btn ghost sm" data-verify="${ship.transactionHash}">Verify</button> <span data-out="${ship.transactionHash}"></span></div>`;
+      for (const f of fills) {
+        const buy = f.args.tokenOut.toLowerCase() === A.WETH.toLowerCase();
+        const eth = Number(buy ? f.args.amountOut : f.args.amountIn) / 1e18, usdc = Number(buy ? f.args.amountIn : f.args.amountOut) / 1e6;
+        h += `<div class="hash" style="margin-top:4px">fill ${short(f.transactionHash)} · taker ${buy ? "bought" : "sold"} ${num(eth, 4)} WETH for ${num(usdc, 2)} USDC (${usd(usdc / eth)}) <button class="btn ghost sm" data-verify="${f.transactionHash}">Verify</button> <span data-out="${f.transactionHash}"></span></div>`;
+      }
+      if (shipped && !fills.length) h += `<div class="dim" style="font-size:0.62rem;margin-top:4px">No fills yet · <span class="hash">make demo-fill CURVE=${c.side === "call_like" ? "upside" : "downside"}</span></div>`;
+      rows.push(h + "</div>");
+    }
+    el.innerHTML = rows.join("") + `<div class="dim" style="font-size:0.6rem;margin-top:8px">Options-like payoffs from swap curves, not option contracts.</div>`;
+    el.querySelectorAll("[data-verify]").forEach((b) => b.addEventListener("click", () => verify(b.dataset.verify)));
+    bindTips(el);
+  } catch (e) { el.innerHTML = unavailable("demo chain: " + (e.shortMessage || e.message)); }
+}
+
+async function verify(hash) {
+  const out = document.querySelector(`[data-out="${hash}"]`);
+  try {
+    const rc = await V.pub.getTransactionReceipt({ hash });
+    out.innerHTML = `<span style="color:var(--${rc.status === "success" ? "green" : "red"})">${rc.status} · block ${rc.blockNumber} · gas ${rc.gasUsed.toLocaleString()} · ${rc.logs.length} logs</span>`;
+  } catch (e) { out.innerHTML = unavailable("receipt"); }
+}
+
+// ── history ──────────────────────────────────────────────────────────────
+async function renderHistory() {
+  try {
+    S.history = await engine("/decisions?limit=15");
+  } catch (e) { $("history").innerHTML = unavailable("engine GET /decisions"); return; }
+  if (!S.history.length) { $("history").innerHTML = `<div class="dim">No decisions yet.</div>`; return; }
+  const rows = S.history.map((d) => `<tr><td class="dim" style="white-space:nowrap">${ts(d.created_at)}</td><td>${esc(d.opportunity_id)}</td><td><span class="pill ${d.verdict}">${d.verdict}</span></td>
+    <td class="num">${usd(d.net_edge)}</td><td class="muted" style="font-family:var(--body);min-width:260px">${esc(d.reason)}</td>
+    <td><button class="btn ghost sm" data-replay="${d.decision_id}">Replay</button> <span data-rout="${d.decision_id}"></span></td></tr>`).join("");
+  $("history").innerHTML = `<table><thead><tr><th>Created</th><th>Opportunity</th><th>Verdict</th><th class="num">Net edge</th><th>Reason</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  document.querySelectorAll("[data-replay]").forEach((b) => b.addEventListener("click", async () => {
+    const out = document.querySelector(`[data-rout="${b.dataset.replay}"]`);
+    try {
+      const r = await engine(`/decisions/${b.dataset.replay}/replay`, { method: "POST" });
+      out.innerHTML = r.matches ? `<span style="color:var(--green)">identical</span>` : `<span style="color:var(--red)">differs</span>`;
+    } catch { out.innerHTML = unavailable("engine replay"); }
+  }));
+}
+
+// ── not yet deployed ─────────────────────────────────────────────────────
+function renderPending() {
+  $("hook").innerHTML = unavailable("v4 hook (not deployed yet)") + `<div class="dim" style="font-size:0.62rem;margin-top:6px">The dynamic fee and σ_EWMA series appear here once the hook is deployed and its swaps are on the chain.</div>`;
+  $("arc").innerHTML = unavailable("Arc escrow (not deployed yet)") + `<div class="dim" style="font-size:0.62rem;margin-top:6px">Fund and settle transactions for each approved decision appear here once the escrow is on Arc testnet.</div>`;
+}
+
+// ── load ─────────────────────────────────────────────────────────────────
+async function refreshChain(errs) {
+  try { S.chain = await readChain(); } catch (e) { S.chain = null; if (errs) errs.chain = e.shortMessage || e.message; }
+}
+async function seed() {
+  try { S.seed = await engine("/demo/seed", { method: "POST" }); S.seedErr = null; }
+  catch (e) { S.seed = null; S.seedErr = "engine POST /demo/seed: " + e.message; }
+  renderOpps(); renderDecision(); renderHistory();
+}
+
+async function main() {
+  const errs = {};
+  renderPending();
+  await Promise.all([
+    engine("/profiles").then((p) => { S.profiles = p; S.profilesAt = now(); }).catch(() => { errs.engine = "engine " + ENGINE; }),
+    engine("/demo/info").then((i) => { S.info = i; S.infoAt = now(); }).catch((e) => { errs.info = e.message.startsWith("404") ? "demo/curves.json (run make demo-chain)" : "engine " + ENGINE; }),
+    loadViem().catch(() => { errs.chain = "viem (CDN)"; }),
+  ]);
+  if (V) { await refreshChain(errs); if (S.chain) S.signer = await getSigner().catch(() => null); }
+  renderStatus(errs);
+  // Seed the three demo opportunities; pick the approved one if there is one.
+  await seed();
+  const approved = S.seed?.items.findIndex((i) => i.decision.verdict === "APPROVE");
+  if (approved >= 0) { S.sel = approved; renderOpps(); renderDecision(); }
+  renderStatus(errs);
+  await renderAqua();
+  renderDecision();
+}
+main();
+</script>
+</body>
+</html>
