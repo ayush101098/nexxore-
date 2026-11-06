@@ -19,7 +19,9 @@ from pricing import DAYS_PER_YEAR, aqua_position, aqua_premium_floor
 from profiles import PROFILES
 from scanner import Source, scan
 from scanner.holdings import DEFAULT_RPC, read_gas_gwei, read_holdings
-from scanner.live import AquaRouterSource, HookedV4PoolSource, UniswapTradingApiSource, hook_pool_state, load_hook
+from scanner.live import (
+    AquaRouterSource, HookedV4PoolSource, UniswapTradingApiSource, hook_pool_state, load_hook, main_pool_price,
+)
 from scanner.recorded import RecordedSource
 from schemas import validate
 from store import Store
@@ -59,6 +61,8 @@ def create_app(
     clock: Callable[[], datetime] = _utcnow,
     holdings_reader: Callable[[str], Holdings] = _chain_holdings,
     gas_reader: Callable[[], Decimal] = _chain_gas,
+    spot_reader: Callable[[], Decimal] | None = None,
+    gap_reader: Callable[[datetime], tuple[dict, dict]] | None = None,
 ) -> FastAPI:
     sources = sources if sources is not None else default_sources()
     app = FastAPI(title="RiskPilot engine", version=MODEL_VERSION)
@@ -228,7 +232,20 @@ def create_app(
     @app.post("/demo/seed")
     def post_demo_seed(wallet: str | None = None) -> dict:
         """Evaluate the three demo opportunities now, store the decisions, return both."""
-        requests, report = seed_requests(clock(), wallet, holdings_reader, gas_reader)
+        rpc = os.environ.get("DEMO_RPC_URL", DEFAULT_RPC)
+        v4 = HookedV4PoolSource(rpc)
+
+        def live_gap(now):
+            opps = [o for o in scan("ETH/USDC", [v4], now, Decimal("10000.00"), Decimal("5")) if o["source_venue"] == "uniswap_v4_hooked"]
+            if not opps:
+                raise RuntimeError("no gap on the hooked pool")
+            return opps[0], v4.market("uniswap_v4_hooked", now, Decimal(opps[0]["size"])).model_dump(mode="json")
+
+        requests, report = seed_requests(
+            clock(), wallet, holdings_reader, gas_reader,
+            read_spot=spot_reader or (lambda: main_pool_price(rpc)),
+            live_gap=gap_reader if gap_reader is not None else (live_gap if load_hook() else None),
+        )
         items = []
         for label, req in requests:
             decision = generate_execution_decision(req)

@@ -5,7 +5,7 @@ They raise NotImplementedError until then rather than guessing addresses or ABIs
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -31,6 +31,39 @@ SEL_GET_SLOT0 = "0xc815641c"  # getSlot0(bytes32)
 SEL_GET_FEE = "0xe5f3d3a5"  # VolatilityFeeHook.getFee(bytes32)
 SEL_GET_VOL = "0x17f58ccc"  # VolatilityFeeHook.getVolatility(bytes32)
 HOOK_DIR = Path(os.environ.get("RISKPILOT_HOOK_DIR", Path(__file__).resolve().parents[2] / "contracts" / "hook" / "demo"))
+
+
+# V4Quoter, Ethereum mainnet (same deployments page); quoteExactInputSingle(((address,address,
+# uint24,int24,address),bool,uint128,bytes)) -> (amountOut, gasEstimate), callable with eth_call.
+QUOTER = "0x99bd42B2B22e531f283b7F8a86dFf631EB16A9D1"
+SEL_QUOTE_EXACT_IN_SINGLE = "0xaa9d21cb"
+SEL_GAS_PRICE = "eth_gasPrice"
+MAIN_POOL_ID = "0x21c67e77068de97969ba93d4aab21826d33ca12bb9f565d8496e8fda8a82ca27"  # ETH/USDC 0.05%, spacing 10
+USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+DYNAMIC_FEE_FLAG = 0x800000
+BASE_TX_GAS = 21_000
+
+
+def _word(x: int) -> str:
+    return hex(x)[2:].rjust(64, "0")
+
+
+def _addr(a: str) -> str:
+    return a[2:].lower().rjust(64, "0")
+
+
+def _eth_call(rpc_url: str, to: str, data: str, post=_post) -> str:
+    [reply] = post(rpc_url, [{"jsonrpc": "2.0", "id": 0, "method": "eth_call", "params": [{"to": to, "data": data}, "latest"]}])
+    if "error" in reply:
+        raise RuntimeError(f"eth_call to {to} failed: {reply['error']}")
+    return reply["result"]
+
+
+def main_pool_price(rpc_url: str, post=_post) -> Decimal:
+    """USDC per ETH on the fork's main ETH/USDC v4 pool, via StateView."""
+    sqrt = int(_eth_call(rpc_url, STATE_VIEW, SEL_GET_SLOT0 + MAIN_POOL_ID[2:], post)[2:66], 16)
+    return (Decimal(sqrt) ** 2 * Decimal(10**12) / Decimal(2**192)).quantize(Decimal("0.01"))
 
 
 def load_hook() -> dict | None:
@@ -77,6 +110,48 @@ class HookedV4PoolSource(_Live):
 
     def __init__(self, rpc_url: str | None = None):
         self.rpc_url = rpc_url or os.environ.get("DEMO_RPC_URL", DEFAULT_RPC)
+
+    def market(self, venue: str, as_of: datetime, size: Decimal = Decimal("10000")) -> Market:
+        """Market snapshot for trading `size` USD through the hooked pool, all from the chain:
+        a Quoter quote at size (fee-exclusive price), the hook's fee and sigma, eth_gasPrice."""
+        hook = load_hook()
+        if hook is None or venue != "uniswap_v4_hooked":
+            raise NotImplementedError(f"v4_pool: no live market for {venue!r}")
+        state = hook_pool_state(self.rpc_url, hook)
+        mid, ref, fee = state["hooked_price"], state["main_price"], Decimal(state["fee_pips"]) / Decimal(10**6)
+        sell_eth = mid > ref  # ETH is dearer here: sell it into the hooked pool
+        if sell_eth:
+            amount_in = int(size / mid * Decimal(10**18))  # WETH wei
+        else:
+            amount_in = int(size * Decimal(10**6))  # USDC units
+        data = (
+            SEL_QUOTE_EXACT_IN_SINGLE + _word(0x20) + _addr(USDC) + _addr(WETH) + _word(DYNAMIC_FEE_FLAG)
+            + _word(60) + _addr(hook["hook"]) + _word(0 if sell_eth else 1) + _word(amount_in) + _word(0x100) + _word(0)
+        )
+        out = _eth_call(self.rpc_url, QUOTER, data)
+        amount_out, gas_estimate = int(out[2:66], 16), int(out[66:130], 16)
+        # The quote is after the pool fee (taken from the input); price it ex-fee, since the
+        # engine itemizes the fee separately.
+        effective_in = Decimal(amount_in) * (1 - fee)
+        if sell_eth:
+            price = (Decimal(amount_out) / Decimal(10**6)) / (effective_in / Decimal(10**18))
+        else:
+            price = (Decimal(amount_in) * (1 - fee) / Decimal(10**6)) / (Decimal(amount_out) / Decimal(10**18))
+        [gas_reply] = _post(self.rpc_url, [{"jsonrpc": "2.0", "id": 0, "method": SEL_GAS_PRICE, "params": []}])
+        gas_gwei = (Decimal(int(gas_reply["result"], 16)) / Decimal(10**9)).quantize(Decimal("0.000001"))
+        return Market.model_validate({
+            "quote": {"price": str(price.quantize(Decimal("0.01"))), "mid": str(mid), "quoted_at": as_of.isoformat(),
+                      "expires_at": (as_of + timedelta(seconds=20)).isoformat(), "latency_seconds": "2",
+                      "source": "demo chain V4Quoter.quoteExactInputSingle"},
+            # The quoter filled the whole size, so the pool can take it.
+            "liquidity": str(size),
+            "gas": {"units": str(gas_estimate + BASE_TX_GAS), "price_gwei": str(gas_gwei), "observed_at": as_of.isoformat(),
+                    "source": "demo chain eth_gasPrice; units = quoter gasEstimate + 21,000"},
+            "fee_rate": str(fee),
+            "volatility": {"annualized": str(state["sigma"]), "observed_at": as_of.isoformat(), "source": "hook.getVolatility"},
+            # Hedge leg: the offsetting trade on the main ETH/USDC pool at its 0.05% fee.
+            "hedge": {"ratio": "1", "cost": str((size * Decimal("0.0005")).quantize(Decimal("0.01")))},
+        })
 
     def quotes(self, pair: str, as_of: datetime) -> list[VenueQuote]:
         hook = load_hook()

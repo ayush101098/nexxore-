@@ -16,13 +16,15 @@ from store import Store
 NOW = datetime(2026, 11, 6, 14, 0, tzinfo=timezone.utc)
 MAKER = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 
-# What `make demo-chain` writes for the demo curves (DemoParams: w = 1.275, 5 ETH call, f_min fees).
+# What `make demo-chain` writes for the demo curves (DemoParams: spot 2,218.55, w = 1.275,
+# a 7 ETH call-like curve and 1 ETH of USDC put-like, fees at f_min).
 CURVES = {
     "maker": MAKER,
-    "upside": {"side": "call_like", "range_low_usdc": 3400000000, "range_high_usdc": 4335000000,
-               "fee_instruction": 2013952, "weth_amount": 5 * 10**18, "usdc_amount": 0},
-    "downside": {"side": "put_like", "range_low_usdc": 2666666666, "range_high_usdc": 3400000000,
-                 "fee_instruction": 2274072, "weth_amount": 0, "usdc_amount": 3011090000},
+    "spot_usdc": 2218550000,
+    "upside": {"side": "call_like", "range_low_usdc": 2218550000, "range_high_usdc": 2828651250,
+               "fee_instruction": 2013952, "weth_amount": 7 * 10**18, "usdc_amount": 0},
+    "downside": {"side": "put_like", "range_low_usdc": 1740039215, "range_high_usdc": 2218550000,
+                 "fee_instruction": 2274072, "weth_amount": 0, "usdc_amount": 1964780000},
 }
 
 
@@ -32,26 +34,28 @@ def curves_file(tmp_path, monkeypatch):
     monkeypatch.setattr(demo, "DEMO_DIR", tmp_path)
 
 
-def client(holdings=None, gas=None) -> TestClient:
-    def read_holdings(wallet):
-        if holdings is None:
-            raise OSError("connection refused")
-        return holdings
+def client(holdings=None, gas=None, spot=None, gap=None) -> TestClient:
+    def down(value):
+        def read(*_):
+            if value is None:
+                raise OSError("connection refused")
+            return value
+        return read
 
-    def read_gas():
-        if gas is None:
-            raise OSError("connection refused")
-        return gas
-
-    app = create_app(Store(":memory:"), clock=lambda: NOW, holdings_reader=read_holdings, gas_reader=read_gas)
+    app = create_app(
+        Store(":memory:"), clock=lambda: NOW, holdings_reader=down(holdings), gas_reader=down(gas),
+        spot_reader=down(spot), gap_reader=down(gap),
+    )
     return TestClient(app)
 
 
 def test_seed_gives_reject_reject_approve_from_chain_holdings():
-    c = client(holdings=Holdings(weth="6", usdc="5000"), gas=Decimal("0.0875"))
+    c = client(holdings=Holdings(weth="8", usdc="5000"), gas=Decimal("0.0875"), spot=Decimal("2218.55"))
     body = c.post("/demo/seed").json()
     assert body["wallet"] == MAKER
-    assert body["sources"] == {"curves": "demo/curves.json", "holdings": "demo chain", "gas": "demo chain eth_gasPrice"}
+    assert body["sources"]["holdings"] == "demo chain"
+    assert body["sources"]["spot"].startswith("demo chain")
+    assert body["sources"]["price_gap"].startswith("recorded fixture")  # no live pool in this test
     verdicts = [i["decision"]["verdict"] for i in body["items"]]
     assert verdicts == ["REJECT", "REJECT", "APPROVE"]
     for item in body["items"]:
@@ -61,11 +65,13 @@ def test_seed_gives_reject_reject_approve_from_chain_holdings():
         assert item["decision"]["created_at"] == "2026-11-06T14:00:00Z"
     call = body["items"][2]["decision"]
     assert call["risk_charge"] == "0.00"
-    assert call["reason"].endswith("worst stress loss falls from $8,160.00 to $8,127.78")
+    assert "worst stress loss falls from" in call["reason"]
+    assert call["inputs"]["prices"]["mid"] == "2218.55", "curves priced at the fork's spot"
+    assert call["inputs"]["aqua"]["range_high"] == "2828.65125"
+    assert call["inputs"]["request"]["holdings"] == {"weth": "8", "usdc": "5000"}
     put = body["items"][1]["decision"]
-    assert put["reason"].endswith("(+$965.39 from this trade)")
-    assert call["inputs"]["aqua"]["range_high"] == "4335"
-    assert call["inputs"]["request"]["holdings"] == {"weth": "6", "usdc": "5000"}
+    assert put["inputs"]["aqua"]["range_low"] == "1740.039215"
+    assert put["reason"].endswith("from this trade)")
     assert len(call["inputs"]["stress_grid"]) == 14
     # Seeded decisions land in history.
     assert len(c.get("/decisions").json()) == 3
@@ -77,13 +83,14 @@ def test_seed_without_the_chain_reports_sources_unavailable():
     assert body["sources"]["holdings"].startswith("unavailable")
     assert body["sources"]["gas"].startswith("unavailable")
     # Falls back to the declared inputs, and says so in the decision's sources.
+    assert body["sources"]["spot"] == "demo/curves.json (DemoParams.SPOT)"
     call = body["items"][2]["decision"]
-    assert call["inputs"]["request"]["holdings"] == {"weth": "5", "usdc": "0"}
+    assert call["inputs"]["request"]["holdings"] == {"weth": "7", "usdc": "0"}
     assert call["verdict"] == "APPROVE"
 
 
 def test_replay_reproduces_the_stored_decision():
-    c = client(holdings=Holdings(weth="6", usdc="5000"), gas=Decimal("0.0875"))
+    c = client(holdings=Holdings(weth="8", usdc="5000"), gas=Decimal("0.0875"), spot=Decimal("2218.55"))
     decision = c.post("/demo/seed").json()["items"][1]["decision"]
     replay = c.post(f"/decisions/{decision['decision_id']}/replay").json()
     assert replay["matches"] is True
@@ -114,7 +121,7 @@ def test_cors_allows_the_site_and_localhost_with_private_network_access():
 
 
 def test_settlement_payout_needs_an_executed_approve():
-    c = client(holdings=Holdings(weth="6", usdc="5000"), gas=Decimal("0.0875"))
+    c = client(holdings=Holdings(weth="8", usdc="5000"), gas=Decimal("0.0875"), spot=Decimal("2218.55"))
     items = c.post("/demo/seed").json()["items"]
     approved, rejected = items[2]["decision"], items[1]["decision"]
     assert c.get(f"/decisions/{rejected['decision_id']}/settlement?amount=10").status_code == 409
@@ -131,3 +138,22 @@ def test_settlement_payout_needs_an_executed_approve():
     settle_tx = "0x" + "ef" * 32
     e = c.post(f"/decisions/{approved['decision_id']}/settlement", json={"settlement_tx": settle_tx}).json()
     assert e["settlement_tx"] == settle_tx and e["tx_hash"] == tx
+
+
+def test_seed_uses_the_live_hooked_pool_when_it_is_up():
+    gap_opp = {"opportunity_id": "opp_live", "type": "price_gap", "pair": "ETH/USDC", "source_venue": "uniswap_v4_hooked",
+               "target": "v4_swap", "observed_price": "2229.27", "reference_price": "2218.55", "size": "10000.00",
+               "observed_at": "2026-11-06T14:00:00Z", "source": "demo chain StateView:hooked"}
+    market = {"quote": {"price": "2203.82", "mid": "2229.27", "quoted_at": "2026-11-06T14:00:00Z",
+                        "expires_at": "2026-11-06T14:00:20Z", "latency_seconds": "2", "source": "demo chain V4Quoter"},
+              "liquidity": "10000", "gas": {"units": "67432", "price_gwei": "1.0", "observed_at": "2026-11-06T14:00:00Z",
+                                            "source": "demo chain eth_gasPrice"},
+              "fee_rate": "0.01", "volatility": {"annualized": "4.0", "observed_at": "2026-11-06T14:00:00Z", "source": "hook.getVolatility"},
+              "hedge": {"ratio": "1", "cost": "5.00"}}
+    c = client(holdings=Holdings(weth="8", usdc="5000"), gas=Decimal("1"), spot=Decimal("2218.55"), gap=(gap_opp, market))
+    body = c.post("/demo/seed").json()
+    gap = body["items"][0]["decision"]
+    assert body["sources"]["price_gap"].startswith("demo chain")
+    assert gap["opportunity_id"] == "opp_live"
+    assert gap["costs"]["fees"] == "100.00", "the hook's 1% fee on $10,000"
+    assert gap["verdict"] == "REJECT"

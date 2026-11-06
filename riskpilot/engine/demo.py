@@ -1,13 +1,16 @@
 """Demo seed: the three opportunities the /riskpilot page opens with.
 
-1. price gap on the hooked v4 pool at mainnet gas          -> REJECT (costs eat the edge)
-2. put-like Aqua curve, 3,011.09 USDC over 2,667-3,400     -> REJECT (adds stress above budget)
-3. call-like Aqua curve, 5 held WETH over 3,400-4,335      -> APPROVE (covered call on held ETH)
+1. price gap on the live hooked v4 pool             -> REJECT (the hook's fee eats the gap)
+2. put-like Aqua curve, 1 ETH of USDC below spot    -> REJECT (adds stress above budget)
+3. call-like Aqua curve, 7 held WETH above spot     -> APPROVE (covered call on held ETH)
 
-Inputs come from the engine's recorded fixtures, re-stamped to `now` so they are
-fresh, with the wallet's holdings and gas price read from the demo chain when it
-is up. Curve parameters (range, size, fee) come from contracts/aqua/demo/curves.json,
-written by `make demo-chain`, so the decision matches the order the page signs.
+Everything comes from the demo chain when it is up: the price gap from the hooked pool
+(StateView price, V4Quoter quote at size, the hook's fee and sigma, eth_gasPrice), the
+ETH spot for the Aqua curves from the fork's main ETH/USDC pool, and the wallet's holdings.
+Curve parameters (range, size, fee) come from contracts/aqua/demo/curves.json, written by
+`make demo-chain`, so the decision matches the order the page signs. The Aqua curves use a
+stated 55% implied volatility. Anything unavailable falls back to the engine's recorded
+fixtures, re-stamped to `now`, and the sources report says so.
 """
 
 import copy
@@ -65,6 +68,8 @@ def seed_requests(
     wallet: str | None,
     read_holdings: Callable[[str], Holdings],
     read_gas_gwei: Callable[[], Decimal],
+    read_spot: Callable[[], Decimal] | None = None,
+    live_gap: Callable[[datetime], tuple[dict, dict]] | None = None,
 ) -> tuple[list[tuple[str, EvaluateRequest]], dict]:
     """Return [(label, request)] plus a sources report for the page's status bar."""
     curves = load_curves()
@@ -86,6 +91,25 @@ def seed_requests(
 
     gap = _fixture("reject", now)
     gap["opportunity"]["opportunity_id"] = "opp_demogap"
+    sources["price_gap"] = "recorded fixture"
+    if live_gap is not None:
+        try:
+            opportunity, market = live_gap(now)
+            gap.update(opportunity=opportunity, size=opportunity["size"], market=market, book=[])
+            sources["price_gap"] = "demo chain: hooked v4 pool via StateView and V4Quoter"
+        except Exception as e:  # noqa: BLE001
+            sources["price_gap"] = f"recorded fixture (live pool unavailable: {e})"
+
+    spot = None
+    if read_spot is not None:
+        try:
+            spot = read_spot()
+            sources["spot"] = "demo chain: main ETH/USDC v4 pool via StateView"
+        except Exception as e:  # noqa: BLE001
+            sources["spot"] = f"unavailable: {e}"
+    if spot is None and curves and "spot_usdc" in curves:
+        spot = Decimal(curves["spot_usdc"]) / Decimal(10**6)
+        sources["spot"] = "demo/curves.json (DemoParams.SPOT)"
 
     put = _fixture("aqua_downside", now)
     put["opportunity"]["opportunity_id"] = "opp_demoput"
@@ -107,18 +131,36 @@ def seed_requests(
     down = (curves or {}).get("downside")
     if down:
         put["market"]["fee_rate"] = str(Decimal(down["fee_instruction"]) / FEE_UNITS)
+        put["aqua"] = {
+            "side": "put_like",
+            "range_low": str(Decimal(down["range_low_usdc"]) / Decimal(10**6)),
+            "range_high": str(Decimal(down["range_high_usdc"]) / Decimal(10**6)),
+        }
+        put["size"] = put["opportunity"]["size"] = f"{Decimal(down['usdc_amount']) / Decimal(10**6):.2f}"
 
     for r in (put, call):
+        if spot is not None:
+            for k in ("observed_price", "reference_price"):
+                r["opportunity"][k] = f"{spot:.2f}"
+            r["market"]["quote"].update(price=f"{spot:.2f}", mid=f"{spot:.2f}")
+            r["market"]["volatility"]["source"] = "stated: 55% implied volatility"
+    if spot is not None and up:
+        call["size"] = call["opportunity"]["size"] = f"{q * spot:.2f}"
+
+    for r in (gap, put, call):
         if holdings is not None:
             r["holdings"] = {"weth": str(holdings.weth), "usdc": str(holdings.usdc)}
-        if gas is not None:
+        if gas is not None and r is not gap:  # the live gap's market already reads gas from the chain
             r["market"]["gas"]["price_gwei"] = str(gas)
             r["market"]["gas"]["source"] = "demo chain eth_gasPrice"
 
+    def span(r):
+        return f"{Decimal(r['aqua']['range_low']):,.0f}–{Decimal(r['aqua']['range_high']):,.0f}"
+
     requests = [
         ("Price gap · hooked v4 pool", gap),
-        ("Put-like curve · 2,667–3,400", put),
-        ("Call-like curve · 3,400–4,335", call),
+        (f"Put-like curve · {span(put)}", put),
+        (f"Call-like curve · {span(call)}", call),
     ]
     return [(label, EvaluateRequest.model_validate(copy.deepcopy(r))) for label, r in requests], {
         "wallet": wallet,

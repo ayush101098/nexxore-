@@ -96,13 +96,14 @@ f_min = (1 + m) · C_eq / K_eq
 - **Also from `/aqua/price`:** it returns `premium_floor.fee_instruction_min`,
   which is f_min in SwapVM flat-fee units (1e9 = 100%), rounded up.
 
-Demo curves (w = 1.275, spot $3,400, vol 55%), from
+Demo curves on the fork's price (w = 1.275, spot $2,218.55, vol 55%). f_min doesn't depend on spot,
+so the fee instructions match the $3,400 fixture's. From
 `tests/fixtures/aqua_premium.json` and `/aqua/price`:
 
 | Curve | Range | K_eq | T_eq | C_eq | f_min | Fee instruction ≥ |
 |---|---|---|---|---|---|---|
-| upside, call-like | 3,400–4,335 | 3,839.14 | 6.99 d | 6.44 | 0.2014% | 2,013,952 |
-| downside, put-like | 2,666.67–3,400 | 3,011.09 | 6.99 d | 5.71 | 0.2274% | 2,274,072 |
+| upside, call-like | 2,218.55–2,828.65 | 2,505.10 | 6.99 d | 4.20 | 0.2014% | 2,013,952 |
+| downside, put-like | 1,740.04–2,218.55 | 1,964.78 | 6.99 d | 3.72 | 0.2274% | 2,274,072 |
 
 ### Existing holdings count in the book
 
@@ -129,16 +130,41 @@ net edge = (f · K_eq − C_eq) · q − gas_ship − λ · max(0, ΔR)
 The last term is 0 for an upside curve on held ETH. `gas_ship` is a measured
 `ship` costing 81,416 gas.
 
-Upside curve on held ETH (3,400–4,335, 55% vol, Balanced, gas_ship $0.42):
+Upside curve on held ETH at the fork's spot (2,218.55–2,828.65, 55% vol, Balanced, fee 2,013,952,
+measured ship gas at the chain's 1.05 gwei):
 
-| q (WETH) | m | Fee instruction | Net edge | Hurdle | Verdict |
-|---|---|---|---|---|---|
-| 1 | 0.20 | 2,013,952 | 0.87 | 5.00 | REJECT |
-| 5 | 0.20 | 2,013,952 | 6.02 | 5.00 | **APPROVE** |
-| 10 | 0.20 | 2,013,952 | 12.47 | 9.42 | APPROVE |
-| 1 | 0.50 | 2,517,440 | 2.80 | 5.00 | REJECT |
-| 5 | 0.50 | 2,517,440 | 15.69 | 5.00 | APPROVE |
-| 10 | 0.50 | 2,517,440 | 31.80 | 9.42 | APPROVE |
+| q (WETH) | Net edge | Hurdle | Verdict |
+|---|---|---|---|
+| 5 | 4.01 | 5.00 | REJECT |
+| 6 | 4.86 | 5.00 | REJECT |
+| **7** | **5.70** | **5.00** | **APPROVE**, the demo size |
+| 8 | 6.54 | 5.00 | APPROVE |
+| 10 | 8.22 | 6.14 | APPROVE |
+
+The premium per ETH scales with the ETH price, so the smallest curve that approves is 7 ETH here.
+At $3,400 it was 5 ETH (see `aqua_upside_held_eth.json`). The margin is thin: $0.70 over the
+hurdle.
+
+### Demo seed (`POST /demo/seed`)
+
+Everything comes from the demo chain when it's up. Here is one run:
+
+| Opportunity | Verdict | Why |
+|---|---|---|
+| Price gap: hooked v4 pool, $10,000 | REJECT | The $48.09 gap (48 bp) loses to the hook's 1% fee ($100), $114.16 of slippage from V4Quoter at size, and the $5 hedge |
+| Put-like curve: 1,964.78 USDC, 1,740–2,219 | REJECT | Adds $629.93 of loss at −40% on top of the wallet's 8 WETH; $7,729.29 is above the $250 budget |
+| Call-like curve: 7 WETH, 2,219–2,829 | APPROVE | Net edge $5.71 clears the $5.00 hurdle, and the worst stress loss falls from $7,099.36 to $7,069.93 |
+
+Each input comes from the chain:
+- the gap from StateView (hooked vs main pool);
+- the quote at size from V4Quoter;
+- the fee and σ from the hook;
+- gas from `eth_gasPrice`;
+- the Aqua spot from the main ETH/USDC pool;
+- holdings from `balanceOf`.
+
+The Aqua curves use a stated 55% implied vol. If a source is down, the seed falls back to the
+recorded fixtures and the `sources` report says so.
 
 ## Quote cap
 
