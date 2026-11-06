@@ -1,0 +1,11 @@
+import { chromium } from '@playwright/test';
+const [dir, name] = process.argv.slice(2);
+const b = await chromium.launch();
+const p = await b.newPage({ viewport:{width:1440,height:900}});
+await p.goto('http://localhost:3002',{waitUntil:'networkidle',timeout:40000}).catch(()=>{});
+await p.waitForTimeout(2500);
+const regime = await p.evaluate(() => document.documentElement.getAttribute('data-regime'));
+const chip = await p.locator('.nx-chip').textContent().catch(()=>null);
+console.log('data-regime:', regime, '| chip:', chip?.trim());
+await p.screenshot({path:`${dir}/${name}.png`});
+await b.close();

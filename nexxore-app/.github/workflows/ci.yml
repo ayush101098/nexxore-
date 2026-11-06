@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nexxore-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: nexxore-app/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      # GLOBAL RULE / Prompt 01 gate: no `href="#"` and no dead internal links.
+      - name: Link check (internal, offline)
+        run: pnpm --filter @nexxore/web link-check
+
+      # Prompt 02 gate: no raw hex color literals in apps/web — token classes only.
+      - name: Token check (no raw hex)
+        run: pnpm --filter @nexxore/web token-check
+
+      # Prompt A + 03 gate: no hardcoded $-figures/percentages outside /legal;
+      # no stale performance figures; no dead links.
+      - name: Content check (no hardcoded numbers)
+        run: pnpm --filter @nexxore/web content-check
+
+      # Prompt 03: OpenAPI spec + SDK types must match the route schemas —
+      # regenerate and fail on drift so a schema change always reaches the web build.
+      - name: OpenAPI/SDK drift check
+        run: |
+          pnpm --filter @nexxore/api openapi
+          pnpm --filter @nexxore/sdk generate
+          git diff --exit-code apps/api/openapi.json packages/sdk/src/generated
+
+      # Prompt A gate: valid HTML, one h1/route, unique titles + descriptions.
+      - name: HTML validate (prerendered routes)
+        run: pnpm --filter @nexxore/web html-validate
+
+      # Prompt 02: Storybook must build with every component in all regime states.
+      - name: Build Storybook
+        run: pnpm --filter @nexxore/ui build-storybook
+
+  # Optional online crawl of the deployed preview with lychee. Runs only when a
+  # preview URL is provided; the offline check above is the hard gate.
+  lychee:
+    runs-on: ubuntu-latest
+    if: ${{ vars.PREVIEW_URL != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lychee link crawl
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --no-progress ${{ vars.PREVIEW_URL }}
+          fail: true

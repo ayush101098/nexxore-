@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeFi Strategy Analytics — Perps + Options Builder | Nexxore</title>
+  <meta name="description" content="DeFi strategy analytics for perpetual futures and options. Interactive payoff modeling, real-time greeks, risk analysis, and one-click execution on BTC, ETH, SOL.">
+  <meta name="keywords" content="defi strategy analytics, crypto trading risk tools, perpetual funding analytics, options strategy builder, greeks calculator, payoff diagrams, BTC options, ETH perps strategy">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <link rel="canonical" href="https://nexxore.xyz/strategy-builder">
+  <meta property="og:title" content="DeFi Strategy Analytics — Perps + Options | Nexxore">
+  <meta property="og:description" content="Model DeFi strategies with payoff diagrams, real-time greeks, and risk analytics.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nexxore.xyz/strategy-builder">
+  <meta property="og:image" content="https://nexxore.xyz/assets/icons/og-image.png">
+  <meta property="og:site_name" content="Nexxore">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@nexxore">
+  <meta name="twitter:title" content="DeFi Strategy Analytics | Nexxore">
+  <meta name="twitter:image" content="https://nexxore.xyz/assets/icons/og-image.png">
+  <meta name="theme-color" content="#060B12">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":["SoftwareApplication","WebApplication"],"name":"Nexxore Strategy Builder","url":"https://nexxore.xyz/strategy-builder","applicationCategory":"FinanceApplication","applicationSubCategory":"DeFi Strategy Analytics","operatingSystem":"Web Browser","description":"DeFi strategy analytics — model perpetual and options strategies with interactive payoff diagrams, real-time greeks, and risk analysis.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Perps + Options Strategy Modeling","Interactive Payoff Diagrams","Real-Time Greeks Calculator","Risk Analysis Dashboard","BTC/ETH/SOL Strategy Builder","One-Click Execution","Scenario Analysis","P&L Simulation"]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Nexxore","item":"https://nexxore.xyz/"},{"@type":"ListItem","position":2,"name":"Strategy Builder","item":"https://nexxore.xyz/strategy-builder"}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://nexxore.xyz/#organization","name":"Nexxore","alternateName":["Nexxore DeFi","Nexxore Analytics","NEXXORE","nexxore","nexxore.xyz"],"url":"https://nexxore.xyz","logo":{"@type":"ImageObject","url":"https://nexxore.xyz/assets/icons/og-image.png","width":1200,"height":630},"image":"https://nexxore.xyz/assets/icons/og-image.png","description":"Nexxore is the institutional-grade DeFi risk analytics platform for crypto traders and funds.","foundingDate":"2025","sameAs":["https://x.com/nexxore","https://github.com/ayush101098/nexxore-"],"knowsAbout":["DeFi Risk Analytics","Perpetual Futures Funding Rates","Crypto Trading Risk Tools","Delta-Neutral Trading","On-Chain Analytics","Market Regime Detection"]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://nexxore.xyz/#website","name":"Nexxore","alternateName":["Nexxore DeFi","Nexxore Analytics","nexxore"],"url":"https://nexxore.xyz","publisher":{"@id":"https://nexxore.xyz/#organization"},"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://nexxore.xyz/research?q={search_term_string}"},"query-input":"required name=search_term_string"}}</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6QGB2RQVP0"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-6QGB2RQVP0');</script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='fg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%2300C8FF'/><stop offset='100%25' stop-color='%2300E87A'/></linearGradient></defs><rect width='32' height='32' rx='4' fill='%2305050D'/><g transform='translate(4,4) scale(0.75)'><circle cx='12' cy='10' r='7' stroke='url(%23fg)' stroke-width='2' fill='none'/><circle cx='20' cy='10' r='7' stroke='url(%23fg)' stroke-width='2' fill='none' opacity='.85'/><circle cx='16' cy='17' r='7' stroke='url(%23fg)' stroke-width='2' fill='none' opacity='.85'/></g></svg>" type="image/svg+xml">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+
+  <style>
+    /* ═══════════════════════════════════
+       VARIABLES & RESETS
+       ═══════════════════════════════════ */
+    :root {
+      --bg: #060B12; --bg-panel: #0B1220; --bg-card: #0E1626;
+      --bg-hover: #121D30; --bg-input: #09101D;
+      --border: rgba(138,180,255,0.12); --border-h: rgba(57,213,255,0.30);
+      --cyan: #39D5FF; --green: #19E6C5; --red: #FF5C5C;
+      --violet: #4F7CFF; --gold: #F7B955; --orange: #F7931A;
+      --t1: #F4F8FF; --t2: #9FB0C7; --t3: #6B7A93;
+      --mono: 'JetBrains Mono', monospace; --sans: 'Inter', -apple-system, sans-serif;
+      --display: 'Space Grotesk', sans-serif;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { font-family:var(--sans); background:var(--bg); color:var(--t2); min-height:100vh; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--border-h); border-radius:3px; }
+
+    /* ═══════════ HEADER ═══════════ */
+    .header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 20px; height:52px;
+      background:rgba(5,5,13,0.95); backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--border);
+      position:sticky; top:0; z-index:100;
+    }
+    .header-left { display:flex; align-items:center; gap:16px; }
+    .logo-link { display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--t1); }
+    .logo-link svg { height:22px; width:auto; }
+    .logo-text { font-family:var(--display); font-weight:700; font-size:14px; letter-spacing:-0.5px; }
+    .header-title { font-size:0.78rem; font-weight:600; color:var(--t2); padding-left:16px; border-left:1px solid var(--border); }
+    .asset-tabs { display:flex; gap:2px; background:var(--bg-card); border-radius:6px; padding:3px; }
+    .asset-tab {
+      padding:7px 16px; border:none; border-radius:4px;
+      background:transparent; color:var(--t3);
+      font-family:var(--mono); font-size:0.72rem; font-weight:600;
+      cursor:pointer; transition:all 0.15s;
+    }
+    .asset-tab:hover { color:var(--t2); background:var(--bg-hover); }
+    .asset-tab.active { color:#000; background:var(--cyan); }
+    .header-right { display:flex; align-items:center; gap:10px; }
+    .spot-display { font-family:var(--mono); font-size:0.85rem; font-weight:600; color:var(--t1); display:flex; align-items:center; gap:6px; }
+    .spot-display .label { font-size:0.6rem; color:var(--t3); text-transform:uppercase; }
+    .connect-btn {
+      padding:7px 18px; border:none; font-size:0.7rem; font-weight:700; font-family:var(--sans);
+      cursor:pointer; border-radius:4px; transition:all 0.15s;
+    }
+    .connect-btn.disconnected { background:var(--t1); color:var(--bg); }
+    .connect-btn.disconnected:hover { background:rgba(255,255,255,0.85); }
+    .connect-btn.connected { background:var(--green); color:#000; }
+
+    /* ═══════════ LIVE TICKER BAR ═══════════ */
+    .ticker-bar {
+      display:flex; align-items:center; gap:24px;
+      padding:8px 20px; background:var(--bg-panel);
+      border-bottom:1px solid var(--border); overflow-x:auto;
+      font-family:var(--mono); font-size:0.7rem;
+    }
+    .ticker-item { display:flex; align-items:center; gap:8px; white-space:nowrap; }
+    .ticker-label { color:var(--t3); font-size:0.6rem; text-transform:uppercase; letter-spacing:0.5px; }
+    .ticker-val { color:var(--t1); font-weight:600; }
+    .ticker-val.pos { color:var(--green); }
+    .ticker-val.neg { color:var(--red); }
+    .ticker-divider { width:1px; height:16px; background:var(--border); }
+
+    /* ═══════════ MAIN 3-PANEL LAYOUT ═══════════ */
+    .main { display:grid; grid-template-columns:320px 1fr 380px; min-height:calc(100vh - 94px); }
+    @media(max-width:1280px) { .main { grid-template-columns:280px 1fr 340px; } }
+    @media(max-width:1024px) { .main { grid-template-columns:1fr; } }
+    .panel { background:var(--bg-panel); border-right:1px solid var(--border); padding:14px; overflow-y:auto; }
+    .panel:last-child { border-right:none; }
+    .panel-section { margin-bottom:16px; }
+    .section-head { font-family:var(--display); font-size:0.72rem; font-weight:600; color:var(--t1); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; justify-content:space-between; }
+    .section-head .badge { font-size:0.6rem; padding:2px 6px; border-radius:3px; background:var(--cyan); color:#000; font-family:var(--mono); font-weight:700; }
+
+    /* ═══════════ TEMPLATES ═══════════ */
+    .template-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+    .template-btn {
+      padding:10px 8px; background:var(--bg-card); border:1px solid var(--border);
+      border-radius:6px; cursor:pointer; transition:all 0.15s;
+      text-align:left; display:flex; flex-direction:column; gap:3px;
+    }
+    .template-btn:hover { border-color:var(--cyan); background:var(--bg-hover); }
+    .template-btn.active { border-color:var(--cyan); background:rgba(0,200,255,0.06); }
+    .template-btn .name { font-size:0.7rem; font-weight:600; color:var(--t1); }
+    .template-btn .desc { font-size:0.58rem; color:var(--t3); line-height:1.3; }
+    .template-btn .type-badge {
+      font-size:0.5rem; font-family:var(--mono); font-weight:700;
+      padding:1px 4px; border-radius:2px; width:fit-content;
+    }
+    .type-badge.bullish { background:rgba(0,232,122,0.12); color:var(--green); }
+    .type-badge.bearish { background:rgba(255,61,90,0.12); color:var(--red); }
+    .type-badge.neutral { background:rgba(0,200,255,0.12); color:var(--cyan); }
+    .type-badge.hedge { background:rgba(232,160,32,0.12); color:var(--gold); }
+
+    /* ═══════════ LEG BUILDER ═══════════ */
+    .leg-builder { margin-top:8px; }
+    .leg-row { display:flex; gap:4px; margin-bottom:4px; }
+    .leg-row select, .leg-row input {
+      background:var(--bg-input); border:1px solid var(--border); color:var(--t1);
+      padding:6px; border-radius:4px; font-family:var(--mono); font-size:0.68rem;
+      outline:none; transition:border-color 0.15s;
+    }
+    .leg-row select:focus, .leg-row input:focus { border-color:var(--cyan); }
+    .leg-row select { width:60px; }
+    .leg-row input { width:100%; }
+    .add-leg-btn {
+      width:100%; padding:7px; background:transparent; border:1px dashed var(--border);
+      color:var(--cyan); font-size:0.68rem; font-family:var(--mono); font-weight:600;
+      cursor:pointer; border-radius:4px; transition:all 0.15s; margin-top:4px;
+    }
+    .add-leg-btn:hover { border-color:var(--cyan); background:rgba(0,200,255,0.04); }
+    .leg-card {
+      background:var(--bg-card); border:1px solid var(--border); border-radius:6px;
+      padding:8px 10px; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;
+    }
+    .leg-card .leg-info { display:flex; align-items:center; gap:8px; font-size:0.68rem; font-family:var(--mono); }
+    .leg-card .leg-side { font-weight:700; }
+    .leg-card .leg-side.buy { color:var(--green); }
+    .leg-card .leg-side.sell { color:var(--red); }
+    .leg-card .leg-type { color:var(--cyan); }
+    .leg-card .leg-detail { color:var(--t2); }
+    .leg-remove { background:none; border:none; color:var(--red); cursor:pointer; font-size:0.8rem; padding:2px 6px; border-radius:3px; }
+    .leg-remove:hover { background:rgba(255,61,90,0.12); }
+
+    /* ═══════════ GREEKS BAR ═══════════ */
+    .greeks-bar {
+      display:grid; grid-template-columns:repeat(4, 1fr); gap:4px; padding:8px;
+      background:var(--bg-card); border-radius:6px; border:1px solid var(--border);
+    }
+    .greek-item { text-align:center; }
+    .greek-item .symbol { font-size:0.6rem; color:var(--t3); font-family:var(--mono); }
+    .greek-item .value { font-size:0.82rem; font-weight:600; font-family:var(--mono); color:var(--t1); }
+
+    /* ═══════════ CENTER PANEL ═══════════ */
+    .payoff-container { position:relative; background:var(--bg-card); border-radius:8px; border:1px solid var(--border); overflow:hidden; }
+    .payoff-container canvas { width:100%; display:block; }
+    .payoff-label {
+      position:absolute; top:8px; left:10px; font-size:0.6rem; font-family:var(--mono);
+      color:var(--t3); text-transform:uppercase; letter-spacing:1px;
+    }
+
+    /* ═══════════ OPTIONS CHAIN ═══════════ */
+    .chain-controls { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+    .chain-controls select {
+      background:var(--bg-input); border:1px solid var(--border); color:var(--t1);
+      padding:6px 10px; border-radius:4px; font-family:var(--mono); font-size:0.68rem; outline:none;
+    }
+    .chain-controls select:focus { border-color:var(--cyan); }
+    .chain-wrap { overflow-x:auto; border-radius:6px; border:1px solid var(--border); max-height:340px; overflow-y:auto; }
+    .chain-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:0.64rem; }
+    .chain-table th {
+      background:var(--bg-card); color:var(--t3); font-weight:600; text-transform:uppercase;
+      padding:6px 8px; position:sticky; top:0; z-index:2; letter-spacing:0.5px; font-size:0.58rem;
+    }
+    .chain-table td { padding:5px 8px; border-bottom:1px solid var(--border); white-space:nowrap; }
+    .chain-table .call-side { background:rgba(0,232,122,0.02); }
+    .chain-table .put-side { background:rgba(255,61,90,0.02); }
+    .chain-table .strike-col {
+      background:var(--bg-card); color:var(--t1); font-weight:700; text-align:center;
+      border-left:1px solid var(--border); border-right:1px solid var(--border);
+      position:sticky; z-index:1;
+    }
+    .chain-table .strike-col.atm { color:var(--cyan); }
+    .chain-table tr:hover td { background:var(--bg-hover); }
+    .chain-table .clickable { cursor:pointer; transition:color 0.1s; }
+    .chain-table .clickable:hover { color:var(--cyan); }
+
+    /* ═══════════ ORDERBOOK ═══════════ */
+    .orderbook-container { background:var(--bg-card); border-radius:6px; border:1px solid var(--border); overflow:hidden; }
+    .ob-header { display:flex; justify-content:space-between; padding:8px 10px; background:var(--bg-panel); font-size:0.6rem; color:var(--t3); text-transform:uppercase; font-family:var(--mono); letter-spacing:0.5px; }
+    .ob-rows { max-height:200px; overflow-y:auto; }
+    .ob-row { display:grid; grid-template-columns:1fr 1fr 1fr; padding:2px 10px; font-family:var(--mono); font-size:0.64rem; position:relative; }
+    .ob-row.ask { color:var(--red); }
+    .ob-row.bid { color:var(--green); }
+    .ob-row .ob-depth {
+      position:absolute; top:0; bottom:0; right:0;
+      opacity:0.08; pointer-events:none;
+    }
+    .ob-row.ask .ob-depth { background:var(--red); }
+    .ob-row.bid .ob-depth { background:var(--green); }
+    .ob-spread {
+      display:flex; justify-content:center; align-items:center; gap:8px;
+      padding:4px; background:var(--bg-panel); font-family:var(--mono);
+      font-size:0.62rem; color:var(--t3); border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+    }
+    .ob-spread .mid-price { color:var(--t1); font-weight:700; font-size:0.72rem; }
+
+    /* ═══════════ RIGHT PANEL: EXECUTION ═══════════ */
+    .panel-right { background:var(--bg-panel); padding:14px; overflow-y:auto; }
+    .exec-tabs { display:flex; gap:2px; background:var(--bg-card); border-radius:6px; padding:3px; margin-bottom:12px; }
+    .exec-tab {
+      flex:1; padding:8px; border:none; border-radius:4px;
+      background:transparent; color:var(--t3); font-family:var(--mono);
+      font-size:0.7rem; font-weight:600; cursor:pointer; transition:all 0.15s; text-align:center;
+    }
+    .exec-tab:hover { color:var(--t2); background:var(--bg-hover); }
+    .exec-tab.active { color:#000; }
+    .exec-tab.active.perp { background:var(--cyan); }
+    .exec-tab.active.option { background:var(--violet); }
+
+    .exec-panel { display:none; }
+    .exec-panel.active { display:block; }
+
+    /* ═══ PERP EXECUTION FORM ═══ */
+    .side-toggle { display:flex; gap:2px; margin-bottom:10px; background:var(--bg-card); border-radius:6px; padding:3px; }
+    .side-btn {
+      flex:1; padding:10px; border:none; border-radius:4px; font-family:var(--mono);
+      font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.15s; text-align:center;
+      background:transparent; color:var(--t3);
+    }
+    .side-btn:hover { background:var(--bg-hover); }
+    .side-btn.buy.active { background:var(--green); color:#000; }
+    .side-btn.sell.active { background:var(--red); color:#000; }
+
+    .form-group { margin-bottom:10px; }
+    .form-label { font-size:0.62rem; color:var(--t3); font-family:var(--mono); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:flex; justify-content:space-between; }
+    .form-input-wrap { position:relative; }
+    .form-input {
+      width:100%; padding:10px 12px; background:var(--bg-input); border:1px solid var(--border);
+      border-radius:6px; color:var(--t1); font-family:var(--mono); font-size:0.8rem; font-weight:600;
+      outline:none; transition:border-color 0.15s;
+    }
+    .form-input:focus { border-color:var(--cyan); }
+    .form-input-suffix {
+      position:absolute; right:10px; top:50%; transform:translateY(-50%);
+      font-size:0.6rem; color:var(--t3); font-family:var(--mono);
+    }
+    .leverage-slider { width:100%; margin-top:4px; accent-color:var(--cyan); }
+    .leverage-presets { display:flex; gap:4px; margin-top:4px; }
+    .leverage-presets button {
+      flex:1; padding:5px; background:var(--bg-card); border:1px solid var(--border);
+      border-radius:4px; color:var(--t2); font-family:var(--mono); font-size:0.62rem;
+      cursor:pointer; transition:all 0.15s;
+    }
+    .leverage-presets button:hover { border-color:var(--cyan); color:var(--cyan); }
+    .leverage-presets button.active { background:rgba(0,200,255,0.1); border-color:var(--cyan); color:var(--cyan); }
+
+    .order-summary {
+      background:var(--bg-card); border-radius:6px; border:1px solid var(--border);
+      padding:10px; margin-bottom:10px;
+    }
+    .summary-row { display:flex; justify-content:space-between; padding:3px 0; font-size:0.66rem; font-family:var(--mono); }
+    .summary-row .summary-label { color:var(--t3); }
+    .summary-row .summary-val { color:var(--t1); font-weight:600; }
+    .summary-row .summary-val.red { color:var(--red); }
+    .summary-row .summary-val.green { color:var(--green); }
+
+    .exec-btn {
+      width:100%; padding:14px; border:none; border-radius:6px;
+      font-family:var(--mono); font-size:0.82rem; font-weight:700;
+      cursor:pointer; transition:all 0.2s; text-transform:uppercase; letter-spacing:1px;
+    }
+    .exec-btn.buy { background:var(--green); color:#000; }
+    .exec-btn.sell { background:var(--red); color:#fff; }
+    .exec-btn:hover { transform:translateY(-1px); filter:brightness(1.1); }
+    .exec-btn:active { transform:translateY(0); }
+    .exec-btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; filter:none; }
+
+    /* ═══ OPTION EXECUTION SUMMARY ═══ */
+    .option-legs-summary { margin-bottom:10px; }
+    .option-leg-row {
+      display:flex; align-items:center; justify-content:space-between; gap:6px;
+      padding:6px 10px; background:var(--bg-card); border:1px solid var(--border);
+      border-radius:6px; margin-bottom:4px; font-family:var(--mono); font-size:0.66rem;
+    }
+    .leg-pnl { font-weight:700; }
+
+    /* ═══ POSITIONS ═══ */
+    .positions-section { margin-top:12px; }
+    .position-card {
+      background:var(--bg-card); border:1px solid var(--border); border-radius:6px;
+      padding:10px; margin-bottom:6px;
+    }
+    .position-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+    .position-asset { font-family:var(--mono); font-weight:700; font-size:0.76rem; color:var(--t1); }
+    .position-side { font-family:var(--mono); font-weight:700; font-size:0.66rem; padding:2px 6px; border-radius:3px; }
+    .position-side.long { background:rgba(0,232,122,0.12); color:var(--green); }
+    .position-side.short { background:rgba(255,61,90,0.12); color:var(--red); }
+    .position-details { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+    .position-detail { font-size:0.62rem; font-family:var(--mono); }
+    .position-detail .dl { color:var(--t3); }
+    .position-detail .dv { color:var(--t1); font-weight:600; }
+    .close-position-btn {
+      width:100%; margin-top:6px; padding:6px; background:transparent; border:1px solid var(--red);
+      color:var(--red); font-family:var(--mono); font-size:0.62rem; font-weight:600;
+      cursor:pointer; border-radius:4px; transition:all 0.15s;
+    }
+    .close-position-btn:hover { background:rgba(255,61,90,0.1); }
+
+    /* ═══════════ TOAST SYSTEM ═══════════ */
+    .toast-container { position:fixed; top:60px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:6px; pointer-events:none; }
+    .toast {
+      padding:12px 16px; border-radius:8px; font-family:var(--mono); font-size:0.72rem;
+      backdrop-filter:blur(20px); border:1px solid var(--border);
+      animation:toastIn 0.3s ease-out; pointer-events:auto;
+      display:flex; align-items:center; gap:8px; min-width:280px;
+    }
+    .toast.success { background:rgba(0,232,122,0.12); border-color:rgba(0,232,122,0.3); color:var(--green); }
+    .toast.error { background:rgba(255,61,90,0.12); border-color:rgba(255,61,90,0.3); color:var(--red); }
+    .toast.info { background:rgba(0,200,255,0.12); border-color:rgba(0,200,255,0.3); color:var(--cyan); }
+    .toast.warning { background:rgba(232,160,32,0.12); border-color:rgba(232,160,32,0.3); color:var(--gold); }
+    .toast-icon { font-size:1rem; }
+    @keyframes toastIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(-10px); } }
+
+    /* ═══════════ STATUS DOT ═══════════ */
+    .status-dot { width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:4px; }
+    .status-dot.live { background:var(--green); box-shadow:0 0 6px var(--green); animation:pulse 2s infinite; }
+    .status-dot.stale { background:var(--gold); }
+    .status-dot.off { background:var(--red); }
+    @keyframes pulse { 0%, 100% { opacity:1; } 50% { opacity:0.4; } }
+
+    .empty-state { text-align:center; padding:24px; color:var(--t3); font-size:0.72rem; }
+    .empty-state .icon { font-size:1.5rem; margin-bottom:8px; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <header class="header">
+    <div class="header-left">
+      <a href="index.html" class="logo-link">
+        <svg viewBox="0 0 120 32" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00C8FF"/><stop offset="100%" stop-color="#00E87A"/></linearGradient></defs>
+          <rect width="32" height="32" rx="4" fill="#05050D"/>
+          <g transform="translate(4,4) scale(0.75)"><circle cx="12" cy="10" r="7" stroke="url(#lg)" stroke-width="2" fill="none"/><circle cx="20" cy="10" r="7" stroke="url(#lg)" stroke-width="2" fill="none" opacity=".85"/><circle cx="16" cy="17" r="7" stroke="url(#lg)" stroke-width="2" fill="none" opacity=".85"/></g>
+          <text x="40" y="22" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="16" fill="white">nexxore</text>
+        </svg>
+      </a>
+      <span class="header-title">Strategy Builder</span>
+      <div class="asset-tabs">
+        <button class="asset-tab active" data-asset="BTC">BTC</button>
+        <button class="asset-tab" data-asset="ETH">ETH</button>
+        <button class="asset-tab" data-asset="SOL">SOL</button>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="spot-display">
+        <span class="label"><span class="status-dot live" id="statusDot"></span>LIVE</span>
+        <span id="spotPrice">—</span>
+      </div>
+      <select class="connect-btn disconnected" id="connectType" style="background:var(--bg-card);color:var(--t1);border:1px solid var(--border)">
+        <option value="wallet">MetaMask</option>
+        <option value="deribit">Deribit API Key</option>
+      </select>
+      <button class="connect-btn disconnected" id="connectBtn" onclick="handleConnectAction()">Connect</button>
+    </div>
+  </header>
+
+  <!-- ═══════════ LIVE TICKER BAR ═══════════ -->
+  <div class="ticker-bar" id="tickerBar">
+    <div class="ticker-item"><span class="ticker-label">Mark</span><span class="ticker-val" id="tkMark">—</span></div>
+    <div class="ticker-divider"></div>
+    <div class="ticker-item"><span class="ticker-label">24h</span><span class="ticker-val" id="tkChange">—</span></div>
+    <div class="ticker-divider"></div>
+    <div class="ticker-item"><span class="ticker-label">Funding</span><span class="ticker-val" id="tkFunding">—</span></div>
+    <div class="ticker-divider"></div>
+    <div class="ticker-item"><span class="ticker-label">Ann. Rate</span><span class="ticker-val" id="tkAnnual">—</span></div>
+    <div class="ticker-divider"></div>
+    <div class="ticker-item"><span class="ticker-label">OI</span><span class="ticker-val" id="tkOI">—</span></div>
+    <div class="ticker-divider"></div>
+    <div class="ticker-item"><span class="ticker-label">24h Vol</span><span class="ticker-val" id="tkVol">—</span></div>
+    <div class="ticker-divider"></div>
+    <div class="ticker-item"><span class="ticker-label">Premium</span><span class="ticker-val" id="tkPremium">—</span></div>
+  </div>
+
+  <!-- ═══════════ TOAST CONTAINER ═══════════ -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ═══════════ MAIN 3-PANEL ═══════════ -->
+  <div class="main">
+    <!-- LEFT PANEL: Templates + Legs -->
+    <div class="panel">
+      <div class="panel-section">
+        <div class="section-head">Strategy Templates <span class="badge" id="templateCount">8</span></div>
+        <div class="template-grid" id="templateGrid"></div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-head">Strategy Legs <span class="badge" id="legCount">0</span></div>
+        <div id="legsContainer"></div>
+        <button class="add-leg-btn" onclick="addManualLeg()">+ Add Leg</button>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-head">Net Greeks</div>
+        <div class="greeks-bar">
+          <div class="greek-item"><div class="symbol">Δ Delta</div><div class="value" id="gDelta">0</div></div>
+          <div class="greek-item"><div class="symbol">Γ Gamma</div><div class="value" id="gGamma">0</div></div>
+          <div class="greek-item"><div class="symbol">Θ Theta</div><div class="value" id="gTheta">0</div></div>
+          <div class="greek-item"><div class="symbol">ν Vega</div><div class="value" id="gVega">0</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER PANEL: Payoff + Chain + Orderbook -->
+    <div class="panel" style="border-right:1px solid var(--border);">
+      <div class="panel-section">
+        <div class="section-head">Payoff Diagram</div>
+        <div class="payoff-container">
+          <span class="payoff-label">P&L at Expiry</span>
+          <canvas id="payoffCanvas" height="260"></canvas>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-head">Orderbook — <span id="obAsset">BTC</span> Perp <span class="status-dot live"></span></div>
+        <div class="orderbook-container">
+          <div class="ob-header"><span>Price</span><span>Size</span><span>Total</span></div>
+          <div class="ob-rows" id="obAsks"></div>
+          <div class="ob-spread"><span>Spread</span><span class="mid-price" id="obMid">—</span><span id="obSpread">—</span></div>
+          <div class="ob-rows" id="obBids"></div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="section-head">Options Chain <span class="badge" id="chainSource">DERIBIT</span></div>
+        <div class="chain-controls">
+          <select id="expirySelect" onchange="loadChain()"></select>
+          <select id="chainFilter" onchange="renderChain()">
+            <option value="all">All</option>
+            <option value="itm">ITM Only</option>
+            <option value="otm">OTM Only</option>
+            <option value="atm">Near ATM</option>
+          </select>
+        </div>
+        <div class="chain-wrap">
+          <table class="chain-table">
+            <thead>
+              <tr>
+                <th>OI</th><th>Vol</th><th>IV</th><th>Bid</th><th>Ask</th><th>Δ</th>
+                <th>Strike</th>
+                <th>Δ</th><th>Bid</th><th>Ask</th><th>IV</th><th>Vol</th><th>OI</th>
+              </tr>
+            </thead>
+            <tbody id="chainBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: Trade Execution + Positions -->
+    <div class="panel panel-right">
+      <div class="exec-tabs">
+        <button class="exec-tab perp active" onclick="switchExecTab('perp')">⚡ Perp Trade</button>
+        <button class="exec-tab option" onclick="switchExecTab('option')">◎ Option Strategy</button>
+      </div>
+
+      <!-- PERP EXECUTION PANEL -->
+      <div class="exec-panel active" id="perpPanel">
+        <div class="side-toggle">
+          <button class="side-btn buy active" onclick="setPerpSide('buy')">Long / Buy</button>
+          <button class="side-btn sell" onclick="setPerpSide('sell')">Short / Sell</button>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label"><span>Order Type</span></div>
+          <select class="form-input" id="perpOrderType" style="font-size:0.72rem;" onchange="updatePerpSummary()">
+            <option value="market">Market</option>
+            <option value="limit">Limit</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="limitPriceGroup" style="display:none;">
+          <div class="form-label"><span>Limit Price</span></div>
+          <div class="form-input-wrap">
+            <input type="number" class="form-input" id="perpLimitPrice" placeholder="0.00" step="0.1" oninput="updatePerpSummary()">
+            <span class="form-input-suffix">USD</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label"><span>Size</span><span id="perpSizeUSD" style="color:var(--t1);">$0</span></div>
+          <div class="form-input-wrap">
+            <input type="number" class="form-input" id="perpSize" placeholder="0.001" step="0.001" min="0.001" value="0.01" oninput="updatePerpSummary()">
+            <span class="form-input-suffix" id="perpSizeAsset">BTC</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label"><span>Leverage</span><span id="leverageDisplay" style="color:var(--cyan); font-weight:700;">10×</span></div>
+          <input type="range" class="leverage-slider" id="leverageSlider" min="1" max="50" value="10" oninput="updateLeverage()">
+          <div class="leverage-presets">
+            <button onclick="setLeverage(1)">1×</button>
+            <button onclick="setLeverage(2)">2×</button>
+            <button onclick="setLeverage(5)">5×</button>
+            <button class="active" onclick="setLeverage(10)">10×</button>
+            <button onclick="setLeverage(25)">25×</button>
+            <button onclick="setLeverage(50)">50×</button>
+          </div>
+        </div>
+
+        <div class="order-summary" id="perpSummary">
+          <div class="summary-row"><span class="summary-label">Entry Price</span><span class="summary-val" id="sumEntry">—</span></div>
+          <div class="summary-row"><span class="summary-label">Notional Value</span><span class="summary-val" id="sumNotional">—</span></div>
+          <div class="summary-row"><span class="summary-label">Margin Required</span><span class="summary-val" id="sumMargin">—</span></div>
+          <div class="summary-row"><span class="summary-label">Est. Fee (Taker)</span><span class="summary-val" id="sumFee">—</span></div>
+          <div class="summary-row"><span class="summary-label">Liquidation Price</span><span class="summary-val red" id="sumLiq">—</span></div>
+        </div>
+
+        <button class="exec-btn buy" id="perpExecBtn" onclick="executePerpTrade()">
+          ⚡ Long BTC — Market
+        </button>
+      </div>
+
+      <!-- OPTION STRATEGY PANEL -->
+      <div class="exec-panel" id="optionPanel">
+        <div class="section-head" style="margin-bottom:8px;">Strategy Summary</div>
+        <div class="option-legs-summary" id="optionLegsSummary">
+          <div class="empty-state"><div class="icon">◎</div>Add legs from the options chain<br>or select a template</div>
+        </div>
+
+        <div class="order-summary" id="optionSummary" style="display:none;">
+          <div class="summary-row"><span class="summary-label">Strategy</span><span class="summary-val" id="optStratName">—</span></div>
+          <div class="summary-row"><span class="summary-label">Net Debit/Credit</span><span class="summary-val" id="optNetCost">—</span></div>
+          <div class="summary-row"><span class="summary-label">Max Profit</span><span class="summary-val green" id="optMaxProfit">—</span></div>
+          <div class="summary-row"><span class="summary-label">Max Loss</span><span class="summary-val red" id="optMaxLoss">—</span></div>
+          <div class="summary-row"><span class="summary-label">Breakeven(s)</span><span class="summary-val" id="optBreakeven">—</span></div>
+          <div class="summary-row"><span class="summary-label">Exchange</span><span class="summary-val">Deribit</span></div>
+        </div>
+
+        <button class="exec-btn buy" id="optionExecBtn" onclick="executeOptionStrategy()" style="background:var(--violet); display:none;">
+          ◎ Execute Strategy on Deribit
+        </button>
+      </div>
+
+      <!-- POSITIONS -->
+      <div class="positions-section">
+        <div class="section-head">Open Positions <span class="badge" id="posCount">0</span></div>
+        <div id="positionsContainer">
+          <div class="empty-state"><div class="icon">📊</div>No open positions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  GLOBAL STATE
+// ═══════════════════════════════════════════════════
+const API = '/api/options-data';
+const ST = {
+  asset: 'BTC', spot: 0, markPrice: 0,
+  expiries: [], selectedExpiry: '',
+  chain: [], legs: [], positions: [],
+  funding: { rate: 0, annual: 0 },
+  ticker: {}, orderbook: { bids: [], asks: [] },
+  marketInfo: {},
+  nextId: 1, synthetic: false,
+  perpSide: 'buy', perpLeverage: 10,
+  walletAddress: null, walletConnected: false,
+  deribitConnected: false, deribitCredentialId: null,
+  deribitMode: 'trading', deribitChainWs: null,
+  refreshInterval: null
+};
+
+// ═══════════════════════════════════════════════════
+//  TOAST NOTIFICATIONS
+// ═══════════════════════════════════════════════════
+const TOAST_ICONS = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+
+function toast(msg, type = 'info', duration = 4000) {
+  const c = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="toast-icon">${TOAST_ICONS[type]}</span><span>${msg}</span>`;
+  c.appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'toastOut 0.3s ease-in forwards';
+    setTimeout(() => el.remove(), 300);
+  }, duration);
+}
+
+// ═══════════════════════════════════════════════════
+//  WALLET CONNECTION
+// ═══════════════════════════════════════════════════
+async function handleConnectAction() {
+  const mode = document.getElementById('connectType').value;
+  if (mode === 'deribit') return connectDeribit();
+  return toggleWallet();
+}
+
+async function connectDeribit() {
+  const clientId = prompt('Deribit client_id');
+  if (!clientId) return;
+  const clientSecret = prompt('Deribit client_secret');
+  if (!clientSecret) return;
+  if (!ST.walletConnected) {
+    toast('Connect MetaMask first to bind Deribit credentials.', 'warning');
+    return;
+  }
+  try {
+    const res = await fetch('/api/deribit/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        walletAddress: ST.walletAddress,
+        clientId,
+        clientSecret,
+        mode: ST.deribitMode
+      })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Deribit auth failed');
+    ST.deribitConnected = true;
+    ST.deribitCredentialId = data.credentialId;
+    document.getElementById('connectBtn').textContent = 'Deribit Connected';
+    document.getElementById('connectBtn').className = 'connect-btn connected';
+    toast('Deribit connected successfully', 'success');
+    await loadPositions();
+  } catch (e) {
+    toast(`Deribit connect failed: ${e.message}`, 'error');
+  }
+}
+
+async function toggleWallet() {
+  if (ST.walletConnected) {
+    ST.walletConnected = false;
+    ST.walletAddress = null;
+    document.getElementById('connectBtn').textContent = 'Connect Wallet';
+    document.getElementById('connectBtn').className = 'connect-btn disconnected';
+    toast('Wallet disconnected', 'info');
+    renderPositions();
+    return;
+  }
+  if (typeof window.ethereum === 'undefined') {
+    toast('MetaMask not detected. Install MetaMask to trade.', 'warning', 5000);
+    window.open('https://metamask.io/download/', '_blank');
+    return;
+  }
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    if (accounts.length > 0) {
+      ST.walletAddress = accounts[0];
+      ST.walletConnected = true;
+      const short = ST.walletAddress.slice(0, 6) + '...' + ST.walletAddress.slice(-4);
+      document.getElementById('connectBtn').textContent = short;
+      document.getElementById('connectBtn').className = 'connect-btn connected';
+      toast(`Connected: ${short}`, 'success');
+      loadPositions();
+    }
+  } catch (e) {
+    toast('Wallet connection rejected', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  API HELPERS
+// ═══════════════════════════════════════════════════
+async function apiFetch(action, extra = {}) {
+  const params = new URLSearchParams({ action, asset: ST.asset, ...extra });
+  try {
+    const r = await fetch(`${API}?${params}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.json();
+  } catch (e) {
+    console.error(`[API] ${action} error:`, e);
+    return null;
+  }
+}
+
+async function apiPost(action, body) {
+  try {
+    const r = await fetch(`${API}?action=${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    return await r.json();
+  } catch (e) {
+    console.error(`[API] POST ${action} error:`, e);
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  DATA LOADING
+// ═══════════════════════════════════════════════════
+async function loadTicker() {
+  const d = await apiFetch('ticker');
+  if (!d) return;
+  ST.spot = d.spot;
+  ST.markPrice = d.markPrice;
+  ST.ticker = d;
+  ST.funding = { rate: d.fundingRate, annual: d.fundingAnnualized };
+
+  document.getElementById('spotPrice').textContent = '$' + fmt(d.spot);
+  document.getElementById('tkMark').textContent = '$' + fmt(d.markPrice);
+
+  const chEl = document.getElementById('tkChange');
+  chEl.textContent = (d.change24h >= 0 ? '+' : '') + d.change24h.toFixed(2) + '%';
+  chEl.className = 'ticker-val ' + (d.change24h >= 0 ? 'pos' : 'neg');
+
+  const frEl = document.getElementById('tkFunding');
+  frEl.textContent = d.fundingRate.toFixed(4) + '%';
+  frEl.className = 'ticker-val ' + (d.fundingRate >= 0 ? 'pos' : 'neg');
+
+  document.getElementById('tkAnnual').textContent = d.fundingAnnualized.toFixed(2) + '%';
+  document.getElementById('tkAnnual').className = 'ticker-val ' + (d.fundingAnnualized >= 0 ? 'pos' : 'neg');
+  document.getElementById('tkOI').textContent = fmtK(d.openInterest) + ' ' + ST.asset;
+  document.getElementById('tkVol').textContent = '$' + fmtK(d.volume24h);
+
+  const pEl = document.getElementById('tkPremium');
+  pEl.textContent = d.premium.toFixed(4) + '%';
+  pEl.className = 'ticker-val ' + (d.premium >= 0 ? 'pos' : 'neg');
+
+  updatePerpSummary();
+}
+
+async function loadOrderbook() {
+  const d = await apiFetch('orderbook');
+  if (!d) return;
+  ST.orderbook = d;
+  document.getElementById('obAsset').textContent = ST.asset;
+  renderOrderbook(d);
+}
+
+async function loadExpiries() {
+  const d = await apiFetch('expiries');
+  if (!d) return;
+  ST.expiries = d.expiries || [];
+  ST.synthetic = d.synthetic || false;
+  const sel = document.getElementById('expirySelect');
+  sel.innerHTML = '';
+  ST.expiries.forEach(e => {
+    const opt = document.createElement('option');
+    opt.value = e.date || e;
+    opt.textContent = (e.label || e.date || e) + (e.daysToExpiry != null ? ` (${e.daysToExpiry}d)` : '');
+    sel.appendChild(opt);
+  });
+  if (ST.expiries.length > 0) {
+    ST.selectedExpiry = ST.expiries[0].date || ST.expiries[0];
+    loadChain();
+  }
+}
+
+async function loadChain() {
+  ST.selectedExpiry = document.getElementById('expirySelect').value;
+  const d = await apiFetch('chain', { expiry: ST.selectedExpiry });
+  if (!d) return;
+  if (d.spot) ST.spot = d.spot;
+  ST.chain = d.chain || [];
+  ST.synthetic = d.synthetic || false;
+  document.getElementById('chainSource').textContent = ST.synthetic ? 'SYNTHETIC' : 'DERIBIT';
+  renderChain();
+  startDeribitChainFeed();
+}
+
+async function loadMarketInfo() {
+  const d = await apiFetch('market-info');
+  if (!d) return;
+  ST.marketInfo = d;
+  const slider = document.getElementById('leverageSlider');
+  if (d.maxLeverage) slider.max = d.maxLeverage;
+}
+
+async function loadPositions() {
+  if (!ST.walletConnected || !ST.walletAddress) return;
+  if (ST.deribitConnected && ST.deribitCredentialId) {
+    try {
+      const u = new URL('/api/deribit/positions', window.location.origin);
+      u.searchParams.set('walletAddress', ST.walletAddress);
+      u.searchParams.set('credentialId', ST.deribitCredentialId);
+      const r = await fetch(u.toString());
+      const d = await r.json();
+      ST.positions = d.positions || [];
+      renderPositions();
+      return;
+    } catch (_) {}
+  }
+  try {
+    const r = await fetch(`/api/perps/trade-history/${ST.walletAddress}`);
+    const d = await r.json();
+    ST.positions = (d.trades || []).filter(t => t.status === 'open');
+    renderPositions();
+  } catch (e) {
+    ST.positions = [];
+    renderPositions();
+  }
+}
+
+function startDeribitChainFeed() {
+  if (ST.synthetic || !ST.chain || ST.chain.length === 0) return;
+  if (ST.deribitChainWs) {
+    try { ST.deribitChainWs.close(); } catch (_) {}
+    ST.deribitChainWs = null;
+  }
+  const instruments = [];
+  ST.chain.forEach(row => {
+    if (row.call?.instrument) instruments.push(row.call.instrument);
+    if (row.put?.instrument) instruments.push(row.put.instrument);
+  });
+  if (instruments.length === 0) return;
+  const ws = new WebSocket('wss://www.deribit.com/ws/api/v2');
+  ST.deribitChainWs = ws;
+  ws.onopen = () => {
+    const channels = instruments.slice(0, 120).map(i => `book.${i}.100ms`);
+    ws.send(JSON.stringify({ jsonrpc: '2.0', id: 77, method: 'public/subscribe', params: { channels } }));
+  };
+  ws.onmessage = ev => {
+    try {
+      const msg = JSON.parse(ev.data);
+      const data = msg.params?.data;
+      if (!data?.instrument_name) return;
+      for (const row of ST.chain) {
+        for (const side of ['call', 'put']) {
+          const opt = row[side];
+          if (opt && opt.instrument === data.instrument_name) {
+            if (data.best_bid_price != null) opt.bid = Number(data.best_bid_price) * (ST.spot || 1);
+            if (data.best_ask_price != null) opt.ask = Number(data.best_ask_price) * (ST.spot || 1);
+            if (data.mark_iv != null) opt.iv = Number(data.mark_iv).toFixed(1);
+          }
+        }
+      }
+      renderChain();
+    } catch (_) {}
+  };
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDERING
+// ═══════════════════════════════════════════════════
+
+function fmt(n) {
+  if (!n && n !== 0) return '—';
+  return n >= 1000 ? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : n.toFixed(2);
+}
+
+function fmtK(n) {
+  if (!n) return '0';
+  if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return n.toFixed(2);
+}
+
+function renderOrderbook(d) {
+  const asksEl = document.getElementById('obAsks');
+  const bidsEl = document.getElementById('obBids');
+
+  // Asks: reversed so lowest ask is at bottom
+  const asks = (d.asks || []).slice(0, 10).reverse();
+  asksEl.innerHTML = asks.map(a =>
+    `<div class="ob-row ask"><span>${fmt(a.price)}</span><span>${a.size.toFixed(4)}</span><span>${fmtK(a.total)}</span><div class="ob-depth" style="width:${(a.depth * 100).toFixed(1)}%"></div></div>`
+  ).join('');
+
+  document.getElementById('obMid').textContent = '$' + fmt(d.midPrice);
+  document.getElementById('obSpread').textContent = d.spread.toFixed(4) + '%';
+
+  const bids = (d.bids || []).slice(0, 10);
+  bidsEl.innerHTML = bids.map(b =>
+    `<div class="ob-row bid"><span>${fmt(b.price)}</span><span>${b.size.toFixed(4)}</span><span>${fmtK(b.total)}</span><div class="ob-depth" style="width:${(b.depth * 100).toFixed(1)}%"></div></div>`
+  ).join('');
+}
+
+function renderChain() {
+  const body = document.getElementById('chainBody');
+  const filter = document.getElementById('chainFilter').value;
+  let rows = ST.chain;
+
+  if (filter === 'itm') rows = rows.filter(r => (r.call && r.strike < ST.spot) || (r.put && r.strike > ST.spot));
+  else if (filter === 'otm') rows = rows.filter(r => (r.call && r.strike > ST.spot) || (r.put && r.strike < ST.spot));
+  else if (filter === 'atm') {
+    const sorted = [...rows].sort((a, b) => Math.abs(a.strike - ST.spot) - Math.abs(b.strike - ST.spot));
+    rows = sorted.slice(0, 10);
+  }
+
+  body.innerHTML = rows.map(r => {
+    const c = r.call || {};
+    const p = r.put || {};
+    const atm = Math.abs(r.strike - ST.spot) / ST.spot < 0.02 ? ' atm' : '';
+    return `<tr>
+      <td class="call-side clickable" onclick="addLegFromChain('call','buy',${r.strike})">${c.oi || '—'}</td>
+      <td class="call-side">${c.volume ? fmtK(c.volume) : '—'}</td>
+      <td class="call-side">${c.iv || '—'}%</td>
+      <td class="call-side clickable" onclick="addLegFromChain('call','buy',${r.strike})" style="color:var(--green)">${c.bid ? fmt(c.bid) : '—'}</td>
+      <td class="call-side clickable" onclick="addLegFromChain('call','sell',${r.strike})" style="color:var(--red)">${c.ask ? fmt(c.ask) : '—'}</td>
+      <td class="call-side">${c.delta || '—'}</td>
+      <td class="strike-col${atm}">${fmt(r.strike)}</td>
+      <td class="put-side">${p.delta || '—'}</td>
+      <td class="put-side clickable" onclick="addLegFromChain('put','buy',${r.strike})" style="color:var(--green)">${p.bid ? fmt(p.bid) : '—'}</td>
+      <td class="put-side clickable" onclick="addLegFromChain('put','sell',${r.strike})" style="color:var(--red)">${p.ask ? fmt(p.ask) : '—'}</td>
+      <td class="put-side">${p.iv || '—'}%</td>
+      <td class="put-side">${p.volume ? fmtK(p.volume) : '—'}</td>
+      <td class="put-side clickable" onclick="addLegFromChain('put','buy',${r.strike})">${p.oi || '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderLegs() {
+  const c = document.getElementById('legsContainer');
+  document.getElementById('legCount').textContent = ST.legs.length;
+
+  if (ST.legs.length === 0) {
+    c.innerHTML = '<div class="empty-state" style="padding:12px;">Select a template or click the chain</div>';
+    renderOptionSummary();
+    return;
+  }
+
+  c.innerHTML = ST.legs.map(leg => {
+    const icon = leg.type === 'perp' ? '⚡' : leg.type === 'call' ? '📈' : '📉';
+    const detail = leg.type === 'perp'
+      ? `${leg.size} @ Mkt`
+      : `${leg.strike} ${leg.type.toUpperCase()} × ${leg.qty}`;
+    return `<div class="leg-card">
+      <div class="leg-info">
+        <span>${icon}</span>
+        <span class="leg-side ${leg.side}">${leg.side.toUpperCase()}</span>
+        <span class="leg-type">${leg.type.toUpperCase()}</span>
+        <span class="leg-detail">${detail}</span>
+      </div>
+      <button class="leg-remove" onclick="removeLeg(${leg.id})">✕</button>
+    </div>`;
+  }).join('');
+
+  updateGreeks();
+  drawPayoff();
+  renderOptionSummary();
+}
+
+function renderOptionSummary() {
+  const optLegs = ST.legs.filter(l => l.type !== 'perp');
+  const summaryEl = document.getElementById('optionLegsSummary');
+  const summaryBox = document.getElementById('optionSummary');
+  const execBtn = document.getElementById('optionExecBtn');
+
+  if (optLegs.length === 0) {
+    summaryEl.innerHTML = '<div class="empty-state"><div class="icon">◎</div>Add legs from the options chain<br>or select a template</div>';
+    summaryBox.style.display = 'none';
+    execBtn.style.display = 'none';
+    return;
+  }
+
+  summaryEl.innerHTML = optLegs.map(l => {
+    const price = l.side === 'buy' ? (l.ask || l.mark || 0) : (l.bid || l.mark || 0);
+    const cost = l.side === 'buy' ? -price * l.qty : price * l.qty;
+    return `<div class="option-leg-row">
+      <span><span class="leg-side ${l.side}" style="font-weight:700">${l.side.toUpperCase()}</span> ${l.qty}× ${l.strike} ${l.type.toUpperCase()}</span>
+      <span class="leg-pnl" style="color:${cost >= 0 ? 'var(--green)' : 'var(--red)'}">${cost >= 0 ? '+' : ''}$${fmt(Math.abs(cost))}</span>
+    </div>`;
+  }).join('');
+
+  // Calculate net cost
+  let netCost = 0;
+  optLegs.forEach(l => {
+    const price = l.side === 'buy' ? (l.ask || l.mark || 0) : (l.bid || l.mark || 0);
+    netCost += l.side === 'buy' ? -price * l.qty : price * l.qty;
+  });
+
+  // Rough max profit / max loss from payoff scan
+  const { maxProfit, maxLoss, breakevens } = computePayoffStats();
+
+  document.getElementById('optStratName').textContent = ST.activeTemplate || 'Custom';
+  document.getElementById('optNetCost').textContent = (netCost >= 0 ? '+$' : '-$') + fmt(Math.abs(netCost));
+  document.getElementById('optNetCost').style.color = netCost >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('optMaxProfit').textContent = maxProfit === Infinity ? '∞' : '$' + fmt(maxProfit);
+  document.getElementById('optMaxLoss').textContent = maxLoss === Infinity ? '∞' : '-$' + fmt(maxLoss);
+  document.getElementById('optBreakeven').textContent = breakevens.length ? breakevens.map(b => '$' + fmt(b)).join(', ') : '—';
+
+  summaryBox.style.display = 'block';
+  execBtn.style.display = 'block';
+}
+
+function computePayoffStats() {
+  const optLegs = ST.legs.filter(l => l.type !== 'perp');
+  if (optLegs.length === 0) return { maxProfit: 0, maxLoss: 0, breakevens: [] };
+
+  const lo = ST.spot * 0.5, hi = ST.spot * 1.5;
+  let maxProfit = -Infinity, maxLoss = -Infinity;
+  const breakevens = [];
+  let prevPnl = null;
+
+  for (let px = lo; px <= hi; px += (hi - lo) / 500) {
+    let pnl = 0;
+    for (const leg of optLegs) {
+      const price = leg.side === 'buy' ? (leg.ask || leg.mark || 0) : (leg.bid || leg.mark || 0);
+      let legPnl;
+      if (leg.type === 'call') {
+        legPnl = Math.max(0, px - leg.strike) - price;
+      } else {
+        legPnl = Math.max(0, leg.strike - px) - price;
+      }
+      if (leg.side === 'sell') legPnl = -legPnl;
+      pnl += legPnl * leg.qty;
+    }
+    if (pnl > maxProfit) maxProfit = pnl;
+    if (-pnl > maxLoss) maxLoss = -pnl;
+    if (prevPnl !== null && ((prevPnl < 0 && pnl >= 0) || (prevPnl >= 0 && pnl < 0))) {
+      breakevens.push(Math.round(px));
+    }
+    prevPnl = pnl;
+  }
+
+  return { maxProfit: Math.max(0, maxProfit), maxLoss: Math.max(0, maxLoss), breakevens };
+}
+
+function renderPositions() {
+  const c = document.getElementById('positionsContainer');
+  document.getElementById('posCount').textContent = ST.positions.length;
+
+  if (ST.positions.length === 0) {
+    c.innerHTML = '<div class="empty-state"><div class="icon">📊</div>No open positions</div>';
+    return;
+  }
+
+  c.innerHTML = ST.positions.map((p, i) => {
+    const isLong = p.side === 'buy';
+    const entry = p.entryPrice || p.price || 0;
+    const pnl = isLong ? (ST.spot - entry) * p.size : (entry - ST.spot) * p.size;
+    const pnlPct = entry > 0 ? (pnl / (entry * p.size) * 100) : 0;
+    return `<div class="position-card">
+      <div class="position-header">
+        <span class="position-asset">${p.asset || ST.asset}</span>
+        <span class="position-side ${isLong ? 'long' : 'short'}">${isLong ? 'LONG' : 'SHORT'} ${p.leverage || 1}×</span>
+      </div>
+      <div class="position-details">
+        <div class="position-detail"><span class="dl">Entry</span><br><span class="dv">$${fmt(entry)}</span></div>
+        <div class="position-detail"><span class="dl">Size</span><br><span class="dv">${p.size} ${p.asset || ST.asset}</span></div>
+        <div class="position-detail"><span class="dl">Mark</span><br><span class="dv">$${fmt(ST.spot)}</span></div>
+        <div class="position-detail"><span class="dl">P&L</span><br><span class="dv" style="color:${pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${pnl >= 0 ? '+' : ''}$${fmt(pnl)} (${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%)</span></div>
+      </div>
+      <button class="close-position-btn" onclick="closePosition(${i})">Close Position</button>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  LEG MANAGEMENT
+// ═══════════════════════════════════════════════════
+function addLegFromChain(type, side, strike) {
+  const row = ST.chain.find(r => r.strike === strike);
+  if (!row) return;
+  const opt = row[type];
+  if (!opt) return;
+
+  ST.legs.push({
+    id: ST.nextId++, type, side, strike,
+    qty: 1, expiry: opt.expiry, dte: opt.dte,
+    mark: opt.mark, bid: opt.bid, ask: opt.ask,
+    iv: opt.iv, delta: opt.delta, gamma: opt.gamma,
+    theta: opt.theta, vega: opt.vega,
+    instrument: opt.instrument
+  });
+
+  toast(`Added ${side.toUpperCase()} ${strike} ${type.toUpperCase()}`, 'success', 2000);
+  renderLegs();
+}
+
+function addManualLeg() {
+  // Add a perp leg at current market
+  ST.legs.push({
+    id: ST.nextId++, type: 'perp', side: 'buy',
+    strike: ST.spot, qty: 1, size: 0.01,
+    mark: ST.spot, bid: ST.spot, ask: ST.spot,
+    delta: 1, gamma: 0, theta: 0, vega: 0
+  });
+  toast('Added PERP leg', 'info', 2000);
+  renderLegs();
+}
+
+function removeLeg(id) {
+  ST.legs = ST.legs.filter(l => l.id !== id);
+  renderLegs();
+}
+
+function clearLegs() {
+  ST.legs = [];
+  ST.activeTemplate = null;
+  document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+  renderLegs();
+}
+
+// ═══════════════════════════════════════════════════
+//  GREEKS CALCULATION
+// ═══════════════════════════════════════════════════
+function updateGreeks() {
+  let d = 0, g = 0, t = 0, v = 0;
+  for (const leg of ST.legs) {
+    const sign = leg.side === 'buy' ? 1 : -1;
+    const qty = leg.qty || 1;
+    d += (leg.delta || 0) * sign * qty;
+    g += (leg.gamma || 0) * sign * qty;
+    t += (leg.theta || 0) * sign * qty;
+    v += (leg.vega || 0) * sign * qty;
+  }
+  document.getElementById('gDelta').textContent = d.toFixed(4);
+  document.getElementById('gGamma').textContent = g.toFixed(6);
+  document.getElementById('gTheta').textContent = t.toFixed(2);
+  document.getElementById('gVega').textContent = v.toFixed(2);
+}
+
+// ═══════════════════════════════════════════════════
+//  BLACK-SCHOLES (Client-side for payoff)
+// ═══════════════════════════════════════════════════
+function N(x) {
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const sign=x<0?-1:1, ax=Math.abs(x)/Math.SQRT2;
+  const t=1/(1+p*ax);
+  const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-ax*ax);
+  return 0.5*(1+sign*y);
+}
+
+function bsPrice(S,K,T,r,iv,isCall) {
+  if(T<=0||iv<=0) return isCall?Math.max(0,S-K):Math.max(0,K-S);
+  const sqT=Math.sqrt(T);
+  const d1=(Math.log(S/K)+(r+0.5*iv*iv)*T)/(iv*sqT);
+  const d2=d1-iv*sqT;
+  return isCall ? S*N(d1)-K*Math.exp(-r*T)*N(d2) : K*Math.exp(-r*T)*N(-d2)-S*N(-d1);
+}
+
+// ═══════════════════════════════════════════════════
+//  PAYOFF DIAGRAM
+// ═══════════════════════════════════════════════════
+function drawPayoff() {
+  const canvas = document.getElementById('payoffCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 260 * dpr;
+  canvas.style.height = '260px';
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 260;
+
+  ctx.fillStyle = '#0C0C1A';
+  ctx.fillRect(0, 0, W, H);
+
+  if (ST.legs.length === 0) {
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '12px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText('Add strategy legs to see payoff', W / 2, H / 2);
+    return;
+  }
+
+  const spot = ST.spot || 69000;
+  const pad = { t: 30, b: 30, l: 50, r: 20 };
+  const lo = spot * 0.7, hi = spot * 1.3;
+  const steps = 400;
+  const dx = (hi - lo) / steps;
+
+  // Calculate combined P&L at each price point
+  const points = [];
+  for (let i = 0; i <= steps; i++) {
+    const px = lo + i * dx;
+    let pnl = 0;
+    for (const leg of ST.legs) {
+      const sign = leg.side === 'buy' ? 1 : -1;
+      const qty = leg.qty || 1;
+      if (leg.type === 'perp') {
+        const entry = leg.mark || spot;
+        pnl += (px - entry) * (leg.size || 0.01) * sign;
+      } else {
+        const premium = leg.side === 'buy' ? (leg.ask || leg.mark || 0) : (leg.bid || leg.mark || 0);
+        let intrinsic;
+        if (leg.type === 'call') intrinsic = Math.max(0, px - leg.strike);
+        else intrinsic = Math.max(0, leg.strike - px);
+        pnl += (intrinsic - premium) * sign * qty;
+      }
+    }
+    points.push({ px, pnl });
+  }
+
+  const pnls = points.map(p => p.pnl);
+  const maxPnl = Math.max(...pnls, 0.01);
+  const minPnl = Math.min(...pnls, -0.01);
+  const range = Math.max(Math.abs(maxPnl), Math.abs(minPnl)) * 1.2;
+
+  const toX = px => pad.l + (px - lo) / (hi - lo) * (W - pad.l - pad.r);
+  const toY = pnl => pad.t + (range - pnl) / (2 * range) * (H - pad.t - pad.b);
+  const zeroY = toY(0);
+
+  // Zero line
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(pad.l, zeroY); ctx.lineTo(W - pad.r, zeroY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Spot line
+  const spotX = toX(spot);
+  ctx.strokeStyle = 'rgba(0,200,255,0.3)';
+  ctx.setLineDash([2, 3]);
+  ctx.beginPath(); ctx.moveTo(spotX, pad.t); ctx.lineTo(spotX, H - pad.b); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Fill areas
+  ctx.beginPath();
+  ctx.moveTo(toX(points[0].px), zeroY);
+  for (const p of points) {
+    if (p.pnl >= 0) ctx.lineTo(toX(p.px), toY(p.pnl));
+    else ctx.lineTo(toX(p.px), zeroY);
+  }
+  ctx.lineTo(toX(points[points.length - 1].px), zeroY);
+  ctx.closePath();
+  const gGreen = ctx.createLinearGradient(0, pad.t, 0, zeroY);
+  gGreen.addColorStop(0, 'rgba(0,232,122,0.25)');
+  gGreen.addColorStop(1, 'rgba(0,232,122,0.02)');
+  ctx.fillStyle = gGreen;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(toX(points[0].px), zeroY);
+  for (const p of points) {
+    if (p.pnl < 0) ctx.lineTo(toX(p.px), toY(p.pnl));
+    else ctx.lineTo(toX(p.px), zeroY);
+  }
+  ctx.lineTo(toX(points[points.length - 1].px), zeroY);
+  ctx.closePath();
+  const gRed = ctx.createLinearGradient(0, zeroY, 0, H - pad.b);
+  gRed.addColorStop(0, 'rgba(255,61,90,0.02)');
+  gRed.addColorStop(1, 'rgba(255,61,90,0.25)');
+  ctx.fillStyle = gRed;
+  ctx.fill();
+
+  // Main P&L line
+  ctx.beginPath();
+  for (let i = 0; i < points.length; i++) {
+    const x = toX(points[i].px), y = toY(points[i].pnl);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Breakeven dots
+  for (let i = 1; i < points.length; i++) {
+    if ((points[i - 1].pnl < 0 && points[i].pnl >= 0) || (points[i - 1].pnl >= 0 && points[i].pnl < 0)) {
+      const x = toX(points[i].px);
+      ctx.beginPath();
+      ctx.arc(x, zeroY, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#E8A020';
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = '9px JetBrains Mono';
+      ctx.textAlign = 'center';
+      ctx.fillText('$' + Math.round(points[i].px).toLocaleString(), x, zeroY - 10);
+    }
+  }
+
+  // Axis labels
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '9px JetBrains Mono';
+  ctx.textAlign = 'left';
+  ctx.fillText('+$' + fmt(range), 4, pad.t + 8);
+  ctx.fillText('-$' + fmt(range), 4, H - pad.b - 4);
+  ctx.textAlign = 'center';
+  ctx.fillText('$' + Math.round(lo).toLocaleString(), pad.l, H - 8);
+  ctx.fillText('SPOT $' + fmt(spot), spotX, H - 8);
+  ctx.fillText('$' + Math.round(hi).toLocaleString(), W - pad.r, H - 8);
+}
+
+// ═══════════════════════════════════════════════════
+//  PERP EXECUTION
+// ═══════════════════════════════════════════════════
+function setPerpSide(side) {
+  ST.perpSide = side;
+  document.querySelectorAll('.side-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.side-btn.${side}`).classList.add('active');
+  updatePerpSummary();
+}
+
+function setLeverage(lev) {
+  ST.perpLeverage = lev;
+  document.getElementById('leverageSlider').value = lev;
+  document.getElementById('leverageDisplay').textContent = lev + '×';
+  document.querySelectorAll('.leverage-presets button').forEach(b => {
+    b.classList.toggle('active', parseInt(b.textContent) === lev);
+  });
+  updatePerpSummary();
+}
+
+function updateLeverage() {
+  const lev = parseInt(document.getElementById('leverageSlider').value);
+  ST.perpLeverage = lev;
+  document.getElementById('leverageDisplay').textContent = lev + '×';
+  document.querySelectorAll('.leverage-presets button').forEach(b => {
+    b.classList.toggle('active', parseInt(b.textContent) === lev);
+  });
+  updatePerpSummary();
+}
+
+function updatePerpSummary() {
+  const size = parseFloat(document.getElementById('perpSize').value) || 0;
+  const orderType = document.getElementById('perpOrderType').value;
+  const spot = ST.markPrice || ST.spot || 0;
+
+  // Show/hide limit price
+  document.getElementById('limitPriceGroup').style.display = orderType === 'limit' ? 'block' : 'none';
+
+  const price = orderType === 'limit' ? (parseFloat(document.getElementById('perpLimitPrice').value) || spot) : spot;
+  const notional = price * size;
+  const margin = notional / ST.perpLeverage;
+  const fee = notional * 0.0005;
+  const liqPrice = ST.perpLeverage > 1
+    ? (ST.perpSide === 'buy' ? price * (1 - 0.9 / ST.perpLeverage) : price * (1 + 0.9 / ST.perpLeverage))
+    : null;
+
+  document.getElementById('perpSizeUSD').textContent = '$' + fmt(notional);
+  document.getElementById('perpSizeAsset').textContent = ST.asset;
+  document.getElementById('sumEntry').textContent = '$' + fmt(price);
+  document.getElementById('sumNotional').textContent = '$' + fmt(notional);
+  document.getElementById('sumMargin').textContent = '$' + fmt(margin);
+  document.getElementById('sumFee').textContent = '$' + fmt(fee);
+  document.getElementById('sumLiq').textContent = liqPrice ? '$' + fmt(liqPrice) : 'N/A';
+
+  // Update button
+  const btn = document.getElementById('perpExecBtn');
+  btn.className = `exec-btn ${ST.perpSide}`;
+  btn.textContent = `⚡ ${ST.perpSide === 'buy' ? 'Long' : 'Short'} ${ST.asset} — ${orderType === 'limit' ? 'Limit' : 'Market'}`;
+}
+
+async function executePerpTrade() {
+  const size = parseFloat(document.getElementById('perpSize').value);
+  const orderType = document.getElementById('perpOrderType').value;
+  const limitPrice = parseFloat(document.getElementById('perpLimitPrice').value);
+
+  if (!size || size <= 0) { toast('Enter a valid size', 'error'); return; }
+  if (!ST.walletConnected) { toast('Connect your wallet first', 'warning'); return; }
+
+  const btn = document.getElementById('perpExecBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Validating...';
+
+  // Server-side validation
+  const validation = await apiPost('validate-trade', {
+    asset: ST.asset,
+    side: ST.perpSide,
+    type: 'perp',
+    size: size,
+    leverage: ST.perpLeverage,
+    price: orderType === 'limit' ? limitPrice : null,
+    orderType
+  });
+
+  if (!validation || !validation.valid) {
+    toast((validation?.errors || ['Trade validation failed']).join(', '), 'error');
+    btn.disabled = false;
+    updatePerpSummary();
+    return;
+  }
+
+  btn.textContent = '⚡ Submitting...';
+
+  // Log trade to backend
+  try {
+    const tradeData = {
+      ...validation.summary,
+      walletAddress: ST.walletAddress,
+      status: 'open',
+      timestamp: Date.now()
+    };
+
+    const logResult = await fetch('/api/perps/log-trade', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tradeData)
+    });
+    const logData = await logResult.json();
+
+    // Add to local positions
+    ST.positions.push(tradeData);
+    renderPositions();
+
+    toast(
+      `${ST.perpSide === 'buy' ? 'LONG' : 'SHORT'} ${size} ${ST.asset} @ $${fmt(validation.summary.entryPrice)} (${ST.perpLeverage}×) — Submitted`,
+      'success', 5000
+    );
+  } catch (e) {
+    toast('Trade logged locally (API unavailable)', 'warning');
+    ST.positions.push(validation.summary);
+    renderPositions();
+  }
+
+  btn.disabled = false;
+  updatePerpSummary();
+}
+
+function closePosition(index) {
+  const pos = ST.positions[index];
+  if (!pos) return;
+  const pnl = pos.side === 'buy'
+    ? (ST.spot - (pos.entryPrice || pos.price || 0)) * pos.size
+    : ((pos.entryPrice || pos.price || 0) - ST.spot) * pos.size;
+
+  ST.positions.splice(index, 1);
+  renderPositions();
+  toast(`Closed position — P&L: ${pnl >= 0 ? '+' : ''}$${fmt(pnl)}`, pnl >= 0 ? 'success' : 'error');
+}
+
+// ═══════════════════════════════════════════════════
+//  OPTION STRATEGY EXECUTION
+// ═══════════════════════════════════════════════════
+async function executeOptionStrategy() {
+  const optLegs = ST.legs.filter(l => l.type !== 'perp');
+  if (optLegs.length === 0) { toast('Add option legs first', 'warning'); return; }
+  if (!ST.walletConnected) { toast('Connect your wallet first', 'warning'); return; }
+
+  if (!ST.deribitConnected || !ST.deribitCredentialId) {
+    toast('Connect Deribit API key before execution', 'warning');
+    return;
+  }
+  const btn = document.getElementById('optionExecBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Preparing...';
+
+  // Validate all legs
+  for (const leg of optLegs) {
+    const v = await apiPost('validate-trade', {
+      asset: ST.asset, side: leg.side, type: leg.type,
+      size: leg.qty, price: leg.mark
+    });
+    if (!v || !v.valid) {
+      toast(`Leg validation failed: ${leg.strike} ${leg.type}`, 'error');
+      btn.disabled = false;
+      btn.textContent = '◎ Execute Strategy on Deribit';
+      return;
+    }
+  }
+
+  let estimatedFee = 0;
+  let estNotional = 0;
+  optLegs.forEach(leg => {
+    const px = Number(leg.side === 'buy' ? (leg.ask || leg.mark || 0) : (leg.bid || leg.mark || 0));
+    estNotional += px * Number(leg.qty || 0);
+  });
+  estimatedFee = estNotional * 0.0005;
+  const shouldExecute = confirm(
+    `Confirm Deribit strategy execution?\nLegs: ${optLegs.length}\nNotional: $${fmt(estNotional)}\nEstimated Fee: $${fmt(estimatedFee)}`
+  );
+  if (!shouldExecute) {
+    btn.disabled = false;
+    btn.textContent = '◎ Execute Strategy on Deribit';
+    return;
+  }
+
+  const payloadLegs = optLegs.map(leg => ({
+    side: leg.side,
+    instrument_name: leg.instrument,
+    qty: Number(leg.qty || 0),
+    orderType: 'market',
+    price: leg.side === 'buy' ? leg.ask : leg.bid,
+    mark: leg.mark
+  }));
+  const orderRes = await fetch('/api/deribit/order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      walletAddress: ST.walletAddress,
+      credentialId: ST.deribitCredentialId,
+      legs: payloadLegs,
+      strategyId: ST.activeTemplate || 'custom'
+    })
+  });
+  const orderData = await orderRes.json();
+  if (!orderData.success) {
+    toast(orderData.message || orderData.code || 'Deribit order failed', 'error', 5000);
+    btn.disabled = false;
+    btn.textContent = '◎ Execute Strategy on Deribit';
+    return;
+  }
+  toast(`Strategy executed with ${payloadLegs.length} legs`, 'success', 4000);
+  const fillsUrl = new URL('/api/deribit/fills', window.location.origin);
+  fillsUrl.searchParams.set('walletAddress', ST.walletAddress);
+  fetch(fillsUrl.toString()).catch(() => {});
+  await loadPositions();
+
+  btn.disabled = false;
+  btn.textContent = '◎ Execute Strategy on Deribit';
+}
+
+// ═══════════════════════════════════════════════════
+//  EXEC TAB SWITCHING
+// ═══════════════════════════════════════════════════
+function switchExecTab(tab) {
+  document.querySelectorAll('.exec-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.exec-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.exec-tab.${tab}`).classList.add('active');
+  document.getElementById(tab === 'perp' ? 'perpPanel' : 'optionPanel').classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  STRATEGY TEMPLATES
+// ═══════════════════════════════════════════════════
+const TEMPLATES = [
+  { name: 'Covered Call', desc: 'Long asset + sell OTM call', bias: 'neutral', legs: (s) => [
+    { type: 'perp', side: 'buy', size: 0.01 },
+    { type: 'call', side: 'sell', strikeOffset: 0.05 }
+  ]},
+  { name: 'Protective Put', desc: 'Long asset + buy OTM put', bias: 'hedge', legs: (s) => [
+    { type: 'perp', side: 'buy', size: 0.01 },
+    { type: 'put', side: 'buy', strikeOffset: -0.05 }
+  ]},
+  { name: 'Bull Call Spread', desc: 'Buy ATM call + sell OTM call', bias: 'bullish', legs: (s) => [
+    { type: 'call', side: 'buy', strikeOffset: 0 },
+    { type: 'call', side: 'sell', strikeOffset: 0.05 }
+  ]},
+  { name: 'Bear Put Spread', desc: 'Buy ATM put + sell OTM put', bias: 'bearish', legs: (s) => [
+    { type: 'put', side: 'buy', strikeOffset: 0 },
+    { type: 'put', side: 'sell', strikeOffset: -0.05 }
+  ]},
+  { name: 'Long Straddle', desc: 'Buy ATM call + ATM put', bias: 'neutral', legs: (s) => [
+    { type: 'call', side: 'buy', strikeOffset: 0 },
+    { type: 'put', side: 'buy', strikeOffset: 0 }
+  ]},
+  { name: 'Long Strangle', desc: 'Buy OTM call + OTM put', bias: 'neutral', legs: (s) => [
+    { type: 'call', side: 'buy', strikeOffset: 0.05 },
+    { type: 'put', side: 'buy', strikeOffset: -0.05 }
+  ]},
+  { name: 'Iron Condor', desc: 'Sell strangle + buy wings', bias: 'neutral', legs: (s) => [
+    { type: 'put', side: 'buy', strikeOffset: -0.10 },
+    { type: 'put', side: 'sell', strikeOffset: -0.05 },
+    { type: 'call', side: 'sell', strikeOffset: 0.05 },
+    { type: 'call', side: 'buy', strikeOffset: 0.10 }
+  ]},
+  { name: 'Basis Trade', desc: 'Perp short + spot long (funding)', bias: 'hedge', legs: (s) => [
+    { type: 'perp', side: 'sell', size: 0.01 },
+    { type: 'call', side: 'buy', strikeOffset: 0 }
+  ]}
+];
+
+function initTemplates() {
+  const grid = document.getElementById('templateGrid');
+  document.getElementById('templateCount').textContent = TEMPLATES.length;
+  grid.innerHTML = TEMPLATES.map((t, i) => `
+    <button class="template-btn" onclick="applyTemplate(${i})" data-idx="${i}">
+      <span class="type-badge ${t.bias}">${t.bias.toUpperCase()}</span>
+      <span class="name">${t.name}</span>
+      <span class="desc">${t.desc}</span>
+    </button>
+  `).join('');
+}
+
+function applyTemplate(idx) {
+  const tmpl = TEMPLATES[idx];
+  if (!tmpl) return;
+
+  // Clear existing legs
+  ST.legs = [];
+  ST.activeTemplate = tmpl.name;
+
+  // Highlight template
+  document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.template-btn[data-idx="${idx}"]`).classList.add('active');
+
+  const spot = ST.spot || 69000;
+  const chain = ST.chain;
+
+  for (const legDef of tmpl.legs(spot)) {
+    if (legDef.type === 'perp') {
+      ST.legs.push({
+        id: ST.nextId++, type: 'perp', side: legDef.side,
+        strike: spot, qty: 1, size: legDef.size || 0.01,
+        mark: spot, bid: spot, ask: spot,
+        delta: legDef.side === 'buy' ? 1 : -1, gamma: 0, theta: 0, vega: 0
+      });
+    } else {
+      const targetStrike = spot * (1 + (legDef.strikeOffset || 0));
+      // Find nearest strike in chain
+      let best = chain[0];
+      let bestDist = Infinity;
+      for (const row of chain) {
+        const d = Math.abs(row.strike - targetStrike);
+        if (d < bestDist) { bestDist = d; best = row; }
+      }
+      if (best) {
+        const opt = best[legDef.type];
+        if (opt) {
+          ST.legs.push({
+            id: ST.nextId++, type: legDef.type, side: legDef.side,
+            strike: best.strike, qty: 1, expiry: opt.expiry, dte: opt.dte,
+            mark: opt.mark, bid: opt.bid, ask: opt.ask,
+            iv: opt.iv, delta: opt.delta, gamma: opt.gamma,
+            theta: opt.theta, vega: opt.vega, instrument: opt.instrument
+          });
+        }
+      }
+    }
+  }
+
+  toast(`Applied: ${tmpl.name}`, 'info', 2000);
+  renderLegs();
+
+  // Switch to option panel if has option legs
+  if (ST.legs.some(l => l.type !== 'perp')) switchExecTab('option');
+}
+
+// ═══════════════════════════════════════════════════
+//  ASSET SWITCHING
+// ═══════════════════════════════════════════════════
+function switchAsset(asset) {
+  ST.asset = asset;
+  ST.legs = [];
+  ST.chain = [];
+  ST.activeTemplate = null;
+
+  document.querySelectorAll('.asset-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.asset-tab[data-asset="${asset}"]`).classList.add('active');
+  document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+
+  renderLegs();
+  initData();
+}
+
+// ═══════════════════════════════════════════════════
+//  INITIALIZATION
+// ═══════════════════════════════════════════════════
+async function initData() {
+  await Promise.all([
+    loadTicker(),
+    loadOrderbook(),
+    loadExpiries(),
+    loadMarketInfo()
+  ]);
+  updatePerpSummary();
+  drawPayoff();
+}
+
+function startRefresh() {
+  if (ST.refreshInterval) clearInterval(ST.refreshInterval);
+  ST.refreshInterval = setInterval(() => {
+    loadTicker();
+    loadOrderbook();
+    // Update positions P&L
+    if (ST.positions.length > 0) renderPositions();
+  }, 8000); // 8s refresh for ticker + orderbook
+
+  // Slower refresh for chain
+  setInterval(() => {
+    if (ST.selectedExpiry) loadChain();
+  }, 30000);
+}
+
+// Boot
+document.addEventListener('DOMContentLoaded', () => {
+  initTemplates();
+  initData();
+  startRefresh();
+
+  // Asset tab clicks
+  document.querySelectorAll('.asset-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchAsset(tab.dataset.asset));
+  });
+
+  // Order type toggle
+  document.getElementById('perpOrderType').addEventListener('change', updatePerpSummary);
+
+  // Window resize → redraw payoff
+  window.addEventListener('resize', drawPayoff);
+
+  toast('Strategy Builder loaded — Live data streaming', 'info', 3000);
+});
+</script>
+</body>
+</html>

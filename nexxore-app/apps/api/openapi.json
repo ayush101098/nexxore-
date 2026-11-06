@@ -1,0 +1,489 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "NEXXORE API",
+    "description": "Public API gateway — single source of truth for all stats.",
+    "version": "0.1.0"
+  },
+  "components": {
+    "schemas": {}
+  },
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "service": {
+                      "type": "string"
+                    },
+                    "time": {
+                      "format": "date-time",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "service",
+                    "time"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/stats": {
+      "get": {
+        "operationId": "getStats",
+        "description": "Single source of truth for brand stats. verified=false renders as \"reported\"; verified=true (Proof-Layer anchored) renders as \"verify ↗\".",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "generatedAt": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "stats": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          },
+                          "unit": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "evidenceUrl": {
+                            "type": "string"
+                          },
+                          "verified": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "value",
+                          "unit",
+                          "label",
+                          "evidenceUrl",
+                          "verified"
+                        ],
+                        "title": "Stat"
+                      }
+                    }
+                  },
+                  "required": [
+                    "generatedAt",
+                    "stats"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/index/current": {
+      "get": {
+        "operationId": "getIndexCurrent",
+        "description": "Current Escalation Index composite, regime, and component breakdown.",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ts": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "composite": {
+                      "type": "number"
+                    },
+                    "regime": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "risk_on"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "transition"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "risk_off"
+                          ]
+                        }
+                      ]
+                    },
+                    "contentHash": {
+                      "type": "string"
+                    },
+                    "components": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number"
+                          },
+                          "weight": {
+                            "type": "number"
+                          },
+                          "topDriverNote": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "label",
+                          "value",
+                          "weight",
+                          "topDriverNote"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "ts",
+                    "composite",
+                    "regime",
+                    "contentHash",
+                    "components"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/index/history": {
+      "get": {
+        "operationId": "getIndexHistory",
+        "description": "Composite time series (public, rate-limited, ≤2000 points). Component-level history requires an API key.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "from",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "to",
+            "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "raw"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "hour"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "day"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "granularity",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "components",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    },
+                    "to": {
+                      "type": "string"
+                    },
+                    "granularity": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "points": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ts": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "composite": {
+                            "type": "number"
+                          },
+                          "regime": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "risk_on"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "transition"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "risk_off"
+                                ]
+                              }
+                            ]
+                          },
+                          "components": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "value": {
+                                  "type": "number"
+                                },
+                                "weight": {
+                                  "type": "number"
+                                },
+                                "topDriverNote": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "key",
+                                "label",
+                                "value",
+                                "weight",
+                                "topDriverNote"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "ts",
+                          "composite",
+                          "regime"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "from",
+                    "to",
+                    "granularity",
+                    "count",
+                    "points"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "hint": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "hint"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/index/events": {
+      "get": {
+        "operationId": "getIndexEvents",
+        "description": "Driver events behind a reading (API key required).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "readingId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "readingId": {
+                      "type": "integer"
+                    },
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ts": {
+                            "type": "string"
+                          },
+                          "componentKey": {
+                            "type": "string"
+                          },
+                          "headline": {
+                            "type": "string"
+                          },
+                          "sourceCategory": {
+                            "type": "string"
+                          },
+                          "scoreDelta": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "ts",
+                          "componentKey",
+                          "headline",
+                          "sourceCategory",
+                          "scoreDelta"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "readingId",
+                    "events"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "hint": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "hint"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000"
+    }
+  ]
+}

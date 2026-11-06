@@ -1,0 +1,842 @@
+/*
+ * NEXXORE design system — Palette v2 + motion + component styles.
+ *
+ * Regime accents shift with `data-regime` on <html>; the whole site recolors
+ * from one variable swap. Brand cyan is the ONLY interactive color. Motion is
+ * GPU-cheap (transform/opacity only) and fully disabled under reduced-motion.
+ */
+
+/* ── Base palette (mirrors the Tailwind preset for use in plain CSS) ── */
+:root {
+  --bg: #07080b;
+  --surface-1: #0c0e12;
+  --surface-2: #12151b;
+  --surface-3: #191d25;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --fg: rgba(255, 255, 255, 0.92);
+  --fg-secondary: rgba(255, 255, 255, 0.64);
+  --fg-muted: rgba(255, 255, 255, 0.4);
+
+  /* Brand accent — interactive elements only. */
+  --brand: #22d3ee;
+  --brand-hover: #67e8f9;
+  --brand-muted: rgba(34, 211, 238, 0.16);
+  --brand-contrast: #04141a;
+
+  /* Motion. */
+  --ease-instrument: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-micro: 150ms;
+  --dur-standard: 300ms;
+  --dur-loop: 700ms;
+}
+
+/* ── Regime accent scales (3 shades + 25%-opacity glow) ───────────── */
+:root,
+html[data-regime='transition'] {
+  --accent: #f59e0b;
+  --accent-muted: rgba(245, 158, 11, 0.38);
+  --accent-glow: rgba(245, 158, 11, 0.25);
+  --accent-contrast: #1a1204;
+}
+html[data-regime='risk-on'] {
+  --accent: #10b981;
+  --accent-muted: rgba(16, 185, 129, 0.38);
+  --accent-glow: rgba(16, 185, 129, 0.25);
+  --accent-contrast: #04140d;
+}
+html[data-regime='risk-off'] {
+  --accent: #ef4444;
+  --accent-muted: rgba(239, 68, 68, 0.4);
+  --accent-glow: rgba(239, 68, 68, 0.25);
+  --accent-contrast: #1a0606;
+}
+
+/* ── Shell ────────────────────────────────────────────────────────── */
+.nx-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: var(--fg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1100px 520px at 78% -10%, var(--accent-glow), transparent 60%),
+    radial-gradient(900px 480px at 8% -4%, rgba(34, 211, 238, 0.06), transparent 55%);
+  background-repeat: no-repeat;
+  transition: background-image var(--dur-standard) var(--ease-instrument);
+}
+
+.nx-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.nx-nav__logo {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+.nx-nav__links {
+  display: flex;
+  gap: 0.15rem;
+  align-items: center;
+  margin-left: 0.75rem;
+  flex-wrap: wrap;
+}
+.nx-nav__link {
+  position: relative;
+  font-size: 0.82rem;
+  color: var(--fg-secondary);
+  text-decoration: none;
+  padding: 0.4rem 0.65rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: color var(--dur-micro) var(--ease-instrument);
+}
+.nx-nav__link::after {
+  content: '';
+  position: absolute;
+  left: 0.65rem;
+  right: 0.65rem;
+  bottom: 0.2rem;
+  height: 1.5px;
+  background: var(--brand);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-standard) var(--ease-instrument);
+}
+.nx-nav__link:hover {
+  color: var(--fg);
+}
+.nx-nav__link:hover::after {
+  transform: scaleX(1);
+}
+.nx-nav__spacer {
+  flex: 1;
+}
+.nx-nav__toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+}
+
+.nx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  color: var(--accent);
+  border: 1px solid var(--accent-muted);
+  background: var(--accent-glow);
+}
+.nx-chip__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.nx-main {
+  flex: 1;
+}
+
+.nx-footer {
+  border-top: 1px solid var(--line);
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--fg-muted);
+  font-size: 0.82rem;
+}
+.nx-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.nx-footer a {
+  color: var(--fg-secondary);
+  text-decoration: none;
+}
+.nx-footer a:hover {
+  color: var(--fg);
+}
+
+@media (max-width: 900px) {
+  .nx-nav__links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    padding: 0.5rem;
+    margin: 0;
+  }
+  .nx-nav__links[data-open='true'] {
+    display: flex;
+  }
+  .nx-nav__toggle {
+    display: inline-block;
+  }
+}
+
+/* ── Interactive primitives (brand cyan) ──────────────────────────── */
+.nx-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-sans), Inter, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.7rem 1.15rem;
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    transform var(--dur-micro) var(--ease-instrument),
+    background var(--dur-micro) var(--ease-instrument),
+    border-color var(--dur-micro) var(--ease-instrument);
+}
+.nx-btn:active {
+  transform: scale(0.98);
+}
+.nx-btn--primary {
+  background: var(--brand);
+  color: var(--brand-contrast);
+}
+.nx-btn--primary:hover {
+  background: var(--brand-hover);
+}
+.nx-btn--secondary {
+  background: transparent;
+  color: var(--brand);
+  border-color: var(--brand-muted);
+}
+.nx-btn--secondary:hover {
+  border-color: var(--brand);
+}
+
+.nx-link {
+  color: var(--brand);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--dur-micro) var(--ease-instrument);
+}
+.nx-link:hover {
+  border-bottom-color: var(--brand);
+}
+
+:where(a, button, [tabindex]):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Evidence link ────────────────────────────────────────────────── */
+.nx-evidence {
+  font-size: 0.72rem;
+  color: var(--brand);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--brand-muted);
+}
+.nx-evidence:hover {
+  border-bottom-style: solid;
+}
+.nx-evidence--reported {
+  color: var(--fg-secondary);
+  border-bottom-color: var(--line-strong);
+}
+
+/* ── Live badge ───────────────────────────────────────────────────── */
+.nx-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  padding: 0.22rem 0.55rem;
+  border-radius: 5px;
+  border: 1px solid;
+}
+.nx-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.nx-badge--live {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.42);
+  background: rgba(16, 185, 129, 0.1);
+}
+.nx-badge--simulated {
+  color: #22d3ee;
+  border-color: rgba(34, 211, 238, 0.42);
+  background: rgba(34, 211, 238, 0.1);
+}
+.nx-badge--audit {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.42);
+  background: rgba(245, 158, 11, 0.1);
+}
+.nx-badge--pending {
+  color: rgba(255, 255, 255, 0.64);
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ── Section header ───────────────────────────────────────────────── */
+.nx-section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.nx-section-header__kicker {
+  display: block;
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.4rem;
+}
+.nx-section-header__title {
+  font-size: 1.5rem;
+  color: var(--fg);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.nx-section-header__desc {
+  color: var(--fg-secondary);
+  margin: 0.5rem 0 0;
+  max-width: 62ch;
+  line-height: 1.6;
+}
+
+/* ── StatCard ─────────────────────────────────────────────────────── */
+.nx-stat {
+  border: 1px solid var(--line);
+  background: var(--surface-1);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+}
+.nx-stat[data-verified='true'] {
+  border-color: var(--accent-muted);
+}
+.nx-stat__value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+.nx-stat__number {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+.nx-stat__unit {
+  font-size: 0.8rem;
+  color: var(--fg-muted);
+}
+.nx-stat__label {
+  color: var(--fg-secondary);
+  font-size: 0.82rem;
+  margin-top: 0.3rem;
+}
+.nx-stat__meta {
+  margin-top: 0.6rem;
+  min-height: 1rem;
+}
+.nx-stat__footer {
+  margin-top: 0.5rem;
+}
+
+/* ── GaugeDial ────────────────────────────────────────────────────── */
+.nx-gauge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+.nx-gauge__track {
+  stroke: var(--surface-3);
+}
+.nx-gauge__value {
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 8px var(--accent-glow));
+  transition: stroke var(--dur-standard) var(--ease-instrument);
+}
+.nx-gauge__threshold {
+  stroke: var(--fg);
+  opacity: 0.85;
+}
+.nx-gauge__caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -0.5rem;
+}
+.nx-gauge__readout {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 1.6rem;
+  color: var(--accent);
+}
+.nx-gauge__label {
+  font-size: 0.78rem;
+  color: var(--fg-secondary);
+}
+
+/* ── DataTable ────────────────────────────────────────────────────── */
+.nx-table__wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.nx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.nx-table caption {
+  caption-side: top;
+  text-align: left;
+  padding: 0.6rem 0.9rem;
+  color: var(--fg-secondary);
+}
+.nx-table th,
+.nx-table td {
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  color: var(--fg);
+}
+.nx-table th {
+  color: var(--fg-muted);
+  font-weight: 500;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.nx-table [data-align='right'] {
+  text-align: right;
+}
+.nx-table [data-align='center'] {
+  text-align: center;
+}
+.nx-table td[data-numeric='true'] {
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+}
+.nx-table__empty {
+  text-align: center;
+  color: var(--fg-muted);
+  padding: 1.5rem;
+}
+
+/* ── Reduced motion: kill all positional motion ───────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Homepage sections ────────────────────────────────────────────── */
+.nx-section {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+.nx-hero {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: clamp(3rem, 8vh, 6rem) 1.5rem clamp(3rem, 7vh, 5rem);
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 3rem;
+  align-items: center;
+}
+.nx-hero__h1 {
+  font-size: clamp(2rem, 4.4vw, 3.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  margin: 0 0 1.1rem;
+  max-width: 16ch;
+}
+.nx-hero__sub {
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  color: var(--fg-secondary);
+  line-height: 1.6;
+  max-width: 46ch;
+  margin: 0 0 1.75rem;
+}
+.nx-hero__ctas {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.nx-hero__gauge {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.nx-hero__gauge::before {
+  content: '';
+  position: absolute;
+  inset: -18% -8% 20%;
+  background: radial-gradient(closest-side, var(--accent-glow), transparent 72%);
+  filter: blur(8px);
+  z-index: 0;
+  pointer-events: none;
+}
+.nx-hero__gauge > * {
+  position: relative;
+  z-index: 1;
+}
+.nx-hero__caption {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+  text-align: center;
+}
+
+.nx-problem-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+.nx-problem-card {
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent-muted);
+  background: var(--surface-1);
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+.nx-problem-card__title {
+  font-size: 1rem;
+  color: var(--fg);
+  margin: 0 0 0.4rem;
+}
+.nx-problem-card__body {
+  font-size: 0.88rem;
+  color: var(--fg-secondary);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ── The Loop ─────────────────────────────────────────────────────── */
+.nx-loop {
+  position: relative;
+}
+.nx-loop__path {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.nx-loop__stages {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+.nx-loop__stage {
+  display: block;
+  text-decoration: none;
+  border: 1px solid var(--line);
+  background: var(--surface-1);
+  border-radius: 12px;
+  padding: 1.5rem 1.25rem;
+  transition:
+    transform var(--dur-standard) var(--ease-instrument),
+    border-color var(--dur-standard) var(--ease-instrument),
+    box-shadow var(--dur-standard) var(--ease-instrument);
+}
+.nx-loop__stage.is-active {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-muted), 0 0 28px var(--accent-glow);
+}
+.nx-loop__stage-name {
+  display: block;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.nx-loop__stage-metric {
+  display: block;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.9rem;
+  color: var(--fg);
+  margin: 0.6rem 0 0.75rem;
+}
+.nx-loop__points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.nx-loop__points li {
+  font-size: 0.85rem;
+  color: var(--fg-secondary);
+  padding-left: 0.9rem;
+  position: relative;
+}
+.nx-loop__points li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-muted);
+}
+.nx-loop__pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 16px 4px var(--accent-glow);
+  pointer-events: none;
+  z-index: 2;
+  will-change: transform, opacity;
+}
+
+/* ── Products grid ────────────────────────────────────────────────── */
+.nx-products-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+.nx-product-card {
+  display: block;
+  text-decoration: none;
+  border: 1px solid var(--line);
+  background: var(--surface-1);
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition:
+    transform var(--dur-micro) var(--ease-instrument),
+    border-color var(--dur-micro) var(--ease-instrument);
+}
+.nx-product-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-strong);
+}
+.nx-product-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+.nx-product-card__name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+.nx-product-card__prop {
+  font-size: 0.86rem;
+  color: var(--fg-secondary);
+  line-height: 1.5;
+  margin: 0 0 0.6rem;
+}
+.nx-product-card__stat {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.76rem;
+  color: var(--fg-muted);
+}
+
+/* ── Sequencing strip ─────────────────────────────────────────────── */
+.nx-sequencing {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+  border-top: 1px solid var(--line);
+}
+.nx-sequencing__headline {
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  color: var(--fg);
+  max-width: 30ch;
+  margin: 2rem 0 0.75rem;
+  letter-spacing: -0.01em;
+}
+.nx-sequencing__body {
+  font-size: 0.95rem;
+  color: var(--fg-secondary);
+  line-height: 1.6;
+  max-width: 60ch;
+  margin: 0;
+}
+
+/* ── Responsive: stack on mobile ──────────────────────────────────── */
+@media (max-width: 900px) {
+  .nx-hero {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    min-height: auto;
+    padding-top: 2rem;
+  }
+  .nx-hero__gauge {
+    order: -1;
+  }
+  .nx-problem-grid,
+  .nx-loop__stages,
+  .nx-products-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── ProductShell (shared product-page anatomy) ───────────────────── */
+.nx-product {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+}
+.nx-product__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+.nx-product__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.nx-product__name {
+  font-size: 1.75rem;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  margin: 0;
+}
+.nx-product__prop {
+  margin: 0.5rem 0 0;
+  color: var(--fg-secondary);
+  max-width: 52ch;
+  line-height: 1.55;
+}
+.nx-product__stats {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 0.75rem;
+}
+.nx-product__body {
+  padding: 2rem 0;
+}
+.nx-product__loop {
+  border-top: 1px solid var(--line);
+  padding-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.nx-product__loop-kicker {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.nx-product__loop-stages {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.nx-product__loop-item:not(:last-child)::after {
+  content: '→';
+  margin-left: 0.5rem;
+  color: var(--fg-muted);
+}
+.nx-product__loop-current {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8rem;
+  color: var(--accent);
+  border: 1px solid var(--accent-muted);
+  background: var(--accent-glow);
+  border-radius: 6px;
+  padding: 0.25rem 0.6rem;
+}
+.nx-product__loop-link {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8rem;
+  color: var(--brand);
+  text-decoration: none;
+  padding: 0.25rem 0.6rem;
+}
+.nx-product__loop-link:hover {
+  text-decoration: underline;
+}
+
+/* Product body helpers shared across surfaces. */
+.nx-product-note {
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+}
+.nx-product-callout {
+  border: 1px solid var(--line);
+  background: var(--surface-1);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+@media (max-width: 720px) {
+  .nx-product__stats {
+    grid-auto-flow: row;
+  }
+}
