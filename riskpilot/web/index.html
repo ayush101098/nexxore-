@@ -554,9 +554,76 @@ async function renderHook() {
   bindTips(el);
 }
 
-// ── not yet deployed ─────────────────────────────────────────────────────
+// ── positions: Arc settlement ────────────────────────────────────────────
+// Arc testnet (docs.arc.io/arc/references/connect-to-arc). ?arcRpc= points the panel at another node.
+const ARC = { id: 5042002, rpc: qs.get("arcRpc") || "https://rpc.testnet.arc.io", explorer: "https://explorer.testnet.arc.io", usdc: "0x3600000000000000000000000000000000000000" };
+const arcLink = (h) => `<a href="${ARC.explorer}/tx/${h}" target="_blank" rel="noopener">${short(h)}</a>`;
+
 function renderPending() {
-  $("arc").innerHTML = unavailable("Arc escrow (not deployed yet)") + `<div class="dim" style="font-size:0.62rem;margin-top:6px">Fund and settle transactions for each approved decision appear here once the escrow is on Arc testnet.</div>`;
+  $("arc").innerHTML = `<div class="dim" style="font-size:0.62rem">Loading…</div>`;
+}
+
+async function renderArc() {
+  const el = $("arc"), dep = S.info?.arc;
+  if (!dep) {
+    el.innerHTML = unavailable("Arc escrow (not deployed yet: make deploy-arc-testnet)") +
+      `<div class="dim" style="font-size:0.62rem;margin-top:6px">Each approved decision is funded in USDC on Arc and settled by the operator after the trade is verified.</div>`;
+    return;
+  }
+  if (!V) { el.innerHTML = unavailable("viem (CDN)"); return; }
+  const arc = V.viem.createPublicClient({ transport: V.viem.http(ARC.rpc) });
+  const abi = V.viem.parseAbi(["function reserve() view returns (uint256)"]);
+  const funded = V.viem.parseAbiItem("event Funded(bytes32 indexed decisionId, address indexed depositor, uint256 amount)");
+  const settled = V.viem.parseAbiItem("event Settled(bytes32 indexed decisionId, address indexed depositor, uint256 amount, uint256 payout, uint256 reserve)");
+  try {
+    const from = BigInt(dep.deployed_block);
+    const [reserve, f, st] = await Promise.all([
+      arc.readContract({ address: dep.escrow, abi, functionName: "reserve" }),
+      arc.getLogs({ address: dep.escrow, event: funded, fromBlock: from }),
+      arc.getLogs({ address: dep.escrow, event: settled, fromBlock: from }),
+    ]);
+    const at = now();
+    const byKey = new Map(S.history.map((d) => [V.viem.keccak256(V.viem.toHex(d.decision_id)), d.decision_id]));
+    const name = (k) => byKey.get(k) || short(k);
+    let h = `<div class="cells"><div class="cell"><div class="k">Escrow</div><div class="v"><a href="${ARC.explorer}/address/${dep.escrow}" target="_blank" rel="noopener">${short(dep.escrow)}</a></div></div>
+      <div class="cell"><div class="k">Reserve</div><div class="v" ${src("RiskPilotEscrow.reserve · Arc testnet", at)}>${num(Number(reserve) / 1e6, 4)} USDC</div></div></div>`;
+    const rows = [
+      ...f.map((l) => ({ b: l.blockNumber, t: `fund ${name(l.args.decisionId)} · ${num(Number(l.args.amount) / 1e6, 2)} USDC`, tx: l.transactionHash })),
+      ...st.map((l) => ({ b: l.blockNumber, t: `settle ${name(l.args.decisionId)} · paid ${num(Number(l.args.payout) / 1e6, 6)} USDC`, tx: l.transactionHash })),
+    ].sort((x, y) => Number(x.b - y.b));
+    h += rows.length ? rows.map((r) => `<div class="hash" style="margin-top:5px">${esc(r.t)} · ${arcLink(r.tx)}</div>`).join("")
+      : `<div class="dim" style="font-size:0.62rem;margin-top:8px">No escrow transactions yet.</div>`;
+    const d = S.seed?.items[S.sel]?.decision;
+    if (d?.verdict === "APPROVE") {
+      h += `<div class="act" style="margin-top:10px"><input id="arcAmt" value="5.00" inputmode="decimal" aria-label="USDC to escrow" style="width:80px;padding:6px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--mono);font-size:0.7rem">
+        <button class="btn ghost sm" id="arcFund">Fund on Arc</button><span class="countdown" id="arcOut"></span>
+        <div class="signer">browser wallet on Arc testnet (chain ${ARC.id}); USDC, 6 decimals</div></div>`;
+    }
+    el.innerHTML = h; bindTips(el);
+    if ($("arcFund")) $("arcFund").onclick = () => fundOnArc(d, dep);
+  } catch (e) { el.innerHTML = unavailable("Arc testnet: " + (e.shortMessage || e.message)); }
+}
+
+async function fundOnArc(d, dep) {
+  const out = $("arcOut");
+  try {
+    if (!window.ethereum) throw new Error("no browser wallet: connect one on Arc testnet to fund");
+    await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x" + ARC.id.toString(16) }] });
+    const [addr] = await window.ethereum.request({ method: "eth_requestAccounts" });
+    const chain = V.viem.defineChain({ id: ARC.id, name: "Arc Testnet", nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 }, rpcUrls: { default: { http: [ARC.rpc] } } });
+    const wallet = V.viem.createWalletClient({ account: addr, chain, transport: V.viem.custom(window.ethereum) });
+    const arc = V.viem.createPublicClient({ chain, transport: V.viem.http(ARC.rpc) });
+    const amount = V.viem.parseUnits($("arcAmt").value, 6);
+    const erc20 = V.viem.parseAbi(["function approve(address,uint256) returns (bool)"]);
+    const escrowAbi = V.viem.parseAbi(["function fund(bytes32 decisionId, uint256 amount)"]);
+    out.textContent = "approve · sign";
+    await arc.waitForTransactionReceipt({ hash: await wallet.writeContract({ address: ARC.usdc, abi: erc20, functionName: "approve", args: [dep.escrow, amount] }) });
+    out.textContent = "fund · sign";
+    const hash = await wallet.writeContract({ address: dep.escrow, abi: escrowAbi, functionName: "fund", args: [V.viem.keccak256(V.viem.toHex(d.decision_id)), amount] });
+    await arc.waitForTransactionReceipt({ hash });
+    out.innerHTML = `funded ${arcLink(hash)}`;
+    await renderArc();
+  } catch (e) { out.innerHTML = `<span class="unavail">${esc(e.shortMessage || e.message)}</span>`; }
 }
 
 // ── load ─────────────────────────────────────────────────────────────────
@@ -586,6 +653,7 @@ async function main() {
   renderStatus(errs);
   await renderAqua();
   await renderHook();
+  await renderArc();
   renderDecision();
 }
 main();
