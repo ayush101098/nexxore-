@@ -1,6 +1,6 @@
 // RiskPilot /riskpilot end-to-end suite (PRD 6). Runs against the live demo chain and engine.
 import { expect, test, type Page } from "@playwright/test";
-import { curves, engineJson, fixed, hookDeployment, rpc, startEngine, stopEngine, takerFill, usd } from "./stack";
+import { curves, DEMO_WALLET, engineJson, fixed, freshWallet, hookDeployment, installWallet, rpc, startEngine, stopEngine, takerFill, usd } from "./stack";
 
 const row = (page: Page, label: string) => page.locator(`[data-testid=opp-row][data-label^="${label}"]`);
 const money = (text: string) => Number(text.replace(/[$,\s]/g, "").replace("−", "-"));
@@ -12,17 +12,24 @@ test.afterEach(async () => {
 });
 
 const ROWS = 5; // three live v4 gaps + the two Aqua curves
+// The demo wallet (the owner's address) through the injected test wallet; its Moderate profile
+// comes with the frozen demo DB, so no signature is needed to open the page.
 async function open(page: Page) {
+  await installWallet(page, DEMO_WALLET);
   await page.goto("/riskpilot");
-  // First connect of the wallet: choose the profile once (the engine keeps it per wallet).
-  const card = page.locator("[data-testid=profile-card][data-profile=moderate]");
-  await Promise.race([card.waitFor({ timeout: 15_000 }), page.locator("[data-testid=opp-row]").first().waitFor({ timeout: 15_000 })]);
-  if (await card.isVisible()) await card.click();
   await expect(page.locator("[data-testid=opp-row]")).toHaveCount(ROWS);
 }
 
-test("0. fresh wallet: three profile cards, none preselected; Moderate gives budget $250 (cap)", async ({ page }) => {
+// A fresh wallet (a new random key, dealt the demo wallet's balances): it chooses and signs its profile.
+async function openFresh(page: Page) {
+  const w = freshWallet();
+  await installWallet(page, w.address, w.key);
   await page.goto("/riskpilot");
+  return w;
+}
+
+test("0. fresh wallet: three profile cards, none preselected; Moderate gives budget $250 (cap)", async ({ page }) => {
+  await openFresh(page);
   const cards = page.getByTestId("profile-card");
   await expect(cards).toHaveCount(3);
   await expect(cards).toHaveText([/Conservative/, /Moderate/, /Aggressive/]);
@@ -181,6 +188,7 @@ test("8. number audit: five values match the engine and the chain exactly", asyn
   await expect(page.getByTestId("aq-K_eq")).toHaveText(usd(call.inputs.aqua.k_eq)); // engine inputs.aqua.k_eq
 
   const maker = curves().maker as string;
+  expect(maker).toBe(DEMO_WALLET); // the demo wallet is the owner's address
   const bal = await rpc<string>("eth_call", [{ to: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     data: "0x70a08231" + maker.slice(2).toLowerCase().padStart(64, "0") }, "latest"]);
   await expect(page.getByTestId("hold-WETH")).toHaveText(`${fixed(Number(BigInt(bal)) / 1e18, 4)} WETH`); // chain balanceOf
@@ -215,7 +223,9 @@ test("10. a new block requotes in place: new decision id, same selection", async
 });
 
 test("11. Conservative: budget $150 (cap); change re-evaluates everything", async ({ page }) => {
-  await open(page);
+  await openFresh(page);
+  await page.locator("[data-testid=profile-card][data-profile=moderate]").click();
+  await expect(page.locator("[data-testid=opp-row]")).toHaveCount(ROWS);
   await page.getByTestId("profile-change").click();
   await page.locator("[data-testid=profile-card][data-profile=conservative]").click();
   await expect(page.getByTestId("profile-status")).toHaveText("Conservative · budget $150 (cap)");

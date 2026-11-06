@@ -1,6 +1,6 @@
 // Helpers for the e2e suite: the engine process, the demo chain's JSON-RPC, and raw engine reads.
 import { spawn, execSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -37,8 +37,14 @@ async function waitFor(check: () => Promise<boolean>, what: string, ms = 30_000)
   throw new Error(`timed out waiting for ${what}`);
 }
 
+// freshDb: start from the frozen demo DB (demo/frozen/riskpilot.db: the demo wallet on Moderate,
+// recorded by make demo-freeze), or an empty one if nothing is frozen.
 export async function startEngine(freshDb = false) {
-  if (freshDb) rmSync(DB, { force: true });
+  if (freshDb) {
+    for (const f of [DB, DB + "-wal", DB + "-shm"]) rmSync(f, { force: true });
+    const frozen = join(ROOT, "demo", "frozen", "riskpilot.db");
+    if (existsSync(frozen)) copyFileSync(frozen, DB);
+  }
   const py = process.env.RISKPILOT_PYTHON ?? join(ROOT, ".venv", "bin", "python");
   const child = spawn(py, ["-m", "uvicorn", "main:app", "--port", "8000", "--timeout-graceful-shutdown", "1"], {
     cwd: join(ROOT, "engine"), detached: true, stdio: "ignore",
@@ -82,3 +88,65 @@ export const usd = (v: number | string) => {
 };
 export const fixed = (v: number | string, d: number) =>
   Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+// ── test wallet ───────────────────────────────────────────────────────────────
+// An injected EIP-1193 wallet for the page, like a browser extension. It acts as `address` on the
+// local chains through Anvil impersonation (no key needed to send), and signs messages only when
+// the test gives it a key (a freshly generated one; never an Anvil default account).
+import type { Page } from "@playwright/test";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { execSync as exec } from "node:child_process";
+
+export const DEMO_WALLET = "0x905aCd442c7B3EF9BfEB0A3189f3686c1Cd0c697";
+const CHAIN_RPC: Record<number, string> = { 31337: RPC, 5042002: "http://127.0.0.1:8547" };
+
+async function rpcAt<T = any>(url: string, method: string, params: unknown[] = []): Promise<T> {
+  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
+  const j = await r.json();
+  if (j.error) throw Object.assign(new Error(j.error.message), { code: j.error.code });
+  return j.result;
+}
+
+export async function installWallet(page: Page, address: string = DEMO_WALLET, privateKey?: `0x${string}`) {
+  const account = privateKey ? privateKeyToAccount(privateKey) : null;
+  await page.exposeFunction("__rpWallet", async (method: string, params: any[], chainId: number) => {
+    const url = CHAIN_RPC[chainId];
+    switch (method) {
+      case "eth_requestAccounts": case "eth_accounts": return [address];
+      case "wallet_getCapabilities": return {};
+      case "personal_sign":
+        if (!account) throw Object.assign(new Error("this test wallet holds no key: it cannot sign messages"), { code: 4100 });
+        return account.signMessage({ message: { raw: params[0] } });
+      case "eth_sendTransaction":
+        await rpcAt(url, "anvil_impersonateAccount", [address]);
+        return rpcAt(url, "eth_sendTransaction", params);
+      default: return rpcAt(url, method, params);
+    }
+  });
+  await page.addInitScript(() => {
+    let chainId = 31337;
+    const known = [31337, 5042002];
+    (window as any).ethereum = {
+      isRiskPilotTestWallet: true,
+      on() {}, removeListener() {},
+      async request({ method, params = [] }: { method: string; params?: any[] }) {
+        if (method === "eth_chainId") return "0x" + chainId.toString(16);
+        if (method === "wallet_switchEthereumChain") {
+          const id = parseInt(params[0].chainId, 16);
+          if (!known.includes(id)) throw Object.assign(new Error("Unrecognized chain"), { code: 4902 });
+          chainId = id; return null;
+        }
+        if (method === "wallet_addEthereumChain") { chainId = parseInt(params[0].chainId, 16); return null; }
+        try { return await (window as any).__rpWallet(method, params, chainId); }
+        catch (e: any) { throw Object.assign(new Error(e.message), { code: /no key/.test(e.message) ? 4100 : -32603 }); }
+      },
+    };
+  });
+}
+
+/** A fresh wallet (new random key), given the demo wallet's balances on the fork. */
+export function freshWallet(): { address: string; key: `0x${string}` } {
+  const key = generatePrivateKey(), address = privateKeyToAccount(key).address;
+  exec(`./scripts/deal.sh ${address} 992 8 5000 ${RPC}`, { cwd: ROOT, stdio: "ignore" });
+  return { address, key };
+}

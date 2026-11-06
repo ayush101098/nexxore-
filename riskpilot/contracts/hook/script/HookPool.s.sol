@@ -10,7 +10,7 @@ import {DemoHookBase} from "./DemoHookBase.sol";
 
 /// @notice make hook-pool: deploy the hook on the demo chain and open the live pools the agent
 ///         quotes from: a hooked dynamic-fee USDC/WETH pool and a static 0.30% pool, both priced
-///         ~0.5% from the fork's main ETH/USDC pool, with liquidity from LP_PRIVATE_KEY. Then a
+///         ~0.5% from the fork's main ETH/USDC pool, with liquidity from the LP address (impersonated on the fork). Then a
 ///         calm -> volatile -> long calm sequence of real swaps (one per block on Anvil) gives the
 ///         hook an on-chain fee history that rises and falls back. Alternating directions bring the
 ///         price back.
@@ -19,8 +19,7 @@ contract HookPool is DemoHookBase {
     using PoolIdLibrary for PoolKey;
 
     function run() external {
-        uint256 pk = vm.envUint("LP_PRIVATE_KEY");
-        vm.startBroadcast(pk);
+        vm.startBroadcast(vm.envAddress("LP"));
         Pools memory p = setUpPools();
         // Deep enough to trade a $10k gap through (~1,000 WETH per pool within ±45% of the price).
         fundPools(p, 1_000 ether);

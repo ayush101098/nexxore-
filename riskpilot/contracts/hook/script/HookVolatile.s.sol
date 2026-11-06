@@ -28,7 +28,7 @@ contract HookVolatile is DemoHookBase {
         uint256 blocks = vm.envOr("VOL_BLOCKS", uint256(6));
         uint256 ethSize = vm.envOr("VOL_ETH", uint256(4 ether));
         console.log("fee before (pips)", p.hook.getFee(p.hooked.toId()));
-        vm.startBroadcast(vm.envUint("LP_PRIVATE_KEY"));
+        vm.startBroadcast(vm.envAddress("LP"));
         for (uint256 i = 0; i < blocks; i++) {
             vm.roll(block.number + 1); // simulation only; on Anvil every swap is its own block
             (uint256 price,) = priceAndTick(p.hooked);

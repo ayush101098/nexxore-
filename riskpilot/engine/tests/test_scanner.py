@@ -56,9 +56,9 @@ def test_read_holdings_decodes_weth_and_usdc():
         seen["url"], seen["body"] = url, body
         return [{"id": 1, "result": hex(5_000 * 10**6)}, {"id": 0, "result": hex(2 * 10**18)}]
 
-    h = read_holdings("http://127.0.0.1:8545", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", post=post)
+    h = read_holdings("http://127.0.0.1:8545", "0x905aCd442c7B3EF9BfEB0A3189f3686c1Cd0c697", post=post)
     assert (h.weth, h.usdc) == (2, 5000)
-    assert seen["body"][0]["params"][0]["data"].endswith("f39fd6e51aad88f6f4ce6ab8827279cfffb92266")
+    assert seen["body"][0]["params"][0]["data"].endswith("905acd442c7b3ef9bfeb0a3189f3686c1cd0c697")
 
 
 def test_hook_pool_state_decodes_prices_fee_and_sigma():

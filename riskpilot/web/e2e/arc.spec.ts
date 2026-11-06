@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test";
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { ROOT, engineJson } from "./stack";
+import { installWallet, ROOT, engineJson } from "./stack";
 
 test.skip(!process.env.ARC, "Arc rehearsal only: ARC=1 E2E_EXTERNAL=1");
 const ARC_RPC = "http://127.0.0.1:8547";
@@ -20,6 +20,7 @@ const settledLogs = (key: string) => arcRpc("eth_getLogs", [{ address: dep().esc
 
 test("one click: ship the call-like curve, fund on Arc, the worker settles; a restart never settles twice", async ({ page }) => {
   test.setTimeout(180_000);
+  await installWallet(page); // the demo wallet, impersonated on the fork and on the Arc stand-in
   await page.goto(`/riskpilot?arcRpc=${ARC_RPC}`);
   const card = page.locator("[data-testid=profile-card][data-profile=moderate]");
   if (await card.isVisible().catch(() => false)) await card.click();

@@ -2,11 +2,11 @@
 # Older pinned blocks need an archive RPC: export AQUA_FORK_RPC_URL=<your mainnet archive rpc>.
 AQUA_FORK_RPC_URL ?= https://ethereum-rpc.publicnode.com
 export AQUA_FORK_RPC_URL
-TAKER_PK = 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
 CURVE ?= upside
 
 .PHONY: test deps demo-chain demo-ship demo-fill demo-reset
-MAKER_PK = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+# Demo actors are addresses, never keys: they act on the fork through Anvil impersonation.
+ACTORS = . ../../scripts/addresses.sh
 
 # Paths are relative to this directory, so this works wherever the repo root is.
 deps:
@@ -21,13 +21,14 @@ demo-chain: deps
 
 # Ship the approved call-like curve from the CLI (the page normally does this on Approve and sign).
 demo-ship:
-	MAKER_PRIVATE_KEY=$(MAKER_PK) SHIP=upside forge script script/ShipDemoCurves.s.sol \
-		--rpc-url http://127.0.0.1:$${DEMO_PORT:-8545} --broadcast
+	@$(ACTORS); MAKER=$$DEMO_WALLET SHIP=upside forge script script/ShipDemoCurves.s.sol \
+		--rpc-url http://127.0.0.1:$${DEMO_PORT:-8545} --broadcast --unlocked --sender $$DEMO_WALLET
 
 # Scripted taker against the running demo chain: CURVE=upside|downside [AMOUNT=...]
 demo-fill:
-	TAKER_PRIVATE_KEY=$(TAKER_PK) CURVE=$(CURVE) forge script script/TakeDemoFill.s.sol \
-		--rpc-url http://127.0.0.1:$${DEMO_PORT:-8545} --broadcast
+	@$(ACTORS); cast rpc --rpc-url http://127.0.0.1:$${DEMO_PORT:-8545} anvil_impersonateAccount $$DEMO_TAKER >/dev/null; \
+	TAKER=$$DEMO_TAKER CURVE=$(CURVE) forge script script/TakeDemoFill.s.sol \
+		--rpc-url http://127.0.0.1:$${DEMO_PORT:-8545} --broadcast --unlocked --sender $$DEMO_TAKER
 
 demo-reset:
 	rm -f demo/anvil-state.json demo/curves.json demo/anvil.log

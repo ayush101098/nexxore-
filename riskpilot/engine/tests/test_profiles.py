@@ -9,11 +9,11 @@ from eth_account.messages import encode_defunct
 from api import profile_message
 from models import Holdings
 from profiles import PROFILES, derive, get_profile
-from tests.test_demo import CHAIN, MAKER, NOW, client
+from tests.test_demo import CHAIN, MAKER, NOW, client, curves_file  # noqa: F401 - autouse: the test curves.json
 
 HELD = dict(holdings=Holdings(weth="8", usdc="5000"), gas=Decimal("0.0875"), spot=Decimal("2218.55"))
-# Anvil #0, the public test key: the demo maker.
-KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+# A fresh key for the signing tests (never an Anvil default account: those keys are public).
+SIGNER = Account.create()
 
 
 def seed(c, profile="moderate"):
@@ -68,17 +68,18 @@ def test_slippage_and_gas_ceiling():
 
 def test_seed_needs_a_signed_profile():
     c = client(**HELD)
-    assert c.get(f"/profile?wallet={MAKER}").json()["profile"] is None
-    r = c.post("/demo/seed")
+    W = SIGNER.address
+    assert c.get(f"/profile?wallet={W}").json()["profile"] is None
+    r = c.post(f"/demo/seed?wallet={W}")
     assert r.status_code == 409 and r.json()["detail"]["needs_profile"] is True
     set_at = "2026-11-06T14:00:00Z"
-    sig = Account.sign_message(encode_defunct(text=profile_message(MAKER, "conservative", set_at)), KEY).signature.hex()
-    bad = c.put("/profile", json={"wallet": MAKER, "profile": "aggressive", "set_at": set_at, "signature": "0x" + sig})
+    sig = Account.sign_message(encode_defunct(text=profile_message(W, "conservative", set_at)), SIGNER.key).signature.hex()
+    bad = c.put("/profile", json={"wallet": W, "profile": "aggressive", "set_at": set_at, "signature": "0x" + sig})
     assert bad.status_code == 401  # signed conservative, asked for aggressive
-    ok = c.put("/profile", json={"wallet": MAKER, "profile": "conservative", "set_at": set_at, "signature": "0x" + sig}).json()
-    assert ok["profile"] == "conservative" and ok["previous"] is None
-    assert c.get(f"/profile?wallet={MAKER}").json()["profile"] == "conservative"
-    body = c.post("/demo/seed").json()
+    ok = c.put("/profile", json={"wallet": W, "profile": "conservative", "set_at": set_at, "signature": "0x" + sig}).json()
+    assert ok["profile"] == "conservative" and ok["previous"] is None and ok["source"] == "EIP-191 signature"
+    assert c.get(f"/profile?wallet={W}").json()["profile"] == "conservative"
+    body = c.post(f"/demo/seed?wallet={W}").json()
     assert {i["decision"]["inputs"]["profile"]["name"] for i in body["items"]} == {"conservative"}
 
 

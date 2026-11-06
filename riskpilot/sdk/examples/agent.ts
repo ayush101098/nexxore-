@@ -3,8 +3,10 @@
 //   make demo-reset                     # repo root: demo chain + engine
 //   cd sdk && npm install && AGENT_KEY=0x… npm run agent
 //
-// AGENT_KEY is the agent wallet's key, from your terminal. On the demo chain the Anvil #0 public
-// test key works (it is the demo maker). The engine decides; this wallet signs every transaction.
+// AGENT_KEY is the agent wallet's own key, from your terminal (never an Anvil default account:
+// those keys are public). For the demo chain, make one and fund it on the fork:
+//   cast wallet new   ·   ../scripts/deal.sh <its address> 20 8 5000
+// The engine decides; this wallet signs every transaction.
 import { createPublicClient, createWalletClient, http, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { foundry } from "viem/chains";

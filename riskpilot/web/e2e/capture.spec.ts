@@ -2,12 +2,19 @@
 // check, and a console-clean load. Skipped in the normal e2e run.
 import { expect, test, type Page } from "@playwright/test";
 import { join, resolve } from "node:path";
-import { startEngine, stopEngine } from "./stack";
+import { freshWallet, installWallet, startEngine, stopEngine } from "./stack";
 
 test.skip(!process.env.CAPTURE, "set CAPTURE=1 to produce PR screenshots");
 const OUT = resolve(__dirname, "..", "..", "docs", "screenshots");
 
+// The demo wallet (its profile comes with the frozen DB); `shoot` opens as a fresh wallet instead,
+// to photograph the first-connect profile picker.
+const installed = new WeakSet<Page>();
 async function open(page: Page, shoot?: string) {
+  if (!installed.has(page)) {
+    installed.add(page);
+    if (shoot) { const w = freshWallet(); await installWallet(page, w.address, w.key); } else await installWallet(page);
+  }
   await page.goto("/riskpilot");
   const card = page.locator("[data-testid=profile-card][data-profile=moderate]");
   await Promise.race([card.waitFor({ timeout: 15_000 }), page.locator("[data-testid=opp-row]").first().waitFor({ timeout: 15_000 })]);
@@ -23,7 +30,7 @@ test("console is clean on load", async ({ page }) => {
   const problems: string[] = [];
   page.on("console", (m) => { if (m.type() === "error" || m.type() === "warning") problems.push(`${m.type()}: ${m.text()}`); });
   page.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
-  await open(page, "0-profile-picker.png"); // the suite starts with a fresh DB: a fresh wallet
+  await open(page, "0-profile-picker.png"); // a fresh wallet: the picker, then it signs Moderate
   await page.waitForTimeout(3_000);
   expect(problems).toEqual([]);
 });

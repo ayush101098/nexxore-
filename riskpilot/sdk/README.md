@@ -29,20 +29,24 @@ edge, checks the engine's signature, then builds, executes and reports it.
 ```bash
 make demo-reset                                   # repo root
 cd sdk && npm install
-AGENT_KEY=0x… npm run agent                       # the agent wallet's key, from your terminal
+cast wallet new                                   # the agent's own wallet; keep its key in your terminal
+../scripts/deal.sh <its address> 20 8 5000        # fund it on the fork: 20 ETH, 8 WETH, 5,000 USDC
+AGENT_KEY=0x… npm run agent
 ```
 
-A run on the demo chain (Anvil #0 public test key):
+A run on the demo chain (a freshly generated agent wallet, funded with `deal.sh`). The agent
+simulates every call before sending; with too little WETH the simulation reverts and nothing is sent.
 
 ```
-engine engine-0.1.0 · signer 0x2E9c…fD5F · stream websocket newHeads
-block 26354383: 5 opportunities, budget 250.00 (cap)
+engine engine-0.1.0 · signer 0x6D28…c184 · stream websocket newHeads
+profile set: moderate
+block 26354377: 5 opportunities, budget 250.00 (cap)
   APPROVE Price gap · hooked v4 pool · net 15.38
   APPROVE Price gap · static 0.30% v4 pool · net 7.19
   REJECT  Price gap · v4 ETH/USDC 0.30% · net -15.80
   REJECT  Put-like curve · 1,740–2,219 · net -314.41
   APPROVE Call-like curve · 2,219–2,829 · net 5.71
-executing Price gap · hooked v4 pool · dec_26722bb95a2f0654 (signature verified)
+executing Price gap · hooked v4 pool · dec_af8d78aa943cacd7 (signature verified)
 plan: approve for the v4 router → swap through the v4 pool
-confirmed 0xfeb1…0641 in block 26354385 · position pos_26722bb95a2f0654 open
+confirmed 0x8f30…c16a in block 26354379 · position pos_af8d78aa943cacd7 open
 ```

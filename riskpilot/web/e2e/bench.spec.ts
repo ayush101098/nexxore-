@@ -2,7 +2,7 @@
 // Works on the pre-hardening page too (no profile cards, no stream), for the "before" column.
 import { expect, test } from "@playwright/test";
 import { writeFileSync } from "node:fs";
-import { ENGINE_URL, rpc, startEngine, stopEngine } from "./stack";
+import { installWallet, ENGINE_URL, rpc, startEngine, stopEngine } from "./stack";
 
 test.skip(!process.env.BENCH, "bench only: BENCH=1");
 
@@ -14,6 +14,7 @@ const pct = (xs: number[], q: number) => [...xs].sort((a, b) => a - b)[Math.min(
 test("bench", async ({ page }) => {
   test.setTimeout(300_000);
   // Warm-up, and the one-time profile choice on the new page.
+  await installWallet(page);
   await page.goto("/riskpilot");
   const card = page.locator("[data-testid=profile-card][data-profile=moderate]");
   await Promise.race([card.waitFor({ timeout: 15_000 }), page.locator("[data-testid=opp-row]").first().waitFor({ timeout: 15_000 })]);

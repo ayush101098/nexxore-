@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS executions (
 CREATE TABLE IF NOT EXISTS profiles (
     wallet TEXT PRIMARY KEY,
     profile TEXT NOT NULL,
-    set_at TEXT NOT NULL
+    set_at TEXT NOT NULL,
+    source TEXT NOT NULL DEFAULT 'EIP-191 signature'
 );
 CREATE TABLE IF NOT EXISTS settlements (
     decision_id TEXT PRIMARY KEY,
@@ -46,6 +47,8 @@ class Store:
                 self._db.execute("PRAGMA journal_mode=WAL")
                 self._db.execute("PRAGMA synchronous=NORMAL")
             self._db.executescript(_SCHEMA)
+            if "source" not in {r[1] for r in self._db.execute("PRAGMA table_info(profiles)")}:  # older DBs
+                self._db.execute("ALTER TABLE profiles ADD COLUMN source TEXT NOT NULL DEFAULT 'EIP-191 signature'")
 
     def _write(self, sql: str, args: tuple) -> None:
         with self._lock, self._db:
@@ -90,14 +93,15 @@ class Store:
     def save_execution(self, e: dict) -> None:
         self._write("INSERT OR REPLACE INTO executions VALUES (?, ?, ?)", (e["tx_hash"], e["decision_id"], json.dumps(e)))
 
-    def set_profile(self, wallet: str, profile: str, set_at: str) -> None:
+    def set_profile(self, wallet: str, profile: str, set_at: str, source: str = "EIP-191 signature") -> None:
+        """source says how it was set: the wallet's signature, or the local demo default (make demo-freeze)."""
         with self._lock, self._db:
-            self._db.execute("INSERT OR REPLACE INTO profiles VALUES (?, ?, ?)", (wallet.lower(), profile, set_at))
+            self._db.execute("INSERT OR REPLACE INTO profiles VALUES (?, ?, ?, ?)", (wallet.lower(), profile, set_at, source))
 
     def get_profile(self, wallet: str) -> dict | None:
         with self._lock:
-            row = self._db.execute("SELECT wallet, profile, set_at FROM profiles WHERE wallet = ?", (wallet.lower(),)).fetchone()
-        return None if row is None else {"wallet": row[0], "profile": row[1], "set_at": row[2]}
+            row = self._db.execute("SELECT wallet, profile, set_at, source FROM profiles WHERE wallet = ?", (wallet.lower(),)).fetchone()
+        return None if row is None else {"wallet": row[0], "profile": row[1], "set_at": row[2], "source": row[3]}
 
     def save_settlement(self, s: dict) -> None:
         self._write("INSERT OR REPLACE INTO settlements VALUES (?, ?, ?)", (s["decision_id"], s["status"], json.dumps(s)))

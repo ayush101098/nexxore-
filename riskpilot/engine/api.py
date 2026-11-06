@@ -382,7 +382,7 @@ def create_app(
     @app.get("/profile")
     def get_wallet_profile(wallet: str) -> dict:
         """The wallet's profile; profile is null until the wallet chooses one (PUT /v1/profile)."""
-        return store.get_profile(wallet) or {"wallet": wallet.lower(), "profile": None, "set_at": None}
+        return store.get_profile(wallet) or {"wallet": wallet.lower(), "profile": None, "set_at": None, "source": None}
 
     @app.put("/profile")
     def put_wallet_profile(body: dict) -> dict:

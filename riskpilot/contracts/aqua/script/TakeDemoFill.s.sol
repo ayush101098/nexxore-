@@ -14,8 +14,7 @@ import { DemoParams } from "../src/DemoParams.sol";
 ///         curve. Reads demo/curves.json, prints balances before and after.
 contract TakeDemoFill is Script {
     function run() external {
-        uint256 pk = vm.envUint("TAKER_PRIVATE_KEY");
-        address taker = vm.addr(pk);
+        address taker = vm.envAddress("TAKER"); // impersonated on the fork (--unlocked)
         string memory curve = vm.envOr("CURVE", string("upside"));
         bool upside = keccak256(bytes(curve)) == keccak256("upside");
         uint256 amount = vm.envOr("AMOUNT", upside ? uint256(1_500e6) : uint256(0.4 ether));
@@ -37,7 +36,7 @@ contract TakeDemoFill is Script {
         require(quoted <= fillable, "quote exceeds the curve's real balance");
 
         _log("before", maker, taker);
-        vm.startBroadcast(pk);
+        vm.startBroadcast(taker);
         IERC20(tokenIn).approve(DemoParams.ROUTER, amount);
         (uint256 amountIn, uint256 amountOut,) = ISwapVM(DemoParams.ROUTER).swap(order, tokenIn, tokenOut, amount, takerData);
         vm.stopBroadcast();

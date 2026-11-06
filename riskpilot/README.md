@@ -1,6 +1,8 @@
 # RiskPilot: pricing liquidity risk
 
-Risk-aware execution engine for programmable liquidity (ETH/USDC).
+Risk-aware execution engine for programmable liquidity (ETH/USDC). **It runs on Ethereum**: a
+local fork of mainnet (real Uniswap v4, 1inch Aqua, WETH and USDC at block 26,354,292). Other
+chains come later (see What's next).
 
 ## What it is
 
@@ -17,8 +19,9 @@ Primitives:
   spot and a cash-secured-put-like range below spot.
 - **Volatility-aware v4 hook (Uniswap)**: a dynamic fee driven by an EWMA of the
   pool's own squared log returns, with no external oracle.
-- **Arc USDC settlement**: an escrow keyed by `decision_id` that records each
-  approved strategy's lock and settlement.
+- **Next, Arc USDC settlement**: an escrow keyed by `decision_id` and a worker that settles it.
+  Built and tested (`contracts/arc`, `engine/arc_worker.py`), but not in the Ethereum demo flow;
+  `ARC_REHEARSAL=1 make up` previews it against a local stand-in.
 
 Out of scope: automated execution, mainnet funds, multi-asset support.
 
@@ -93,7 +96,15 @@ make down
 
 Contracts: `cd contracts/{aqua,hook,arc} && make test` (12, 6 and 7 Foundry tests).
 
-**Public testnets, from your own wallet** (forge prompts for the key; nothing is stored):
+**The demo wallet is your own address** (`scripts/addresses.sh`, default `0x905a…c697`). On the
+fork it holds 992 ETH, 8 WETH and 5,000 USDC, set by `scripts/deal.sh` (balance and storage
+writes). Connect your browser wallet to the fork (chain 31337, RPC `http://127.0.0.1:8545`) to
+sign as it. No Anvil default account is used anywhere: their keys are public. The taker and the
+hook pools' LP are keccak-derived addresses that nobody holds a key for; they act through Anvil
+impersonation. The frozen demo DB records your address on Moderate as a local default (unsigned;
+`GET /v1/profile` shows `source`). Sign `PUT /v1/profile` from your wallet to replace it.
+
+**Later, other chains, from your own wallet** (forge prompts for the key; nothing is stored):
 `make testnet SENDER=0xYourAddress` deploys the hook to Unichain Sepolia and the escrow to Arc
 (`make arc-deploy` alone writes `contracts/arc/deployments/arc-testnet.json`). Then start the
 engine with `ARC_OPERATOR_KEY` exported in your terminal and the arc-worker settles every funded
@@ -122,6 +133,9 @@ Decisions are signed by the engine key (`RISKPILOT_ENGINE_KEY`; ephemeral if uns
 `decision_id` = hash(inputs, block, engine version).
 
 ## What's next
+
+- **Other chains.** Arc USDC settlement (escrow and arc-worker, built and tested) into the main
+  flow, and the hook on Unichain (`make testnet`).
 
 - **Decision-gated hook.** The v4 hook checks the engine's EIP-712 decision signature in
   `beforeSwap`, so a pool only fills flow that RiskPilot approved.

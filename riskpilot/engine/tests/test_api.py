@@ -165,7 +165,7 @@ def test_evaluate_reads_holdings_for_a_wallet():
     client = TestClient(create_app(Store(":memory:"), clock=lambda: AS_OF, holdings_reader=reader))
     body = json.loads((FIXTURES / "aqua_upside_held_eth.json").read_text())["request"]
     body.pop("holdings")
-    body["wallet"] = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+    body["wallet"] = "0x905aCd442c7B3EF9BfEB0A3189f3686c1Cd0c697"
     decision = client.post("/evaluate", json=body).json()
     assert wallets == [body["wallet"]]
     assert decision["inputs"]["request"]["holdings"] == {"weth": "1.0", "usdc": "0"}

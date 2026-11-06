@@ -14,7 +14,7 @@ from schemas import validate
 from store import Store
 
 NOW = datetime(2026, 11, 6, 14, 0, tzinfo=timezone.utc)
-MAKER = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+MAKER = "0x905aCd442c7B3EF9BfEB0A3189f3686c1Cd0c697"  # the demo wallet: the owner's address
 
 # What `make demo-chain` writes for the demo curves (DemoParams: spot 2,218.55, w = 1.275,
 # a 7 ETH call-like curve and 1 ETH of USDC put-like, fees at f_min).

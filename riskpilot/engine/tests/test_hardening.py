@@ -4,13 +4,21 @@ from datetime import timedelta
 from decimal import Decimal
 
 import build
+from eth_account import Account
 from arc_worker import ArcWorker, decision_key, payout_units
 from signing import EngineKey
 from store import Store
-from tests.test_demo import MAKER, NOW, client
+from tests.test_demo import CURVES, MAKER, NOW, client, curves_file  # noqa: F401 - autouse: the test curves.json
 from tests.test_profiles import HELD
 
 TX = "0x" + "ab" * 32
+
+
+def with_order(monkeypatch):
+    """build() ships curves.json's encoded order; the test curves carry a stand-in one."""
+    curves = {**CURVES, "upside": {**CURVES["upside"], "order": "0x" + "00" * 96}}
+    monkeypatch.setattr(build, "load_curves", lambda: curves)
+    monkeypatch.setattr(build, "_allowance", lambda *a: 0)
 
 
 def call_like(c):
@@ -28,7 +36,7 @@ def test_decisions_are_signed_and_tampering_breaks_the_signature():
 
 
 def test_build_returns_calls_for_a_live_signed_approve(monkeypatch):
-    monkeypatch.setattr(build, "_allowance", lambda *a: 0)
+    with_order(monkeypatch)
     c = client(**HELD)
     d = call_like(c)
     body = c.post(f"/v1/decisions/{d['decision_id']}/build").json()
@@ -38,7 +46,7 @@ def test_build_returns_calls_for_a_live_signed_approve(monkeypatch):
 
 
 def test_build_refuses_rejects_expired_tampered_and_old_profile(monkeypatch):
-    monkeypatch.setattr(build, "_allowance", lambda *a: 0)
+    with_order(monkeypatch)
     t = [NOW]
     c = client(**HELD, clock=lambda: t[0])
     items = c.post("/v1/demo/seed?profile=moderate").json()["items"]
@@ -111,7 +119,7 @@ class FakeArc:
 
 DEP = {"escrow": "0x2E983A1Ba5e8b38AAAeC4B440B9dDcFBf72E15d1", "operator": MAKER, "usdc": "0x3600000000000000000000000000000000000000",
        "chain_id": 5042002, "deployed_block": 1}
-OPERATOR_KEY = "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
+OPERATOR_KEY = Account.create().key.hex()  # a fresh key, not an Anvil default account
 
 
 def executed_store():

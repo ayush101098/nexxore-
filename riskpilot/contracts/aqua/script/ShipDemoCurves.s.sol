@@ -10,7 +10,7 @@ import { AquaCollateral } from "../src/AquaCollateral.sol";
 import { AquaCurves } from "../src/AquaCurves.sol";
 import { DemoParams } from "../src/DemoParams.sol";
 
-/// @notice Builds both demo curves (w = 1.275) for MAKER_PRIVATE_KEY's wallet and writes
+/// @notice Builds both demo curves (w = 1.275) for the MAKER wallet's address and writes
 ///         demo/curves.json (orders, strategy hashes, ranges, fees) for the /riskpilot page.
 ///         SHIP=none (default) only writes the file: the page ships the approved curve when the
 ///         user signs. SHIP=upside or SHIP=both ships from the command line instead, after the
@@ -19,8 +19,9 @@ contract ShipDemoCurves is Script, AquaCurves {
     constructor() AquaCurves(DemoParams.AQUA, DemoParams.WETH, DemoParams.USDC) { }
 
     function run() external {
-        uint256 pk = vm.envUint("MAKER_PRIVATE_KEY");
-        address maker = vm.addr(pk);
+        // The demo wallet is the owner's address; on the fork it acts through Anvil impersonation
+        // (forge script --unlocked --sender), so no private key is involved.
+        address maker = vm.envAddress("MAKER");
 
         Curve memory up =
             upsideCurve(maker, DemoParams.SPOT, DemoParams.WIDTH_BPS, DemoParams.CALL_ETH, DemoParams.UPSIDE_FEE);
@@ -32,7 +33,7 @@ contract ShipDemoCurves is Script, AquaCurves {
         string memory ship = vm.envOr("SHIP", string("none"));
         bool both = keccak256(bytes(ship)) == keccak256("both");
         if (both || keccak256(bytes(ship)) == keccak256("upside")) {
-            vm.startBroadcast(pk);
+            vm.startBroadcast(maker);
             IERC20(WETH).approve(DemoParams.AQUA, type(uint256).max);
             IERC20(USDC).approve(DemoParams.AQUA, type(uint256).max);
             // Refuse to ship if the curves promise more of a token than the wallet can cover.

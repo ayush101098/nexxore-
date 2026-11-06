@@ -30,14 +30,17 @@ deploy-arc-testnet:
 arc-deploy: deploy-arc-testnet
 	@python3 script/record_deploy_tx.py broadcast/DeployEscrow.s.sol/5042002/run-latest.json deployments/arc-testnet.json
 
-# Local rehearsal of the whole Arc flow: an Anvil on :8547 with a 6-decimal mock USDC.
-# Public Anvil test keys only; writes deployments/arc-rehearsal.json.
+# Local rehearsal of the whole Arc flow: an Anvil on :8547 (chain id 5042002) with a 6-decimal
+# mock USDC. The deployer is a keccak-derived address, impersonated (no key); the operator is
+# OPERATOR_ADDRESS (the stand-in generates a fresh key for it). Writes deployments/arc-rehearsal.json.
 REHEARSAL_RPC ?= http://127.0.0.1:8547
-REHEARSAL_PK = 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
 arc-rehearsal: deps
-	@USDC=$$(forge create test/RiskPilotEscrow.t.sol:MockUSDC --rpc-url $(REHEARSAL_RPC) --private-key $(REHEARSAL_PK) --broadcast --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["deployedTo"])'); \
+	@. ../../scripts/addresses.sh; D=$$ARC_DEPLOYER; \
+	cast rpc --rpc-url $(REHEARSAL_RPC) anvil_setBalance $$D 0x3635C9ADC5DEA00000 >/dev/null; \
+	cast rpc --rpc-url $(REHEARSAL_RPC) anvil_impersonateAccount $$D >/dev/null; \
+	USDC=$$(forge create test/RiskPilotEscrow.t.sol:MockUSDC --rpc-url $(REHEARSAL_RPC) --unlocked --from $$D --broadcast --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["deployedTo"])'); \
 	ARC_REHEARSAL=true ARC_USDC=$$USDC ARC_DEPLOYMENT_OUT=./deployments/arc-rehearsal.json \
-	forge script script/DeployEscrow.s.sol --rpc-url $(REHEARSAL_RPC) --private-key $(REHEARSAL_PK) --broadcast -q && \
+	forge script script/DeployEscrow.s.sol --rpc-url $(REHEARSAL_RPC) --unlocked --sender $$D --broadcast -q && \
 	python3 script/record_deploy_tx.py broadcast/DeployEscrow.s.sol/$$(cast chain-id --rpc-url $(REHEARSAL_RPC))/run-latest.json deployments/arc-rehearsal.json && \
 	cat deployments/arc-rehearsal.json
 
