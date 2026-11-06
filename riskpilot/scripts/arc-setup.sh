@@ -19,6 +19,18 @@ GAS_USDC="${ARC_OPERATOR_GAS:-1}"   # native USDC for the operator's settle() ga
 RESERVE_USDC="${ARC_RESERVE:-1}"    # escrow reserve that tops up winning payouts
 log() { printf '%s %s\n' "$(date +%H:%M:%S)" "$*"; }
 
+# Arc's public RPC rate-limits bursts (HTTP 429): retry with backoff, then try its second hostname.
+FALLBACK_RPC="${ARC_FALLBACK_RPC:-https://rpc.testnet.arc.network}"
+retry() {  # retry CMD...: 4 attempts, 5/15/30 s apart, switching to the fallback RPC after the second
+  local n=0 delays=(5 15 30)
+  until "$@"; do
+    [ $n -ge 3 ] && return 1
+    log "  rate-limited or failed; retrying in ${delays[$n]} s"
+    sleep "${delays[$n]}"; n=$((n + 1))
+    [ $n -eq 2 ] && [ "$ARC_RPC" != "$FALLBACK_RPC" ] && { ARC_RPC=$FALLBACK_RPC; log "  switching to $ARC_RPC"; }
+  done
+}
+has_code() { local c; c=$(cast code --rpc-url "$ARC_RPC" "$1" 2>/dev/null) && [ "${#c}" -gt 4 ]; }
 [ "$(cast chain-id --rpc-url "$ARC_RPC")" = 5042002 ] || { echo "not Arc testnet: $ARC_RPC" >&2; exit 1; }
 mkdir -p "$(dirname "$KEY")" && chmod 700 "$(dirname "$KEY")"
 if [ ! -s "$KEY" ]; then
@@ -28,12 +40,19 @@ fi
 OPERATOR=$(cast wallet address --private-key "$(cat "$KEY")")
 log "operator $OPERATOR"
 
-if [ -f "$DEP" ]; then
+# Trust a deployment file only if its escrow has code on chain (forge writes the file while simulating,
+# so a failed broadcast can leave one behind).
+if [ -f "$DEP" ] && has_code "$(python3 -c "import json; print(json.load(open('$DEP'))['escrow'])")"; then
   log "escrow already deployed: $(python3 -c "import json; print(json.load(open('$DEP'))['escrow'])") (delete $DEP to redeploy)"
 else
+  rm -f "$DEP"
   log "1/4 deploy RiskPilotEscrow from $SENDER (your wallet signs)"
-  (cd "$ROOT/contracts/arc" && OPERATOR_ADDRESS=$OPERATOR ARC_DEPLOYMENT_OUT="$DEP" forge script script/DeployEscrow.s.sol \
-    --rpc-url "$ARC_RPC" --sender "$SENDER" $WALLET --broadcast -q)
+  deploy() { (cd "$ROOT/contracts/arc" && OPERATOR_ADDRESS=$OPERATOR ARC_DEPLOYMENT_OUT="$DEP" forge script script/DeployEscrow.s.sol \
+    --rpc-url "$ARC_RPC" --sender "$SENDER" $WALLET --broadcast --slow -q); }
+  retry deploy || { rm -f "$DEP"; echo "deploy failed; nothing recorded" >&2; exit 1; }
+  ESCROW_NEW=$(python3 -c "import json; print(json.load(open('$DEP'))['escrow'])")
+  for _ in $(seq 1 20); do has_code "$ESCROW_NEW" && break; sleep 2; done
+  has_code "$ESCROW_NEW" || { rm -f "$DEP"; echo "no code at $ESCROW_NEW after deploy; nothing recorded" >&2; exit 1; }
   python3 "$ROOT/contracts/arc/script/record_deploy_tx.py" \
     "$ROOT/contracts/arc/broadcast/DeployEscrow.s.sol/5042002/run-latest.json" "$DEP"
 fi
@@ -41,7 +60,7 @@ ESCROW=$(python3 -c "import json; print(json.load(open('$DEP'))['escrow'])")
 [ "$(python3 -c "import json; print(json.load(open('$DEP'))['operator'].lower())")" = "$(echo "$OPERATOR" | tr A-F a-f)" ] \
   || { echo "deployments/arc-testnet.json has a different operator than .secrets/arc-operator.key" >&2; exit 1; }
 
-send() { cast send --rpc-url "$ARC_RPC" --from "$SENDER" $WALLET "$@" >/dev/null; }
+send() { retry cast send --rpc-url "$ARC_RPC" --from "$SENDER" $WALLET "$@" >/dev/null; }
 units() { python3 -c "from decimal import Decimal; print(int(Decimal('$1') * 10**$2))"; }
 have=$(cast balance --rpc-url "$ARC_RPC" "$OPERATOR")
 if [ "$have" -lt "$(units "$GAS_USDC" 18)" ]; then

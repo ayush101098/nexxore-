@@ -15,6 +15,16 @@ pass() { printf 'PASS  %s\n' "$*"; }
 warn() { printf 'WARN  %s\n' "$*"; }
 fail() { printf 'FAIL  %s\n' "$*"; FAILS=$((FAILS + 1)); }
 json() { "$PY" -c "import json,sys; d=json.load(sys.stdin); print($1)"; }
+# Arc's public RPC rate-limits bursts: retry a read, then try its second hostname.
+ARC_FALLBACK="${ARC_FALLBACK_RPC:-https://rpc.testnet.arc.network}"
+arc() {  # arc <cast subcommand> <args...>: prints the result, empty on failure
+  local out
+  for rpc in "$ARC_RPC" "$ARC_RPC" "$ARC_FALLBACK"; do
+    out=$(cast "$@" --rpc-url "$rpc" 2>/dev/null) && [ -n "$out" ] && { echo "$out"; return 0; }
+    sleep 2
+  done
+  return 1
+}
 
 echo "== demo chain"
 if head=$(cast block-number --rpc-url $RPC 2>/dev/null); then
@@ -70,7 +80,7 @@ else
 fi
 
 echo "== Arc"
-if cid=$(cast chain-id --rpc-url "$ARC_RPC" 2>/dev/null); then
+if cid=$(arc chain-id); then
   [ "$cid" = 5042002 ] && pass "Arc RPC reachable ($ARC_RPC, chain 5042002)" || fail "Arc RPC chain id $cid, expected 5042002"
 else
   fail "Arc RPC not reachable ($ARC_RPC)"
@@ -79,9 +89,9 @@ if [ -f "$ARC_DEP" ]; then
   escrow=$("$PY" -c "import json; print(json.load(open('$ARC_DEP'))['escrow'])")
   operator=$("$PY" -c "import json; print(json.load(open('$ARC_DEP'))['operator'])")
   pass "deployments/arc-testnet.json exists (escrow $escrow)"
-  code=$(cast code --rpc-url "$ARC_RPC" "$escrow" 2>/dev/null || echo 0x)
+  code=$(arc code "$escrow" || echo 0x)
   [ ${#code} -gt 4 ] && pass "escrow has code on Arc ($(( (${#code} - 2) / 2 )) bytes)" || fail "no code at $escrow on Arc"
-  bal=$(cast call --rpc-url "$ARC_RPC" $ARC_USDC 'balanceOf(address)(uint256)' "$operator" 2>/dev/null | awk '{print $1}')
+  bal=$(arc call $ARC_USDC 'balanceOf(address)(uint256)' "$operator" | awk '{print $1}')
   if [ -z "$bal" ]; then fail "could not read operator $operator USDC"
   elif [ "$bal" -ge 1000000 ]; then pass "operator $operator holds $("$PY" -c "print(f'{$bal/1e6:,.2f}')") USDC (>= 1)"
   else warn "operator $operator holds $("$PY" -c "print(f'{$bal/1e6:,.6f}')") USDC (below 1)"; fi

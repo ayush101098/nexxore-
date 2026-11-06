@@ -27,6 +27,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 
+from tls import CONTEXT, USER_AGENT
+
 # From 0G's docs and live model list (GET https://router-api.0g.ai/v1/models): 0G's own model.
 ZG_BASE_URL = "https://router-api.0g.ai/v1"
 ZG_MODEL = "0gm-1.0-35b-a3b"
@@ -72,9 +74,9 @@ def zg_client(api_key: str | None = None, base_url: str | None = None, model: st
                 # Short, factual answers: no thinking trace.
                 "chat_template_kwargs": {"enable_thinking": False}}
         req = urllib.request.Request(f"{base}/chat/completions", json.dumps(body).encode(), {
-            "Content-Type": "application/json", "Authorization": f"Bearer {key}", **TRUST_HEADER})
+            "Content-Type": "application/json", "Authorization": f"Bearer {key}", "User-Agent": USER_AGENT, **TRUST_HEADER})
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as r:
+            with urllib.request.urlopen(req, timeout=timeout, context=CONTEXT) as r:
                 reply = json.load(r)
         except urllib.error.HTTPError as e:
             raise AssistantUnavailable(f"0G returned HTTP {e.code}: {e.read()[:200].decode(errors='replace')}") from None

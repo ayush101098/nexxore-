@@ -18,8 +18,10 @@ ERC-20 interface, 6 decimals. Status per decision: Funded -> Settling -> Settled
 
 import json
 import logging
+import os
 import threading
 import time
+import urllib.error
 import urllib.request
 from collections.abc import Callable
 from decimal import Decimal
@@ -27,6 +29,8 @@ from decimal import Decimal
 from eth_abi import decode, encode
 from eth_account import Account
 from eth_utils import keccak
+
+from tls import CONTEXT, USER_AGENT
 
 log = logging.getLogger("riskpilot")
 
@@ -36,7 +40,7 @@ SEL_DEPOSITS = keccak(text="deposits(bytes32)")[:4]
 SEL_BALANCE = keccak(text="balanceOf(address)")[:4]
 STATUS = {0: "None", 1: "Funded", 2: "Settled", 3: "Refunded"}
 RETRY_S = (2, 8, 30)
-POLL_S = 2.0
+POLL_S = float(os.environ.get("ARC_POLL_S", "4"))  # Arc's public RPC rate-limits per IP; leave room for the wallet
 UNITS = Decimal(10**6)  # USDC ERC-20 interface: 6 decimals
 
 
@@ -50,9 +54,16 @@ class Rpc:
 
     def __call__(self, method: str, params: list):
         body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": method, "params": params}).encode()
-        req = urllib.request.Request(self.url, body, {"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=10) as r:
-            reply = json.load(r)
+        req = urllib.request.Request(self.url, body, {"Content-Type": "application/json", "User-Agent": USER_AGENT})
+        for wait in (1, 3, 0):  # Arc's public RPC rate-limits bursts (HTTP 429)
+            try:
+                with urllib.request.urlopen(req, timeout=10, context=CONTEXT) as r:
+                    reply = json.load(r)
+                break
+            except urllib.error.HTTPError as e:
+                if e.code != 429 or not wait:
+                    raise
+                time.sleep(wait)
         if "error" in reply:
             raise RuntimeError(reply["error"].get("message", reply["error"]))
         return reply["result"]

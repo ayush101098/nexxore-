@@ -199,9 +199,15 @@ confirmed 0x8f300cc3fd0da6f9dd23bfa91ff66fb21604205ad8afe041a825daa49507c16a in 
 
 | Contract | Chain | Address |
 |---|---|---|
-| RiskPilotEscrow | Arc testnet (5042002) | TBD (owner deploying: `make arc-setup SENDER=0x905a…c697`) |
+| RiskPilotEscrow | Arc testnet (5042002) | [`0x64c1Af27bdBEcdA432BB4C8cCFec83099962e51E`](https://explorer.testnet.arc.io/address/0x64c1Af27bdBEcdA432BB4C8cCFec83099962e51E), deploy tx [`0xe2cf8f70…23ba`](https://explorer.testnet.arc.io/tx/0xe2cf8f70bdacacb2f0be22bf1e1895b5f231c176affaeb5347931b20be4823ba); operator `0x4A2aE4e0…465b` (the arc-worker's key, made by `make arc-setup`) |
 | VolatilityFeeHook | Unichain Sepolia (1301) | TBD (owner deploying: `make -C contracts/hook deploy-unichain-sepolia SENDER=…`) |
 | VolatilityFeeHook | Demo fork (31337) | `0x3be896d4d9a52f2F29a6DB685B75E04ACAcF1080` (CREATE2; local only) |
+
+First settlement on Arc testnet, end to end: decision `dec_05112ccde05df4d6`, executed on the fork
+and then funded with 5 USDC
+([fund tx](https://explorer.testnet.arc.io/tx/0x11b7a770fd164ed9f8618cc57e3659a0148c29b82e44a59cabda7ae7512b756d)).
+The arc-worker settled it 10 s later, paying 5.007865 USDC
+([settle tx](https://explorer.testnet.arc.io/tx/0x32dd5be603cc22d62985c62f36626746480de5dffabc9a109666b8a410f26db4)).
 
 ## Speed
 
