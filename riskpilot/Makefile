@@ -5,7 +5,7 @@
 #   make demo-freeze   save the running state as the new frozen demo
 #   ARC_REHEARSAL=1 make up   also a local Arc stand-in, so Approve and sign -> fund -> settle runs offline
 #   make outage-test   kill the engine for real under a headed browser
-.PHONY: up down demo-reset demo-freeze preflight arc-setup hook-volatile outage-test test openapi arc-deploy testnet
+.PHONY: up down demo-reset demo-freeze preflight arc-setup snapshot hook-volatile outage-test test openapi arc-deploy testnet
 
 up:
 	./scripts/stack.sh up
@@ -17,6 +17,13 @@ demo-freeze:
 	./scripts/stack.sh freeze
 outage-test:
 	./scripts/outage-test.sh
+# The public page's recording: reset to the frozen block, record every engine and chain response the
+# page receives into web/snapshot.json (nexxore.xyz/riskpilot replays it read-only).
+snapshot:
+	./scripts/stack.sh reset >/dev/null
+	cd web && RECORD=1 E2E_EXTERNAL=1 npx playwright test record --reporter=line
+	./scripts/stack.sh reset >/dev/null
+
 # PASS/FAIL checks before a demo (after make up and make demo-reset); exits 1 on any FAIL.
 preflight:
 	./scripts/preflight.sh

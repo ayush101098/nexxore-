@@ -27,9 +27,9 @@ test("bench", async ({ page }) => {
     const t = Date.now();
     await page.goto("/riskpilot");
     await expect(page.locator("[data-testid=opp-row]")).toHaveCount(5, { timeout: 30_000 });
-    await expect(page.getByTestId("hook-fee")).toBeVisible();
-    await expect(page.locator("#aqua .curve").first()).toBeVisible();
-    await expect(page.locator("[data-testid=history-row]").first()).toBeVisible();
+    await expect(page.getByTestId("hook-fee")).toBeAttached(); // rendered on step 3
+    await expect(page.locator("#aqua .curve").first()).toBeAttached(); // rendered on step 2
+    await expect(page.locator("[data-testid=history-row]").first()).toBeAttached(); // step 4
     loads.push(Date.now() - t);
   }
   out.page_load_ms = median(loads);

@@ -7,6 +7,10 @@
 <meta name="description" content="Risk-aware execution engine for programmable liquidity">
 <meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='16' fill='%23111823'/%3E%3Cpath d='M26 70V30h28a14 14 0 010 28H38m12 0l16 12' fill='none' stroke='%23E8EDF4' stroke-width='8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/viem@2.21.0/+esm" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/viem@2.21.0/chains/+esm" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/viem@2.21.0/accounts/+esm" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -208,6 +212,8 @@ details table { margin-top:var(--s1); font-size:11px; }
 .meta { font-family:var(--mono); font-size:11px; color:var(--text-3); margin-top:4px; }
 .warn { color:var(--requote); margin-top:4px; }
 .sr { position:absolute; left:-9999px; }
+.snap { display:flex; align-items:center; gap:10px; margin:-6px 0 12px; font-size:12.5px; color:var(--text-2); }
+.snap[hidden] { display:none; }
 /* step tabs (shadcn Tabs) */
 .tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; padding:5px; margin-bottom:var(--s3); background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r-lg); }
 .tabs button { display:flex; align-items:center; gap:10px; text-align:left; padding:9px 12px; border:1px solid transparent; border-radius:var(--r); background:none; color:var(--text-2); cursor:pointer; min-width:0; font:inherit; }
@@ -290,6 +296,8 @@ details table { margin-top:var(--s1); font-size:11px; }
 
   </header>
   <div class="top"><div class="status" id="status" aria-label="Status"></div></div>
+  <div class="snap" id="snapBanner" data-testid="snapshot-banner" hidden><span class="chip state">Recorded run</span>
+    <span>The agent's real output at <span data-when></span>, replayed read-only. Arc is live. Run <span class="mono">make up</span> for the live agent and signing.</span></div>
 
   <nav class="tabs" role="tablist" aria-label="Agent workflow">
     <button role="tab" id="tabbtn-1" data-tab="1" aria-controls="tab-1" data-testid="tab-1"><span class="n">1</span><span class="t"><b>Scan and assess</b><small id="tabsub-1">&nbsp;</small></span></button>
@@ -413,7 +421,7 @@ const API = ENGINE + "/v1";
 // Read-only unless served by a local engine (make up) or pointed at one: the public page never asks
 // a visitor's wallet for anything. ?readonly=1 forces it.
 const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-const READ_ONLY = qs.get("readonly") === "1" || (!LOCAL && !qs.has("engine"));
+const READ_ONLY = qs.get("readonly") === "1" || qs.get("snapshot") === "1" || (!LOCAL && !qs.has("engine"));
 // Arc testnet, or the local Arc stand-in (make arc-rehearsal) when arcRpc points at localhost.
 const ARC_LOCAL = /localhost|127\.0\.0\.1/.test(ARC.rpc);
 
@@ -436,10 +444,53 @@ const unavailable = (name) => `<span class="unavail">Source unavailable: ${esc(n
 const tip = (source, at) => `data-src="${esc(`${source} · ${hms(at || now())}${S.chain ? ` · block ${S.chain.block.toLocaleString("en-US")}` : ""}`)}"`;
 const hashChip = (h, explorer) => `<span class="hashchip"><span title="${esc(h)}">${short(h)}</span><button type="button" data-copy="${esc(h)}" aria-label="Copy ${esc(h)}">Copy</button>${explorer ? `<a href="${explorer}" target="_blank" rel="noopener" aria-label="Open ${esc(short(h))} in the explorer">Explorer</a>` : ""}</span>`;
 
+// ── data modes ───────────────────────────────────────────────────────────
+// live: a local engine (make up). record (?record=1): live, and every engine and demo-chain response
+// is kept for a snapshot (make snapshot). snapshot: the public page (no engine, no local chain)
+// replays that recording, read-only and labelled as recorded.
+const MODE = qs.has("record") ? "record" : (qs.get("snapshot") === "1" || (READ_ONLY && !qs.has("engine") && !LOCAL)) ? "snapshot" : "live";
+const REC = { engine: {}, rpc: {}, stream: null, recorded_at: null };
+let SNAP = null;
+async function loadSnapshot() {
+  if (MODE !== "snapshot" || SNAP) return SNAP;
+  const r = await fetch("/riskpilot/web/snapshot.json", { cache: "no-cache" });
+  if (!r.ok) throw new Error(`snapshot ${r.status}`);
+  return (SNAP = await r.json());
+}
+const engineKey = (path, opts) => `${(opts.method || "GET").toUpperCase()} ${path}`;
+window.__rp_record = () => ({ ...REC, recorded_at: new Date().toISOString() });
+
 async function engine(path, opts = {}) {
+  if (MODE === "snapshot") {
+    if (path.startsWith("/assistant")) { const e = new Error("live engine only"); e.status = 503; throw e; }
+    const snap = await loadSnapshot(), body = snap.engine[engineKey(path, opts)];
+    if (body === undefined) { const e = new Error(`not in the recording: ${path}`); e.status = 404; throw e; }
+    return structuredClone(body);
+  }
   const r = await fetch(API + path, { ...opts, headers: { "content-type": "application/json" } });
   if (!r.ok) { const e = new Error(`${r.status} ${(await r.text()).slice(0, 200)}`); e.status = r.status; throw e; }
-  return r.json();
+  const body = await r.json();
+  if (MODE === "record" && !path.startsWith("/assistant") && (opts.method || "GET") !== "PUT") REC.engine[engineKey(path, opts)] = body;
+  return body;
+}
+
+// The demo chain's JSON-RPC, recorded or replayed (viem custom transport).
+function chainTransport(viem) {
+  if (MODE === "live") return viem.http(RPC);
+  const call = async (method, params) => {
+    const r = await fetch(RPC, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
+    const j = await r.json();
+    if (j.error) throw Object.assign(new Error(j.error.message), { code: j.error.code });
+    return j.result;
+  };
+  return viem.custom({ async request({ method, params = [] }) {
+    const key = method + " " + JSON.stringify(params);
+    if (MODE === "record") { const out = await call(method, params); REC.rpc[key] = out; return out; }
+    const snap = await loadSnapshot();
+    if (method === "eth_chainId") return "0x7a69";
+    if (key in snap.rpc) return snap.rpc[key];
+    throw new Error(`not in the recording: ${method}`);
+  } });
 }
 
 // ── viem ──────────────────────────────────────────────────────────────────
@@ -453,7 +504,7 @@ async function loadViem() {
   const chain = { ...chains.foundry, rpcUrls: { default: { http: [RPC] } } };
   const arcChain = viem.defineChain({ id: ARC.id, name: "Arc Testnet", nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 }, rpcUrls: { default: { http: [ARC.rpc] } } });
   V = { viem, chain, arcChain, accounts,
-    pub: viem.createPublicClient({ chain, transport: viem.http(RPC) }),
+    pub: viem.createPublicClient({ chain, transport: chainTransport(viem) }),
     arcPub: viem.createPublicClient({ chain: arcChain, transport: ARC.rpcFallback
       ? viem.fallback([viem.http(ARC.rpc, { retryCount: 2, retryDelay: 800 }), viem.http(ARC.rpcFallback, { retryCount: 2, retryDelay: 800 })])
       : viem.http(ARC.rpc) }),
@@ -606,7 +657,8 @@ async function chooseProfile(name) {
 }
 
 // ── opportunities ────────────────────────────────────────────────────────
-const age = (iso) => Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));
+// In a replayed recording, ages are as of the recording, not now.
+const age = (iso) => Math.max(0, Math.round(((MODE === "snapshot" && SNAP?.recorded_at ? Date.parse(SNAP.recorded_at) : Date.now()) - Date.parse(iso)) / 1000));
 const DEMO_POOLS = new Set(["uniswap_v4_hooked", "uniswap_v4_static"]); // seeded by make hook-pool
 const VENUE_NAME = { uniswap_v4_hooked: "Uniswap v4", uniswap_v4_static: "Uniswap v4", uniswap_v4_eth_usdc_30: "Uniswap v4", aqua_router: "1inch Aqua" };
 // Selection follows the opportunity key across blocks and reseeds; decision ids change, keys do not.
@@ -1161,6 +1213,7 @@ const assistantDown = () => `<span class="unavail" data-testid="assistant-unavai
 let briefFor = null;
 async function renderBrief(force = false) {
   const el = $("brief"), w = viewer();
+  if (MODE === "snapshot") { el.innerHTML = `<h3>Daily risk brief</h3><p class="empty">Ask RiskPilot runs on 0G through the live engine. Run <span class="mono">make up</span> to use it.</p>`; return; }
   if (!S.up.engine) { el.innerHTML = unavailable("engine"); briefFor = null; return; }
   if (!w || S.needsProfile) { el.innerHTML = `<p class="empty">Choose a profile to get your daily brief.</p>`; return; }
   if (briefFor === w && !force) return;
@@ -1276,6 +1329,11 @@ function engineDown() {
 // Push, not polling: the engine streams block, opportunity, decision, health and settlement events.
 let es = null;
 function connect() {
+  if (MODE === "snapshot") { // no live stream: the recorded opportunities and health
+    if (SNAP?.stream) { S.seed = structuredClone(SNAP.stream); S.seedErr = null; }
+    if (SNAP?.health) { S.health = SNAP.health; S.up.engine = true; }
+    return;
+  }
   if (es) es.close();
   es = new EventSource(`${API}/stream${viewer() ? `?wallet=${viewer()}` : ""}`);
   es.onopen = async () => {
@@ -1288,6 +1346,7 @@ function connect() {
   es.onerror = () => engineDown(); // the stream drops the moment the engine does
   es.addEventListener("health", (e) => {
     S.health = JSON.parse(e.data); S.at.health = now(); S.up.engine = true;
+    if (MODE === "record") REC.health = S.health;
     const chainUp = S.health.dependencies?.chain?.up;
     if (chainUp === false && S.up.chain) { S.up.chain = false; S.chain = null; renderStatus(); renderDecision(); renderPositions(); }
     else if (chainUp && !S.up.chain) onBlock();
@@ -1297,6 +1356,7 @@ function connect() {
   es.addEventListener("block", (e) => { S.perf.blockAt = performance.now(); S.perf.block = JSON.parse(e.data).block; onBlock(); });
   es.addEventListener("opportunity", (e) => {
     S.seed = JSON.parse(e.data); S.seedErr = null; S.at.seed = now();
+    if (MODE === "record") REC.stream = S.seed;
     renderStatus(); renderOpps(); renderDecision();
     if (S.perf.blockAt && S.perf.block === S.seed.block) { S.perf.blockToVerdict = performance.now() - S.perf.blockAt; S.perf.blockAt = null; }
     S.perf.firstRender ??= performance.now();
@@ -1339,8 +1399,14 @@ document.addEventListener("keydown", (e) => {
 
 async function main() {
   const t0 = performance.now();
+  const viemReady = loadViem().catch(() => null); // in parallel with the recording, not after it
+  if (MODE === "snapshot") {
+    try { await loadSnapshot(); } catch { /* panels say the engine is unavailable */ }
+    const b = $("snapBanner");
+    if (SNAP) { b.hidden = false; b.querySelector("[data-when]").textContent = `block ${Number(SNAP.stream?.block || 0).toLocaleString("en-US")} · ${new Date(SNAP.recorded_at).toUTCString().slice(5, 22)} UTC`; }
+  }
   setTab((location.hash.match(/step-(\d)/) || [])[1] || 1, false);
-  try { await loadViem(); } catch { /* chain panels report the CDN as unavailable */ }
+  await viemReady; // chain panels report the CDN as unavailable if it failed
   if (V) { try { S.signer = await demoSigner(); S.chain = await readChain(); S.up.chain = true; } catch { S.up.chain = false; } }
   try { await loadEngine(); await loadProfile(); S.up.engine = true; } catch { S.up.engine = false; }
   if (S.up.engine && S.needsProfile && S.signer) showPicker();
