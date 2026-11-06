@@ -1,0 +1,61 @@
+{
+  "description": "Demo upside curve (1 ETH, 3400-4335, fee = f_min at m = 0.20) funded from 1 held WETH. Held ETH is in the before-book, so the covered call lowers the worst loss (1,360.00 -> 1,353.56): risk charge 0 and rule 4 does not fire. Net edge = (f K_eq - C_eq) q - gas_ship = 1.29 - 0.42 decides it.",
+  "request": {
+    "opportunity": {
+      "opportunity_id": "opp_aquaupsideheldeth",
+      "type": "aqua_premium",
+      "pair": "ETH/USDC",
+      "source_venue": "aqua_router",
+      "target": "aqua",
+      "observed_price": "3400.00",
+      "reference_price": "3400.00",
+      "size": "3400.00",
+      "observed_at": "2026-11-06T09:29:58Z",
+      "source": "recorded:aqua_router"
+    },
+    "size": "3400.00",
+    "profile": "balanced",
+    "as_of": "2026-11-06T09:30:00Z",
+    "market": {
+      "quote": {
+        "price": "3400.00",
+        "mid": "3400.00",
+        "quoted_at": "2026-11-06T09:29:59Z",
+        "expires_at": "2026-11-06T09:30:20Z",
+        "latency_seconds": "2",
+        "source": "recorded:aqua_router_quote"
+      },
+      "liquidity": "1000000.00",
+      "gas": {
+        "units": "81416",
+        "price_gwei": "1.5",
+        "observed_at": "2026-11-06T09:29:59Z",
+        "source": "recorded:rpc_gas_price"
+      },
+      "fee_rate": "0.002013952",
+      "volatility": {
+        "annualized": "0.55",
+        "observed_at": "2026-11-06T09:29:50Z",
+        "source": "recorded:hook_ewma"
+      },
+      "hedge": {
+        "ratio": "0",
+        "cost": "0"
+      }
+    },
+    "book": [],
+    "aqua": {
+      "side": "call_like",
+      "range_low": "3400",
+      "range_high": "4335"
+    },
+    "holdings": {
+      "weth": "1.0",
+      "usdc": "0"
+    }
+  },
+  "expected": {
+    "verdict": "REJECT",
+    "reason": "Rejected: net edge $0.87 below $5.00 hurdle ($1.29 premium, $0.42 gas)"
+  }
+}

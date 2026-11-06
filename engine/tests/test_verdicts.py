@@ -94,7 +94,7 @@ def _approve_with(mutate) -> dict:
         (
             lambda r: r["market"].update(hedge={"ratio": "0", "cost": "0"}),
             "REJECT",
-            "Rejected: post-trade stress loss $4,027.09 above $250.00 budget",
+            "Rejected: post-trade stress loss $4,027.09 at -40% spot above $250.00 budget",
         ),
     ],
 )
@@ -169,3 +169,43 @@ def test_aqua_premium_needs_curve_params():
     del request["aqua"]
     with pytest.raises(ValueError):
         EvaluateRequest.model_validate(request)
+
+
+@pytest.mark.parametrize("name", ["aqua_upside_held_eth", "aqua_downside"])
+def test_aqua_fixtures_with_holdings(name):
+    fixture = load(name)
+    decision = decide(fixture["request"])
+    validate("decision", decision)
+    assert (decision["verdict"], decision["reason"]) == (fixture["expected"]["verdict"], fixture["expected"]["reason"])
+
+
+def test_upside_on_held_eth_has_no_risk_charge_and_net_edge_is_premium_minus_ship_gas():
+    decision = decide(load("aqua_upside_held_eth")["request"])
+    assert decision["risk_charge"] == "0.00"
+    assert Decimal(decision["stress_loss_after"]) < Decimal(decision["stress_loss_before"])
+    assert Decimal(decision["net_edge"]) == Decimal(decision["gross_edge"]) - Decimal(decision["costs"]["gas"])
+
+
+def test_holdings_must_cover_the_curve():
+    request = copy.deepcopy(load("aqua_upside_held_eth")["request"])
+    request["holdings"]["weth"] = "0.5"
+    decision = decide(request)
+    assert decision["reason"] == "Rejected: curve needs 1.000000 WETH, wallet holds 0.5"
+
+
+def test_without_holdings_the_same_curve_counts_as_new_exposure():
+    request = copy.deepcopy(load("aqua_upside_held_eth")["request"])
+    request["holdings"] = None
+    decision = decide(request)
+    assert decision["stress_loss_before"] == "0.00"
+    assert decision["reason"].startswith("Rejected: post-trade stress loss $1,353.56")
+
+
+def test_holdings_lower_risk_for_an_offsetting_price_gap_trade():
+    # Selling ETH (observed above reference) against 0.05 held WETH reduces the worst loss.
+    request = copy.deepcopy(load("approve")["request"])
+    request["opportunity"]["reference_price"] = "3371.00"
+    request["holdings"] = {"weth": "0.05", "usdc": "0"}
+    decision = decide(request)
+    assert Decimal(decision["stress_loss_after"]) < Decimal(decision["stress_loss_before"])
+    assert decision["risk_charge"] == "0.00"

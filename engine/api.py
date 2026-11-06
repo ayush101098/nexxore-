@@ -1,6 +1,7 @@
 """FastAPI app for the RiskPilot engine (PRD 2)."""
 
 import math
+import os
 from collections.abc import Callable
 from datetime import datetime, timezone
 
@@ -10,9 +11,10 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from decision import MODEL_VERSION, generate_execution_decision, iso, usd
-from models import AquaPriceBody, EvaluateBody, EvaluateRequest, ScanBody, StressBody
+from models import AquaPriceBody, EvaluateBody, EvaluateRequest, Holdings, ScanBody, StressBody
 from pricing import DAYS_PER_YEAR, aqua_position, aqua_premium_floor
 from scanner import Source, scan
+from scanner.holdings import DEFAULT_RPC, read_holdings
 from scanner.live import AquaRouterSource, HookedV4PoolSource, UniswapTradingApiSource
 from scanner.recorded import RecordedSource
 from schemas import validate
@@ -34,10 +36,15 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _chain_holdings(wallet: str) -> Holdings:
+    return read_holdings(os.environ.get("DEMO_RPC_URL", DEFAULT_RPC), wallet)
+
+
 def create_app(
     store: Store,
     sources: dict[str, Source] | None = None,
     clock: Callable[[], datetime] = _utcnow,
+    holdings_reader: Callable[[str], Holdings] = _chain_holdings,
 ) -> FastAPI:
     sources = sources if sources is not None else default_sources()
     app = FastAPI(title="RiskPilot engine", version=MODEL_VERSION)
@@ -76,6 +83,14 @@ def create_app(
                 market = source(name).market(body.opportunity["source_venue"], as_of)
             except KeyError as e:
                 raise HTTPException(404, str(e.args[0])) from None
+        holdings = body.holdings
+        if holdings is None and body.wallet:
+            try:
+                holdings = holdings_reader(body.wallet)
+            except ValueError as e:
+                raise HTTPException(422, str(e)) from None
+            except (OSError, RuntimeError) as e:
+                raise HTTPException(502, f"could not read holdings for {body.wallet}: {e}") from None
         req = EvaluateRequest(
             opportunity=body.opportunity,
             size=body.size if body.size is not None else body.opportunity["size"],
@@ -86,6 +101,7 @@ def create_app(
             tolerance=body.tolerance,
             gas_budget=body.gas_budget,
             aqua=body.aqua,
+            holdings=holdings,
         )
         decision = generate_execution_decision(req)
         store.save_decision(decision)

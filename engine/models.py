@@ -70,6 +70,14 @@ class AquaCurveParams(_Model):
     range_high: Decimal
 
 
+class Holdings(_Model):
+    """Wallet balances. WETH counts in the before-book as spot ETH, so a curve funded
+    from held ETH is measured against the ETH risk the wallet already carried."""
+
+    weth: Decimal = Decimal("0")
+    usdc: Decimal = Decimal("0")
+
+
 Profile = Literal["conservative", "balanced", "aggressive"]
 
 
@@ -85,6 +93,7 @@ class EvaluateRequest(_Model):
     tolerance: Decimal = Decimal("0.003")
     gas_budget: Decimal = Decimal("25.00")
     aqua: AquaCurveParams | None = None  # required for aqua_premium opportunities
+    holdings: Holdings | None = None  # None: the trade is measured against the book alone
 
     @field_validator("opportunity")
     @classmethod
@@ -115,6 +124,8 @@ class EvaluateBody(_Model):
     tolerance: Decimal = Decimal("0.003")
     gas_budget: Decimal = Decimal("25.00")
     aqua: AquaCurveParams | None = None
+    holdings: Holdings | None = None  # default: read `wallet` over RPC when given
+    wallet: str | None = None
 
 
 class ScanBody(_Model):

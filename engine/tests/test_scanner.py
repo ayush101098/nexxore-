@@ -45,3 +45,17 @@ def test_one_sided_curve_in_the_unfillable_direction_is_dropped():
 def test_size_is_capped():
     [opp] = scan("ETH/USDC", [Fixed(curve("3390", "0.5", "0"))], T, Decimal("10000"), Decimal("5"))
     assert opp["size"] == "1695.00"
+
+
+def test_read_holdings_decodes_weth_and_usdc():
+    from scanner.holdings import read_holdings
+
+    seen = {}
+
+    def post(url, body):
+        seen["url"], seen["body"] = url, body
+        return [{"id": 1, "result": hex(5_000 * 10**6)}, {"id": 0, "result": hex(2 * 10**18)}]
+
+    h = read_holdings("http://127.0.0.1:8545", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", post=post)
+    assert (h.weth, h.usdc) == (2, 5000)
+    assert seen["body"][0]["params"][0]["data"].endswith("f39fd6e51aad88f6f4ce6ab8827279cfffb92266")

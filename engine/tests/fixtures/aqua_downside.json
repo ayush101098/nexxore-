@@ -1,0 +1,61 @@
+{
+  "description": "Demo downside curve (3,011.09 USDC = 1 ETH at K_eq 3,011.09) on USDC holdings. A short put adds ETH risk: at -40% spot the curve buys 1 ETH at ~3,011 that is worth 2,040, a loss of ~965 (971 intrinsic less the 5.71 premium already written), above the 250 budget.",
+  "request": {
+    "opportunity": {
+      "opportunity_id": "opp_aquadownside",
+      "type": "aqua_premium",
+      "pair": "ETH/USDC",
+      "source_venue": "aqua_router",
+      "target": "aqua",
+      "observed_price": "3400.00",
+      "reference_price": "3400.00",
+      "size": "3011.09",
+      "observed_at": "2026-11-06T09:29:58Z",
+      "source": "recorded:aqua_router"
+    },
+    "size": "3011.09",
+    "profile": "balanced",
+    "as_of": "2026-11-06T09:30:00Z",
+    "market": {
+      "quote": {
+        "price": "3400.00",
+        "mid": "3400.00",
+        "quoted_at": "2026-11-06T09:29:59Z",
+        "expires_at": "2026-11-06T09:30:20Z",
+        "latency_seconds": "2",
+        "source": "recorded:aqua_router_quote"
+      },
+      "liquidity": "1000000.00",
+      "gas": {
+        "units": "81416",
+        "price_gwei": "1.5",
+        "observed_at": "2026-11-06T09:29:59Z",
+        "source": "recorded:rpc_gas_price"
+      },
+      "fee_rate": "0.002274072",
+      "volatility": {
+        "annualized": "0.55",
+        "observed_at": "2026-11-06T09:29:50Z",
+        "source": "recorded:hook_ewma"
+      },
+      "hedge": {
+        "ratio": "0",
+        "cost": "0"
+      }
+    },
+    "book": [],
+    "aqua": {
+      "side": "put_like",
+      "range_low": "2666.666666",
+      "range_high": "3400"
+    },
+    "holdings": {
+      "weth": "0",
+      "usdc": "5000.00"
+    }
+  },
+  "expected": {
+    "verdict": "REJECT",
+    "reason": "Rejected: post-trade stress loss $965.39 at -40% spot, +20 vol pts above $250.00 budget"
+  }
+}

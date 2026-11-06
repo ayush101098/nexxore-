@@ -159,6 +159,27 @@ def _proposed_position(req: EvaluateRequest, trade_delta: float) -> dict:
     }
 
 
+def _holdings_spot(req: EvaluateRequest, committed: float) -> list[dict]:
+    """Held WETH (minus any ETH committed to a curve) as a linear spot position for stress."""
+    if req.holdings is None:
+        return []
+    weth = float(req.holdings.weth) - committed
+    return [{"primitive": "spot", "params": {"source": "holdings"}, "greeks": {"delta": f"{weth:.6f}"}}]
+
+
+def _holdings_shortfall(req: EvaluateRequest, q: float, floor: dict) -> str | None:
+    """Collateral invariant against declared holdings: the curve can pay out at most what it ships."""
+    h = req.holdings
+    if h is None:
+        return None
+    if req.aqua.side == "call_like" and h.weth < Decimal(f"{q:.6f}"):
+        return f"Rejected: curve needs {q:.6f} WETH, wallet holds {h.weth}"
+    need = usd(q * floor["k_eq"])
+    if req.aqua.side == "put_like" and h.usdc < need:
+        return f"Rejected: curve needs {fmt_usd(need)} USDC, wallet holds {fmt_usd(h.usdc)}"
+    return None
+
+
 def _proposed_aqua_position(req: EvaluateRequest, q: float) -> dict:
     """The curve to ship, holding q ETH of exposure; stress reprices it with Black-Scholes."""
     a, m = req.aqua, req.market
@@ -190,30 +211,41 @@ def generate_execution_decision(req: EvaluateRequest) -> dict:
     proposed = None
     floor = _premium_floor(req)
 
+    shortfall = worst_after = None
     verdict, reason = None, _sanity_failure(req)
     if reason:
         verdict = "REQUIRE_REVIEW"
     else:
-        q = float(req.size / mid)  # ETH
+        gas = usd(float(m.gas.units * m.gas.price_gwei) * 1e-9 * float(mid))
+        committed_weth = 0.0
         if floor is not None:
-            # Maker side: a fully crossed range trades ~q ETH at K_eq, earning the fee, and
-            # writes an options-like payoff worth C_eq per ETH. The fee is income, not a cost.
+            # Maker side. A fully crossed range trades ~q ETH at K_eq, earning the fee, and writes
+            # an options-like payoff worth C_eq per ETH: net edge = (f K_eq - C_eq) q - gas_ship.
+            # call_like holds q ETH (size / spot); put_like holds q * K_eq USDC (size / K_eq).
+            q = float(req.size / mid) if req.aqua.side == "call_like" else float(req.size) / floor["k_eq"]
             gross = usd(q * (float(m.fee_rate) * floor["k_eq"] - floor["c_eq"]))
-            fees = zero
+            costs = {"gas": gas, "slippage": zero, "fees": zero, "hedge": usd(m.hedge.cost)}
             proposed = _proposed_aqua_position(req, q)
+            committed_weth = q if req.aqua.side == "call_like" else 0.0
+            shortfall = _holdings_shortfall(req, q, floor)
         else:
+            q = float(req.size / mid)  # ETH
             side = 1 if mid < reference else -1  # buy ETH below fair value, sell above
             gross = usd(q * float(abs(reference - mid)))
-            fees = usd(m.fee_rate * req.size)
+            costs = {
+                "gas": gas,
+                "slippage": usd(abs(float(m.quote.price - mid)) * q),
+                "fees": usd(m.fee_rate * req.size),
+                "hedge": usd(m.hedge.cost),
+            }
             proposed = _proposed_position(req, side * q)
-        costs = {
-            "gas": usd(float(m.gas.units * m.gas.price_gwei) * 1e-9 * float(mid)),
-            "slippage": usd(abs(float(m.quote.price - mid)) * q),
-            "fees": fees,
-            "hedge": usd(m.hedge.cost),
-        }
-        loss_before = usd(run_stress_test(req.book, spot=float(mid))["worst_loss"])
-        loss_after = usd(run_stress_test(req.book + [proposed], spot=float(mid))["worst_loss"])
+        # Held WETH is spot ETH in the before-book. ETH a curve takes from the wallet moves
+        # into the curve position, so it leaves the after-book's spot holdings.
+        before = req.book + _holdings_spot(req, committed=0.0)
+        after = req.book + _holdings_spot(req, committed=committed_weth) + [proposed]
+        loss_before = usd(run_stress_test(before, spot=float(mid))["worst_loss"])
+        stressed = run_stress_test(after, spot=float(mid))
+        loss_after, worst_after = usd(stressed["worst_loss"]), stressed["worst_scenario"]
         risk_charge = usd(profile.lam * max(zero, loss_after - loss_before))
         latency_years = float(m.quote.latency_seconds) / SECONDS_PER_YEAR
         uncertainty = usd(float(mid) * float(m.volatility.annualized) * math.sqrt(latency_years) * q)
@@ -222,7 +254,10 @@ def generate_execution_decision(req: EvaluateRequest) -> dict:
     net = gross - sum(costs.values()) - risk_charge
 
     if verdict is None:
-        verdict, reason = _verdict(req, gross, costs, risk_charge, net, hurdle, loss_after, profile.budget, floor)
+        verdict, reason = _verdict(
+            req, gross, costs, risk_charge, net, hurdle, loss_before, loss_after, worst_after, profile.budget,
+            floor, shortfall,
+        )
 
     expires = req.as_of + timedelta(seconds=DECISION_TTL_S) if verdict == "APPROVE" else req.as_of
     decision = {
@@ -266,7 +301,14 @@ def generate_execution_decision(req: EvaluateRequest) -> dict:
     return decision
 
 
-def _verdict(req, gross, costs, risk_charge, net, hurdle, loss_after, budget, floor) -> tuple[str, str]:
+def _scenario(s: dict) -> str:
+    label = f"{s['spot_shock']:+.0%} spot"
+    return label + (f", {s['vol_shock'] * 100:+.0f} vol pts" if s["vol_shock"] else "")
+
+
+def _verdict(
+    req, gross, costs, risk_charge, net, hurdle, loss_before, loss_after, worst_after, budget, floor, shortfall
+) -> tuple[str, str]:
     m = req.market
     # 1. stale inputs (sanity bounds were checked before pricing)
     if reason := _staleness_failure(req):
@@ -283,6 +325,8 @@ def _verdict(req, gross, costs, risk_charge, net, hurdle, loss_after, budget, fl
         return "REJECT", f"Rejected: liquidity {fmt_usd(m.liquidity)} below size {fmt_usd(req.size)}"
     if costs["gas"] > req.gas_budget:
         return "REJECT", f"Rejected: gas {fmt_usd(costs['gas'])} above {fmt_usd(req.gas_budget)} budget"
+    if shortfall:
+        return "REJECT", shortfall
     # 3b. Aqua premium rule: the curve's fee must cover (1 + m) x its equivalent option value
     if floor is not None and m.fee_rate < Decimal(str(floor["f_min"])):
         return "REJECT", (
@@ -290,12 +334,17 @@ def _verdict(req, gross, costs, risk_charge, net, hurdle, loss_after, budget, fl
             f"({1 + floor['markup']:.1f} x C_eq ${floor['c_eq']:,.2f} / K_eq ${floor['k_eq']:,.2f}, "
             f"T_eq {floor['t_eq'] * 365:.1f} d)"
         )
-    # 4. post-trade stress
-    if loss_after > budget:
-        return "REJECT", f"Rejected: post-trade stress loss {fmt_usd(loss_after)} above {fmt_usd(budget)} budget"
+    # 4. post-trade stress. A trade that does not raise the worst loss (e.g. a covered call on
+    #    held ETH) is not blocked by losses the wallet already carried.
+    if loss_after > budget and loss_after > loss_before:
+        return "REJECT", (
+            f"Rejected: post-trade stress loss {fmt_usd(loss_after)} at {_scenario(worst_after)} "
+            f"above {fmt_usd(budget)} budget"
+        )
     # 5. net edge
     if net < hurdle:
-        items = [f"{fmt_usd(gross)} gap"] + [f"{fmt_usd(v)} {k}" for k, v in costs.items() if v]
+        label = "premium" if floor is not None else "gap"
+        items = [f"{fmt_usd(gross)} {label}"] + [f"{fmt_usd(v)} {k}" for k, v in costs.items() if v]
         if risk_charge:
             items.append(f"{fmt_usd(risk_charge)} risk charge")
         return "REJECT", f"Rejected: net edge {fmt_usd(net)} below {fmt_usd(hurdle)} hurdle ({', '.join(items)})"

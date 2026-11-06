@@ -104,6 +104,42 @@ Demo curves (w = 1.275, spot $3,400, vol 55%), from
 | upside, call-like | 3,400–4,335 | 3,839.14 | 6.99 d | 6.44 | 0.2014% | 2,013,952 |
 | downside, put-like | 2,666.67–3,400 | 3,011.09 | 6.99 d | 5.71 | 0.2274% | 2,274,072 |
 
+### Existing holdings count in the book
+
+`/evaluate` takes `holdings: {weth, usdc}`. Alternatively, it takes `wallet`
+and reads the balances over RPC from `DEMO_RPC_URL` (default
+`http://127.0.0.1:8545`, the demo chain).
+
+- **Before-book:** held WETH is added as spot ETH.
+- **After-book:** ETH that a curve takes from the wallet moves into the curve
+  position. So an upside curve on held ETH swaps "held ETH" for "held ETH plus
+  a short call", and its ΔR is ≤ 0.
+- **Collateral:** a curve that needs more WETH or USDC than the wallet holds is
+  rejected (rule 3).
+- **Rule 4:** a trade that doesn't raise the worst loss isn't rejected for
+  losses the wallet already carried. Only a trade that raises the worst loss
+  above the budget is rejected.
+
+For `aqua_premium` decisions:
+
+```
+net edge = (f · K_eq − C_eq) · q − gas_ship − λ · max(0, ΔR)
+```
+
+The last term is 0 for an upside curve on held ETH. `gas_ship` is a measured
+`ship` costing 81,416 gas.
+
+Upside curve on held ETH (3,400–4,335, 55% vol, Balanced, gas_ship $0.42):
+
+| q (WETH) | m | Fee instruction | Net edge | Hurdle | Verdict |
+|---|---|---|---|---|---|
+| 1 | 0.20 | 2,013,952 | 0.87 | 5.00 | REJECT |
+| 5 | 0.20 | 2,013,952 | 6.02 | 5.00 | **APPROVE** |
+| 10 | 0.20 | 2,013,952 | 12.47 | 9.42 | APPROVE |
+| 1 | 0.50 | 2,517,440 | 2.80 | 5.00 | REJECT |
+| 5 | 0.50 | 2,517,440 | 15.69 | 5.00 | APPROVE |
+| 10 | 0.50 | 2,517,440 | 31.80 | 9.42 | APPROVE |
+
 ## Quote cap
 
 Aqua's `quote()` runs the curve maths on virtual reserves, so it prices
@@ -129,11 +165,11 @@ PRDs wire them up, they return 501 with a TODO.
 - `/scan` emits only `price_gap` opportunities so far. `aqua_premium` and
   `vol_regime` come with PRDs 3 and 4.
 - `/evaluate` treats a `price_gap` trade as spot exposure on the v4 pool.
-- **No `aqua_premium` curve can be approved under the current profiles.** The
-  stress test counts a curve's full holdings: a 1 ETH upside curve loses
-  about $1,354 in the −40% scenario, and every stress budget is $150–$500.
-  The edge a curve earns (about $5 per ETH) can never clear both the budget
-  and the minimum edge at the same time. See the fixture.
+- **Holdings matter for `aqua_premium` curves.** Without them, a curve's ETH
+  counts as new exposure, and a 1 ETH upside curve fails stress ($1,353.56 at
+  −40%; see `aqua_premium.json`). With held ETH it is risk-reducing (see
+  `aqua_upside_held_eth.json`). A downside put-like curve on USDC adds about
+  $965 of loss at −40%, so it is rejected (see `aqua_downside.json`).
 - In the stress grid, Aqua curves are repriced on vol shocks as their
   equivalent option, as the PRD specifies. The curve's token balances depend
   only on price, so this convention overstates vol risk rather than hiding it.

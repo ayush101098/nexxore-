@@ -151,3 +151,22 @@ def test_aqua_price_reports_the_premium_floor_for_the_demo_curve(client):
     assert float(floor["f_min"]) == pytest.approx(0.002014, rel=0.001)
     # SwapVM flat fee in 1e9 units, rounded up so the fee never falls below f_min.
     assert floor["fee_instruction_min"] == "2013952"
+
+
+def test_evaluate_reads_holdings_for_a_wallet():
+    from models import Holdings
+
+    wallets = []
+
+    def reader(wallet):
+        wallets.append(wallet)
+        return Holdings(weth="1.0", usdc="0")
+
+    client = TestClient(create_app(Store(":memory:"), clock=lambda: AS_OF, holdings_reader=reader))
+    body = json.loads((FIXTURES / "aqua_upside_held_eth.json").read_text())["request"]
+    body.pop("holdings")
+    body["wallet"] = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+    decision = client.post("/evaluate", json=body).json()
+    assert wallets == [body["wallet"]]
+    assert decision["inputs"]["request"]["holdings"] == {"weth": "1.0", "usdc": "0"}
+    assert decision["risk_charge"] == "0.00"
