@@ -208,7 +208,73 @@ details table { margin-top:var(--s1); font-size:11px; }
 .meta { font-family:var(--mono); font-size:11px; color:var(--text-3); margin-top:4px; }
 .warn { color:var(--requote); margin-top:4px; }
 .sr { position:absolute; left:-9999px; }
+/* step tabs (shadcn Tabs) */
+.tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; padding:5px; margin-bottom:var(--s3); background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r-lg); }
+.tabs button { display:flex; align-items:center; gap:10px; text-align:left; padding:9px 12px; border:1px solid transparent; border-radius:var(--r); background:none; color:var(--text-2); cursor:pointer; min-width:0; font:inherit; }
+.tabs button:hover { color:var(--text); }
+.tabs button[aria-selected="true"] { background:var(--bg); border-color:var(--border); color:var(--text); box-shadow:0 1px 2px rgba(0,0,0,.4); }
+.tabs .n { width:24px; height:24px; flex:0 0 auto; border-radius:999px; display:grid; place-items:center; font-size:12px; font-weight:600; border:1px solid var(--border); background:var(--surface-3); color:var(--text); }
+.tabs button[aria-selected="true"] .n { background:var(--text); color:#18181b; border-color:var(--text); }
+.tabs .t { display:flex; flex-direction:column; min-width:0; }
+.tabs b { font-size:13px; font-weight:500; white-space:nowrap; }
+.tabs small { font-size:11.5px; color:var(--text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tabs button.running .n { animation:pulse 1.2s ease-in-out infinite; }
+.tabs button.done .n { background:var(--approve-bg); color:var(--approve); border-color:rgba(52,211,153,.4); }
+@keyframes pulse { 50% { box-shadow:0 0 0 4px rgba(250,250,250,.15); } }
+.tabpanel[hidden] { display:none; }
+.page-h { margin:0 0 var(--s2); display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+.page-h h2 { font-size:18px; font-weight:600; letter-spacing:-0.02em; }
+.page-h p { font-size:13px; color:var(--text-2); }
+.tabpanel .panel-b { padding:20px; }
+.tabpanel .panel-h { padding:16px 20px 0; }
+.seg { display:inline-flex; gap:2px; padding:2px; border:1px solid var(--border); border-radius:var(--r); background:var(--surface-2); }
+.seg button { height:26px; padding:0 10px; border:none; border-radius:6px; background:none; color:var(--text-2); font:500 12px var(--sans); cursor:pointer; }
+.seg button[aria-pressed="true"] { background:var(--bg); color:var(--text); }
+.next { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:var(--s2); padding:12px 14px; border:1px dashed var(--border); border-radius:var(--r); color:var(--text-2); font-size:12.5px; }
+.cmp td, .cmp th { padding:10px 8px; }
+@media (max-width:900px) { .tabs { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+/* Short screens (1280x800 laptops): drop the restatements the tab label already makes, keep the step on one screen. */
+@media (max-height:840px) {
+  .hero { padding-bottom:8px; } .hero p { display:none; }
+  .tabs { margin-bottom:12px; } .tabs button { padding:6px 10px; }
+  .page-h { display:none; }
+  .tabpanel .panel-b { padding:16px; } .tabpanel .panel-h { padding:12px 16px 0; }
+  .top { margin-bottom:10px; }
+}
+/* workflow stages */
+.stage { margin-top:var(--s2); }
+.stage-h { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.stage-h h2 { font-size:15px; font-weight:600; letter-spacing:-0.01em; }
+.stage-h p { font-size:12px; color:var(--text-2); }
+.stage-n { width:26px; height:26px; flex:0 0 auto; border-radius:999px; display:grid; place-items:center; font-size:12px; font-weight:600; border:1px solid var(--border); background:var(--surface-2); color:var(--text); }
+.stage.active .stage-n { background:var(--text); color:#18181b; border-color:var(--text); }
+.stage.done .stage-n { background:var(--approve-bg); color:var(--approve); border-color:rgba(52,211,153,.4); }
+.stage-state { margin-left:auto; font-size:12px; color:var(--text-2); white-space:nowrap; }
+.stage-state .chip { min-width:0; margin-left:6px; }
+.flow { display:flex; align-items:center; gap:10px; margin:10px 0 0 12px; color:var(--text-3); font-size:11px; }
+.flow::before { content:""; width:1px; height:22px; background:linear-gradient(var(--border), var(--ring)); }
+.span-6 { grid-column:span 6; }
+#hook .chart { max-width:520px; }
+#aquaDetail .chart { max-width:600px; }
+.venue { transition:border-color 150ms ease, box-shadow 150ms ease; }
+.venue.target { border-color:var(--ring); box-shadow:0 0 0 1px var(--ring) inset; }
+.venue .target-note { display:none; margin-left:8px; }
+.venue.target .target-note { display:inline-flex; }
+.steps li.active { border-color:var(--ring); color:var(--text); }
+.steps li.active b { background:var(--text); color:#18181b; }
+.steps li.done b { background:var(--approve-bg); color:var(--approve); }
+.steps a { color:inherit; text-decoration:none; }
+/* Ask RiskPilot pop-up (0G) */
+.ask-fab { position:fixed; right:var(--s3); bottom:var(--s3); z-index:35; display:inline-flex; align-items:center; gap:8px; height:40px; padding:0 14px; border-radius:999px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font:500 13px var(--sans); cursor:pointer; box-shadow:0 8px 30px rgba(0,0,0,.45); }
+.ask-fab:hover { background:var(--surface-3); }
+.ask-fab .k { font-family:var(--mono); border:1px solid var(--border); border-radius:999px; padding:0 6px; }
+.ask-fab .dot { width:8px; height:8px; border-radius:999px; background:var(--approve); }
+.ask-pop { position:fixed; right:var(--s3); bottom:76px; z-index:36; width:min(420px, calc(100vw - 32px)); max-height:min(640px, calc(100vh - 110px)); display:flex; flex-direction:column; background:var(--bg); border:1px solid var(--border); border-radius:var(--r-lg); box-shadow:0 16px 50px rgba(0,0,0,.55); overflow:hidden; }
+.ask-pop[hidden] { display:none; }
+.ask-pop .panel-h { padding:12px var(--s2) 0; }
+.ask-pop .ask { grid-template-columns:1fr; overflow-y:auto; padding:12px var(--s2) var(--s2); }
 @media (max-width:1100px) {
+  .span-6 { grid-column:span 12; }
   .ask { grid-template-columns:1fr; }
   .span-7, .span-5, .span-4 { grid-column:span 12; }
   .top { flex-direction:column; } .status { flex-wrap:wrap; } .st { flex:1 1 45%; }
@@ -221,45 +287,82 @@ details table { margin-top:var(--s1); font-size:11px; }
     <div class="hero-l"><div class="logo" aria-hidden="true">R</div>
       <div><h1>RiskPilot: <span>pricing liquidity risk</span></h1>
       <p>Prices LP positions as options, stress-tests them against your wallet, executes only what you sign.</p></div></div>
-    <ol class="steps" aria-label="How it works"><li><b>1</b>Scan every block</li><li><b>2</b>Price and stress-test</li><li><b>3</b>You sign</li></ol>
+
   </header>
   <div class="top"><div class="status" id="status" aria-label="Status"></div></div>
 
-  <main class="grid">
-    <section class="panel span-7" aria-labelledby="h-opps">
-      <div class="panel-h"><h2 id="h-opps">Opportunities</h2><span class="k" id="oppNote"></span></div>
-      <p class="helper">Live from the scanner, or any agent via the API.</p>
-      <div class="panel-b tscroll" id="opps"><span class="skel w80"></span><span class="skel w60"></span><span class="skel w80"></span></div>
-    </section>
+  <nav class="tabs" role="tablist" aria-label="Agent workflow">
+    <button role="tab" id="tabbtn-1" data-tab="1" aria-controls="tab-1" data-testid="tab-1"><span class="n">1</span><span class="t"><b>Scan and assess</b><small id="tabsub-1">&nbsp;</small></span></button>
+    <button role="tab" id="tabbtn-2" data-tab="2" aria-controls="tab-2" data-testid="tab-2"><span class="n">2</span><span class="t"><b>Aqua payoff</b><small id="tabsub-2">&nbsp;</small></span></button>
+    <button role="tab" id="tabbtn-3" data-tab="3" aria-controls="tab-3" data-testid="tab-3"><span class="n">3</span><span class="t"><b>Uniswap v4 hook</b><small id="tabsub-3">&nbsp;</small></span></button>
+    <button role="tab" id="tabbtn-4" data-tab="4" aria-controls="tab-4" data-testid="tab-4"><span class="n">4</span><span class="t"><b>Arc settlement</b><small id="tabsub-4">&nbsp;</small></span></button>
+  </nav>
 
-    <section class="panel span-5" aria-labelledby="h-dec">
-      <div class="panel-h"><h2 id="h-dec">Decision</h2><button class="linkbtn" id="viewApi" type="button" disabled>View API</button></div>
-      <p class="helper">Edge after costs, and what it does to your worst case.</p>
-      <div class="panel-b" id="decision"><span class="skel w40"></span><span class="skel w80"></span><span class="skel tall"></span><span class="skel tall"></span></div>
-    </section>
-
-    <section class="span-12" aria-labelledby="h-pos">
-      <div class="section-h"><h2 id="h-pos">Positions</h2></div>
+  <main>
+    <section class="tabpanel" id="tab-1" role="tabpanel" aria-labelledby="tabbtn-1">
+      <div class="page-h"><h2>Scan and assess risk</h2><p>Every block, the agent prices each opportunity against your profile. Pick one and approve.</p></div>
       <div class="grid">
-        <section class="panel span-4" aria-labelledby="h-aqua">
-          <div class="panel-h"><h2 id="h-aqua">Aqua curves</h2><span class="k">AquaSwapVMRouter v1.0.2</span></div>
-          <div class="panel-b" id="aqua"><span class="skel w80"></span><span class="skel w60"></span></div>
+        <section class="panel span-7" aria-labelledby="h-opps">
+          <div class="panel-h"><h2 id="h-opps">Opportunities</h2><span class="k" id="oppNote"></span></div>
+          <div class="panel-b tscroll" id="opps"><span class="skel w80"></span><span class="skel w60"></span><span class="skel w80"></span></div>
         </section>
-        <section class="panel span-4" aria-labelledby="h-hook">
-          <div class="panel-h"><h2 id="h-hook">Uniswap v4 hook</h2><span class="k">VolatilityFeeHook</span></div>
-          <div class="panel-b" id="hook"><span class="skel w80"></span><span class="skel tall"></span></div>
-        </section>
-        <section class="panel span-4" aria-labelledby="h-arc">
-          <div class="panel-h"><h2 id="h-arc">Arc settlement</h2><span class="k">RiskPilotEscrow</span></div>
-          <div class="panel-b" id="arc"><span class="skel w80"></span><span class="skel w60"></span></div>
+        <section class="panel span-5" aria-labelledby="h-dec">
+          <div class="panel-h"><h2 id="h-dec">Risk decision</h2><button class="linkbtn" id="viewApi" type="button" disabled>View API</button></div>
+          <div class="panel-b" id="decision"><span class="skel w40"></span><span class="skel w80"></span><span class="skel tall"></span><span class="skel tall"></span></div>
         </section>
       </div>
     </section>
 
-    <section class="panel span-12" aria-labelledby="h-ask">
-      <div class="panel-h"><h2 id="h-ask">Ask RiskPilot</h2><span class="k">0G Private Computer · 0gm-1.0-35b-a3b</span></div>
-      <p class="helper">Private answers from your own engine data.</p>
-      <div class="panel-b ask">
+    <section class="tabpanel" id="tab-2" role="tabpanel" aria-labelledby="tabbtn-2" hidden>
+      <div class="page-h"><h2>Options-like payoff on 1inch Aqua</h2><p>A one-sided swap curve behaves like a covered call or a cash-secured put. The engine prices it as one.</p></div>
+      <div class="grid">
+        <section class="panel span-7" aria-labelledby="h-curve">
+          <div class="panel-h"><h2 id="h-curve">Curve</h2><div class="seg" id="curvePick" role="group" aria-label="Curve"></div></div>
+          <div class="panel-b" id="aquaDetail"></div>
+        </section>
+        <section class="panel span-5" aria-labelledby="h-aqua">
+          <div class="panel-h"><h2 id="h-aqua">On chain</h2><span class="k">AquaSwapVMRouter</span></div>
+          <div class="panel-b" id="aqua"><span class="skel w80"></span><span class="skel w60"></span></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="tabpanel" id="tab-3" role="tabpanel" aria-labelledby="tabbtn-3" hidden>
+      <div class="page-h"><h2>Volatility-aware execution on Uniswap v4</h2><p>The hook sets the pool fee from realized volatility, so the same gap nets more in a calm market.</p></div>
+      <div class="grid">
+        <section class="panel span-7" aria-labelledby="h-hook">
+          <div class="panel-h"><h2 id="h-hook">VolatilityFeeHook</h2><span class="k">hooked ETH/USDC pool</span></div>
+          <div class="panel-b" id="hook"><span class="skel w80"></span><span class="skel tall"></span></div>
+        </section>
+        <section class="panel span-5" aria-labelledby="h-pools">
+          <div class="panel-h"><h2 id="h-pools">Same gap, three pools</h2></div>
+          <div class="panel-b" id="poolCompare"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="tabpanel" id="tab-4" role="tabpanel" aria-labelledby="tabbtn-4" hidden>
+      <div class="page-h"><h2>Settle in USDC on Arc</h2><p>Each approved trade can escrow a USDC stake. The worker settles it once the trade is verified.</p></div>
+      <div class="grid">
+        <section class="panel span-12" aria-labelledby="h-arc">
+          <div class="panel-h"><h2 id="h-arc">Escrow</h2><span class="k">RiskPilotEscrow · Arc testnet</span></div>
+          <div class="panel-b" id="arc"><span class="skel w80"></span><span class="skel w60"></span></div>
+        </section>
+        <section class="panel span-12" aria-labelledby="h-hist">
+          <div class="panel-h"><h2 id="h-hist">Decision history</h2><span class="k">every decision replays from its inputs</span></div>
+          <div class="panel-b tscroll" id="history"><span class="skel w80"></span><span class="skel w80"></span></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <button type="button" class="ask-fab" id="askOpen" data-testid="ask-open" aria-expanded="false" aria-controls="askPanel">
+    <span class="dot" id="askDot" hidden></span>Ask RiskPilot<span class="k">0G</span></button>
+  <aside class="ask-pop" id="askPanel" data-testid="ask-panel" aria-labelledby="h-ask" hidden>
+    <div class="panel-h"><h2 id="h-ask">Ask RiskPilot</h2>
+      <button type="button" class="btn ghost sm" id="askClose" aria-label="Close">Close</button></div>
+    <p class="helper">Private answers from your own data · 0G Private Computer</p>
+    <div class="panel-b ask">
         <div class="brief" id="brief" data-testid="brief"><span class="skel w80"></span><span class="skel w60"></span></div>
         <div class="chat">
           <form id="askForm" class="askrow"><label for="askQ" class="sr">Question</label>
@@ -268,14 +371,7 @@ details table { margin-top:var(--s1); font-size:11px; }
           <div id="answers" data-testid="answers" aria-live="polite"></div>
         </div>
       </div>
-    </section>
-
-    <section class="panel span-12" aria-labelledby="h-hist">
-      <div class="panel-h"><h2 id="h-hist">History</h2></div>
-      <p class="helper">Every decision replays from its inputs.</p>
-      <div class="panel-b tscroll" id="history"><span class="skel w80"></span><span class="skel w80"></span></div>
-    </section>
-  </main>
+  </aside>
 </div>
 
 <aside class="drawer" id="drawer" aria-labelledby="h-api" aria-hidden="true">
@@ -301,7 +397,9 @@ const qs = new URLSearchParams(location.search);
 const ENGINE = qs.get("engine") || (location.port === "8000" ? location.origin : "http://localhost:8000");
 const RPC = qs.get("rpc") || "http://127.0.0.1:8545";
 const CHAIN_ID = 31337;
-const ARC = { id: 5042002, rpc: qs.get("arcRpc") || "https://rpc.testnet.arc.io", explorer: "https://explorer.testnet.arc.io",
+const ARC = { id: 5042002, rpc: qs.get("arcRpc") || "https://rpc.testnet.arc.network",
+  // Arc's public RPC hostnames rate-limit per IP (HTTP 429): reads fall back from one to the other.
+  rpcFallback: qs.get("arcRpc") ? null : "https://rpc.testnet.arc.io", explorer: "https://explorer.testnet.arc.io",
   usdc: "0x3600000000000000000000000000000000000000" };
 const A = {
   AQUA: "0x1111113CCf1426A8E30e2bfF5E005d929bF6a90a",
@@ -356,7 +454,9 @@ async function loadViem() {
   const arcChain = viem.defineChain({ id: ARC.id, name: "Arc Testnet", nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 }, rpcUrls: { default: { http: [ARC.rpc] } } });
   V = { viem, chain, arcChain, accounts,
     pub: viem.createPublicClient({ chain, transport: viem.http(RPC) }),
-    arcPub: viem.createPublicClient({ chain: arcChain, transport: viem.http(ARC.rpc) }),
+    arcPub: viem.createPublicClient({ chain: arcChain, transport: ARC.rpcFallback
+      ? viem.fallback([viem.http(ARC.rpc, { retryCount: 2, retryDelay: 800 }), viem.http(ARC.rpcFallback, { retryCount: 2, retryDelay: 800 })])
+      : viem.http(ARC.rpc) }),
     erc20: viem.parseAbi(["function balanceOf(address) view returns (uint256)"]),
     events: {
       shipped: viem.parseAbiItem("event Shipped(address maker, address app, bytes32 strategyHash, bytes strategy)"),
@@ -689,7 +789,7 @@ function renderDecision() {
   clearInterval(timer);
   $("viewApi").disabled = !(S.up.engine && S.seed);
   if (READ_ONLY && !S.up.engine) { $("decision").innerHTML = `<p class="empty" data-testid="read-only">Read-only. Run <span class="mono">make up</span> locally to sign.</p>`; $("viewApi").disabled = true; return; }
-  if (!S.up.engine || !S.seed) { $("decision").innerHTML = S.up.engine && S.needsProfile ? `<p class="empty">Choose a profile first.</p>` : unavailable(S.seedErr || "engine"); return; }
+  if (!S.up.engine || !S.seed) { $("decision").innerHTML = S.up.engine && S.needsProfile ? `<p class="empty">Choose a profile first.</p>` : unavailable(S.seedErr || "engine"); renderWorkflow(); return; }
   if (S.busy) return; // the stepper owns the button until the signature flow ends
   const it = S.seed.items[selectIndex()], d = it.decision, inp = d.inputs, ds = tip(`engine /v1/evaluate · ${d.model_version}`, d.created_at);
   const shipped = liveShipped(d), kind = adapterFor(d);
@@ -704,13 +804,15 @@ function renderDecision() {
     <div class="log" id="log" aria-live="polite">${S.log.join("<br>")}</div>`;
   h += `<div class="sub"><span>Net edge, USD</span></div>${waterfall(d)}`;
   h += `<div class="sub"><span>Worst of 14 stress scenarios · <span data-testid="stress-before">${usd(d.stress_loss_before)}</span> → <span data-testid="stress-after">${usd(d.stress_loss_after)}</span> · budget <span data-testid="budget">${usd(d.budget)}</span></span></div>${stressBars(d)}`;
-  if (inp.aqua) h += aquaBlock(d) + payoffChart(d);
+  const nextTab = kind === "aqua" ? 2 : kind === "v4" ? 3 : null;
+  if (nextTab) h += `<div class="next" data-testid="next-step"><span>${kind === "aqua" ? "Executes as an options-like curve on 1inch Aqua." : "Executes through the volatility-aware Uniswap v4 hook."}</span>
+    <button type="button" class="btn ghost sm" data-goto="${nextTab}">See step ${nextTab} →</button></div>`;
   const tsOf = (k) => inp.timestamps?.[k];
   const lines = Object.entries(inp.sources || {}).map(([k, v]) => `${k}: ${esc(v)}${tsOf(k) ? ` · ${hms(tsOf(k))}` : ""}`);
   if (inp.request?.holdings) lines.push(`holdings: ${num(inp.request.holdings.weth, 4)} WETH, ${usd(inp.request.holdings.usdc).slice(1)} USDC`);
   if (kind === "v4" && inp.profile?.slippage_tolerance) lines.push(`<span data-tip="The demo router has no on-chain amountOutMinimum: the slippage limit is checked by simulation before sending, and again before each transaction.">slippage limit ${pct(inp.profile.slippage_tolerance, 2)} · checked before sending</span>`);
   // On short viewports (< 880 px) the inputs collapse so the decision still fits without scrolling.
-  h += `<details class="inputs-d" ${innerHeight >= 880 ? "open" : ""}><summary>Inputs · ${lines.length} sources</summary><div class="inputs">${lines.join("<br>")}</div></details>`;
+  h += `<details class="inputs-d"><summary>Inputs · ${lines.length} sources</summary><div class="inputs">${lines.join("<br>")}</div></details>`;
   $("decision").innerHTML = h;
   bindTips($("decision"));
   if ($("drawer").classList.contains("open")) renderDrawer();
@@ -724,6 +826,7 @@ function renderDecision() {
   };
   tick(); timer = setInterval(tick, 250);
   if (live) $("approve").onclick = () => approve(d, kind, it.key);
+  renderWorkflow();
 }
 
 function log(msg, cls = "") { S.log.push(`<span class="${cls}">${esc(new Date().toISOString().slice(11, 19))} ${esc(msg)}</span>`); const el = $("log"); if (el) { el.innerHTML = S.log.join("<br>"); el.scrollTop = el.scrollHeight; } }
@@ -749,6 +852,8 @@ async function approve(d, kind, key) {
     const onStep = ({ i, n, label, phase }) => {
       if (phase === "sign" && S.perf.firstPrompt === null) S.perf.firstPrompt = performance.now() - S.perf.click;
       set(phase === "sign" ? `Signing ${i} of ${n}: ${label}…` : `Confirming ${i} of ${n}…`);
+      S.flow.running = { tab: i > execN ? 4 : kind === "aqua" ? 2 : 3, text: `${phase === "sign" ? "signing" : "confirming"} ${label}` };
+      renderWorkflow();
     };
     const execution = await execute(adapter, d, signer, V.pub, log, { onStep, gas, total: n, startedAt });
     await engine("/executions", { method: "POST", body: JSON.stringify(execution) });
@@ -756,6 +861,7 @@ async function approve(d, kind, key) {
     log(`verified · ${short(execution.tx_hash)}`, "ok");
     if (dep) {
       set(ARC_LOCAL ? "Switching to Arc (local stand-in)…" : "Switching to Arc testnet…");
+      S.flow.running = { tab: 4, text: "switching to Arc" }; renderWorkflow();
       const arcS = await arcSigner();
       const arc = arcAdapter({ viem: V.viem, arcPub: V.arcPub, dep, usdc: dep.usdc || ARC.usdc, stakeUnits: V.viem.parseUnits(String(dep.stake_usdc), 6), signer: arcS, executed: true });
       const funded = await execute(arc, d, arcS, V.arcPub, log, { onStep, offset: execN, total: n, startedAt });
@@ -764,11 +870,11 @@ async function approve(d, kind, key) {
       // Back to the demo chain, so the wallet is where the next decision needs it.
       if (arcS.provider) await switchTo(arcS.provider, CHAIN_ID, { chainName: "RiskPilot demo chain (mainnet fork)", rpcUrls: [RPC], nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 } }).catch(() => {});
     }
-    S.busy = false;
+    S.busy = false; S.flow.running = null;
     btn.textContent = "Confirmed · view tx";
     await refreshAll();
   } catch (e) {
-    S.busy = false;
+    S.busy = false; S.flow.running = null;
     log(`${e instanceof AdapterRefused ? "Refused" : "Stopped"}: ${walletError(e)}`, "bad");
     renderDecision();
   }
@@ -924,8 +1030,12 @@ async function v4Swaps() {
 
 // ── positions: Arc ───────────────────────────────────────────────────────
 const REFUND_AFTER_S = 24 * 3600;
-async function renderArc() {
+// Arc reads are rate-limited upstream: re-read at most every 10 s, unless a settlement event forces it.
+let arcReadAt = 0;
+async function renderArc(force = false) {
   const el = $("arc"), dep = S.info?.arc;
+  if (dep && S.up.engine && !force && Date.now() - arcReadAt < 10_000 && el.dataset.ok) return;
+  arcReadAt = Date.now();
   if (!S.up.engine) { el.innerHTML = unavailable("engine"); return; }
   if (!dep) { el.innerHTML = `<p class="empty" data-testid="arc-next">Not set up. Run <span class="mono">make arc-setup SENDER=0x…</span>, then <span class="mono">make up</span>.</p>`; return; }
   try {
@@ -955,9 +1065,9 @@ async function renderArc() {
     rows.sort((a, b) => Number(a.b - b.b));
     h += rows.length ? rows.map((r) => `<div class="line" data-testid="arc-row" ${tip("Arc Funded / Settled logs", at)}>${esc(r.t)} ${hashChip(r.tx, explorer && `${explorer}/tx/${r.tx}`)}${r.extra}</div>`).join("")
       : `<p class="empty">No escrows yet. Funding happens inside Approve and sign.</p>`;
-    el.innerHTML = h; bindTips(el);
+    el.innerHTML = h; bindTips(el); el.dataset.ok = "1";
     el.querySelectorAll("[data-refund]").forEach((b) => { b.onclick = () => refundArc(b.dataset.refund, dep); });
-  } catch (e) { el.innerHTML = unavailable("Arc: " + (e.shortMessage || e.message)); }
+  } catch (e) { el.innerHTML = unavailable("Arc: " + (e.shortMessage || e.message)); delete el.dataset.ok; }
 }
 
 async function refundArc(key, dep) {
@@ -966,9 +1076,78 @@ async function refundArc(key, dep) {
     const abi = V.viem.parseAbi(["function refund(bytes32)"]);
     const hash = await signer.client.writeContract({ address: dep.escrow, abi, functionName: "refund", args: [key] });
     await V.arcPub.waitForTransactionReceipt({ hash });
-    await renderArc();
+    await renderArc(true);
   } catch (e) { log(`Refund stopped: ${e.shortMessage || e.message}`, "bad"); }
 }
+
+// ── steps: four tabs, one step on screen at a time ──────────────────────
+// 1 scan + assess (you approve) → 2 Aqua options-like payoff → 3 Uniswap v4 hook → 4 settle on Arc.
+S.flow = { running: null }; // { tab, text } while Approve and sign is in progress
+const TABS = [1, 2, 3, 4];
+function setTab(n, push = true) {
+  n = TABS.includes(Number(n)) ? Number(n) : 1;
+  for (const t of TABS) {
+    $("tab-" + t).hidden = t !== n;
+    const b = $("tabbtn-" + t); b.setAttribute("aria-selected", String(t === n)); b.tabIndex = t === n ? 0 : -1;
+  }
+  S.tab = n;
+  if (push) history.replaceState(null, "", `#step-${n}`);
+  if (n === 4) renderArc(true);
+}
+document.querySelectorAll(".tabs [data-tab]").forEach((b) => b.addEventListener("click", () => setTab(b.dataset.tab)));
+document.querySelector(".tabs").addEventListener("keydown", (e) => {
+  if (!["ArrowRight", "ArrowLeft"].includes(e.key)) return;
+  const n = ((S.tab || 1) + (e.key === "ArrowRight" ? 0 : -2) + 4) % 4 + 1; setTab(n); $("tabbtn-" + n).focus();
+});
+document.addEventListener("click", (e) => { const g = e.target.closest("[data-goto]"); if (g) setTab(g.dataset.goto); });
+
+function aquaItem() {  // the selected opportunity if it is an Aqua curve, else the first curve
+  const items = S.seed?.items || [], sel = items[S.sel];
+  return sel?.decision.inputs.aqua ? sel : items.find((i) => i.decision.inputs.aqua);
+}
+function renderAquaDetail() {
+  const el = $("aquaDetail"), pick = $("curvePick");
+  const it = S.up.engine && aquaItem();
+  if (!it) { el.innerHTML = unavailable(S.seedErr || "engine"); pick.innerHTML = ""; return; }
+  const curves = S.seed.items.filter((i) => i.decision.inputs.aqua);
+  pick.innerHTML = curves.map((c) => `<button type="button" data-curve="${esc(c.key)}" aria-pressed="${c.key === it.key}">${c.decision.inputs.aqua.side === "call_like" ? "Call-like" : "Put-like"}</button>`).join("");
+  pick.querySelectorAll("[data-curve]").forEach((b) => { b.onclick = () => { S.selKey = b.dataset.curve; renderOpps(); renderDecision(); }; });
+  const d = it.decision;
+  el.innerHTML = `<div class="dec-head"><span class="chip ${d.verdict}">${d.verdict}</span><span class="dec-id">${esc(it.label)}</span></div>
+    <p class="reason">${esc(d.reason)}</p>${aquaBlock(d)}${payoffChart(d)}`;
+  bindTips(el);
+}
+function renderPoolCompare() {
+  const el = $("poolCompare"), items = (S.seed?.items || []).filter((i) => i.opportunity.type === "price_gap");
+  if (!S.up.engine || !items.length) { el.innerHTML = S.up.engine ? `<p class="empty">No price gaps this block.</p>` : unavailable("engine"); return; }
+  el.innerHTML = `<p class="helper" style="padding:0 0 12px;border:0">The same $10,000 gap, priced at each pool's own fee.</p><table class="cmp"><thead><tr><th>Pool</th><th class="num">Fee</th><th class="num">Net edge</th><th>Verdict</th></tr></thead><tbody>${items.map((i) => {
+    const d = i.decision, fee = Number(d.inputs.request.market.fee_rate);
+    return `<tr><td>${esc(i.label.replace("Price gap · ", ""))}</td><td class="num">${pct(fee, 2)}</td><td class="num">${usd(d.net_edge)}</td><td><span class="chip ${d.verdict}">${d.verdict}</span></td></tr>`;
+  }).join("")}</tbody></table>`;
+}
+function renderSteps() {
+  const items = S.seed?.items || [], it = items[S.sel], d = it?.decision, kind = d && adapterFor(d);
+  const sub = (n, text, cls = "") => { $("tabsub-" + n).textContent = text || " "; const b = $("tabbtn-" + n); b.classList.remove("running", "done"); if (cls) b.classList.add(cls); };
+  if (!S.up.engine || !S.seed) { TABS.forEach((n) => sub(n, S.up.engine ? "" : "engine unavailable")); renderAquaDetail(); renderPoolCompare(); return; }
+  const run = S.flow.running, last = it && S.lastTx[it.key], st = last && S.settlements[last.decision_id];
+  const approves = items.filter((i) => i.decision.verdict === "APPROVE").length;
+  sub(1, `${items.length} scanned · ${approves} approved`, last ? "done" : "");
+  const aq = aquaItem();
+  sub(2, run?.tab === 2 ? run.text : aq ? `${aq.decision.inputs.aqua.side === "call_like" ? "call-like" : "put-like"} · ${aq.decision.verdict.toLowerCase()}` : "", run?.tab === 2 ? "running" : last && kind === "aqua" ? "done" : "");
+  const fee = S.info?.hook?.live?.fee_pips;
+  sub(3, run?.tab === 3 ? run.text : fee ? `fee ${pct(Number(fee) / 1e6, 2)} now` : "", run?.tab === 3 ? "running" : last && kind === "v4" ? "done" : "");
+  sub(4, run?.tab === 4 ? run.text : !S.info?.arc ? "not set up" : st ? st.status.toLowerCase() : "escrow live", run?.tab === 4 ? "running" : st?.status === "Settled" ? "done" : "");
+  renderAquaDetail(); renderPoolCompare();
+}
+const renderWorkflow = renderSteps; // older call sites
+
+function setAsk(open) {
+  $("askPanel").hidden = !open; $("askOpen").setAttribute("aria-expanded", String(open)); $("askDot").hidden = true;
+  if (open) $("askQ").focus();
+}
+$("askOpen").addEventListener("click", () => setAsk($("askPanel").hidden));
+$("askClose").addEventListener("click", () => setAsk(false));
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("askPanel").hidden) setAsk(false); });
 
 // ── Ask RiskPilot (0G Private Computer) ──────────────────────────────────
 // The engine builds the context from its own data and calls 0G; the browser never sees the key.
@@ -990,6 +1169,7 @@ async function renderBrief(force = false) {
   try {
     const r = await engine("/assistant/brief", { method: "POST", body: JSON.stringify({ wallet: w }) });
     el.innerHTML = `<h3>Daily risk brief · ${esc(hms(r.created_at))}</h3><div>${esc(r.answer)}</div>${assistantMeta(r)}`;
+    if ($("askPanel").hidden) $("askDot").hidden = false;
   } catch (e) { el.innerHTML = `<h3>Daily risk brief</h3>${assistantDown(e)}`; briefFor = null; }
 }
 async function renderAnswers() {
@@ -1128,7 +1308,7 @@ function connect() {
   });
   es.addEventListener("settlement", (e) => {
     const st = JSON.parse(e.data); S.settlements[st.decision_id] = st;
-    renderDecision(); renderArc();
+    renderDecision(); renderArc(true); renderWorkflow();
   });
 }
 
@@ -1159,6 +1339,7 @@ document.addEventListener("keydown", (e) => {
 
 async function main() {
   const t0 = performance.now();
+  setTab((location.hash.match(/step-(\d)/) || [])[1] || 1, false);
   try { await loadViem(); } catch { /* chain panels report the CDN as unavailable */ }
   if (V) { try { S.signer = await demoSigner(); S.chain = await readChain(); S.up.chain = true; } catch { S.up.chain = false; } }
   try { await loadEngine(); await loadProfile(); S.up.engine = true; } catch { S.up.engine = false; }

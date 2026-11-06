@@ -24,7 +24,7 @@ async function open(page: Page, shoot?: string) {
     await card.click();
   }
   await expect(page.locator("[data-testid=opp-row]")).toHaveCount(5);
-  await expect(page.locator("#hook svg")).toBeVisible();
+  await expect(page.locator("#hook svg")).toBeAttached(); // on step 3; rendered in the background
 }
 
 test("console is clean on load", async ({ page }) => {
@@ -56,6 +56,14 @@ test("screenshots", async ({ page }) => {
   await page.screenshot({ path: join(OUT, "2-approve-selected.png") });
   await page.locator("[data-testid=opp-row][data-label^='Put-like']").click();
   await page.screenshot({ path: join(OUT, "3-reject-selected.png") });
+  // One screenshot per step tab.
+  await page.locator("[data-testid=opp-row][data-label^='Call-like']").click();
+  for (const [tab, file] of [[2, "10-step2-aqua.png"], [3, "11-step3-uniswap.png"], [4, "12-step4-arc.png"]] as const) {
+    await page.getByTestId(`tab-${tab}`).click();
+    await page.waitForTimeout(tab === 4 ? 1500 : 400);
+    await page.screenshot({ path: join(OUT, file) });
+  }
+  await page.getByTestId("tab-1").click();
   await page.locator("[data-testid=opp-row][data-label^='Call-like']").click();
   await page.getByRole("button", { name: "View API" }).click();
   await expect(page.getByTestId("api-request")).toBeVisible();

@@ -83,7 +83,8 @@ test("3. put-like curve: stress over budget, Approve disabled", async ({ page })
   expect(after).toBeGreaterThan(Number(d.budget));
   await expect(page.getByTestId("approve")).toBeDisabled();
   await expect(page.getByTestId("approve")).toHaveText("Rejected: adds $629.93 worst-case loss, limit $250");
-  // The options-like payoff: a cash-secured put loses as ETH falls (stress grid, after − before).
+  // The options-like payoff, on step 2: a cash-secured put loses as ETH falls (stress grid, after − before).
+  await page.getByTestId("tab-2").click();
   await expect(page.getByTestId("payoff")).toBeVisible();
   const g = d.inputs.stress_grid.find((r: any) => Number(r.spot_shock) === -0.4 && Number(r.vol_shock) === 0);
   expect(Number(g.pnl_after) - Number(g.pnl_before)).toBeLessThan(0);
@@ -127,6 +128,7 @@ test("4b. swap through the hooked v4 pool: tx appears, receipt verified, fee pai
     await page.getByTestId("approve").click();
     await expect(page.locator("#log")).toContainText("verified ·", { timeout: 60_000 });
     await expect(page.getByTestId("confirmed")).toHaveText("Confirmed · view tx");
+    await page.getByTestId("tab-3").click(); // the swap shows on step 3, the v4 hook
     const swap = page.getByTestId("v4-swap-tx").first();
     await expect(swap).toBeVisible({ timeout: 20_000 });
     // The fee actually paid is the hook's fee for the swap's block (it re-estimates per block).
@@ -179,6 +181,7 @@ test("5. one click ships the curve, even when the first prompt takes longer than
   await select(page, "Call-like");
   await page.getByTestId("approve").click();
   await expect(page.locator("#log")).toContainText("verified ·", { timeout: 90_000 });
+  await page.getByTestId("tab-2").click(); // the curve shows on step 2, Aqua
   const ship = page.getByTestId("ship-tx").first();
   await expect(ship).toBeVisible();
   takerFill("upside");
@@ -200,6 +203,7 @@ test("5c. after the curve ships, the v4 sale is refused by the cross-primitive c
 
 test("6. replay a REJECT: same verdict, same numbers", async ({ page }) => {
   await open(page);
+  await page.getByTestId("tab-4").click(); // history is on step 4
   const r = page.locator("[data-testid=history-row][data-verdict=REJECT]").first();
   const id = await r.getAttribute("data-decision");
   const d = await engineJson(`/decisions/${id}`);
@@ -249,7 +253,7 @@ test("9. the only trade control is Approve and sign", async ({ page }) => {
   for (const label of ["Price gap · hooked", "Put-like", "Call-like"]) {
     await select(page, label);
     const names = await page.locator("main button").evaluateAll((bs) => bs.map((b) => b.textContent?.trim() ?? ""));
-    const trade = names.filter((n) => !/^(Copy|Replay|View API|Change|Ask|\?)$/.test(n));
+    const trade = names.filter((n) => !/^(Copy|Replay|View API|Change|Ask|Call-like|Put-like|See step \d →|\?)$/.test(n));
     expect(trade, label).toHaveLength(1);
     expect(trade[0]).toMatch(/^(Approve and sign|Rejected:|Already shipped|Requoting)/);
     for (const gone of ["Re-evaluate", "Ship", "Verify", "Fund"]) expect(names.some((n) => n.startsWith(gone)), gone).toBe(false);
@@ -310,6 +314,9 @@ test("13. read-only page: no wallet requests, nothing signable", async ({ page }
 
 test("15. Ask RiskPilot: the daily brief and an answer show their 0G request IDs; a 0G error says Assistant unavailable", async ({ page }) => {
   await open(page);
+  await expect(page.getByTestId("ask-panel")).toBeHidden(); // a pop-up on the right, closed until asked
+  await page.getByTestId("ask-open").click();
+  await expect(page.getByTestId("ask-panel")).toBeVisible();
   const brief = page.getByTestId("brief");
   await expect(brief).toContainText("Daily risk brief");
   await expect(brief.getByTestId("request-id")).toHaveAttribute("data-request-id", /^0g-e2e-\d+$/);
@@ -322,4 +329,26 @@ test("15. Ask RiskPilot: the daily brief and an answer show their 0G request IDs
   await page.getByTestId("ask-input").fill("FAIL");
   await page.getByTestId("ask-button").click();
   await expect(page.getByTestId("assistant-unavailable").first()).toHaveText("Assistant unavailable");
+});
+
+test("16. four steps, one on screen at a time; each decision points to the step where it executes", async ({ page }) => {
+  await open(page);
+  await expect(page.locator("#tab-1")).toBeVisible();
+  for (const t of [2, 3, 4]) await expect(page.locator(`#tab-${t}`)).toBeHidden();
+  await expect(page.locator("#tabsub-1")).toHaveText("5 scanned · 3 approved");
+  await select(page, "Call-like");
+  await page.getByTestId("next-step").getByRole("button", { name: "See step 2 →" }).click();
+  await expect(page.locator("#tab-2")).toBeVisible();
+  await expect(page.locator("#tab-1")).toBeHidden();
+  await expect(page).toHaveURL(/#step-2$/);
+  await expect(page.getByTestId("payoff")).toBeVisible();
+  await page.getByTestId("tab-1").click();
+  await select(page, "Price gap · hooked");
+  await page.getByTestId("next-step").getByRole("button", { name: "See step 3 →" }).click();
+  await expect(page.locator("#poolCompare")).toContainText("hooked v4 pool");
+  await expect(page.getByTestId("hook-fee")).toBeVisible();
+  await page.getByTestId("tab-4").click();
+  await expect(page.locator("[data-testid=history-row]").first()).toBeVisible();
+  await page.reload(); // the step is in the URL
+  await expect(page.locator("#tab-4")).toBeVisible();
 });
