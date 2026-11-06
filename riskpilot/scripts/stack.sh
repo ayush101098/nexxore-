@@ -76,6 +76,11 @@ arc_up() {
 
 engine_up() {
   port_free 8000 || { log "engine already on :8000"; return; }
+  # Arc testnet (make arc-setup): the arc-worker settles with the operator key made there.
+  if [ "${ARC_REHEARSAL:-0}" != 1 ] && [ -f "$ROOT/contracts/arc/deployments/arc-testnet.json" ] && [ -s "$ROOT/.secrets/arc-operator.key" ]; then
+    ARC_OPERATOR_KEY=$(cat "$ROOT/.secrets/arc-operator.key"); export ARC_OPERATOR_KEY
+    log "Arc testnet escrow found: the arc-worker settles with the operator in .secrets/"
+  fi
   if [ -f "$FROZEN/riskpilot.db" ] && [ "${KEEP_DB:-0}" != 1 ]; then cp "$FROZEN/riskpilot.db" "$RUN/riskpilot.db"; rm -f "$RUN/riskpilot.db-wal" "$RUN/riskpilot.db-shm"; fi
   (cd "$ROOT/engine" && RISKPILOT_DB="$RUN/riskpilot.db" DEMO_RPC_URL=http://127.0.0.1:8545 \
     exec "$PY" -m uvicorn main:app --port 8000 --timeout-graceful-shutdown 1 --no-access-log >"$RUN/engine.log" 2>&1) &

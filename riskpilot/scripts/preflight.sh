@@ -86,7 +86,7 @@ if [ -f "$ARC_DEP" ]; then
   elif [ "$bal" -ge 1000000 ]; then pass "operator $operator holds $("$PY" -c "print(f'{$bal/1e6:,.2f}')") USDC (>= 1)"
   else warn "operator $operator holds $("$PY" -c "print(f'{$bal/1e6:,.6f}')") USDC (below 1)"; fi
 else
-  fail "deployments/arc-testnet.json missing (make arc-deploy SENDER=0x…)"
+  fail "deployments/arc-testnet.json missing (make arc-setup SENDER=0x…)"
   fail "operator USDC: no deployment to read the operator from"
 fi
 

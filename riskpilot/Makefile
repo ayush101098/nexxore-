@@ -5,7 +5,7 @@
 #   make demo-freeze   save the running state as the new frozen demo
 #   ARC_REHEARSAL=1 make up   also a local Arc stand-in, so Approve and sign -> fund -> settle runs offline
 #   make outage-test   kill the engine for real under a headed browser
-.PHONY: up down demo-reset demo-freeze preflight hook-volatile outage-test test openapi arc-deploy testnet
+.PHONY: up down demo-reset demo-freeze preflight arc-setup hook-volatile outage-test test openapi arc-deploy testnet
 
 up:
 	./scripts/stack.sh up
@@ -39,6 +39,13 @@ openapi:
 #   make arc-deploy SENDER=0xYourAddress [WALLET="--account riskpilot"]
 SENDER ?=
 WALLET ?= --interactive
+# Arc testnet in one go: a fresh operator key (.secrets/, gitignored), the escrow deployed by YOUR
+# wallet, 1 USDC of operator gas and a 1 USDC reserve. About 4 wallet prompts.
+#   make arc-setup SENDER=0xYourAddress [WALLET="--account riskpilot"]
+arc-setup:
+	@test -n "$(SENDER)" || { echo "usage: make arc-setup SENDER=0xYourAddress [WALLET=--account <name>]"; exit 1; }
+	WALLET="$(WALLET)" ./scripts/arc-setup.sh $(SENDER)
+
 arc-deploy:
 	@test -n "$(SENDER)" || { echo "usage: make arc-deploy SENDER=0xYourAddress [WALLET=--account <name>]"; exit 1; }
 	$(MAKE) -C contracts/arc arc-deploy SENDER=$(SENDER) WALLET="$(WALLET)"

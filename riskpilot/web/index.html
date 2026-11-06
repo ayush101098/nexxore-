@@ -654,6 +654,8 @@ async function approve(d, kind, key) {
   set("Preparing…");
   try {
     const signer = S.signer;
+    // A previous Arc funding leaves the wallet on Arc: always start on the demo chain.
+    if (signer.provider) await switchTo(signer.provider, CHAIN_ID, { chainName: "RiskPilot demo chain (mainnet fork)", rpcUrls: [RPC], nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 } });
     const ctx = { viem: V.viem, pub: V.pub, chainId: CHAIN_ID, A, signer };
     const adapter = kind === "aqua" ? aquaAdapter({ ...ctx, info: S.info }) : v4Adapter({ ...ctx, hook: S.info?.hook, aquaCommitted });
     await adapter.validate(d);
@@ -674,17 +676,30 @@ async function approve(d, kind, key) {
       const arcS = await arcSigner();
       const arc = arcAdapter({ viem: V.viem, arcPub: V.arcPub, dep, usdc: dep.usdc || ARC.usdc, stakeUnits: V.viem.parseUnits(String(dep.stake_usdc), 6), signer: arcS, executed: true });
       const funded = await execute(arc, d, arcS, V.arcPub, log, { onStep, offset: execN, total: n });
-      S.settlements[d.decision_id] = { decision_id: d.decision_id, status: "Funded", fund_tx: funded.tx_hash };
+      S.settlements[d.decision_id] = { decision_id: d.decision_id, status: "Funded", fund_tx: funded.tx_hash, funded_at: performance.now() };
       log(`funded on Arc · ${short(funded.tx_hash)} · the arc-worker settles it`, "ok");
+      // Back to the demo chain, so the wallet is where the next decision needs it.
+      if (arcS.provider) await switchTo(arcS.provider, CHAIN_ID, { chainName: "RiskPilot demo chain (mainnet fork)", rpcUrls: [RPC], nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 } }).catch(() => {});
     }
     S.busy = false;
     btn.textContent = "Confirmed · view tx";
     await refreshAll();
   } catch (e) {
     S.busy = false;
-    log(`${e instanceof AdapterRefused ? "Refused" : "Stopped"}: ${String(e.shortMessage || e.message || e)}`, "bad");
+    log(`${e instanceof AdapterRefused ? "Refused" : "Stopped"}: ${walletError(e)}`, "bad");
     renderDecision();
   }
+}
+
+// A wallet error in plain words. After make demo-reset the fork rewinds, so a wallet that cached
+// the old nonce fails with "nonce too high"-style errors: say what to do instead of the raw RPC text.
+function walletError(e) {
+  const raw = String(e?.shortMessage || e?.message || e) + " " + String(e?.details || e?.cause?.message || "");
+  if (/nonce (too high|too low|has already been used)|invalid nonce|expected nonce|nonce.*(expected|mismatch)/i.test(raw)) {
+    return "Reset your wallet's activity data: the demo chain was reset, so the wallet's saved nonce is stale (MetaMask: Settings → Advanced → Clear activity tab data), then try again.";
+  }
+  if (/user (rejected|denied)|rejected the request/i.test(raw)) return "Cancelled in the wallet.";
+  return String(e?.shortMessage || e?.message || e);
 }
 
 // What live Aqua curves hold of a token: a v4 sale must leave it in the wallet.

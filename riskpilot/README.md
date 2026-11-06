@@ -92,6 +92,7 @@ make up                           # fork + engine; the first run builds the chai
 open http://localhost:8000/riskpilot
 make demo-reset                   # back to the frozen block, same decision ids, ~3 s
 make hook-volatile                # a volatile spell through the hooked pool: fee 2,161 -> 8,976 pips
+make arc-setup SENDER=0x…        # Arc testnet: operator key, escrow (your wallet signs), gas, reserve
 make preflight                    # PASS/FAIL checks before a demo
 make down
 ```
@@ -190,7 +191,7 @@ confirmed 0x8f300cc3fd0da6f9dd23bfa91ff66fb21604205ad8afe041a825daa49507c16a in 
 
 | Contract | Chain | Address |
 |---|---|---|
-| RiskPilotEscrow | Arc testnet (5042002) | TBD (owner deploying: `make arc-deploy SENDER=0x905a…c697`) |
+| RiskPilotEscrow | Arc testnet (5042002) | TBD (owner deploying: `make arc-setup SENDER=0x905a…c697`) |
 | VolatilityFeeHook | Unichain Sepolia (1301) | TBD (owner deploying: `make -C contracts/hook deploy-unichain-sepolia SENDER=…`) |
 | VolatilityFeeHook | Demo fork (31337) | `0x3be896d4d9a52f2F29a6DB685B75E04ACAcF1080` (CREATE2; local only) |
 

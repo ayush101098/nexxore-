@@ -1,6 +1,8 @@
 // RiskPilot /riskpilot end-to-end suite (PRD 6). Runs against the live demo chain and engine.
 import { expect, test, type Page } from "@playwright/test";
-import { curves, DEMO_WALLET, engineJson, fixed, freshWallet, hookDeployment, installWallet, rpc, startEngine, stopEngine, takerFill, usd } from "./stack";
+import { allowance, curves, DEMO_WALLET, engineJson, fixed, freshWallet, hookDeployment, installWallet, rpc, startEngine, stopEngine, takerFill, usd } from "./stack";
+
+const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", AQUA = "0x1111113CCf1426A8E30e2bfF5E005d929bF6a90a";
 
 const row = (page: Page, label: string) => page.locator(`[data-testid=opp-row][data-label^="${label}"]`);
 const money = (text: string) => Number(text.replace(/[$,\s]/g, "").replace("−", "-"));
@@ -127,9 +129,22 @@ test("4b. swap through the hooked v4 pool: tx appears, receipt verified, fee pai
     await expect(swap).toContainText(/Quoted \d\.\d\d% · paid \d\.\d\d%/);
     test.info().annotations.push({ type: "fee", description: `quoted ${Math.round(Number(d.inputs.request.market.fee_rate) * 1e6)} pips, paid ${fee} pips` });
     await expect(swap.getByTestId("verify-result")).toContainText("success"); // read from the receipt, no button
+    // The approval was for the swap's exact amount: the router pulled all of it, none is left over.
+    expect(await allowance(WETH, DEMO_WALLET, h.swap_router)).toBe(0n);
   } finally {
     await rpc("evm_revert", [snap]);
   }
+});
+
+test("4c. a stale wallet nonce after demo-reset gives a plain instruction, not a raw RPC error", async ({ page }) => {
+  await installWallet(page, DEMO_WALLET, undefined, { sendError: "Nonce too high. Expected nonce to be 37 but got 52. Note that transactions can't be queued when automining." });
+  await page.goto("/riskpilot");
+  await expect(page.locator("[data-testid=opp-row]")).toHaveCount(ROWS);
+  await select(page, "Price gap · static");
+  await page.getByTestId("approve").click();
+  await expect(page.locator("#log")).toContainText("Reset your wallet's activity data", { timeout: 20_000 });
+  await expect(page.locator("#log")).not.toContainText("Expected nonce to be");
+  await expect(page.getByTestId("approve")).toBeEnabled(); // the decision is still live: try again after the reset
 });
 
 test("5. one click ships the curve; ship and fill receipts verified automatically", async ({ page }) => {
@@ -143,6 +158,10 @@ test("5. one click ships the curve; ship and fill receipts verified automaticall
   const fill = page.getByTestId("fill-tx").first();
   await expect(fill).toBeVisible({ timeout: 20_000 });
   for (const tx of [ship, fill]) await expect(tx.getByTestId("verify-result")).toContainText("success");
+  // The WETH approval for Aqua is exactly the curve's 7 WETH, not unlimited (ship pulls nothing; fills draw on it).
+  const left = await allowance(WETH, DEMO_WALLET, AQUA);
+  expect(left).toBeLessThanOrEqual(7n * 10n ** 18n);
+  expect(left).toBeGreaterThan(0n);
 });
 
 test("5c. after the curve ships, the v4 sale is refused by the cross-primitive collateral check", async ({ page }) => {

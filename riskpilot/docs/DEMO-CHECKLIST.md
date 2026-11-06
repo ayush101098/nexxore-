@@ -10,8 +10,8 @@
 3. **`make preflight`**: every line must read PASS.
    - WARN for the ephemeral engine key is acceptable. Set `RISKPILOT_ENGINE_KEY` in your terminal
      to remove it.
-   - Arc lines FAIL until `contracts/arc/deployments/arc-testnet.json` exists
-     (`make arc-deploy SENDER=0x905a…c697`).
+   - Arc lines FAIL until `contracts/arc/deployments/arc-testnet.json` exists. Run
+     `make arc-setup SENDER=0x905a…c697` once, before `make up`: about 4 wallet prompts.
 4. **Clear MetaMask activity data.** Settings → Advanced → Clear activity tab data. The reset
    rewinds the fork, so MetaMask's cached nonce and history for chain 31337 are now wrong.
 5. **Open the page:** http://localhost:8000/riskpilot. Connect the wallet on chain 31337 (RPC

@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test";
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { installWallet, ROOT, engineJson } from "./stack";
+import { allowance, DEMO_WALLET, installWallet, ROOT, engineJson } from "./stack";
 
 test.skip(!process.env.ARC, "Arc rehearsal only: ARC=1 E2E_EXTERNAL=1");
 const ARC_RPC = "http://127.0.0.1:8547";
@@ -35,8 +35,19 @@ test("one click: ship the call-like curve, fund on Arc, the worker settles; a re
     new MutationObserver(() => { const t = btn.textContent ?? ""; if (w.__steps.at(-1) !== t) w.__steps.push(t); })
       .observe(btn, { childList: true, characterData: true, subtree: true });
   });
+  const t0 = Date.now();
   await btn.click();
   await expect(page.locator("#decision").getByTestId("settle-chip")).toHaveAttribute("data-status", "Settled", { timeout: 60_000 });
+  const clickToSettled = Date.now() - t0;
+  test.info().annotations.push({ type: "latency", description: `click to Settled ${clickToSettled} ms` });
+  console.log(`click to Settled: ${clickToSettled} ms`);
+  // The button kept its step state across the chain switch (it never fell back to "Approve and sign").
+  const states: string[] = await page.evaluate(() => (window as any).__steps);
+  const sw = states.findIndex((s) => /Switching to Arc/.test(s));
+  expect(states.slice(sw).some((s) => /^Approve and sign/.test(s))).toBe(false);
+  // The wallet is back on the demo chain afterwards, and the escrow approval was the exact stake.
+  expect(await page.evaluate(() => (window as any).ethereum.request({ method: "eth_chainId" }))).toBe("0x7a69");
+  expect(await allowance(dep().usdc, DEMO_WALLET, dep().escrow, ARC_RPC)).toBe(0n);
   const steps: string[] = await page.evaluate(() => (window as any).__steps);
   test.info().annotations.push({ type: "steps", description: steps.join(" → ") });
   console.log("steps:", steps.join(" → "));

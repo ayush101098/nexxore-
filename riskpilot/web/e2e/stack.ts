@@ -100,14 +100,15 @@ import { execSync as exec } from "node:child_process";
 export const DEMO_WALLET = "0x905aCd442c7B3EF9BfEB0A3189f3686c1Cd0c697";
 const CHAIN_RPC: Record<number, string> = { 31337: RPC, 5042002: "http://127.0.0.1:8547" };
 
-async function rpcAt<T = any>(url: string, method: string, params: unknown[] = []): Promise<T> {
+export async function rpcAt<T = any>(url: string, method: string, params: unknown[] = []): Promise<T> {
   const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
   const j = await r.json();
   if (j.error) throw Object.assign(new Error(j.error.message), { code: j.error.code });
   return j.result;
 }
 
-export async function installWallet(page: Page, address: string = DEMO_WALLET, privateKey?: `0x${string}`) {
+/** sendError: make every eth_sendTransaction fail with this message (e.g. MetaMask's stale-nonce text). */
+export async function installWallet(page: Page, address: string = DEMO_WALLET, privateKey?: `0x${string}`, opts: { sendError?: string } = {}) {
   const account = privateKey ? privateKeyToAccount(privateKey) : null;
   await page.exposeFunction("__rpWallet", async (method: string, params: any[], chainId: number) => {
     const url = CHAIN_RPC[chainId];
@@ -118,6 +119,7 @@ export async function installWallet(page: Page, address: string = DEMO_WALLET, p
         if (!account) throw Object.assign(new Error("this test wallet holds no key: it cannot sign messages"), { code: 4100 });
         return account.signMessage({ message: { raw: params[0] } });
       case "eth_sendTransaction":
+        if (opts.sendError) throw Object.assign(new Error(opts.sendError), { code: -32603 });
         await rpcAt(url, "anvil_impersonateAccount", [address]);
         return rpcAt(url, "eth_sendTransaction", params);
       default: return rpcAt(url, method, params);
@@ -149,4 +151,10 @@ export function freshWallet(): { address: string; key: `0x${string}` } {
   const key = generatePrivateKey(), address = privateKeyToAccount(key).address;
   exec(`./scripts/deal.sh ${address} 992 8 5000 ${RPC}`, { cwd: ROOT, stdio: "ignore" });
   return { address, key };
+}
+
+const word = (a: string) => a.slice(2).toLowerCase().padStart(64, "0");
+/** ERC-20 allowance(owner, spender) on a chain (default: the demo fork). */
+export async function allowance(token: string, owner: string, spender: string, url: string = RPC): Promise<bigint> {
+  return BigInt(await rpcAt<string>(url, "eth_call", [{ to: token, data: "0xdd62ed3e" + word(owner) + word(spender) }, "latest"]));
 }
