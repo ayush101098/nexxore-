@@ -4,6 +4,7 @@ pragma solidity 0.8.30;
 import { Script, console } from "forge-std/Script.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IAqua } from "@1inch/aqua/src/interfaces/IAqua.sol";
+import { TakerTraitsLib } from "@1inch/swap-vm/src/libs/TakerTraits.sol";
 
 import { AquaCollateral } from "../src/AquaCollateral.sol";
 import { AquaCurves } from "../src/AquaCurves.sol";
@@ -54,10 +55,39 @@ contract ShipDemoCurves is Script, AquaCurves {
         vm.serializeAddress(root, "aqua", DemoParams.AQUA);
         vm.serializeUint(root, "fork_block", vm.envOr("AQUA_FORK_BLOCK", DemoParams.FORK_BLOCK));
         vm.serializeUint(root, "spot_usdc", DemoParams.SPOT);
+        // Exact-in taker data for router.quote(), built with swap-vm's own TakerTraitsLib so the
+        // page can quote curves (and cap them at the curve's real Aqua balance) without re-encoding.
+        vm.serializeBytes(root, "taker_data_exact_in", _exactInTakerData());
         vm.serializeString(root, "upside", _curveJson("upside", "call_like", up, hUp, DemoParams.UPSIDE_FEE));
         string memory out =
             vm.serializeString(root, "downside", _curveJson("downside", "put_like", down, hDown, DemoParams.DOWNSIDE_FEE));
         vm.writeJson(out, "./demo/curves.json");
+    }
+
+    function _exactInTakerData() internal pure returns (bytes memory) {
+        return TakerTraitsLib.build(
+            TakerTraitsLib.Args({
+                taker: address(0),
+                isExactIn: true,
+                shouldUnwrapWeth: false,
+                isStrictThresholdAmount: false,
+                isFirstTransferFromTaker: false,
+                useTransferFromAndAquaPush: true,
+                threshold: "",
+                to: address(0),
+                deadline: 0,
+                hasPreTransferInCallback: false,
+                hasPreTransferOutCallback: false,
+                preTransferInHookData: "",
+                postTransferInHookData: "",
+                preTransferOutHookData: "",
+                postTransferOutHookData: "",
+                preTransferInCallbackData: "",
+                preTransferOutCallbackData: "",
+                instructionsArgs: "",
+                signature: ""
+            })
+        );
     }
 
     function _curveJson(string memory key, string memory side, Curve memory c, bytes32 h, uint32 fee)
