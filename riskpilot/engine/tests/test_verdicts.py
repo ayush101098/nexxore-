@@ -94,7 +94,7 @@ def _approve_with(mutate) -> dict:
         (
             lambda r: r["market"].update(hedge={"ratio": "0", "cost": "0"}),
             "REJECT",
-            "Rejected: post-trade stress loss $4,027.09 at -40% spot above $250.00 budget (+$4,000.00 from this trade)",
+            "Rejected: adds $4,000.00 worst-case loss; limit $250 (post-trade worst case $4,027.09 at -40% spot)",
         ),
     ],
 )
@@ -198,7 +198,7 @@ def test_without_holdings_the_same_curve_counts_as_new_exposure():
     request["holdings"] = None
     decision = decide(request)
     assert decision["stress_loss_before"] == "0.00"
-    assert decision["reason"].startswith("Rejected: post-trade stress loss $1,353.56")
+    assert decision["reason"].startswith("Rejected: adds $1,353.56 worst-case loss; limit $250")
 
 
 def test_holdings_lower_risk_for_an_offsetting_price_gap_trade():

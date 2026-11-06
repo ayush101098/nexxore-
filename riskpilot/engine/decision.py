@@ -1,8 +1,10 @@
 """generate_execution_decision: a resolved EvaluateRequest -> Decision.
 
 Deterministic: no clock reads and no randomness. The caller supplies as_of,
-and decision_id is a hash of the whole request, so the same request always
-gives the same Decision. Decision.inputs.request replays it.
+and decision_id is a hash of the request, the block it was read at and the engine
+version, so the same request always gives the same Decision. With a block, the
+hash uses timestamps relative to as_of: every rule depends only on input ages, so
+re-reading the same block later gives the same id. Decision.inputs.request replays it.
 
 E_net = q (P_exit - P_entry) - C_gas - C_slip - C_fees - C_hedge
         - lambda * max(0, L_after - L_before)
@@ -16,14 +18,14 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from models import EvaluateRequest
 from pricing import aqua_position, aqua_premium_floor
-from profiles import PROFILES
+from profiles import TTL_S, get_profile
 from schemas import validate
 from stress import run_stress_test
 
 MODEL_VERSION = "engine-0.1.0"
 MAX_INPUT_AGE_S = 30
 MAX_CLOCK_SKEW_S = 5
-DECISION_TTL_S = 30
+DECISION_TTL_S = TTL_S
 SECONDS_PER_YEAR = 365 * 24 * 3600
 
 # Inputs outside these bounds are treated as a bad feed, not a trade signal.
@@ -51,6 +53,11 @@ def fmt_usd(d: Decimal) -> str:
     return f"{'-' if d < 0 else ''}${abs(d):,.2f}"
 
 
+def fmt_limit(d: Decimal) -> str:
+    """A configured limit: whole dollars print without cents ($250)."""
+    return f"${d:,.0f}" if d == d.to_integral_value() else fmt_usd(d)
+
+
 def iso(dt: datetime) -> str:
     return dt.isoformat().replace("+00:00", "Z")
 
@@ -59,8 +66,24 @@ def _seconds(delta: timedelta) -> str:
     return f"{delta.total_seconds():g}"
 
 
+def _relative(obj, as_of: datetime):
+    """Every timestamp (keys ending in _at) as seconds from as_of; as_of itself dropped."""
+    if isinstance(obj, dict):
+        return {
+            k: (f"{(datetime.fromisoformat(v) - as_of).total_seconds():g}" if isinstance(v, str) and k.endswith("_at") else _relative(v, as_of))
+            for k, v in obj.items() if k != "as_of"
+        }
+    if isinstance(obj, list):
+        return [_relative(v, as_of) for v in obj]
+    return obj
+
+
 def _decision_id(req: EvaluateRequest) -> str:
-    canonical = json.dumps([MODEL_VERSION, req.model_dump(mode="json")], sort_keys=True, separators=(",", ":"))
+    """hash(inputs, block, engine version)."""
+    body = req.model_dump(mode="json")
+    if req.block is not None:
+        body = _relative(body, req.as_of)
+    canonical = json.dumps([MODEL_VERSION, req.block, body], sort_keys=True, separators=(",", ":"))
     return "dec_" + hashlib.sha256(canonical.encode()).hexdigest()[:16]
 
 
@@ -98,13 +121,14 @@ def _sanity_failure(req: EvaluateRequest) -> str | None:
     return None
 
 
-def _premium_floor(req: EvaluateRequest) -> dict | None:
+def _premium_floor(req: EvaluateRequest, margin: Decimal) -> dict | None:
     """Aqua premium rule inputs (K_eq, T_eq, C_eq, f_min) when the curve params are usable."""
     a, m = req.aqua, req.market
     if a is None or not (0 < a.range_low < a.range_high and m.volatility.annualized > 0 and m.quote.mid > 0):
         return None
     return aqua_premium_floor(
-        float(m.quote.mid), float(a.range_low), float(a.range_high), a.side, float(m.volatility.annualized)
+        float(m.quote.mid), float(a.range_low), float(a.range_high), a.side, float(m.volatility.annualized),
+        float(margin),
     )
 
 
@@ -202,14 +226,15 @@ def _proposed_aqua_position(req: EvaluateRequest, q: float) -> dict:
 
 
 def generate_execution_decision(req: EvaluateRequest) -> dict:
-    opp, m, profile = req.opportunity, req.market, PROFILES[req.profile]
+    opp, m, profile = req.opportunity, req.market, get_profile(req.profile)
+    budget = req.budget if req.budget is not None else profile.budget
     reference = Decimal(opp["reference_price"])
     mid = m.quote.mid
     zero = usd(0)
     gross, costs, risk_charge, hurdle = zero, dict.fromkeys(["gas", "slippage", "fees", "hedge"], zero), zero, zero
     loss_before = loss_after = uncertainty = zero
     proposed = None
-    floor = _premium_floor(req)
+    floor = _premium_floor(req, profile.aqua_margin)
 
     shortfall = worst_after = None
     stress_grid = []
@@ -266,7 +291,7 @@ def generate_execution_decision(req: EvaluateRequest) -> dict:
 
     if verdict is None:
         verdict, reason = _verdict(
-            req, gross, costs, risk_charge, net, hurdle, loss_before, loss_after, worst_after, profile.budget,
+            req, gross, costs, risk_charge, net, hurdle, loss_before, loss_after, worst_after, budget,
             floor, shortfall,
         )
 
@@ -281,7 +306,7 @@ def generate_execution_decision(req: EvaluateRequest) -> dict:
         "net_edge": str(net),
         "stress_loss_before": str(loss_before),
         "stress_loss_after": str(loss_after),
-        "budget": str(profile.budget),
+        "budget": str(usd(budget)),
         "reason": reason,
         "inputs": {
             "prices": {
@@ -303,6 +328,8 @@ def generate_execution_decision(req: EvaluateRequest) -> dict:
             "aqua": _floor_inputs(req, floor),
             "stress_grid": stress_grid,
             "proposed_position": proposed,
+            "profile": {"name": profile.name, "lambda": str(profile.lam), "min_edge": str(profile.min_edge),
+                        "k": str(profile.k), "aqua_margin": str(profile.aqua_margin), **(req.derived or {})},
             "request": req.model_dump(mode="json"),
         },
         "model_version": MODEL_VERSION,
@@ -349,10 +376,9 @@ def _verdict(
     # 4. post-trade stress. A trade that does not raise the worst loss (e.g. a covered call on
     #    held ETH) is not blocked by losses the wallet already carried.
     if loss_after > budget and loss_after > loss_before:
-        added = f" (+{fmt_usd(loss_after - loss_before)} from this trade)" if loss_before else ""
         return "REJECT", (
-            f"Rejected: post-trade stress loss {fmt_usd(loss_after)} at {_scenario(worst_after)} "
-            f"above {fmt_usd(budget)} budget{added}"
+            f"Rejected: adds {fmt_usd(loss_after - loss_before)} worst-case loss; limit {fmt_limit(budget)} "
+            f"(post-trade worst case {fmt_usd(loss_after)} at {_scenario(worst_after)})"
         )
     # 5. net edge
     if net < hurdle:

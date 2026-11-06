@@ -181,3 +181,9 @@ def seed_requests(
         "holdings": None if holdings is None else {"weth": str(holdings.weth), "usdc": str(holdings.usdc)},
         "sources": sources,
     }
+
+
+def opportunity_key(req: EvaluateRequest) -> str:
+    """Stable across blocks and reseeds (the decision id is not): what the page keeps selected."""
+    o = req.opportunity
+    return ":".join([o["type"], o["source_venue"], req.aqua.side if req.aqua else o["target"]])

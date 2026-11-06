@@ -78,7 +78,12 @@ class Holdings(_Model):
     usdc: Decimal = Decimal("0")
 
 
-Profile = Literal["conservative", "balanced", "aggressive"]
+# "balanced" is the pre-hardening name for moderate; it is accepted and normalized.
+Profile = Literal["conservative", "moderate", "aggressive", "balanced"]
+
+
+def _normalize_profile(v: str) -> str:
+    return "moderate" if v == "balanced" else v
 
 
 class EvaluateRequest(_Model):
@@ -94,6 +99,14 @@ class EvaluateRequest(_Model):
     gas_budget: Decimal = Decimal("25.00")
     aqua: AquaCurveParams | None = None  # required for aqua_premium opportunities
     holdings: Holdings | None = None  # None: the trade is measured against the book alone
+    budget: Decimal | None = None  # derived stress budget; None: the profile's cap
+    block: int | None = None  # chain block the market was read at; part of the decision id
+    derived: dict | None = None  # how budget, slippage, size cap and gas ceiling were derived
+
+    @field_validator("profile")
+    @classmethod
+    def _profile(cls, v: str) -> str:
+        return _normalize_profile(v)
 
     @field_validator("opportunity")
     @classmethod
@@ -117,7 +130,7 @@ class EvaluateBody(_Model):
 
     opportunity: dict
     size: Decimal | None = None  # default: the opportunity's size
-    profile: Profile = "balanced"
+    profile: Profile = "moderate"
     market: Market | None = None  # default: fetched from the scanner source
     book: list[dict] | None = None  # default: open positions in the store
     as_of: AwareDatetime | None = None  # default: now

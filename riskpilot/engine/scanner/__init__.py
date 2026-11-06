@@ -72,7 +72,9 @@ def scan(pair: str, sources: list[Source], as_of: datetime, size: Decimal, min_g
         trade_size = size if cap is None else min(size, cap.quantize(Decimal("0.01")))
         if trade_size <= 0:
             continue  # the quote prices a direction the venue cannot fill
-        key = f"{q.venue}|{q.price}|{_iso(q.observed_at)}|{reference.price}"
+        # Deterministic: the same prices on the same venue are the same opportunity, whenever read
+        # (decision ids add the block). No clock time in the id.
+        key = f"{q.venue}|{q.price}|{reference.price}|{trade_size}"
         opp = {
             "opportunity_id": "opp_" + hashlib.sha256(key.encode()).hexdigest()[:12],
             "type": "price_gap",

@@ -34,7 +34,10 @@ def curves_file(tmp_path, monkeypatch):
     monkeypatch.setattr(demo, "DEMO_DIR", tmp_path)
 
 
-def client(holdings=None, gas=None, spot=None, gap=None) -> TestClient:
+CHAIN = {"block": 26354383, "base_fee_gwei": Decimal("0.000000007"), "tip_gwei": Decimal("0.000089"), "eth": Decimal("992")}
+
+
+def client(holdings=None, gas=None, spot=None, gap=None, chain=CHAIN, clock=lambda: NOW) -> TestClient:
     def down(value):
         def read(*_):
             if value is None:
@@ -43,15 +46,15 @@ def client(holdings=None, gas=None, spot=None, gap=None) -> TestClient:
         return read
 
     app = create_app(
-        Store(":memory:"), clock=lambda: NOW, holdings_reader=down(holdings), gas_reader=down(gas),
-        spot_reader=down(spot), gap_reader=down(gap),
+        Store(":memory:"), clock=clock, holdings_reader=down(holdings), gas_reader=down(gas),
+        spot_reader=down(spot), gap_reader=down(gap), chain_reader=down(chain),
     )
     return TestClient(app)
 
 
 def test_seed_gives_reject_reject_approve_from_chain_holdings():
     c = client(holdings=Holdings(weth="8", usdc="5000"), gas=Decimal("0.0875"), spot=Decimal("2218.55"))
-    body = c.post("/demo/seed").json()
+    body = c.post("/demo/seed?profile=moderate").json()
     assert body["wallet"] == MAKER
     assert body["sources"]["holdings"] == "demo chain"
     assert body["sources"]["spot"].startswith("demo chain")
@@ -71,14 +74,14 @@ def test_seed_gives_reject_reject_approve_from_chain_holdings():
     assert call["inputs"]["request"]["holdings"] == {"weth": "8", "usdc": "5000"}
     put = body["items"][1]["decision"]
     assert put["inputs"]["aqua"]["range_low"] == "1740.039215"
-    assert put["reason"].endswith("from this trade)")
+    assert put["reason"].startswith("Rejected: adds $629.93 worst-case loss; limit $250 (")
     assert len(call["inputs"]["stress_grid"]) == 14
     # Seeded decisions land in history.
     assert len(c.get("/decisions").json()) == 3
 
 
 def test_seed_without_the_chain_reports_sources_unavailable():
-    body = client().post("/demo/seed").json()
+    body = client(chain=None).post("/demo/seed?profile=moderate").json()
     assert body["holdings"] is None
     assert body["sources"]["holdings"].startswith("unavailable")
     assert body["sources"]["gas"].startswith("unavailable")
@@ -91,15 +94,17 @@ def test_seed_without_the_chain_reports_sources_unavailable():
 
 def test_replay_reproduces_the_stored_decision():
     c = client(holdings=Holdings(weth="8", usdc="5000"), gas=Decimal("0.0875"), spot=Decimal("2218.55"))
-    decision = c.post("/demo/seed").json()["items"][1]["decision"]
+    decision = c.post("/demo/seed?profile=moderate").json()["items"][1]["decision"]
     replay = c.post(f"/decisions/{decision['decision_id']}/replay").json()
     assert replay["matches"] is True
-    assert replay["decision"] == decision
+    assert replay["decision"] == {k: v for k, v in decision.items() if k != "signature"}
 
 
 def test_profiles_and_demo_info():
     c = client()
-    assert c.get("/profiles").json()["balanced"] == {"lambda": "0.5", "budget": "250.00", "min_edge": "5.00", "k": "2"}
+    moderate = c.get("/profiles").json()["moderate"]
+    assert {k: moderate[k] for k in ("lambda", "budget", "min_edge", "k")} == {"lambda": "0.5", "budget": "250.00", "min_edge": "5.00", "k": "2"}
+    assert (moderate["label"], moderate["budget_share"], moderate["aqua_margin"], moderate["max_slippage"]) == ("Moderate", "0.025", "0.20", "0.0050")
     assert c.get("/demo/info").json()["upside"]["fee_instruction"] == 2013952
 
 
@@ -122,7 +127,7 @@ def test_cors_allows_the_site_and_localhost_with_private_network_access():
 
 def test_settlement_payout_needs_an_executed_approve():
     c = client(holdings=Holdings(weth="8", usdc="5000"), gas=Decimal("0.0875"), spot=Decimal("2218.55"))
-    items = c.post("/demo/seed").json()["items"]
+    items = c.post("/demo/seed?profile=moderate").json()["items"]
     approved, rejected = items[2]["decision"], items[1]["decision"]
     assert c.get(f"/decisions/{rejected['decision_id']}/settlement?amount=10").status_code == 409
     assert c.get(f"/decisions/{approved['decision_id']}/settlement?amount=10").status_code == 409  # not executed
@@ -153,7 +158,7 @@ def test_seed_uses_the_live_hooked_pool_when_it_is_up():
     static = {**gap_opp, "opportunity_id": "opp_static", "source_venue": "uniswap_v4_static"}
     gaps = [("hooked v4 pool", gap_opp, market), ("static 0.30% v4 pool", static, {**market, "fee_rate": "0.003"})]
     c = client(holdings=Holdings(weth="8", usdc="5000"), gas=Decimal("1"), spot=Decimal("2218.55"), gap=gaps)
-    body = c.post("/demo/seed").json()
+    body = c.post("/demo/seed?profile=moderate").json()
     assert body["sources"]["price_gap"] == "demo chain: 2 v4 pools via StateView and V4Quoter"
     labels = [i["label"] for i in body["items"]]
     assert labels[:2] == ["Price gap · hooked v4 pool", "Price gap · static 0.30% v4 pool"]
