@@ -20,6 +20,13 @@ def _post(url: str, body: list) -> list:
         return json.load(resp)
 
 
+def read_gas_gwei(rpc_url: str, post: Callable[[str, list], list] = _post) -> Decimal:
+    [reply] = post(rpc_url, [{"jsonrpc": "2.0", "id": 0, "method": "eth_gasPrice", "params": []}])
+    if "error" in reply:
+        raise RuntimeError(f"rpc error reading gas price: {reply['error']}")
+    return (Decimal(int(reply["result"], 16)) / Decimal(10**9)).quantize(Decimal("0.000001"))
+
+
 def read_holdings(rpc_url: str, wallet: str, post: Callable[[str, list], list] = _post) -> Holdings:
     if not (wallet.startswith("0x") and len(wallet) == 42):
         raise ValueError(f"not an address: {wallet!r}")

@@ -2,19 +2,23 @@
 
 import math
 import os
+from decimal import Decimal
 from collections.abc import Callable
 from datetime import datetime, timezone
 
 import jsonschema
 import pydantic
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
 
 from decision import MODEL_VERSION, generate_execution_decision, iso, usd
+from demo import load_curves, seed_requests
 from models import AquaPriceBody, EvaluateBody, EvaluateRequest, Holdings, ScanBody, StressBody
 from pricing import DAYS_PER_YEAR, aqua_position, aqua_premium_floor
+from profiles import PROFILES
 from scanner import Source, scan
-from scanner.holdings import DEFAULT_RPC, read_holdings
+from scanner.holdings import DEFAULT_RPC, read_gas_gwei, read_holdings
 from scanner.live import AquaRouterSource, HookedV4PoolSource, UniswapTradingApiSource
 from scanner.recorded import RecordedSource
 from schemas import validate
@@ -23,6 +27,11 @@ from stress import run_stress_test
 
 # SwapVM flat-fee units: 1e9 = 100% (swap-vm v1.0.2 Fee.sol BPS).
 FEE_BPS = 10**9
+
+PAGE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "web", "index.html")
+# Where the /riskpilot page may call the engine from: the deployed site and local dev servers.
+CORS_ORIGINS = ["https://nexxore.xyz", "https://www.nexxore.xyz"]
+CORS_LOCAL = r"http://(localhost|127\.0\.0\.1)(:\d+)?"
 
 POSITION_STATUS = {"pending": "pending", "confirmed": "open", "reverted": "failed"}
 
@@ -40,14 +49,34 @@ def _chain_holdings(wallet: str) -> Holdings:
     return read_holdings(os.environ.get("DEMO_RPC_URL", DEFAULT_RPC), wallet)
 
 
+def _chain_gas() -> Decimal:
+    return read_gas_gwei(os.environ.get("DEMO_RPC_URL", DEFAULT_RPC))
+
+
 def create_app(
     store: Store,
     sources: dict[str, Source] | None = None,
     clock: Callable[[], datetime] = _utcnow,
     holdings_reader: Callable[[str], Holdings] = _chain_holdings,
+    gas_reader: Callable[[], Decimal] = _chain_gas,
 ) -> FastAPI:
     sources = sources if sources is not None else default_sources()
     app = FastAPI(title="RiskPilot engine", version=MODEL_VERSION)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=CORS_ORIGINS,
+        allow_origin_regex=CORS_LOCAL,
+        allow_methods=["GET", "POST"],
+        allow_headers=["content-type"],
+    )
+
+    @app.middleware("http")
+    async def _private_network(request: Request, call_next):
+        # Chrome asks before a public page (nexxore.xyz) calls a localhost engine.
+        response = await call_next(request)
+        if request.headers.get("access-control-request-private-network") == "true":
+            response.headers["Access-Control-Allow-Private-Network"] = "true"
+        return response
 
     @app.exception_handler(jsonschema.ValidationError)
     async def _schema_error(_: Request, e: jsonschema.ValidationError):
@@ -188,6 +217,44 @@ def create_app(
         if decision is None:
             raise HTTPException(404, f"unknown decision {decision_id}")
         return decision
+
+    @app.get("/profiles")
+    def get_profiles() -> dict:
+        return {
+            name: {"lambda": str(p.lam), "budget": str(p.budget), "min_edge": str(p.min_edge), "k": str(p.k)}
+            for name, p in PROFILES.items()
+        }
+
+    @app.post("/demo/seed")
+    def post_demo_seed(wallet: str | None = None) -> dict:
+        """Evaluate the three demo opportunities now, store the decisions, return both."""
+        requests, report = seed_requests(clock(), wallet, holdings_reader, gas_reader)
+        items = []
+        for label, req in requests:
+            decision = generate_execution_decision(req)
+            store.save_decision(decision)
+            items.append({"label": label, "opportunity": req.opportunity, "decision": decision})
+        return {**report, "as_of": iso(clock()), "items": items}
+
+    @app.get("/demo/info")
+    def get_demo_info() -> dict:
+        curves = load_curves()
+        if curves is None:
+            raise HTTPException(404, "no demo/curves.json; run make demo-chain in contracts/aqua")
+        return curves
+
+    @app.post("/decisions/{decision_id}/replay")
+    def post_replay(decision_id: str) -> dict:
+        """Re-run a stored decision from its recorded inputs; it must come out identical."""
+        stored = store.get_decision(decision_id)
+        if stored is None:
+            raise HTTPException(404, f"unknown decision {decision_id}")
+        replayed = generate_execution_decision(EvaluateRequest.model_validate(stored["inputs"]["request"]))
+        return {"matches": replayed == stored, "decision": replayed}
+
+    @app.get("/riskpilot", include_in_schema=False)
+    def get_page() -> FileResponse:
+        return FileResponse(PAGE, media_type="text/html")
 
     @app.get("/health")
     def health() -> dict:

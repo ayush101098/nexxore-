@@ -212,6 +212,7 @@ def generate_execution_decision(req: EvaluateRequest) -> dict:
     floor = _premium_floor(req)
 
     shortfall = worst_after = None
+    stress_grid = []
     verdict, reason = None, _sanity_failure(req)
     if reason:
         verdict = "REQUIRE_REVIEW"
@@ -243,9 +244,19 @@ def generate_execution_decision(req: EvaluateRequest) -> dict:
         # into the curve position, so it leaves the after-book's spot holdings.
         before = req.book + _holdings_spot(req, committed=0.0)
         after = req.book + _holdings_spot(req, committed=committed_weth) + [proposed]
-        loss_before = usd(run_stress_test(before, spot=float(mid))["worst_loss"])
+        unstressed = run_stress_test(before, spot=float(mid))
         stressed = run_stress_test(after, spot=float(mid))
+        loss_before = usd(unstressed["worst_loss"])
         loss_after, worst_after = usd(stressed["worst_loss"]), stressed["worst_scenario"]
+        stress_grid = [
+            {
+                "spot_shock": f"{a['spot_shock']:.2f}",
+                "vol_shock": f"{a['vol_shock']:.2f}",
+                "pnl_before": str(usd(b["pnl"])),
+                "pnl_after": str(usd(a["pnl"])),
+            }
+            for b, a in zip(unstressed["scenarios"], stressed["scenarios"])
+        ]
         risk_charge = usd(profile.lam * max(zero, loss_after - loss_before))
         latency_years = float(m.quote.latency_seconds) / SECONDS_PER_YEAR
         uncertainty = usd(float(mid) * float(m.volatility.annualized) * math.sqrt(latency_years) * q)
@@ -290,6 +301,7 @@ def generate_execution_decision(req: EvaluateRequest) -> dict:
             "uncertainty": str(uncertainty),
             "hurdle": str(hurdle),
             "aqua": _floor_inputs(req, floor),
+            "stress_grid": stress_grid,
             "proposed_position": proposed,
             "request": req.model_dump(mode="json"),
         },
@@ -337,9 +349,10 @@ def _verdict(
     # 4. post-trade stress. A trade that does not raise the worst loss (e.g. a covered call on
     #    held ETH) is not blocked by losses the wallet already carried.
     if loss_after > budget and loss_after > loss_before:
+        added = f" (+{fmt_usd(loss_after - loss_before)} from this trade)" if loss_before else ""
         return "REJECT", (
             f"Rejected: post-trade stress loss {fmt_usd(loss_after)} at {_scenario(worst_after)} "
-            f"above {fmt_usd(budget)} budget"
+            f"above {fmt_usd(budget)} budget{added}"
         )
     # 5. net edge
     if net < hurdle:
@@ -349,8 +362,8 @@ def _verdict(
             items.append(f"{fmt_usd(risk_charge)} risk charge")
         return "REJECT", f"Rejected: net edge {fmt_usd(net)} below {fmt_usd(hurdle)} hurdle ({', '.join(items)})"
     # 6. approve
-    return (
-        "APPROVE",
-        f"Approved: net edge {fmt_usd(net)} clears {fmt_usd(hurdle)} hurdle; "
-        f"stress loss {fmt_usd(loss_after)} within {fmt_usd(budget)} budget",
-    )
+    if loss_after > budget:  # passed rule 4 only because the trade lowers the worst loss
+        risk = f"worst stress loss falls from {fmt_usd(loss_before)} to {fmt_usd(loss_after)}"
+    else:
+        risk = f"stress loss {fmt_usd(loss_after)} within {fmt_usd(budget)} budget"
+    return "APPROVE", f"Approved: net edge {fmt_usd(net)} clears {fmt_usd(hurdle)} hurdle; {risk}"

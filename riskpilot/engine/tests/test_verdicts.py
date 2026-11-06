@@ -94,7 +94,7 @@ def _approve_with(mutate) -> dict:
         (
             lambda r: r["market"].update(hedge={"ratio": "0", "cost": "0"}),
             "REJECT",
-            "Rejected: post-trade stress loss $4,027.09 at -40% spot above $250.00 budget",
+            "Rejected: post-trade stress loss $4,027.09 at -40% spot above $250.00 budget (+$4,000.00 from this trade)",
         ),
     ],
 )
