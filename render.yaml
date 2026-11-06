@@ -1,0 +1,35 @@
+# Render blueprint: the always-on RiskPilot agent (riskpilot/Dockerfile).
+# New > Blueprint > this repo. Render asks for the four secrets marked sync: false.
+services:
+  - type: web
+    name: riskpilot-agent
+    runtime: docker
+    dockerfilePath: ./riskpilot/Dockerfile
+    dockerContext: ./riskpilot
+    plan: starter            # always on (the free plan sleeps after 15 minutes idle)
+    region: singapore
+    branch: main
+    healthCheckPath: /v1/health
+    autoDeploy: true
+    buildFilter:
+      paths:
+        - riskpilot/Dockerfile
+        - riskpilot/deploy/**
+        - riskpilot/engine/**
+        - riskpilot/shared/**
+        - riskpilot/contracts/arc/deployments/**
+    disk:                    # decisions, profiles, settlements and assistant answers survive restarts
+      name: riskpilot-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: AQUA_FORK_RPC_URL   # an Ethereum mainnet archive RPC (Alchemy)
+        sync: false
+      - key: ZG_API_KEY          # 0G Private Computer, for Ask RiskPilot
+        sync: false
+      - key: ARC_OPERATOR_KEY    # the arc-worker's operator key (riskpilot/.secrets/arc-operator.key)
+        sync: false
+      - key: RISKPILOT_ENGINE_KEY  # decision signatures (riskpilot/.secrets/engine.key)
+        sync: false
+      - key: ARC_RPC_URL
+        value: https://rpc.testnet.arc.io

@@ -425,12 +425,18 @@ let API = ENGINE + "/v1";
 // a visitor's wallet for anything. ?readonly=1 forces it.
 const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && !qs.has("public");
 const READ_ONLY = qs.get("readonly") === "1";
+// Off localhost the demo chain is always read through the engine's /v1/rpc gateway.
 async function resolveEndpoints() {
-  if (LOCAL || qs.has("engine")) return;
-  try {
+  if (LOCAL) return;
+  const use = (url) => { ENGINE = url.replace(/\/$/, ""); API = ENGINE + "/v1"; if (!qs.has("rpc")) RPC = ENGINE + "/v1/rpc"; };
+  if (qs.has("engine")) return use(qs.get("engine"));
+  try {  // nexxore.xyz: the always-on agent's address, in web/live.json
     const live = await (await fetch("/riskpilot/web/live.json", { cache: "no-cache" })).json();
-    if (live?.engine) { ENGINE = live.engine.replace(/\/$/, ""); API = ENGINE + "/v1"; RPC = ENGINE + "/v1/rpc"; }
-  } catch { /* no live endpoint published: the page says the agent is offline */ }
+    if (live?.engine) return use(live.engine);
+  } catch { /* not published here */ }
+  try {  // served by the engine itself (e.g. the agent's own /riskpilot)
+    if ((await fetch(location.origin + "/v1/health", { cache: "no-cache" })).ok) return use(location.origin);
+  } catch { /* the page says the agent is offline */ }
 }
 // Arc testnet, or the local Arc stand-in (make arc-rehearsal) when arcRpc points at localhost.
 const ARC_LOCAL = /localhost|127\.0\.0\.1/.test(ARC.rpc);
