@@ -25,6 +25,16 @@ DEMO_DIR = Path(os.environ.get("RISKPILOT_DEMO_DIR", Path(__file__).resolve().pa
 FEE_UNITS = Decimal(10**9)  # SwapVM flat fee: 1e9 = 100%
 
 
+ARC_DEPLOYMENT = Path(
+    os.environ.get("RISKPILOT_ARC_DEPLOYMENT", Path(__file__).resolve().parents[1] / "contracts" / "arc" / "deployments" / "arc-testnet.json")
+)
+
+
+def load_arc() -> dict | None:
+    """RiskPilotEscrow on Arc testnet, written by make deploy-arc-testnet."""
+    return json.loads(ARC_DEPLOYMENT.read_text()) if ARC_DEPLOYMENT.exists() else None
+
+
 def load_curves() -> dict | None:
     path = DEMO_DIR / "curves.json"
     return json.loads(path.read_text()) if path.exists() else None

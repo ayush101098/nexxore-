@@ -111,3 +111,23 @@ def test_cors_allows_the_site_and_localhost_with_private_network_access():
         assert r.headers["access-control-allow-private-network"] == "true"
     r = c.get("/profiles", headers={"Origin": "https://evil.example"})
     assert "access-control-allow-origin" not in r.headers
+
+
+def test_settlement_payout_needs_an_executed_approve():
+    c = client(holdings=Holdings(weth="6", usdc="5000"), gas=Decimal("0.0875"))
+    items = c.post("/demo/seed").json()["items"]
+    approved, rejected = items[2]["decision"], items[1]["decision"]
+    assert c.get(f"/decisions/{rejected['decision_id']}/settlement?amount=10").status_code == 409
+    assert c.get(f"/decisions/{approved['decision_id']}/settlement?amount=10").status_code == 409  # not executed
+
+    tx = "0x" + "cd" * 32
+    c.post("/executions", json={"decision_id": approved["decision_id"], "chain_id": 31337, "tx_hash": tx,
+                                "status": "confirmed", "verified_at": "2026-11-06T14:00:05Z", "settlement_tx": None})
+    s = c.get(f"/decisions/{approved['decision_id']}/settlement?amount=10").json()
+    expected = Decimal(10) * (1 + Decimal(approved["net_edge"]) / Decimal(approved["inputs"]["request"]["size"]))
+    assert Decimal(s["payout"]) == expected.quantize(Decimal("0.000001"))
+    assert s["execution_tx"] == tx
+
+    settle_tx = "0x" + "ef" * 32
+    e = c.post(f"/decisions/{approved['decision_id']}/settlement", json={"settlement_tx": settle_tx}).json()
+    assert e["settlement_tx"] == settle_tx and e["tx_hash"] == tx

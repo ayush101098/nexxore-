@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
 from decision import MODEL_VERSION, generate_execution_decision, iso, usd
-from demo import load_curves, seed_requests
+from demo import load_arc, load_curves, seed_requests
 from models import AquaPriceBody, EvaluateBody, EvaluateRequest, Holdings, ScanBody, StressBody
 from pricing import DAYS_PER_YEAR, aqua_position, aqua_premium_floor
 from profiles import PROFILES
@@ -251,6 +251,9 @@ def create_app(
             except (OSError, RuntimeError, ValueError) as e:
                 live = {"error": str(e)}
             info["hook"] = {**hook, "live": live}
+        arc = load_arc()
+        if arc is not None:
+            info["arc"] = arc
         return info
 
     @app.post("/decisions/{decision_id}/replay")
@@ -261,6 +264,48 @@ def create_app(
             raise HTTPException(404, f"unknown decision {decision_id}")
         replayed = generate_execution_decision(EvaluateRequest.model_validate(stored["inputs"]["request"]))
         return {"matches": replayed == stored, "decision": replayed}
+
+    @app.get("/decisions/{decision_id}/settlement")
+    def get_settlement(decision_id: str, amount: Decimal) -> dict:
+        """Payout for `amount` USDC escrowed on Arc against an executed, approved decision.
+
+        Demo rule: the escrow earns the decision's net edge pro rata to its size,
+        payout = amount * (1 + net_edge / size). It is the engine's priced result for the
+        verified execution, not a realized P&L measurement.
+        """
+        decision = store.get_decision(decision_id)
+        if decision is None:
+            raise HTTPException(404, f"unknown decision {decision_id}")
+        if decision["verdict"] != "APPROVE":
+            raise HTTPException(409, f"decision {decision_id} is {decision['verdict']}, not APPROVE")
+        executions = [e for e in store.executions_for_decision(decision_id) if e["status"] == "confirmed"]
+        if not executions:
+            raise HTTPException(409, f"decision {decision_id} has no verified execution yet")
+        if amount <= 0:
+            raise HTTPException(422, "amount must be positive")
+        size = Decimal(decision["inputs"]["request"]["size"])
+        payout = (amount * (1 + Decimal(decision["net_edge"]) / size)).quantize(Decimal("0.000001"))
+        return {
+            "decision_id": decision_id,
+            "amount": str(amount),
+            "payout": str(payout),
+            "rule": "payout = amount × (1 + net_edge / size)",
+            "net_edge": decision["net_edge"],
+            "size": str(size),
+            "execution_tx": executions[-1]["tx_hash"],
+        }
+
+    @app.post("/decisions/{decision_id}/settlement")
+    def post_settlement(decision_id: str, body: dict) -> dict:
+        """Record the Arc settle() transaction on the decision's Execution."""
+        tx = body.get("settlement_tx", "")
+        executions = store.executions_for_decision(decision_id)
+        if not executions:
+            raise HTTPException(404, f"no execution for {decision_id}")
+        execution = {**executions[-1], "settlement_tx": tx}
+        validate("execution", execution)
+        store.save_execution(execution)
+        return execution
 
     @app.get("/riskpilot", include_in_schema=False)
     def get_page() -> FileResponse:

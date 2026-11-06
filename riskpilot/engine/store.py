@@ -65,5 +65,8 @@ class Store:
     def open_positions(self) -> list[dict]:
         return self._read("SELECT body FROM positions WHERE status = 'open' ORDER BY rowid")
 
+    def executions_for_decision(self, decision_id: str) -> list[dict]:
+        return self._read("SELECT body FROM executions WHERE decision_id = ? ORDER BY rowid", (decision_id,))
+
     def save_execution(self, e: dict) -> None:
         self._write("INSERT OR REPLACE INTO executions VALUES (?, ?, ?)", (e["tx_hash"], e["decision_id"], json.dumps(e)))
