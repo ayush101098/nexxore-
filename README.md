@@ -24,10 +24,15 @@ Out of scope: automated execution, mainnet funds, multi-asset support.
 
 ## Pre-event vs event work
 
-TODO: everything in this repository was written during ETHGlobal. Pre-existing
-Nexxore code (the frontend and the stress-scenario grid) lives in a separate
-repository, tagged `pre-eth-global`. List here exactly which files are copied or
-adapted from that tag.
+Everything in this repository was written during ETHGlobal. Pre-existing Nexxore
+code lives in a separate repository, tagged `pre-eth-global`. Anything taken
+from it is listed here:
+
+| Here | From `pre-eth-global` | How |
+|---|---|---|
+| `engine/pricing.py` | `strategy-builder.html` (`bsPrice`, `bsGreeks`) | Black-Scholes conventions ported from JavaScript to Python (r = 0, theta per day, vega per vol point). The code was rewritten. |
+
+The stress grid, verdict logic, Aqua mapping, scanner and API are new.
 
 ## Architecture
 
@@ -68,9 +73,14 @@ integration.
 cp .env.example .env          # fill in testnet RPCs and keys
 python3 -m venv .venv && .venv/bin/pip install -r shared/requirements.txt
 .venv/bin/pytest shared/tests
+
+cd engine                     # quant engine, see engine/README.md
+../.venv/bin/pip install -r requirements.txt
+../.venv/bin/pytest
+../.venv/bin/uvicorn main:app --reload
 ```
 
-TODO: engine, contracts and web setup.
+TODO: contracts and web setup.
 
 ## Demo
 
