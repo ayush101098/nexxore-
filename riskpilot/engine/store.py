@@ -137,3 +137,9 @@ class Store:
     def assistant_context(self, context_id: str) -> dict | None:
         rows = self._read("SELECT body FROM assistant_contexts WHERE context_id = ?", (context_id,))
         return rows[0] if rows else None
+
+    def assistant_contexts_for(self, wallet: str) -> list[dict]:
+        """Contexts this wallet's answers and briefs were built from, oldest first."""
+        w = wallet.lower()
+        return sorted((c for c in self._read("SELECT body FROM assistant_contexts") if c.get("wallet") == w),
+                      key=lambda c: c.get("as_of", ""))

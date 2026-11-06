@@ -41,9 +41,10 @@ Rules:
 - When you mention a decision, cite its decision_id exactly (dec_ followed by 16 hex characters).
 - No price predictions, no advice to buy or sell, no opinions about the market.
 - If the context does not contain what is asked, say "I don't have that" and say which data is missing.
+- Never mention JSON field names or the word "context"; write for the wallet's owner.
 - Keep answers short: at most 6 sentences, plain text, no tables."""
 
-BRIEF_PROMPT = """Write today's risk brief for this wallet from the context's `last_24h` block and the current figures: what changed in the last 24 hours (worst stress loss now and 24 hours ago), positions near the edges of their ranges, and trades that were declined and why (cite decision_ids). Plain text, at most 8 short lines. Quote figures exactly from the context."""
+BRIEF_PROMPT = """Write today's risk brief for this wallet. Line 1: last_24h.stress_summary, copied as written. Then positions near the edges of their ranges (or that none are), then each declined trade with its reason and decision_id. Plain text, at most 6 short lines. Quote figures exactly from the context."""
 
 
 class AssistantUnavailable(Exception):
@@ -225,7 +226,19 @@ def build_context(store, wallet: str, opportunities: dict | None, stress_fn: Cal
 
     mine = _decisions_for(store, wallet)
     day = [d for d in mine if datetime.fromisoformat(d["created_at"]) >= now - timedelta(hours=24)]
-    oldest = min(day, key=lambda d: d["created_at"]) if day else None
+    # "24 hours ago" compares like with like: the wallet's whole-book worst stress loss in the earliest
+    # context recorded in the last 24 h (from an earlier answer or brief); none recorded -> None.
+    since = (now - timedelta(hours=24)).isoformat().replace("+00:00", "Z")
+    earlier = [c for c in store.assistant_contexts_for(wallet) if c.get("as_of", "") >= since and c.get("worst_stress_loss")]
+    first = earlier[0] if earlier else None
+    now_loss = float(grid["worst_loss"])
+    if first is None:
+        stress_summary = f"Worst stress loss is ${now_loss:,.2f}. This is the first reading in the last 24 hours."
+    else:
+        was, at = float(first["worst_stress_loss"]), first["as_of"][11:16]
+        diff = now_loss - was
+        stress_summary = (f"Worst stress loss is ${now_loss:,.2f}, unchanged since {at} UTC." if abs(diff) < 0.005 else
+                          f"Worst stress loss is ${now_loss:,.2f}, {'up' if diff > 0 else 'down'} ${abs(diff):,.2f} from ${was:,.2f} at {at} UTC.")
     declined = {}
     for d in sorted(day, key=lambda d: d["created_at"]):
         if d["verdict"] != "APPROVE":
@@ -248,8 +261,11 @@ def build_context(store, wallet: str, opportunities: dict | None, stress_fn: Cal
             "decisions": len(day),
             "approved": sum(d["verdict"] == "APPROVE" for d in day),
             "declined": [_short(d) for d in declined.values()],
-            "worst_stress_loss_24h_ago": oldest["stress_loss_before"] if oldest else None,
-            "worst_stress_loss_now": first["stress_loss_before"] if first else None,
+            "stress_summary": stress_summary,
+            "worst_stress_loss_now": f"{grid['worst_loss']:.2f}",
+            "worst_stress_loss_earlier": first["worst_stress_loss"] if first else None,
+            "worst_stress_loss_earlier_at": first["as_of"] if first else None,
+            "note": "worst_stress_loss_* are the wallet's whole-book worst loss over the stress grid; earlier is the first recorded in the last 24 h (null if none).",
             "positions_near_range_edges": near,
         },
     }

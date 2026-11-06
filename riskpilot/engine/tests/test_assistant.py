@@ -90,7 +90,14 @@ def test_brief_reports_the_last_24h_with_request_id():
     # The unit-test seed: a recorded gap (REJECT), the put-like (REJECT) and the call-like (APPROVE).
     assert ctx["last_24h"]["decisions"] == 3 and ctx["last_24h"]["approved"] == 1
     assert {d["verdict"] for d in ctx["last_24h"]["declined"]} == {"REJECT"}
-    assert "what changed in the last 24 hours" in fake.sent[0][1]["content"]
+    # Like with like: the whole-book worst loss now; nothing earlier on the first brief.
+    assert ctx["last_24h"]["worst_stress_loss_now"] == ctx["worst_stress_loss"]
+    assert ctx["last_24h"]["worst_stress_loss_earlier"] is None
+    c.post("/v1/assistant/brief", json={"wallet": MAKER})
+    second = json.loads(fake.sent[-1][1]["content"].split("Context (JSON):\n", 1)[1])
+    assert second["last_24h"]["worst_stress_loss_earlier"] == ctx["worst_stress_loss"]
+    assert "last_24h.stress_summary" in fake.sent[0][1]["content"]
+    assert ctx["last_24h"]["stress_summary"].endswith("This is the first reading in the last 24 hours.")
 
 
 def test_post_check_rules():
