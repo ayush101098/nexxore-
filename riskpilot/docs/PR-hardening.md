@@ -170,6 +170,20 @@ TTL 30 s, staleness 30 s and requote at 0.3% apply to every profile.
 - **Wallets:** EIP-6963 discovery, and `wallet_switchEthereumChain` / `wallet_addEthereumChain` for
   the demo chain and Arc 5042002.
 
+## P1, after every P0 was green
+
+- **`@riskpilot/sdk`** (`sdk/`): `setProfile`, `subscribe` (SSE over fetch), `evaluate`,
+  `verifyDecision` (EIP-712, checked with viem against the engine's Python signature), `build`,
+  `execute` (simulate, then send each call) and `report`.
+  - `examples/agent.ts` sets a profile, picks the best approved gap, verifies, builds, executes and
+    reports: confirmed in block 26,354,385, position open.
+  - `tsc --noEmit` is clean.
+- **Item 8, `make hook-volatile`:** a volatile spell through the live hooked pool. The fee goes
+  from 2,161 to 8,976 pips, and on the next block the engine re-prices the hooked gap from
+  APPROVE (net $15.38) to REJECT (net −$52.82, fees $89.76).
+- **Fix found by `make hook-volatile`:** `/v1/opportunities` served a cached block to wallets with
+  no open stream. It now re-evaluates unless the cache is for the current head.
+
 ## 7 WETH call-like curve, from `POST /v1/aqua/price`
 
 Request: spot 2,218.55, range 2,218.55–2,828.65125, call_like, 7 ETH, σ 55%.
@@ -218,7 +232,7 @@ The console is clean on load (`capture.spec.ts` checks this).
 | Latency numbers | done (table above) |
 | `make demo-reset` < 30 s, same ids | done (2–5 s; the ids are checked) |
 | The earlier 10 e2e tests still pass | done; updated for one action and push |
-| `agent.ts` (P1) | see the SDK PR, if it lands |
+| `agent.ts` (P1) | done: `sdk/` (`@riskpilot/sdk`) and `sdk/examples/agent.ts`, run against the demo chain (see `sdk/README.md`) |
 | Manual MetaMask and Rabby runs | **not done**: needs a person with the wallets. The EIP-5792 batch path is untested with a real wallet. |
 
 ## Not done, or done differently, stated plainly
@@ -234,9 +248,8 @@ The console is clean on load (`capture.spec.ts` checks this).
   change the engine's maths, which this PR doesn't touch.
 - **The arc-worker** follows `Funded` by `getLogs` polling every 2 s from a cursor, not a
   WebSocket subscription. The catch-up on start is the same `getLogs` path.
-- **Not done:** WalletConnect (P1), `make hook-volatile`, and an on-chain `amountOutMinimum`. The
-  demo router has none, so the page says "slippage limit … checked before sending" with a
-  tooltip.
+- **Not done:** WalletConnect (P1), and an on-chain `amountOutMinimum`. The demo router has none,
+  so the page says "slippage limit … checked before sending" with a tooltip.
 - **Unchanged since the earlier PR:** `docs/demo-backup.mp4` and `runthrough.spec.ts` predate this
   PR and still show the old buttons.
 - **Still needs your wallet:**

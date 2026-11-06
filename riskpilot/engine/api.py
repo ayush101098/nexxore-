@@ -329,8 +329,13 @@ def create_app(
 
     @app.get("/opportunities")
     def get_opportunities(wallet: str) -> dict:
-        """The wallet's newest evaluated opportunities (evaluated now if none this block)."""
-        return latest.get(wallet.lower()) or seed_for(wallet, None)
+        """The wallet's evaluated opportunities at the current block (evaluated now if not yet)."""
+        cached = latest.get(wallet.lower())
+        watcher = getattr(app.state, "watcher", None)
+        head = watcher.block if watcher else None
+        if cached is not None and head is not None and cached.get("block") == head:
+            return cached
+        return seed_for(wallet, None)
 
     @app.get("/positions")
     def get_positions(wallet: str | None = None) -> list[dict]:

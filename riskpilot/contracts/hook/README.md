@@ -9,6 +9,8 @@ through it.
 make test        # 6 tests
 make hook-demo   # same swaps through the hooked pool and a static 0.30% pool, on the demo chain (simulated)
 make hook-pool   # deploy the hook + live pools on the demo chain (needs make demo-chain in ../aqua)
+make hook-volatile # a volatile spell through the live hooked pool: fee 2,161 -> 8,976 pips; the engine
+                   # re-prices the next block (hooked gap: APPROVE $15.38 -> REJECT, net -$52.82)
 make deploy-unichain-sepolia SENDER=0xYourAddress   # public testnet, signed by your wallet
 ```
 

@@ -7,7 +7,7 @@ USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48
 # Large USDC holder at the pinned block (found by contracts/aqua/script/find_usdc_holder.py).
 USDC_HOLDER = 0x37305b1cd40574e4c5ce33f8e8306be057fd7341
 
-.PHONY: deps test hook-demo hook-pool deploy-unichain-sepolia
+.PHONY: hook-volatile deps test hook-demo hook-pool deploy-unichain-sepolia
 
 deps:
 	git submodule update --init lib/forge-std lib/hookmate && git submodule update --init --recursive lib/uniswap-hooks
@@ -21,6 +21,10 @@ hook-demo:
 	forge script script/HookDemo.s.sol --rpc-url $(RPC)
 
 # Deploy the hook and the live pools on the demo chain, funded by Anvil account #2.
+# A volatile spell through the live hooked pool: the fee rises toward the cap (VOL_BLOCKS, VOL_ETH).
+hook-volatile:
+	LP_PRIVATE_KEY=$(LP_PK) forge script script/HookVolatile.s.sol --rpc-url $(RPC) --broadcast --slow 2>&1 | grep -E "fee (before|after)|Error" || true
+
 hook-pool:
 	@LP=$$(cast wallet address --private-key $(LP_PK)); \
 	cast rpc --rpc-url $(RPC) anvil_setBalance $$LP 0xa2a15d09519be00000 >/dev/null; \
