@@ -6,7 +6,7 @@ services:
     runtime: docker
     dockerfilePath: ./riskpilot/Dockerfile
     dockerContext: ./riskpilot
-    plan: starter            # always on (the free plan sleeps after 15 minutes idle)
+    plan: free               # kept awake by the Netlify keep-alive (riskpilot/keepalive); starter = always on natively
     region: singapore
     branch: main
     healthCheckPath: /v1/health
@@ -18,10 +18,8 @@ services:
         - riskpilot/engine/**
         - riskpilot/shared/**
         - riskpilot/contracts/arc/deployments/**
-    disk:                    # decisions, profiles, settlements and assistant answers survive restarts
-      name: riskpilot-data
-      mountPath: /data
-      sizeGB: 1
+    # The free plan has no persistent disk: the engine DB lives in /tmp, so decision history starts
+    # fresh after a restart (the chain does anyway). On starter, add: disk {name, mountPath: /data, sizeGB: 1}.
     envVars:
       - key: AQUA_FORK_RPC_URL   # an Ethereum mainnet archive RPC (Alchemy)
         sync: false
@@ -33,3 +31,5 @@ services:
         sync: false
       - key: ARC_RPC_URL
         value: https://rpc.testnet.arc.io
+      - key: DATA_DIR
+        value: /tmp/riskpilot

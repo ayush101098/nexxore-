@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RiskPilot agent status</title>
+<style>
+  body { margin:0; background:#09090b; color:#fafafa; font:14px/1.5 system-ui, sans-serif; display:grid; place-items:center; min-height:100vh; }
+  .card { border:1px solid #27272a; border-radius:12px; padding:24px 28px; min-width:300px; }
+  h1 { font-size:16px; margin:0 0 12px; } .k { color:#a1a1aa; font-size:12px; } .v { margin:2px 0 10px; }
+  .ok { color:#34d399; } .bad { color:#f87171; } a { color:#fafafa; }
+</style></head>
+<body><div class="card"><h1>RiskPilot agent</h1>
+  <div class="k">Status</div><div class="v" id="st">checking…</div>
+  <div class="k">Demo chain block</div><div class="v" id="bl">—</div>
+  <div class="k">Arc</div><div class="v" id="arc">—</div>
+  <a href="https://nexxore.xyz/riskpilot">Open RiskPilot →</a></div>
+<script>
+  const agent = "https://riskpilot-agent.onrender.com";
+  async function check() {
+    try {
+      const h = await (await fetch(agent + "/v1/health", { cache: "no-cache" })).json();
+      document.getElementById("st").innerHTML = `<span class="ok">live</span> · ${h.model_version}`;
+      document.getElementById("bl").textContent = h.dependencies?.chain?.block?.toLocaleString("en-US") ?? "—";
+      document.getElementById("arc").textContent = h.dependencies?.arc?.up ? "connected" : "not connected";
+    } catch { document.getElementById("st").innerHTML = `<span class="bad">offline or waking up</span>`; }
+  }
+  check(); setInterval(check, 15000);
+</script></body></html>

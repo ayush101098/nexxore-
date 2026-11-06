@@ -44,7 +44,8 @@ FEE_BPS = 10**9
 PAGE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "web", "index.html")
 # Where the /riskpilot page may call the engine from: the deployed site and local dev servers.
 CORS_ORIGINS = ["https://nexxore.xyz", "https://www.nexxore.xyz"]
-CORS_LOCAL = r"http://(localhost|127\.0\.0\.1)(:\d+)?"
+# Local dev servers, and the agent's status page on Netlify (riskpilot/keepalive).
+CORS_LOCAL = r"http://(localhost|127\.0\.0\.1)(:\d+)?|https://[a-z0-9-]+\.netlify\.app"
 
 POSITION_STATUS = {"pending": "pending", "confirmed": "open", "reverted": "failed"}
 
