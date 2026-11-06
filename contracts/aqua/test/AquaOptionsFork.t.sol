@@ -12,19 +12,17 @@ import { TakerTraitsLib } from "@1inch/swap-vm/src/libs/TakerTraits.sol";
 
 import { AquaCollateral } from "../src/AquaCollateral.sol";
 import { AquaCurves } from "../src/AquaCurves.sol";
+import { DemoParams } from "../src/DemoParams.sol";
 
-/// @notice Whole Aqua Options flow on an Ethereum mainnet fork against the deployed
-///         AquaSwapVMRouter v1.0.2: fund a maker, check collateral, ship both curves
-///         from one wallet, quote, fill the upside curve, print balances.
-///         Run: AQUA_FORK_RPC_URL=<mainnet rpc> forge test -vv
+/// @notice Whole Aqua Options flow on an Ethereum mainnet fork, pinned to DemoParams.FORK_BLOCK,
+///         against the deployed AquaSwapVMRouter v1.0.2: fund a maker, check collateral, ship
+///         both curves from one wallet, quote, fill each curve, print balances.
+///         Run: AQUA_FORK_RPC_URL=<archive mainnet rpc> forge test -vv
 contract AquaOptionsForkTest is Test, AquaCurves {
-    // From 1inch's Aqua contract-addresses page; same address on all 13 Aqua chains.
-    address constant AQUA = 0x1111113CCf1426A8E30e2bfF5E005d929bF6a90a;
-    address constant ROUTER = 0x111111338c5091E8440b67B168bAe16a668AC0De;
-    // Canonical Ethereum mainnet tokens; setUp checks symbol and decimals on the fork.
-    address constant MAINNET_WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address constant MAINNET_USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address constant AQUA = DemoParams.AQUA;
+    address constant ROUTER = DemoParams.ROUTER;
 
+    // Unit-test curves: w = 1.10 (~1-day equivalent term). Demo curves live in DemoParams.
     uint256 constant SPOT = 3400e6; // USDC per ETH
     uint256 constant WIDTH_BPS = 11_000; // w = 1.10
     uint32 constant FEE = 0.003e9; // 0.30% flat fee = the maker's premium
@@ -33,10 +31,14 @@ contract AquaOptionsForkTest is Test, AquaCurves {
     address maker = makeAddr("maker");
     address taker = makeAddr("taker");
 
-    constructor() AquaCurves(AQUA, MAINNET_WETH, MAINNET_USDC) { }
+    constructor() AquaCurves(AQUA, DemoParams.WETH, DemoParams.USDC) { }
 
     function setUp() public {
-        vm.createSelectFork(vm.envOr("AQUA_FORK_RPC_URL", string("https://ethereum-rpc.publicnode.com")));
+        vm.createSelectFork(
+            vm.envOr("AQUA_FORK_RPC_URL", string("https://ethereum-rpc.publicnode.com")),
+            vm.envOr("AQUA_FORK_BLOCK", DemoParams.FORK_BLOCK)
+        );
+        assertEq(block.number, vm.envOr("AQUA_FORK_BLOCK", DemoParams.FORK_BLOCK), "fork not pinned");
 
         assertGt(ROUTER.code.length, 0, "router not deployed on this chain");
         assertEq(address(ISwapVMWithAqua(ROUTER).AQUA()), AQUA, "router points at a different Aqua");
@@ -252,6 +254,62 @@ contract AquaOptionsForkTest is Test, AquaCurves {
         vm.serializeUint(k, "maker_weth_after", IERC20(WETH).balanceOf(maker));
         vm.serializeUint(k, "maker_usdc_after", IERC20(USDC).balanceOf(maker));
         vm.writeJson(vm.serializeBytes32(k, "strategy_hash", hUp), "./out/aqua-fill.json");
+    }
+
+    function test_DownsideFillMovesTokens() public {
+        (Curve memory up, Curve memory down) = _curves();
+        (, bytes32 hDown) = _shipChecked(up, down);
+        uint256 priceBefore = _price(_quote(down.order, WETH, USDC, 0.01 ether), 0.01 ether);
+
+        _logBalances("before downside fill");
+        uint256 makerWeth = IERC20(WETH).balanceOf(maker);
+        uint256 makerUsdc = IERC20(USDC).balanceOf(maker);
+        uint256 takerWeth = IERC20(WETH).balanceOf(taker);
+        uint256 takerUsdc = IERC20(USDC).balanceOf(taker);
+
+        // Taker sells WETH for USDC: the put-like curve buys ETH with its USDC as price falls.
+        uint256 sell = 0.4 ether;
+        vm.prank(taker, taker);
+        (uint256 amountIn, uint256 amountOut,) = ISwapVM(ROUTER).swap(down.order, WETH, USDC, sell, _takerData(true));
+        _logBalances("after downside fill (taker sold ETH to the downside curve)");
+
+        assertEq(amountIn, sell);
+        assertGt(amountOut, 0);
+        assertEq(IERC20(WETH).balanceOf(maker), makerWeth + amountIn, "maker ETH in");
+        assertEq(IERC20(USDC).balanceOf(maker), makerUsdc - amountOut, "maker USDC out");
+        assertEq(IERC20(WETH).balanceOf(taker), takerWeth - amountIn, "taker ETH out");
+        assertEq(IERC20(USDC).balanceOf(taker), takerUsdc + amountOut, "taker USDC in");
+
+        (uint256 aquaWeth, uint256 aquaUsdc) = IAqua(AQUA).safeBalances(maker, ROUTER, hDown, WETH, USDC);
+        assertEq(aquaWeth, amountIn, "curve now holds the taker's ETH");
+        assertEq(aquaUsdc, _putUsdc() - amountOut, "curve USDC left");
+
+        uint256 fillPrice = _price(amountOut, amountIn);
+        uint256 priceAfter = _price(_quote(down.order, WETH, USDC, 0.01 ether), 0.01 ether);
+        assertLt(priceAfter, priceBefore, "fill moved the curve's bid down");
+        assertGt(fillPrice, down.range.lowUsdc * (1e9 - FEE) / 1e9, "never below the range bottom - fee");
+        console.log("downside fill price (USDC/ETH):", fillPrice);
+        console.log("downside bid before:           ", priceBefore);
+        console.log("downside bid after:            ", priceAfter);
+    }
+
+    function test_DemoCurvesShipAndPriceInRange() public {
+        deal(WETH, maker, 2 ether);
+        deal(USDC, maker, 5_000e6);
+        Curve memory up = upsideCurve(maker, DemoParams.SPOT, DemoParams.WIDTH_BPS, DemoParams.CALL_ETH, DemoParams.UPSIDE_FEE);
+        Curve memory down =
+            downsideCurve(maker, DemoParams.SPOT, DemoParams.WIDTH_BPS, DemoParams.PUT_USDC, DemoParams.DOWNSIDE_FEE);
+        assertEq(up.range.highUsdc, 4335e6, "upside top");
+        assertEq(equivalentStrike(up.range) / 1e4, 3839_14, "upside K_eq 3,839.14");
+        assertEq(equivalentStrike(down.range) / 1e4, 3011_09, "downside K_eq 3,011.09");
+        _shipChecked(up, down);
+
+        // Wider range, same 1 ETH: thinner liquidity, so probe with small sizes for the marginal price.
+        uint256 ask = _price(10e6, _quote(up.order, USDC, WETH, 10e6));
+        uint256 bid = _price(_quote(down.order, WETH, USDC, 0.001 ether), 0.001 ether);
+        assertApproxEqRel(ask, DemoParams.SPOT * (1e9 + DemoParams.UPSIDE_FEE) / 1e9, 0.002e18, "demo ask");
+        assertApproxEqRel(bid, DemoParams.SPOT * (1e9 - DemoParams.DOWNSIDE_FEE) / 1e9, 0.002e18, "demo bid");
+        console.log("demo ask / bid (USDC/ETH):", ask, bid);
     }
 
     function test_CollateralCheckRefusesOverAllocation() public {
