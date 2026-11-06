@@ -296,8 +296,8 @@ details table { margin-top:var(--s1); font-size:11px; }
 
   </header>
   <div class="top"><div class="status" id="status" aria-label="Status"></div></div>
-  <div class="snap" id="snapBanner" data-testid="snapshot-banner" hidden><span class="chip state">Recorded run</span>
-    <span>The agent's real output at <span data-when></span>, replayed read-only. Arc is live. Run <span class="mono">make up</span> for the live agent and signing.</span></div>
+  <div class="snap" id="offline" data-testid="offline-banner" hidden><span class="chip REQUOTE">Offline</span>
+    <span>The live agent runs on its owner's machine and is not reachable right now. Everything here is real-time when it is.</span></div>
 
   <nav class="tabs" role="tablist" aria-label="Agent workflow">
     <button role="tab" id="tabbtn-1" data-tab="1" aria-controls="tab-1" data-testid="tab-1"><span class="n">1</span><span class="t"><b>Scan and assess</b><small id="tabsub-1">&nbsp;</small></span></button>
@@ -402,8 +402,11 @@ import { execute, supportsBatch, aquaAdapter, v4Adapter, arcAdapter, AdapterRefu
 
 // ── config ────────────────────────────────────────────────────────────────
 const qs = new URLSearchParams(location.search);
-const ENGINE = qs.get("engine") || (location.port === "8000" ? location.origin : "http://localhost:8000");
-const RPC = qs.get("rpc") || "http://127.0.0.1:8545";
+// Endpoints: the engine serving this page (make up), ?engine=, or on nexxore.xyz the live endpoint
+// make live publishes in web/live.json. The public page reads the demo chain through the engine's
+// /v1/rpc gateway (reads and signed transactions only).
+let ENGINE = qs.get("engine") || (location.port === "8000" ? location.origin : "http://localhost:8000");
+let RPC = qs.get("rpc") || "http://127.0.0.1:8545";
 const CHAIN_ID = 31337;
 const ARC = { id: 5042002, rpc: qs.get("arcRpc") || "https://rpc.testnet.arc.network",
   // Arc's public RPC hostnames rate-limit per IP (HTTP 429): reads fall back from one to the other.
@@ -417,11 +420,18 @@ const A = {
 };
 // No key lives in this page. Your browser wallet signs; on the demo chain the demo wallet is the
 // owner's address (curves.json maker), which a wallet connected to the fork can act as.
-const API = ENGINE + "/v1";
+let API = ENGINE + "/v1";
 // Read-only unless served by a local engine (make up) or pointed at one: the public page never asks
 // a visitor's wallet for anything. ?readonly=1 forces it.
-const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-const READ_ONLY = qs.get("readonly") === "1" || qs.get("snapshot") === "1" || (!LOCAL && !qs.has("engine"));
+const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && !qs.has("public");
+const READ_ONLY = qs.get("readonly") === "1";
+async function resolveEndpoints() {
+  if (LOCAL || qs.has("engine")) return;
+  try {
+    const live = await (await fetch("/riskpilot/web/live.json", { cache: "no-cache" })).json();
+    if (live?.engine) { ENGINE = live.engine.replace(/\/$/, ""); API = ENGINE + "/v1"; RPC = ENGINE + "/v1/rpc"; }
+  } catch { /* no live endpoint published: the page says the agent is offline */ }
+}
 // Arc testnet, or the local Arc stand-in (make arc-rehearsal) when arcRpc points at localhost.
 const ARC_LOCAL = /localhost|127\.0\.0\.1/.test(ARC.rpc);
 
@@ -444,54 +454,12 @@ const unavailable = (name) => `<span class="unavail">Source unavailable: ${esc(n
 const tip = (source, at) => `data-src="${esc(`${source} · ${hms(at || now())}${S.chain ? ` · block ${S.chain.block.toLocaleString("en-US")}` : ""}`)}"`;
 const hashChip = (h, explorer) => `<span class="hashchip"><span title="${esc(h)}">${short(h)}</span><button type="button" data-copy="${esc(h)}" aria-label="Copy ${esc(h)}">Copy</button>${explorer ? `<a href="${explorer}" target="_blank" rel="noopener" aria-label="Open ${esc(short(h))} in the explorer">Explorer</a>` : ""}</span>`;
 
-// ── data modes ───────────────────────────────────────────────────────────
-// live: a local engine (make up). record (?record=1): live, and every engine and demo-chain response
-// is kept for a snapshot (make snapshot). snapshot: the public page (no engine, no local chain)
-// replays that recording, read-only and labelled as recorded.
-const MODE = qs.has("record") ? "record" : (qs.get("snapshot") === "1" || (READ_ONLY && !qs.has("engine") && !LOCAL)) ? "snapshot" : "live";
-const REC = { engine: {}, rpc: {}, stream: null, recorded_at: null };
-let SNAP = null;
-async function loadSnapshot() {
-  if (MODE !== "snapshot" || SNAP) return SNAP;
-  const r = await fetch("/riskpilot/web/snapshot.json", { cache: "no-cache" });
-  if (!r.ok) throw new Error(`snapshot ${r.status}`);
-  return (SNAP = await r.json());
-}
-const engineKey = (path, opts) => `${(opts.method || "GET").toUpperCase()} ${path}`;
-window.__rp_record = () => ({ ...REC, recorded_at: new Date().toISOString() });
-
 async function engine(path, opts = {}) {
-  if (MODE === "snapshot") {
-    if (path.startsWith("/assistant")) { const e = new Error("live engine only"); e.status = 503; throw e; }
-    const snap = await loadSnapshot(), body = snap.engine[engineKey(path, opts)];
-    if (body === undefined) { const e = new Error(`not in the recording: ${path}`); e.status = 404; throw e; }
-    return structuredClone(body);
-  }
   const r = await fetch(API + path, { ...opts, headers: { "content-type": "application/json" } });
   if (!r.ok) { const e = new Error(`${r.status} ${(await r.text()).slice(0, 200)}`); e.status = r.status; throw e; }
-  const body = await r.json();
-  if (MODE === "record" && !path.startsWith("/assistant") && (opts.method || "GET") !== "PUT") REC.engine[engineKey(path, opts)] = body;
-  return body;
+  return r.json();
 }
 
-// The demo chain's JSON-RPC, recorded or replayed (viem custom transport).
-function chainTransport(viem) {
-  if (MODE === "live") return viem.http(RPC);
-  const call = async (method, params) => {
-    const r = await fetch(RPC, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
-    const j = await r.json();
-    if (j.error) throw Object.assign(new Error(j.error.message), { code: j.error.code });
-    return j.result;
-  };
-  return viem.custom({ async request({ method, params = [] }) {
-    const key = method + " " + JSON.stringify(params);
-    if (MODE === "record") { const out = await call(method, params); REC.rpc[key] = out; return out; }
-    const snap = await loadSnapshot();
-    if (method === "eth_chainId") return "0x7a69";
-    if (key in snap.rpc) return snap.rpc[key];
-    throw new Error(`not in the recording: ${method}`);
-  } });
-}
 
 // ── viem ──────────────────────────────────────────────────────────────────
 let V = null;
@@ -504,7 +472,7 @@ async function loadViem() {
   const chain = { ...chains.foundry, rpcUrls: { default: { http: [RPC] } } };
   const arcChain = viem.defineChain({ id: ARC.id, name: "Arc Testnet", nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 }, rpcUrls: { default: { http: [ARC.rpc] } } });
   V = { viem, chain, arcChain, accounts,
-    pub: viem.createPublicClient({ chain, transport: chainTransport(viem) }),
+    pub: viem.createPublicClient({ chain, transport: viem.http(RPC, { batch: { wait: 10 } }) }),
     arcPub: viem.createPublicClient({ chain: arcChain, transport: ARC.rpcFallback
       // One JSON-RPC batch per burst of reads keeps under the per-IP limit.
       ? viem.fallback([viem.http(ARC.rpc, { batch: { wait: 20 }, retryCount: 2, retryDelay: 800 }), viem.http(ARC.rpcFallback, { batch: { wait: 20 }, retryCount: 2, retryDelay: 800 })])
@@ -614,7 +582,8 @@ function renderStatus() {
     cell("Chain", !c ? unavailable("demo chain")
       : eng && info ? `<span ${tip("chain eth_chainId · fork block from demo/curves.json", c.at)} tabindex="0">Ethereum mainnet fork · block ${Number(info.fork_block).toLocaleString("en-US")}</span>`
       : `<span ${tip("chain eth_chainId, eth_blockNumber", c.at)} tabindex="0">chain ${c.chainId} · head ${c.block.toLocaleString("en-US")}</span>`, "wide"),
-    cell("Wallet", wallet ? `<span class="mono" ${tip(S.signer ? `signer: ${S.signer.kind}` : "the demo wallet; no wallet connected, so nothing can be signed", c?.at)} tabindex="0">${short(wallet)}${S.signer ? "" : " · read-only"}</span>` : unavailable("wallet")),
+    cell("Wallet", (wallet ? `<span class="mono" ${tip(S.signer ? `signer: ${S.signer.kind}` : "viewing the demo wallet; connect yours to sign", c?.at)} tabindex="0">${short(wallet)}</span>` : unavailable("wallet"))
+      + (!S.signer && !READ_ONLY && injected() ? ` <button type="button" class="linkbtn" id="walletConnect" data-testid="wallet-connect">Connect</button>` : "")),
     cell("WETH", tok(c?.weth, 18, "WETH", 4)),
     cell("USDC", tok(c?.usdc, 6, "USDC", 2)),
     cell("Profile", eng && S.profile ? `<span data-testid="profile-status" data-tip="${esc(derivationTip(pr))}" tabindex="0">${esc(S.profiles?.[S.profile]?.label || S.profile)}${pr ? ` · ${budgetLine(pr)}` : ""}</span>${S.signer ? ` <button type="button" class="linkbtn" id="profileChange" data-testid="profile-change">Change</button>` : ""}`
@@ -622,7 +591,18 @@ function renderStatus() {
     cell("Engine", eng && S.health ? `<span data-tip="${esc(`engine /v1/health · signed by engine ${S.health.engine_signer}${S.health.warnings?.length ? "\n" + S.health.warnings.join("\n") : ""}`)}" tabindex="0">${esc(S.health.model_version)}</span>` : unavailable("engine")),
   ].join("");
   if ($("profileChange")) $("profileChange").onclick = () => showPicker(true);
+  if ($("walletConnect")) $("walletConnect").onclick = connectWallet;
+  $("offline").hidden = S.up.engine;
   bindTips($("status"));
+}
+
+async function connectWallet() {
+  S.signer = await demoSigner();
+  if (!S.signer) { log("No wallet connected: approve the connection in your wallet and try again.", "bad"); return; }
+  await loadProfile();
+  if (S.needsProfile) showPicker();
+  connect(); // the stream now follows the connected wallet
+  await refreshAll();
 }
 
 // ── profile, chosen once per wallet, signed by it (EIP-191) ───────────────
@@ -659,7 +639,7 @@ async function chooseProfile(name) {
 
 // ── opportunities ────────────────────────────────────────────────────────
 // In a replayed recording, ages are as of the recording, not now.
-const age = (iso) => Math.max(0, Math.round(((MODE === "snapshot" && SNAP?.recorded_at ? Date.parse(SNAP.recorded_at) : Date.now()) - Date.parse(iso)) / 1000));
+const age = (iso) => Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));
 const DEMO_POOLS = new Set(["uniswap_v4_hooked", "uniswap_v4_static"]); // seeded by make hook-pool
 const VENUE_NAME = { uniswap_v4_hooked: "Uniswap v4", uniswap_v4_static: "Uniswap v4", uniswap_v4_eth_usdc_30: "Uniswap v4", aqua_router: "1inch Aqua" };
 // Selection follows the opportunity key across blocks and reseeds; decision ids change, keys do not.
@@ -1214,7 +1194,6 @@ const assistantDown = () => `<span class="unavail" data-testid="assistant-unavai
 let briefFor = null;
 async function renderBrief(force = false) {
   const el = $("brief"), w = viewer();
-  if (MODE === "snapshot") { el.innerHTML = `<h3>Daily risk brief</h3><p class="empty">Ask RiskPilot runs on 0G through the live engine. Run <span class="mono">make up</span> to use it.</p>`; return; }
   if (!S.up.engine) { el.innerHTML = unavailable("engine"); briefFor = null; return; }
   if (!w || S.needsProfile) { el.innerHTML = `<p class="empty">Choose a profile to get your daily brief.</p>`; return; }
   if (briefFor === w && !force) return;
@@ -1330,11 +1309,6 @@ function engineDown() {
 // Push, not polling: the engine streams block, opportunity, decision, health and settlement events.
 let es = null;
 function connect() {
-  if (MODE === "snapshot") { // no live stream: the recorded opportunities and health
-    if (SNAP?.stream) { S.seed = structuredClone(SNAP.stream); S.seedErr = null; }
-    if (SNAP?.health) { S.health = SNAP.health; S.up.engine = true; }
-    return;
-  }
   if (es) es.close();
   es = new EventSource(`${API}/stream${viewer() ? `?wallet=${viewer()}` : ""}`);
   es.onopen = async () => {
@@ -1347,7 +1321,6 @@ function connect() {
   es.onerror = () => engineDown(); // the stream drops the moment the engine does
   es.addEventListener("health", (e) => {
     S.health = JSON.parse(e.data); S.at.health = now(); S.up.engine = true;
-    if (MODE === "record") REC.health = S.health;
     const chainUp = S.health.dependencies?.chain?.up;
     if (chainUp === false && S.up.chain) { S.up.chain = false; S.chain = null; renderStatus(); renderDecision(); renderPositions(); }
     else if (chainUp && !S.up.chain) onBlock();
@@ -1357,7 +1330,6 @@ function connect() {
   es.addEventListener("block", (e) => { S.perf.blockAt = performance.now(); S.perf.block = JSON.parse(e.data).block; onBlock(); });
   es.addEventListener("opportunity", (e) => {
     S.seed = JSON.parse(e.data); S.seedErr = null; S.at.seed = now();
-    if (MODE === "record") REC.stream = S.seed;
     renderStatus(); renderOpps(); renderDecision();
     if (S.perf.blockAt && S.perf.block === S.seed.block) { S.perf.blockToVerdict = performance.now() - S.perf.blockAt; S.perf.blockAt = null; }
     S.perf.firstRender ??= performance.now();
@@ -1400,15 +1372,12 @@ document.addEventListener("keydown", (e) => {
 
 async function main() {
   const t0 = performance.now();
-  const viemReady = loadViem().catch(() => null); // in parallel with the recording, not after it
-  if (MODE === "snapshot") {
-    try { await loadSnapshot(); } catch { /* panels say the engine is unavailable */ }
-    const b = $("snapBanner");
-    if (SNAP) { b.hidden = false; b.querySelector("[data-when]").textContent = `block ${Number(SNAP.stream?.block || 0).toLocaleString("en-US")} · ${new Date(SNAP.recorded_at).toUTCString().slice(5, 22)} UTC`; }
-  }
+  await resolveEndpoints();
+  const viemReady = loadViem().catch(() => null);
   setTab((location.hash.match(/step-(\d)/) || [])[1] || 1, false);
   await viemReady; // chain panels report the CDN as unavailable if it failed
-  if (V) { try { S.signer = await demoSigner(); S.chain = await readChain(); S.up.chain = true; } catch { S.up.chain = false; } }
+  // Locally the wallet connects on load; on the public page only when the visitor asks (no surprise prompts).
+  if (V) { try { if (LOCAL) S.signer = await demoSigner(); S.chain = await readChain(); S.up.chain = true; } catch { S.up.chain = false; } }
   try { await loadEngine(); await loadProfile(); S.up.engine = true; } catch { S.up.engine = false; }
   if (S.up.engine && S.needsProfile && S.signer) showPicker();
   connect();

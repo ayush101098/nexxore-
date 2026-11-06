@@ -353,33 +353,25 @@ test("16. four steps, one on screen at a time; each decision points to the step 
   await expect(page.locator("#tab-4")).toBeVisible();
 });
 
-test("17. the public page replays the recorded run with no engine: every step renders, console clean", async ({ page }) => {
-  const problems: string[] = [];
-  page.on("console", (m) => { if (m.type() === "error") problems.push(m.text()); });
-  page.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
-  await stopEngine("SIGKILL"); // nexxore.xyz has no engine: the recording must be enough
+test("17. the public page runs live: engine and demo chain through one endpoint, no wallet prompt; offline when the engine is down", async ({ page }) => {
+  const prompts: string[] = [];
+  await page.addInitScript(() => { (window as any).ethereum = { request: async ({ method }: any) => { (window as any).__asked = [...((window as any).__asked || []), method]; if (method === "eth_chainId") return "0x1"; throw new Error("no"); }, on() {} }; });
+  page.on("console", (m) => { if (m.type() === "error") prompts.push(m.text()); });
+  // As on nexxore.xyz: not localhost, the engine and the chain gateway at one public URL.
+  await page.goto("/riskpilot?public=1&engine=http://localhost:8000&rpc=http://localhost:8000/v1/rpc");
+  await expect(page.locator("[data-testid=opp-row]")).toHaveCount(ROWS);
+  await expect(page.getByTestId("offline-banner")).toBeHidden();
+  await expect(page.getByTestId("wallet-connect")).toBeVisible();
+  const asked: string[] = await page.evaluate(() => (window as any).__asked || []);
+  expect(asked.filter((m) => /request|switch|add/i.test(m))).toEqual([]); // no wallet prompt on load
+  await page.getByTestId("tab-3").click();
+  await expect(page.getByTestId("hook-fee")).toContainText("pips"); // live, via /v1/rpc
+  await expect(page.locator("#hook svg")).toBeVisible();
+  await page.getByTestId("tab-2").click();
+  await expect(page.locator("#aqua .curve")).toHaveCount(2);
+  await stopEngine("SIGKILL");
   try {
-    // Serve the page's static files from disk, as Vercel does; nothing answers on the engine's port.
-    const web = require("node:path").join(__dirname, "..");
-    await page.route((u: URL) => u.port === "8000" && u.pathname === "/riskpilot", (r) => r.fulfill({ path: require("node:path").join(web, "index.html"), contentType: "text/html" }));
-    await page.route((u: URL) => u.port === "8000" && u.pathname.startsWith("/riskpilot/web/"), (r) =>
-      r.fulfill({ path: require("node:path").join(web, new URL(r.request().url()).pathname.replace("/riskpilot/web/", "")) }));
-    await page.goto("/riskpilot?snapshot=1");
-    await expect(page.getByTestId("snapshot-banner")).toBeVisible();
-    await expect(page.locator("[data-testid=opp-row]")).toHaveCount(ROWS);
-    await expect(page.getByTestId("profile-status")).toHaveText("Moderate · budget $250 (cap)");
-    await select(page, "Call-like").catch(() => {}); // select reads the engine; the row click is what matters
-    await page.locator('[data-testid=opp-row][data-label^="Call-like"]').click();
-    await expect(page.getByTestId("approve")).toHaveText("Read-only page: run make up to sign");
-    await page.getByTestId("tab-2").click();
-    await expect(page.getByTestId("payoff")).toBeVisible();
-    await expect(page.locator("#aqua .curve")).toHaveCount(2);
-    await page.getByTestId("tab-3").click();
-    await expect(page.getByTestId("hook-fee")).toContainText("pips");
-    await expect(page.locator("#hook svg")).toBeVisible();
-    await page.getByTestId("tab-4").click();
-    await expect(page.locator("[data-testid=history-row]").first()).toBeVisible();
-    expect(problems.filter((p) => !/arc|Failed to load resource/i.test(p))).toEqual([]);
+    await expect(page.getByTestId("offline-banner")).toBeVisible({ timeout: 5_000 });
   } finally {
     await startEngine();
   }

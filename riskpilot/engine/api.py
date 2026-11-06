@@ -6,6 +6,7 @@ import logging
 import math
 import os
 import time
+import urllib.request
 from decimal import Decimal
 from collections.abc import Callable
 from datetime import datetime, timezone
@@ -46,6 +47,17 @@ CORS_ORIGINS = ["https://nexxore.xyz", "https://www.nexxore.xyz"]
 CORS_LOCAL = r"http://(localhost|127\.0\.0\.1)(:\d+)?"
 
 POSITION_STATUS = {"pending": "pending", "confirmed": "open", "reverted": "failed"}
+
+# The demo chain, as the public page sees it (POST /v1/rpc): reads, and transactions a wallet has
+# already signed. Never anvil_* / evm_* (state rewrites) or eth_sendTransaction (Anvil impersonation
+# would let anyone send from the demo wallet).
+RPC_ALLOWED = {
+    "eth_chainId", "net_version", "eth_blockNumber", "eth_call", "eth_estimateGas", "eth_getLogs",
+    "eth_getBalance", "eth_getCode", "eth_getStorageAt", "eth_getTransactionCount", "eth_getTransactionReceipt",
+    "eth_getTransactionByHash", "eth_getBlockByNumber", "eth_getBlockByHash", "eth_gasPrice", "eth_feeHistory",
+    "eth_maxPriorityFeePerGas", "eth_sendRawTransaction",
+}
+ASSISTANT_LIMIT = (30, 3600)  # requests per client per hour, so public visitors can't run up the 0G bill
 
 
 def default_sources() -> dict[str, Source]:
@@ -402,16 +414,18 @@ def create_app(
         return entry
 
     @app.post("/assistant/ask")
-    def post_assistant_ask(body: dict) -> dict:
+    def post_assistant_ask(body: dict, request: Request) -> dict:
         """Ask about your own positions. Answered by 0G from engine data only; shows the 0G request ID."""
+        assistant_allowed(request)
         q = (body.get("question") or "").strip()
         if not q:
             raise HTTPException(422, "question is required")
         return assistant_reply(body.get("wallet", ""), q[:1000], "ask")
 
     @app.post("/assistant/brief")
-    def post_assistant_brief(body: dict) -> dict:
+    def post_assistant_brief(body: dict, request: Request) -> dict:
         """The daily risk brief: what changed in the last 24 hours."""
+        assistant_allowed(request)
         return assistant_reply(body.get("wallet", ""), None, "brief")
 
     @app.get("/assistant/log")
@@ -426,6 +440,52 @@ def create_app(
         if ctx is None:
             raise HTTPException(404, f"unknown context {context_id}")
         return ctx
+
+    def client_id(request: Request) -> str:
+        # Behind the public tunnel, the visitor's address is in CF-Connecting-IP / X-Forwarded-For.
+        return (request.headers.get("cf-connecting-ip") or request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+                or (request.client.host if request.client else "?"))
+
+    assistant_hits: dict[str, list[float]] = {}
+
+    def assistant_allowed(request: Request) -> None:
+        n, window = ASSISTANT_LIMIT
+        who, t = client_id(request), time.time()
+        hits = [h for h in assistant_hits.get(who, []) if t - h < window]
+        if len(hits) >= n:
+            raise HTTPException(429, {"detail": "Assistant busy: too many questions from this address, try again later"})
+        assistant_hits[who] = hits + [t]
+
+    @app.post("/rpc")
+    async def post_rpc(request: Request) -> JSONResponse:
+        """The demo chain for the public page: allowed JSON-RPC methods only (single or batch)."""
+        try:
+            body = await request.json()
+        except ValueError:
+            return JSONResponse({"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "parse error"}}, status_code=400)
+        calls = body if isinstance(body, list) else [body]
+        if not calls or len(calls) > 50:
+            return JSONResponse({"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "1 to 50 calls per request"}}, status_code=400)
+        refused = {i: c for i, c in enumerate(calls) if not isinstance(c, dict) or c.get("method") not in RPC_ALLOWED}
+        allowed = [c for i, c in enumerate(calls) if i not in refused]
+
+        def forward():
+            if not allowed:
+                return []
+            req = urllib.request.Request(rpc_url, json.dumps(allowed).encode(), {"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=15) as r:
+                return json.load(r)
+        try:
+            replies = await asyncio.get_running_loop().run_in_executor(None, forward)
+        except OSError as e:
+            return JSONResponse({"jsonrpc": "2.0", "id": None, "error": {"code": -32603, "message": f"demo chain unavailable: {e}"}}, status_code=502)
+        by_id = {r.get("id"): r for r in replies} if isinstance(replies, list) else {}
+        out = []
+        for i, c in enumerate(calls):
+            cid = c.get("id") if isinstance(c, dict) else None
+            out.append({"jsonrpc": "2.0", "id": cid, "error": {"code": -32601, "message": f"method not allowed: {c.get('method') if isinstance(c, dict) else '?'}"}}
+                       if i in refused else by_id.get(cid, {"jsonrpc": "2.0", "id": cid, "error": {"code": -32603, "message": "no reply"}}))
+        return JSONResponse(out if isinstance(body, list) else out[0])
 
     @app.get("/settlements")
     def get_settlements(decision_id: str | None = None) -> list[dict]:
