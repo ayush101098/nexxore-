@@ -4,146 +4,213 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RiskPilot</title>
+<meta name="description" content="Risk and execution layer for DeFi agents">
 <meta name="robots" content="noindex">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%2339D5FF'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='16' fill='%23111823'/%3E%3Cpath d='M26 70V30h28a14 14 0 010 28H38m12 0l16 12' fill='none' stroke='%23E8EDF4' stroke-width='8'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #060B12; --bg2: #0B1220; --surface: #0E1626; --surface2: #121D30;
-  --border: rgba(138,180,255,0.12); --border-hi: rgba(57,213,255,0.30);
-  --cyan: #39D5FF; --green: #19E6C5; --gold: #F7B955; --red: #FF5C5C; --amber: #F7B955; --grey: #9AA7BA;
-  --text: #F4F8FF; --text-muted: #9FB0C7; --text-dim: #6B7A93;
-  /* chart series: validated on #0E1626 (dataviz validate_palette, dark) */
-  --c-edge: #1E9AC4; --c-cost: #BC8330; --c-vol0: #0FA98F; --c-vol20: #9E74E3;
-  --grid: rgba(138,180,255,0.10);
-  --body: 'Inter', sans-serif; --mono: 'IBM Plex Mono', monospace; --radius: 3px;
+  /* neutrals */
+  --bg: #0A0F17; --surface: #111823; --surface-2: #161F2C; --border: #253041;
+  --text: #E8EDF4; --text-2: #A9B4C3; --text-3: #8F9BAD;
+  /* one accent for links and focus */
+  --accent: #5AA9FF;
+  /* verdict colours (also the only colours in charts); all >= 6.3:1 on --surface */
+  --approve: #3DDC97; --reject: #FF7070; --requote: #F5B942; --review: #A3AEBD;
+  --on-approve: #06140D; --on-reject: #1A0505; --on-requote: #1A1203; --on-review: #0B0F14;
+  --neutral-bar: #5B6779; --grid: #1D2734;
+  --sans: 'Inter', system-ui, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --r: 8px; --s1: 8px; --s2: 16px; --s3: 24px;
 }
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 html { -webkit-font-smoothing:antialiased; }
-body { background:var(--bg); color:var(--text); font-family:var(--body); font-size:14px; line-height:1.45; overflow-x:hidden; }
-a { color:var(--cyan); text-decoration:none; }
-button { font-family:var(--body); }
-.wrap { max-width:1440px; margin:0 auto; padding:10px 16px 16px; }
+body { background:var(--bg); color:var(--text); font-family:var(--sans); font-size:13px; line-height:1.45; overflow-x:hidden; }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+button { font-family:var(--sans); }
+.num, td.num, .v, [data-wf] { font-variant-numeric:tabular-nums; }
+.mono { font-family:var(--mono); }
+.page { max-width:1440px; margin:0 auto; padding:var(--s2) var(--s3) var(--s3); }
 
-/* status bar */
-.status { display:flex; align-items:stretch; gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; flex-wrap:wrap; }
-.st { background:var(--surface); padding:6px 12px; flex:1 1 140px; min-width:0; }
-.st.wide { flex:2 1 260px; }
-.st.brand { flex:0 0 auto; display:flex; align-items:center; font-weight:700; font-size:0.95rem; padding:0 16px; }
-.st .k { font-family:var(--mono); font-size:0.56rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; }
-.st .v { font-family:var(--mono); font-size:0.78rem; font-weight:600; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.unavail { color:var(--amber) !important; font-weight:500 !important; font-size:0.68rem !important; white-space:normal !important; font-family:var(--body); }
-[data-src] { cursor:help; }
+/* header + status bar */
+.top { display:flex; align-items:stretch; border:1px solid var(--border); border-radius:var(--r); background:var(--surface); }
+.brand { padding:var(--s1) var(--s2); display:flex; flex-direction:column; justify-content:center; border-right:1px solid var(--border); flex:0 0 auto; }
+.brand h1 { font-size:17px; font-weight:700; letter-spacing:-0.2px; }
+.brand p { font-size:12px; color:var(--text-2); }
+.status { display:flex; flex:1; min-width:0; }
+.st { flex:1 1 0; min-width:0; padding:var(--s1) var(--s2); border-right:1px solid var(--border); }
+.st:last-child { border-right:none; }
+.st.wide { flex:2.2 1 0; }
+.st.prof { flex:1.3 1 0; }
+.k { font-size:11px; color:var(--text-3); white-space:nowrap; }
+.v { font-size:13px; font-weight:600; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.v .unavail, .st.wide .v { white-space:normal; }
+.tagline { color:var(--text-3); font-size:12px; margin:var(--s1) 0 var(--s2); }
 
-/* layout */
-.row { display:grid; grid-template-columns:minmax(0,3fr) minmax(0,2fr); gap:10px; margin-bottom:10px; }
-.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); min-width:0; }
-.card-h { padding:8px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; justify-content:space-between; flex-wrap:wrap; }
-.card-h h2 { font-size:0.78rem; font-weight:600; }
-.card-h .note { font-family:var(--mono); font-size:0.56rem; color:var(--text-dim); }
-.card-b { padding:10px 12px; }
-.sub { font-family:var(--mono); font-size:0.56rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; margin:10px 0 4px; }
+/* 12-column grid, 24px gutters */
+.grid { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:var(--s3); }
+.span-7 { grid-column:span 7; } .span-5 { grid-column:span 5; } .span-4 { grid-column:span 4; } .span-12 { grid-column:span 12; }
+.panel { border:1px solid var(--border); border-radius:var(--r); background:var(--surface); min-width:0; }
+.panel-h { display:flex; align-items:baseline; justify-content:space-between; gap:var(--s1); padding:var(--s1) var(--s2) 0; flex-wrap:wrap; }
+.panel-h h2 { font-size:14px; font-weight:600; }
+.helper { font-size:12px; color:var(--text-3); padding:2px var(--s2) var(--s1); border-bottom:1px solid var(--border); }
+.panel-b { padding:var(--s2); }
+.section-h { display:flex; align-items:baseline; gap:var(--s2); margin-bottom:var(--s1); }
+.section-h h2 { font-size:14px; font-weight:600; }
+.section-h .helper { padding:0; border:none; }
+.sub { font-size:11px; color:var(--text-3); margin:12px 0 4px; display:flex; justify-content:space-between; gap:var(--s1); }
+.sub:first-child { margin-top:0; }
+.linkbtn { background:none; border:none; color:var(--accent); font-size:12px; cursor:pointer; padding:0; }
+.linkbtn:hover { text-decoration:underline; }
 
 /* tables */
 .tscroll { overflow-x:auto; }
-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:0.66rem; }
-th { text-align:left; font-weight:500; font-size:0.54rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; padding:5px 7px; border-bottom:1px solid var(--border); white-space:nowrap; }
-td { padding:7px; border-bottom:1px solid var(--border); vertical-align:top; }
-td.num, th.num { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+table { width:100%; border-collapse:collapse; }
+th { text-align:left; font-size:11px; font-weight:500; color:var(--text-3); padding:0 var(--s1) var(--s1); border-bottom:1px solid var(--border); white-space:nowrap; }
+td { padding:var(--s1); border-bottom:1px solid var(--border); vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+td.num, th.num { text-align:right; white-space:nowrap; }
+.sub2 { display:block; font-size:11px; color:var(--text-3); margin-top:2px; }
 tbody tr.pick { cursor:pointer; }
-tbody tr.pick:hover td { background:var(--surface2); }
-tbody tr.sel td { background:rgba(57,213,255,0.06); }
-tbody tr.sel td:first-child { box-shadow:inset 2px 0 0 var(--cyan); }
-.small { font-size:0.56rem; color:var(--text-dim); }
+tbody tr.pick:hover td { background:var(--surface-2); }
+tbody tr.sel td { background:var(--surface-2); }
+tbody tr.sel td:first-child { box-shadow:inset 2px 0 0 var(--accent); }
 
-.pill { font-family:var(--mono); font-size:0.54rem; font-weight:700; padding:2px 6px; border-radius:2px; white-space:nowrap; }
-.pill.APPROVE { background:rgba(25,230,197,0.12); color:var(--green); }
-.pill.REJECT { background:rgba(255,92,92,0.12); color:var(--red); }
-.pill.REQUOTE { background:rgba(247,185,85,0.12); color:var(--amber); }
-.pill.REQUIRE_REVIEW { background:rgba(154,167,186,0.14); color:var(--grey); }
-.pill.SHIPPED { background:rgba(25,230,197,0.12); color:var(--green); }
-.pill.NOT_SHIPPED { background:rgba(154,167,186,0.14); color:var(--grey); }
+/* verdict chip: solid, uppercase, one width */
+.chip { display:inline-block; min-width:118px; text-align:center; padding:3px var(--s1); border-radius:var(--r); font-size:11px; font-weight:700; letter-spacing:0.3px; text-transform:uppercase; white-space:nowrap; }
+.chip.APPROVE { background:var(--approve); color:var(--on-approve); }
+.chip.REJECT { background:var(--reject); color:var(--on-reject); }
+.chip.REQUOTE { background:var(--requote); color:var(--on-requote); }
+.chip.REQUIRE_REVIEW { background:var(--review); color:var(--on-review); }
+.chip.state { min-width:0; background:var(--surface-2); color:var(--text-2); border:1px solid var(--border); }
 
-/* decision panel */
-.dec-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.dec-id { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); }
-.reason { font-size:0.76rem; margin:5px 0 0; line-height:1.4; }
-.act { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:8px; }
-.btn { padding:7px 14px; border:none; border-radius:var(--radius); background:var(--green); color:#04120F; font-size:0.72rem; font-weight:700; cursor:pointer; }
-.btn:disabled { background:var(--surface2); color:var(--text-dim); cursor:not-allowed; }
-.btn.ghost { background:none; border:1px solid var(--border); color:var(--text-muted); font-weight:500; }
-.btn.ghost:hover { border-color:var(--cyan); color:var(--cyan); }
-.btn.sm { padding:2px 8px; font-size:0.6rem; }
-.countdown { font-family:var(--mono); font-size:0.66rem; color:var(--text-muted); }
-.log { font-family:var(--mono); font-size:0.58rem; color:var(--text-muted); margin-top:5px; line-height:1.6; max-height:64px; overflow-y:auto; }
-.log .ok { color:var(--green); } .log .bad { color:var(--red); }
-.cells { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:5px; }
-.cells.c4 { grid-template-columns:repeat(4,minmax(0,1fr)); }
-.cells.aq { grid-template-columns:minmax(0,1.7fr) repeat(5,minmax(0,1fr)); }
-.cells.c2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
-.cell { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:5px 7px; min-width:0; }
-.cell .k { font-family:var(--mono); font-size:0.5rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; }
-.cell .v { font-family:var(--mono); font-size:0.72rem; font-weight:600; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.inputs { font-family:var(--mono); font-size:0.56rem; color:var(--text-dim); line-height:1.55; }
+/* decision */
+.dec-head { display:flex; align-items:center; gap:var(--s1); flex-wrap:wrap; }
+.dec-id { font-family:var(--mono); font-size:11px; color:var(--text-3); }
+.reason { font-size:13px; margin-top:var(--s1); }
+.act { display:flex; align-items:center; gap:var(--s2); margin-top:12px; flex-wrap:wrap; }
+.btn { padding:var(--s1) var(--s2); border:1px solid transparent; border-radius:var(--r); background:var(--approve); color:var(--on-approve); font-size:13px; font-weight:600; cursor:pointer; font-variant-numeric:tabular-nums; }
+.btn:disabled { background:var(--surface-2); color:var(--text-2); border-color:var(--border); cursor:not-allowed; }
+.btn.ghost { background:none; border-color:var(--border); color:var(--text); font-weight:500; }
+.btn.ghost:hover { border-color:var(--accent); }
+.btn.sm { padding:2px var(--s1); font-size:12px; }
+.signer { font-size:11px; color:var(--text-3); }
+.log { font-family:var(--mono); font-size:11px; color:var(--text-2); margin-top:var(--s1); max-height:48px; overflow-y:auto; }
+.log:empty { display:none; }
+.log .ok { color:var(--approve); } .log .bad { color:var(--reject); }
+.kv { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px var(--s3); }
+.kv div { display:flex; justify-content:space-between; gap:var(--s1); border-bottom:1px solid var(--grid); padding-bottom:2px; }
+.kv dt { color:var(--text-2); display:flex; align-items:center; gap:4px; white-space:nowrap; }
+.kv dd { font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.q { width:16px; height:16px; border-radius:50%; border:1px solid var(--border); background:none; color:var(--text-2); font-size:10px; line-height:14px; cursor:help; }
+.inputs { font-size:11px; color:var(--text-3); line-height:1.45; }
+.verdict-note { font-size:12px; font-weight:600; }
+.verdict-note.over { color:var(--reject); } .verdict-note.within { color:var(--approve); }
+
+/* charts */
 .chart { width:100%; display:block; }
-.chart text { font-family:var(--mono); font-size:10px; fill:var(--text-muted); }
+.chart text { font-family:var(--sans); font-size:11px; fill:var(--text-2); font-variant-numeric:tabular-nums; }
+.chart .lbl { fill:var(--text); }
 .chart .axis { stroke:var(--grid); stroke-width:1; }
-.chart .ref { stroke:var(--text-muted); stroke-width:1.5; }
+.chart .ref { stroke:var(--text-2); stroke-width:1; stroke-dasharray:4 3; }
 .chart .hit { fill:transparent; }
-.legend { display:flex; gap:12px; flex-wrap:wrap; font-family:var(--mono); font-size:0.56rem; color:var(--text-muted); margin-top:2px; }
-.legend i { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; vertical-align:-1px; }
-.legend i.line { height:2px; width:13px; vertical-align:3px; background:var(--text-muted); }
-details summary { font-family:var(--mono); font-size:0.56rem; color:var(--text-dim); cursor:pointer; margin-top:3px; }
+details summary { font-size:11px; color:var(--accent); cursor:pointer; margin-top:var(--s1); }
+details table { margin-top:var(--s1); font-size:11px; }
 
-.pos-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:10px; }
-.curve { padding:7px 0; border-bottom:1px solid var(--border); }
-.curve:last-child { border-bottom:none; }
-.curve-t { font-size:0.7rem; font-weight:600; display:flex; gap:7px; align-items:center; flex-wrap:wrap; }
-.hash { font-family:var(--mono); font-size:0.6rem; color:var(--text-muted); margin-top:4px; }
+/* positions */
+.cells { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s1); }
+.cell { border:1px solid var(--border); border-radius:var(--r); padding:var(--s1); min-width:0; }
+.curve { padding-bottom:var(--s1); margin-bottom:var(--s1); border-bottom:1px solid var(--border); }
+.curve:last-of-type { border-bottom:none; }
+.curve-t { font-weight:600; display:flex; gap:var(--s1); align-items:center; flex-wrap:wrap; }
+.line { font-size:12px; color:var(--text-2); margin-top:4px; display:flex; align-items:center; gap:var(--s1); flex-wrap:wrap; }
+.hashchip { display:inline-flex; align-items:center; gap:4px; font-family:var(--mono); font-size:12px; color:var(--text); }
+.hashchip button, .hashchip a { font-family:var(--sans); font-size:11px; background:none; border:1px solid var(--border); border-radius:var(--r); color:var(--text-2); padding:0 6px; cursor:pointer; }
+.hashchip a { color:var(--accent); }
+.ok-text { color:var(--approve); } .bad-text { color:var(--reject); }
+.legend { display:flex; gap:var(--s2); font-size:11px; color:var(--text-2); margin-top:4px; }
+.legend i { display:inline-block; width:14px; height:2px; background:var(--text); vertical-align:middle; margin-right:4px; }
+.legend i.dash { background:none; border-top:1px dashed var(--text-2); }
 
-#tip { position:fixed; z-index:50; pointer-events:none; background:var(--surface2); border:1px solid var(--border-hi); border-radius:var(--radius); padding:6px 9px; font-family:var(--mono); font-size:0.6rem; color:var(--text); line-height:1.6; display:none; max-width:300px; white-space:pre-line; }
+/* states */
+.unavail { color:var(--requote); font-size:12px; }
+.empty { color:var(--text-3); font-size:12px; }
+.skel { display:block; height:12px; border-radius:var(--r); background:var(--surface-2); margin:var(--s1) 0; }
+.skel.w60 { width:60%; } .skel.w80 { width:80%; } .skel.w40 { width:40%; } .skel.tall { height:96px; }
 
-@media (max-width:1100px) { .row, .pos-grid { grid-template-columns:1fr; } .cells { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+/* tooltip */
+#tip { position:fixed; z-index:60; pointer-events:none; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r); padding:var(--s1); font-size:11px; color:var(--text); line-height:1.5; display:none; max-width:320px; white-space:pre-line; }
+
+/* API drawer */
+.drawer { position:fixed; top:0; right:0; bottom:0; width:min(560px,100vw); background:var(--surface); border-left:1px solid var(--border); z-index:50; display:flex; flex-direction:column; transform:translateX(100%); opacity:0; transition:transform 150ms ease, opacity 150ms ease; visibility:hidden; }
+.drawer.open { transform:none; opacity:1; visibility:visible; }
+.drawer-h { display:flex; justify-content:space-between; align-items:center; padding:var(--s2); border-bottom:1px solid var(--border); }
+.drawer-h h2 { font-size:14px; font-weight:600; }
+.drawer-b { padding:var(--s2); overflow-y:auto; flex:1; }
+.drawer pre { font-family:var(--mono); font-size:11px; color:var(--text-2); background:var(--bg); border:1px solid var(--border); border-radius:var(--r); padding:var(--s1); overflow:auto; max-height:38vh; white-space:pre; }
+.endpoint { font-family:var(--mono); font-size:12px; color:var(--text); margin-bottom:var(--s1); }
+
+@media (max-width:1100px) {
+  .span-7, .span-5, .span-4 { grid-column:span 12; }
+  .top { flex-direction:column; } .status { flex-wrap:wrap; } .st { flex:1 1 45%; }
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="status" id="status"></div>
+<div class="page">
+  <header class="top">
+    <div class="brand"><h1>RiskPilot</h1><p>Risk and execution layer for DeFi agents</p></div>
+    <div class="status" id="status" aria-label="Status"></div>
+  </header>
+  <p class="tagline">Agents propose. RiskPilot prices, stress-tests and gates. You sign.</p>
 
-  <div class="row">
-    <div class="card">
-      <div class="card-h"><h2>Opportunities</h2><span class="note" id="oppNote"></span></div>
-      <div class="card-b tscroll" id="opps"></div>
-    </div>
-    <div class="card">
-      <div class="card-h"><h2>Decision</h2><span class="note" id="decNote"></span></div>
-      <div class="card-b" id="decision"></div>
-    </div>
-  </div>
+  <main class="grid">
+    <section class="panel span-7" aria-labelledby="h-opps">
+      <div class="panel-h"><h2 id="h-opps">Opportunities</h2><span class="k" id="oppNote"></span></div>
+      <p class="helper">Proposed by the scanner or any agent via POST /evaluate</p>
+      <div class="panel-b tscroll" id="opps"><span class="skel w80"></span><span class="skel w60"></span><span class="skel w80"></span></div>
+    </section>
 
-  <div class="pos-grid">
-    <div class="card">
-      <div class="card-h"><h2>Aqua curves</h2><span class="note">AquaSwapVMRouter v1.0.2</span></div>
-      <div class="card-b" id="aqua"></div>
-    </div>
-    <div class="card">
-      <div class="card-h"><h2>v4 hook</h2><span class="note">VolatilityFeeHook</span></div>
-      <div class="card-b" id="hook"></div>
-    </div>
-    <div class="card">
-      <div class="card-h"><h2>Arc</h2><span class="note">RiskPilotEscrow</span></div>
-      <div class="card-b" id="arc"></div>
-    </div>
-  </div>
+    <section class="panel span-5" aria-labelledby="h-dec">
+      <div class="panel-h"><h2 id="h-dec">Decision</h2><button class="linkbtn" id="viewApi" type="button" disabled>View API</button></div>
+      <p class="helper">Net edge after all costs, and what this trade does to your worst case</p>
+      <div class="panel-b" id="decision"><span class="skel w40"></span><span class="skel w80"></span><span class="skel tall"></span><span class="skel tall"></span></div>
+    </section>
 
-  <div class="card">
-    <div class="card-h"><h2>Decision history</h2><span class="note">Replay re-runs the stored inputs</span></div>
-    <div class="card-b tscroll" id="history"></div>
-  </div>
+    <section class="span-12" aria-labelledby="h-pos">
+      <div class="section-h"><h2 id="h-pos">Positions</h2><p class="helper">Executed only after your signature</p></div>
+      <div class="grid">
+        <section class="panel span-4" aria-labelledby="h-aqua">
+          <div class="panel-h"><h2 id="h-aqua">Aqua curves</h2><span class="k">AquaSwapVMRouter v1.0.2</span></div>
+          <div class="panel-b" id="aqua"><span class="skel w80"></span><span class="skel w60"></span></div>
+        </section>
+        <section class="panel span-4" aria-labelledby="h-hook">
+          <div class="panel-h"><h2 id="h-hook">Uniswap v4 hook</h2><span class="k">VolatilityFeeHook</span></div>
+          <div class="panel-b" id="hook"><span class="skel w80"></span><span class="skel tall"></span></div>
+        </section>
+        <section class="panel span-4" aria-labelledby="h-arc">
+          <div class="panel-h"><h2 id="h-arc">Arc settlement</h2><span class="k">RiskPilotEscrow</span></div>
+          <div class="panel-b" id="arc"><span class="skel w80"></span><span class="skel w60"></span></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="panel span-12" aria-labelledby="h-hist">
+      <div class="panel-h"><h2 id="h-hist">Decision history</h2></div>
+      <p class="helper">Every decision is stored with its inputs and can be replayed</p>
+      <div class="panel-b tscroll" id="history"><span class="skel w80"></span><span class="skel w80"></span></div>
+    </section>
+  </main>
 </div>
-<div id="tip"></div>
+
+<aside class="drawer" id="drawer" aria-labelledby="h-api" aria-hidden="true">
+  <div class="drawer-h"><h2 id="h-api">Agent API</h2><button class="btn ghost sm" id="drawerClose" type="button">Close</button></div>
+  <div class="drawer-b" id="drawerBody"></div>
+</aside>
+<div id="tip" role="tooltip"></div>
 
 <script type="module">
 import { execute, aquaAdapter, v4Adapter, arcAdapter } from "/riskpilot/web/adapters.js";
@@ -166,16 +233,22 @@ const DEMO_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2
 const HEARTBEAT_MS = 2000; // "Source unavailable" within 5 s of a source stopping
 
 const S = { up: { engine: false, chain: false }, health: null, profiles: null, info: null, seed: null, sel: 0,
-  history: [], executions: [], chain: null, signer: null, log: [], at: {} };
+  history: [], executions: [], chain: null, signer: null, log: [], at: {}, busy: false };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const now = () => new Date().toISOString().replace(/\.\d+Z$/, "Z");
 const ts = (iso) => (iso ? String(iso).replace("T", " ").replace(/\.\d+Z$/, "Z") : "");
+const hms = (iso) => (iso ? new Date(iso).toISOString().slice(11, 19) + " UTC" : "");
+
+// ── number formats ───────────────────────────────────────────────────────
 const usd = (v) => { const n = Number(v); return (n < 0 ? "−$" : "$") + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
 const num = (v, d = 2) => Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+const pct = (fraction, d = 2) => `${num(Number(fraction) * 100, d)}%`;
+const feePips = (pips) => `${pct(Number(pips) / 1e6, 2)} (${Number(pips).toLocaleString("en-US")} pips)`;
 const short = (h) => (h ? h.slice(0, 6) + "…" + h.slice(-4) : "");
-const src = (source, at) => `data-src="${esc(`source: ${source}\nat: ${at || now()}`)}"`;
 const unavailable = (name) => `<span class="unavail">Source unavailable: ${esc(name)}</span>`;
+const tip = (source, at) => `data-src="${esc(`${source} · ${hms(at || now())}${S.chain ? ` · block ${S.chain.block.toLocaleString("en-US")}` : ""}`)}"`;
+const hashChip = (h, explorer) => `<span class="hashchip"><span title="${esc(h)}">${short(h)}</span><button type="button" data-copy="${esc(h)}" aria-label="Copy ${esc(h)}">Copy</button>${explorer ? `<a href="${explorer}" target="_blank" rel="noopener" aria-label="Open ${esc(short(h))} in the explorer">Explorer</a>` : ""}</span>`;
 
 async function engine(path, opts = {}) {
   const r = await fetch(ENGINE + path, { ...opts, headers: { "content-type": "application/json" } });
@@ -226,19 +299,43 @@ async function arcSigner() {
   return { kind: "browser wallet", address, client: V.viem.createWalletClient({ account: address, chain: V.arcChain, transport: V.viem.custom(window.ethereum) }) };
 }
 
+// ── tooltips, copy ───────────────────────────────────────────────────────
+const tipEl = $("tip");
+function bindTips(root) {
+  root.querySelectorAll("[data-tip],[data-src]").forEach((el) => {
+    const show = (x, y) => {
+      tipEl.innerHTML = el.dataset.tip || esc(el.dataset.src); tipEl.style.display = "block";
+      tipEl.style.left = Math.min(x + 14, innerWidth - tipEl.offsetWidth - 8) + "px"; tipEl.style.top = (y + 14) + "px";
+    };
+    el.addEventListener("mousemove", (e) => show(e.clientX, e.clientY));
+    el.addEventListener("focus", () => { const r = el.getBoundingClientRect(); show(r.left, r.bottom); });
+    el.addEventListener("mouseleave", () => { tipEl.style.display = "none"; });
+    el.addEventListener("blur", () => { tipEl.style.display = "none"; });
+  });
+}
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-copy]");
+  if (!b) return;
+  try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; } catch { b.textContent = "Select and copy"; }
+  setTimeout(() => { b.textContent = "Copy"; }, 1200);
+});
+
 // ── status bar ────────────────────────────────────────────────────────────
 function renderStatus() {
   const c = S.chain, p = S.profiles?.balanced, info = S.info;
   const cell = (k, v, cls = "") => `<div class="st ${cls}"><div class="k">${k}</div><div class="v">${v}</div></div>`;
-  const tok = (raw, dec, unit, d) => (c && raw !== undefined ? `<span data-testid="hold-${unit}" ${src(`balanceOf ${unit} · ${RPC}`, c.at)}>${num(Number(raw) / 10 ** dec, d)} ${unit}</span>` : unavailable("demo chain"));
+  const tok = (raw, dec, unit, d) => (c && raw !== undefined
+    ? `<span data-testid="hold-${unit}" ${tip(`chain balanceOf ${unit}`, c.at)} tabindex="0">${num(Number(raw) / 10 ** dec, d)} ${unit}</span>` : unavailable("demo chain"));
+  const eng = S.up.engine; // engine-sourced cells drop their values while the engine is down
   $("status").innerHTML = [
-    `<div class="st brand">RiskPilot</div>`,
-    cell("Chain", c && info ? `<span ${src("eth_chainId, eth_blockNumber · " + RPC + "; fork block from demo/curves.json", c.at)}>Ethereum mainnet fork · block ${Number(info.fork_block).toLocaleString()}</span>` : unavailable("demo chain"), "wide"),
-    cell("Wallet", info ? `<span ${src("demo/curves.json maker", S.at.info)}>${short(info.maker)}</span>` : unavailable("engine")),
+    cell("Chain", !c ? unavailable("demo chain")
+      : eng && info ? `<span ${tip("chain eth_chainId · fork block from demo/curves.json", c.at)} tabindex="0">Ethereum mainnet fork · block ${Number(info.fork_block).toLocaleString("en-US")}</span>`
+      : `<span ${tip("chain eth_chainId, eth_blockNumber", c.at)} tabindex="0">chain ${c.chainId} · head ${c.block.toLocaleString("en-US")}</span>`, "wide"),
+    cell("Wallet", eng && info ? `<span class="mono" ${tip("demo/curves.json maker", S.at.info)} tabindex="0">${short(info.maker)}</span>` : unavailable("engine")),
     cell("WETH", tok(c?.weth, 18, "WETH", 4)),
     cell("USDC", tok(c?.usdc, 6, "USDC", 2)),
-    cell("Profile", p ? `<span ${src("engine GET /profiles", S.at.profiles)}>Balanced · ${usd(p.budget)}</span>` : unavailable("engine")),
-    cell("Engine", S.up.engine && S.health ? `<span ${src("engine GET /health · " + ENGINE, S.at.health)}>${esc(S.health.model_version)}</span>` : unavailable("engine " + ENGINE)),
+    cell("Profile", eng && p ? `<span ${tip("engine /profiles", S.at.profiles)} tabindex="0">Balanced · ${usd(p.budget)}</span>` : unavailable("engine"), "prof"),
+    cell("Engine", S.up.engine && S.health ? `<span ${tip("engine /health", S.at.health)} tabindex="0">${esc(S.health.model_version)}</span>` : unavailable("engine")),
   ].join("");
   bindTips($("status"));
 }
@@ -246,20 +343,20 @@ function renderStatus() {
 // ── opportunities ────────────────────────────────────────────────────────
 const age = (iso) => Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));
 function renderOpps() {
-  if (!S.up.engine || !S.seed) { $("opps").innerHTML = unavailable(S.seedErr || "engine " + ENGINE); $("oppNote").textContent = ""; return; }
+  if (!S.up.engine || !S.seed) { $("opps").innerHTML = unavailable(S.seedErr || "engine"); $("oppNote").textContent = ""; return; }
   const rows = S.seed.items.map((it, i) => {
-    const o = it.opportunity, d = it.decision, s = src(`engine POST /demo/seed · ${o.source}`, d.created_at);
-    return `<tr class="pick ${i === S.sel ? "sel" : ""}" data-i="${i}" tabindex="0" data-testid="opp-row" data-label="${esc(it.label)}" data-decision="${d.decision_id}">
-      <td ${s}>${esc(o.type)} · ${esc(o.pair)}<div class="small">${esc(o.source_venue)} → ${esc(o.target)}</div></td>
-      <td class="num" ${s}>${usd(o.observed_price)}<div class="small">ref ${usd(o.reference_price)}</div></td>
+    const o = it.opportunity, d = it.decision, s = tip(`engine /evaluate · ${o.source}`, d.created_at);
+    return `<tr class="pick ${i === S.sel ? "sel" : ""}" data-i="${i}" tabindex="0" aria-selected="${i === S.sel}" data-testid="opp-row" data-label="${esc(it.label)}" data-decision="${d.decision_id}">
+      <td ${s}>${esc(it.label.split(" · ")[0])}<span class="sub2">${esc(o.type)} · ${esc(o.pair)} · ${esc(o.source_venue)} → ${esc(o.target)}</span></td>
+      <td class="num" ${s}>${usd(o.observed_price)}<span class="sub2">ref ${usd(o.reference_price)}</span></td>
       <td class="num" ${s}>${usd(o.size)}</td>
       <td class="num" ${s}>${usd(d.gross_edge)}</td>
       <td class="num" ${s}>${usd(d.net_edge)}</td>
-      <td><span class="pill ${d.verdict}" data-testid="opp-verdict">${d.verdict}</span></td>
-      <td class="num" data-age="${o.observed_at}" ${src("now − opportunity.observed_at", o.observed_at)}>${age(o.observed_at)} s</td></tr>`;
+      <td><span class="chip ${d.verdict}" data-testid="opp-verdict">${d.verdict}</span></td>
+      <td class="num" data-age="${o.observed_at}" ${tip("now − observed_at", o.observed_at)}>${age(o.observed_at)} s</td></tr>`;
   }).join("");
-  $("opps").innerHTML = `<table><thead><tr><th>Type · pair</th><th class="num">Observed</th><th class="num">Size</th><th class="num">Gross</th><th class="num">Net</th><th>Verdict</th><th class="num">Age</th></tr></thead><tbody>${rows}</tbody></table>`;
-  $("oppNote").textContent = `seeded ${ts(S.seed.as_of)}`;
+  $("opps").innerHTML = `<table><thead><tr><th scope="col">Opportunity</th><th scope="col" class="num">Observed / ref</th><th scope="col" class="num">Size</th><th scope="col" class="num">Gross edge</th><th scope="col" class="num">Net edge</th><th scope="col">Verdict</th><th scope="col" class="num">Age</th></tr></thead><tbody>${rows}</tbody></table>`;
+  $("oppNote").textContent = `seeded ${hms(S.seed.as_of)}`;
   document.querySelectorAll("#opps tr.pick").forEach((tr) => {
     const go = () => { S.sel = Number(tr.dataset.i); renderOpps(); renderDecision(); renderArc(); };
     tr.addEventListener("click", go);
@@ -269,75 +366,63 @@ function renderOpps() {
 }
 
 // ── charts ────────────────────────────────────────────────────────────────
-const tip = $("tip");
-function bindTips(root) {
-  root.querySelectorAll("[data-tip],[data-src]").forEach((el) => {
-    el.addEventListener("mousemove", (e) => {
-      tip.innerHTML = el.dataset.tip || esc(el.dataset.src); tip.style.display = "block";
-      tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + "px"; tip.style.top = (e.clientY + 14) + "px";
-    });
-    el.addEventListener("mouseleave", () => { tip.style.display = "none"; });
-  });
-}
 const niceStep = (span) => { const raw = span / 4, p = 10 ** Math.floor(Math.log10(raw || 1)); return [1, 2, 2.5, 5, 10].map((m) => m * p).find((s) => s >= raw); };
 
+// Horizontal waterfall: gross (neutral), each cost and the risk charge (red), net (green if it clears the hurdle).
 function waterfall(d) {
-  const steps = [{ key: "gross", k: d.inputs.aqua ? "Premium" : "Gross edge", v: +d.gross_edge, kind: "edge" }];
+  const steps = [{ key: "gross", k: d.inputs.aqua ? "Premium" : "Gross edge", v: +d.gross_edge, kind: "gross" }];
   for (const [k, v] of Object.entries(d.costs)) steps.push({ key: k, k: k[0].toUpperCase() + k.slice(1), v: -v, kind: "cost" });
   steps.push({ key: "risk", k: "Risk charge", v: -d.risk_charge, kind: "cost" });
   let run = 0;
   const bars = steps.map((s) => { const a = run; run += s.v; return { ...s, a, b: run }; });
-  bars.push({ key: "net", k: "Net edge", v: +d.net_edge, kind: "edge", a: 0, b: +d.net_edge, net: true });
-  const hurdle = +d.inputs.hurdle, vals = bars.flatMap((b) => [b.a, b.b]).concat([0, hurdle]);
+  const hurdle = +d.inputs.hurdle;
+  bars.push({ key: "net", k: "Net edge", v: +d.net_edge, kind: +d.net_edge >= hurdle ? "net-ok" : "net-bad", a: 0, b: +d.net_edge, net: true });
+  const vals = bars.flatMap((b) => [b.a, b.b]).concat([0, hurdle]);
   let lo = Math.min(...vals), hi = Math.max(...vals);
   const step = niceStep(hi - lo || 1); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
-  const W = 560, L = 84, R = 62, rowH = 17, barH = 11, top = 14, H = top + bars.length * rowH + 16;
+  const W = 520, L = 88, R = 64, rowH = 15, barH = 10, top = 14, H = top + bars.length * rowH + 16;
   const x = (v) => L + ((v - lo) / (hi - lo)) * (W - L - R);
+  const fill = { gross: "var(--neutral-bar)", cost: "var(--reject)", "net-ok": "var(--approve)", "net-bad": "var(--reject)" };
   let g = "";
-  for (let t = lo; t <= hi + 1e-9; t += step) g += `<line class="axis" x1="${x(t)}" x2="${x(t)}" y1="${top}" y2="${H - 14}"/><text x="${x(t)}" y="${H - 3}" text-anchor="middle">${t < 0 ? "−" : ""}$${Math.abs(t).toLocaleString()}</text>`;
+  for (let t = lo; t <= hi + 1e-9; t += step) g += `<line class="axis" x1="${x(t)}" x2="${x(t)}" y1="${top}" y2="${H - 14}"/><text x="${x(t)}" y="${H - 3}" text-anchor="middle">${t < 0 ? "−" : ""}$${Math.abs(t).toLocaleString("en-US")}</text>`;
   bars.forEach((b, i) => {
-    const y = top + i * rowH + (rowH - barH) / 2, x0 = x(Math.min(b.a, b.b)), w = Math.max(1, Math.abs(x(b.b) - x(b.a)));
-    const valX = x(Math.max(b.a, b.b)) + 5;
-    g += `<text x="${L - 7}" y="${y + barH - 2}" text-anchor="end" style="fill:var(--text)">${b.k}</text>`;
-    if (Math.abs(b.v) > 0) g += `<rect x="${x0}" y="${y}" width="${w}" height="${barH}" rx="3" fill="var(--c-${b.kind === "edge" ? "edge" : "cost"})"/>`;
-    g += `<text data-wf="${b.key}" x="${Math.min(valX, W - 3)}" y="${y + barH - 2}" text-anchor="${valX > W - R ? "end" : "start"}">${b.net ? usd(b.v) : (b.v < 0 ? "−" : "") + usd(Math.abs(b.v))}</text>`;
-    g += `<rect class="hit" x="0" y="${top + i * rowH}" width="${W}" height="${rowH}" data-tip="${esc(`${b.k}: ${usd(b.v)}${b.net ? `<br>hurdle ${usd(hurdle)}` : ""}`)}"/>`;
+    const y = top + i * rowH + (rowH - barH) / 2, x0 = x(Math.min(b.a, b.b)), w = Math.max(1, Math.abs(x(b.b) - x(b.a))), valX = x(Math.max(b.a, b.b)) + 6;
+    g += `<text class="lbl" x="${L - 8}" y="${y + barH - 1}" text-anchor="end">${b.k}</text>`;
+    if (Math.abs(b.v) > 0) g += `<rect x="${x0}" y="${y}" width="${w}" height="${barH}" rx="2" fill="${fill[b.kind]}"/>`;
+    g += `<text data-wf="${b.key}" class="lbl" x="${Math.min(valX, W - 2)}" y="${y + barH - 1}" text-anchor="${valX > W - R ? "end" : "start"}">${b.net ? usd(b.v) : (b.v < 0 ? "−" : "") + usd(Math.abs(b.v))}</text>`;
+    g += `<rect class="hit" x="0" y="${top + i * rowH}" width="${W}" height="${rowH}" data-tip="${esc(`${b.k}: ${usd(b.v)}${b.net ? `\nhurdle ${usd(hurdle)}` : ""}`)}"/>`;
   });
-  g += `<line class="ref" x1="${x(hurdle)}" x2="${x(hurdle)}" y1="${top - 3}" y2="${H - 14}"/><text x="${x(hurdle)}" y="${top - 5}" text-anchor="middle" style="fill:var(--text)">hurdle ${usd(hurdle)}</text>`;
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Cost waterfall from gross edge to net edge">${g}</svg>
-    <div class="legend"><span><i style="background:var(--c-edge)"></i>edge</span><span><i style="background:var(--c-cost)"></i>cost</span><span><i class="line"></i>hurdle</span></div>`;
+  g += `<line class="ref" x1="${x(hurdle)}" x2="${x(hurdle)}" y1="${top - 3}" y2="${H - 14}"/><text x="${x(hurdle)}" y="${top - 5}" text-anchor="middle">hurdle ${usd(hurdle)}</text>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Cost waterfall: gross ${usd(d.gross_edge)}, net ${usd(d.net_edge)}, hurdle ${usd(hurdle)}">${g}</svg>`;
 }
 
-function stressChart(d) {
-  const grid = d.inputs.stress_grid || [];
-  if (!grid.length) return `<div class="small">No stress grid: the decision stopped before pricing.</div>`;
-  const budget = +d.budget, spots = [...new Set(grid.map((s) => s.spot_shock))], at = (sp, vo) => grid.find((s) => s.spot_shock === sp && s.vol_shock === vo);
-  const vals = grid.map((s) => +s.pnl_after).concat([0, -budget]);
-  let lo = Math.min(...vals), hi = Math.max(...vals);
-  const step = niceStep(hi - lo || 1); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
-  const W = 560, L = 50, R = 6, top = 6, H = 128, bot = 18, gw = (W - L - R) / spots.length, bw = Math.min(14, gw / 2 - 4);
-  const y = (v) => top + ((hi - v) / (hi - lo)) * (H - top - bot), tk = (v) => (Math.abs(v) >= 1000 ? `${(v / 1000).toLocaleString()}K` : v.toLocaleString());
+// Worst-case loss before and after the trade, against the budget (dashed).
+function stressBars(d) {
+  const before = +d.stress_loss_before, after = +d.stress_loss_after, budget = +d.budget;
+  const W = 520, L = 116, R = 74, rowH = 18, barH = 12, top = 2, H = top + 2 * rowH + 16;
+  const hi = Math.max(before, after, budget) * 1.05 || 1, x = (v) => L + (v / hi) * (W - L - R);
+  const over = after > budget, raises = after > before;
+  // The engine's stress rule (PRD 2 rule 4) rejects only a trade that leaves the worst loss above
+  // budget AND raises it; a trade that lowers an already-over-budget worst loss passes.
+  const fails = over && raises;
+  const rows = [{ k: "Worst loss before", v: before, fill: "var(--neutral-bar)" },
+    { k: "Worst loss after", v: after, fill: fails ? "var(--reject)" : "var(--approve)" }];
   let g = "";
-  for (let t = lo; t <= hi + 1e-9; t += step) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 5}" y="${y(t) + 3}" text-anchor="end">${t < 0 ? "−" : ""}$${tk(Math.abs(t))}</text>`;
-  spots.forEach((sp, i) => {
-    const cx = L + gw * i + gw / 2;
-    g += `<text x="${cx}" y="${H - 4}" text-anchor="middle">${(+sp > 0 ? "+" : "") + Math.round(+sp * 100)}%</text>`;
-    ["0.00", "0.20"].forEach((vo, j) => {
-      const s = at(sp, vo); if (!s) return;
-      const v = +s.pnl_after, x0 = cx + (j === 0 ? -bw - 1 : 1), y0 = y(Math.max(v, 0)), h = Math.max(1, Math.abs(y(v) - y(0))), r = Math.min(3, h / 2);
-      const path = v >= 0
-        ? `M${x0},${y0 + h} V${y0 + r} Q${x0},${y0} ${x0 + r},${y0} H${x0 + bw - r} Q${x0 + bw},${y0} ${x0 + bw},${y0 + r} V${y0 + h} Z`
-        : `M${x0},${y0} V${y0 + h - r} Q${x0},${y0 + h} ${x0 + r},${y0 + h} H${x0 + bw - r} Q${x0 + bw},${y0 + h} ${x0 + bw},${y0 + h - r} V${y0} Z`;
-      g += `<path d="${path}" fill="var(--c-vol${j === 0 ? "0" : "20"})"/>`;
-      g += `<rect class="hit" x="${x0 - 2}" y="${top}" width="${bw + 4}" height="${H - top - bot}" data-tip="${esc(`spot ${(+sp > 0 ? "+" : "") + Math.round(+sp * 100)}% · vol +${Math.round(+vo * 100)} pts<br>after ${usd(s.pnl_after)} · before ${usd(s.pnl_before)}`)}"/>`;
-    });
+  rows.forEach((r, i) => {
+    const y = top + i * rowH + (rowH - barH) / 2;
+    g += `<text class="lbl" x="${L - 8}" y="${y + barH - 2}" text-anchor="end">${r.k}</text>`;
+    g += `<rect x="${L}" y="${y}" width="${Math.max(1, x(r.v) - L)}" height="${barH}" rx="2" fill="${r.fill}"/>`;
+    g += `<text class="lbl" x="${x(r.v) + 6}" y="${y + barH - 2}">${usd(r.v)}</text>`;
   });
-  g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" style="stroke:var(--text-dim)"/>`;
-  g += `<line class="ref" x1="${L}" x2="${W - R}" y1="${y(-budget)}" y2="${y(-budget)}"/><text x="${L + 4}" y="${y(0) - 4}" style="fill:var(--text)">budget −${usd(budget)}</text>`;
-  const table = grid.map((s) => `<tr><td>${s.spot_shock}</td><td>${s.vol_shock}</td><td class="num">${usd(s.pnl_before)}</td><td class="num">${usd(s.pnl_after)}</td></tr>`).join("");
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Post-trade P&amp;L across 14 stress scenarios against the loss budget">${g}</svg>
-    <div class="legend"><span><i style="background:var(--c-vol0)"></i>vol +0</span><span><i style="background:var(--c-vol20)"></i>vol +20 pts</span><span><i class="line"></i>loss budget</span></div>
-    <details><summary>Table</summary><table><thead><tr><th>Spot</th><th>Vol</th><th class="num">P&amp;L before</th><th class="num">P&amp;L after</th></tr></thead><tbody>${table}</tbody></table></details>`;
+  g += `<line class="ref" x1="${x(budget)}" x2="${x(budget)}" y1="0" y2="${H - 14}"/><text x="${x(budget)}" y="${H - 2}" text-anchor="middle">budget ${usd(budget)}</text>`;
+  const delta = after - before;
+  const note = !over ? "Within budget"
+    : raises ? `Over budget by ${usd(after - budget)}`
+    : `Over budget by ${usd(after - budget)}, but this trade lowers the worst loss`;
+  const table = (d.inputs.stress_grid || []).map((s) => `<tr><td class="num">${pct(s.spot_shock, 0)}</td><td class="num">+${pct(s.vol_shock, 0)}</td><td class="num">${usd(s.pnl_before)}</td><td class="num">${usd(s.pnl_after)}</td></tr>`).join("");
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Worst loss before ${usd(before)}, after ${usd(after)}, budget ${usd(budget)}">${g}</svg>
+    <div class="sub" style="margin:4px 0 0"><span class="verdict-note ${fails ? "over" : "within"}" data-testid="stress-note">${note}</span><span>this trade ${delta >= 0 ? "+" : ""}${usd(delta)}</span></div>
+    ${table ? `<details><summary>14 stress scenarios</summary><table><thead><tr><th class="num">Spot</th><th class="num">Vol</th><th class="num">P&amp;L before</th><th class="num">P&amp;L after</th></tr></thead><tbody>${table}</tbody></table></details>` : ""}`;
 }
 
 // ── decision panel ───────────────────────────────────────────────────────
@@ -347,45 +432,6 @@ function liveShipped(d) {
   const c = d.inputs.aqua && S.info ? (d.inputs.aqua.side === "call_like" ? S.info.upside : S.info.downside) : null;
   return c && S.shipped?.[c.strategy_hash];
 }
-
-function renderDecision() {
-  clearInterval(timer);
-  if (!S.up.engine || !S.seed) { $("decision").innerHTML = unavailable(S.seedErr || "engine " + ENGINE); $("decNote").textContent = ""; return; }
-  const it = S.seed.items[S.sel], d = it.decision, inp = d.inputs, aq = inp.aqua, ds = src(`engine generate_execution_decision · ${d.model_version}`, d.created_at);
-  const shipped = liveShipped(d), kind = adapterFor(d);
-  const live = d.verdict === "APPROVE" && Date.parse(d.expires_at) > Date.now() && !shipped && kind && S.up.chain;
-  let h = `<div class="dec-head" data-testid="decision" data-decision="${d.decision_id}"><span class="pill ${d.verdict}" data-testid="dec-verdict">${d.verdict}</span><span class="dec-id" ${ds}>${d.decision_id} · ${ts(d.created_at)}</span></div>
-    <div class="reason" data-testid="dec-reason" ${ds}>${esc(d.reason)}</div>
-    <div class="act"><button class="btn" id="approve" data-testid="approve" ${live ? "" : "disabled"}>${live ? "Approve and sign" : esc(whyDisabled(d, shipped, kind))}</button>
-      <span class="small">${live ? "signer: " + esc(S.signer?.kind || "") : ""}</span></div>
-    <div class="log" id="log">${S.log.join("<br>")}</div>`;
-  h += `<div class="sub">Net edge, USD</div>${waterfall(d)}`;
-  h += `<div class="sub" ${ds}>Stress · worst loss <span data-testid="stress-before">${usd(d.stress_loss_before)}</span> → <span data-testid="stress-after">${usd(d.stress_loss_after)}</span> · budget <span data-testid="budget">${usd(d.budget)}</span></div>${stressChart(d)}`;
-  if (aq) {
-    const cv = (k, v) => `<div class="cell"><div class="k">${k}</div><div class="v" data-testid="aq-${k}" ${src("engine: Black-Scholes at K_eq, T_eq (decision.inputs.aqua)", d.created_at)}>${v}</div></div>`;
-    h += `<div class="sub">Aqua curve · ${aq.side.replace("_", "-")}</div><div class="cells aq">
-      ${cv("Range", `${num(aq.range_low, 0)}–${num(aq.range_high, 0)}`)}${cv("K_eq", usd(aq.k_eq))}${cv("T_eq", num(aq.t_eq_days, 2) + " d")}
-      ${cv("C_eq", usd(aq.c_eq) + "/ETH")}${cv("f_min", num(aq.f_min * 100, 4) + "%")}${cv("Fee", num(aq.fee_rate * 100, 4) + "%")}</div>`;
-  }
-  const tsOf = (k) => inp.timestamps?.[k];
-  const lines = Object.entries(inp.sources || {}).map(([k, v]) => `${k}: ${esc(v)}${tsOf(k) ? ` @ ${ts(tsOf(k))}` : ""}`);
-  if (inp.request?.holdings) lines.push(`holdings: ${num(inp.request.holdings.weth, 4)} WETH, ${num(inp.request.holdings.usdc, 2)} USDC`);
-  h += `<div class="sub">Inputs</div><div class="inputs">${lines.join("<br>")}</div>`;
-  $("decision").innerHTML = h;
-  $("decNote").textContent = it.label;
-  bindTips($("decision"));
-  const tick = () => {
-    const btn = $("approve");
-    if (!btn || !live) return clearInterval(timer);
-    const left = Math.max(0, Math.ceil((Date.parse(d.expires_at) - Date.now()) / 1000));
-    if (left > 0) { if (!btn.dataset.busy) btn.textContent = `Approve and sign · ${left}s`; }
-    else { btn.disabled = true; btn.textContent = "Expired: request a new decision"; clearInterval(timer); }
-  };
-  tick(); timer = setInterval(tick, 250);
-  if (live) $("approve").onclick = () => approve(d, kind);
-}
-
-function log(msg, cls = "") { S.log.push(`<span class="${cls}">${esc(new Date().toLocaleTimeString())} ${esc(msg)}</span>`); const el = $("log"); if (el) { el.innerHTML = S.log.join("<br>"); el.scrollTop = el.scrollHeight; } }
 
 // Why "Approve and sign" is disabled, from the decision's own verdict and reason.
 function whyDisabled(d, shipped, kind) {
@@ -404,8 +450,74 @@ function whyDisabled(d, shipped, kind) {
   return d.verdict;
 }
 
+const TERMS = {
+  call_like: {
+    Range: "Price interval, in USDC per ETH, that the curve sells ETH across as the price rises.",
+    K_eq: "Strike of the equivalent option: the geometric mean of the range.",
+    T_eq: "Option maturity that makes the curve equal to a covered call.",
+  },
+  put_like: {
+    Range: "Price interval, in USDC per ETH, that the curve buys ETH across as the price falls.",
+    K_eq: "Strike of the equivalent option: the geometric mean of the range.",
+    T_eq: "Option maturity that makes the curve equal to a cash-secured put.",
+  },
+  C_eq: "Black-Scholes value of that equivalent option, per ETH.",
+  f_min: "Lowest curve fee that earns 1.2 × C_eq when the range is fully crossed.",
+  Fee: "The curve's Fee instruction, charged on every fill.",
+};
+
+function aquaBlock(d) {
+  const aq = d.inputs.aqua, terms = { ...TERMS[aq.side], C_eq: TERMS.C_eq, f_min: TERMS.f_min, Fee: TERMS.Fee };
+  const kv = (k, v) => `<div><dt>${k}<button type="button" class="q" aria-label="${esc(k)}: ${esc(terms[k])}" data-tip="${esc(terms[k])}">?</button></dt>
+    <dd data-testid="aq-${k}" ${tip("engine /evaluate · Black-Scholes at K_eq, T_eq", d.created_at)}>${v}</dd></div>`;
+  return `<div class="sub">Aqua curve · ${aq.side === "call_like" ? "call-like (covered-call)" : "put-like (cash-secured put)"}</div><dl class="kv">
+    ${kv("Range", `${usd(aq.range_low)}–${usd(aq.range_high)}`)}${kv("K_eq", usd(aq.k_eq))}
+    ${kv("T_eq", `${num(aq.t_eq_days, 2)} days`)}${kv("C_eq", `${usd(aq.c_eq)} per ETH`)}
+    ${kv("f_min", pct(aq.f_min, 4))}${kv("Fee", pct(aq.fee_rate, 4))}</dl>`;
+}
+
+function renderDecision() {
+  clearInterval(timer);
+  $("viewApi").disabled = !(S.up.engine && S.seed);
+  if (!S.up.engine || !S.seed) { $("decision").innerHTML = unavailable(S.seedErr || "engine"); return; }
+  const it = S.seed.items[S.sel], d = it.decision, inp = d.inputs, ds = tip(`engine /evaluate · ${d.model_version}`, d.created_at);
+  const shipped = liveShipped(d), kind = adapterFor(d);
+  const live = d.verdict === "APPROVE" && Date.parse(d.expires_at) > Date.now() && !shipped && kind && S.up.chain;
+  let h = `<div class="dec-head" data-testid="decision" data-decision="${d.decision_id}"><span class="chip ${d.verdict}" data-testid="dec-verdict">${d.verdict}</span>
+      <span class="dec-id" ${ds} tabindex="0">${esc(it.label)} · ${d.decision_id}</span></div>
+    <p class="reason" data-testid="dec-reason" ${ds}>${esc(d.reason)}</p>
+    <div class="act"><button class="btn" id="approve" data-testid="approve" type="button" ${live ? "" : "disabled"}>${live ? "Approve and sign" : esc(whyDisabled(d, shipped, kind))}</button>
+      <span class="signer" id="signerNote">${live ? "signer: " + esc(S.signer?.kind || "") : ""}</span>
+      <button type="button" class="linkbtn" id="reeval" ${d.verdict === "APPROVE" && !live && !shipped && Date.parse(d.expires_at) <= Date.now() ? "" : "hidden"}>Re-evaluate</button></div>
+    <div class="log" id="log" aria-live="polite">${S.log.join("<br>")}</div>`;
+  h += `<div class="sub"><span>Net edge, USD</span></div>${waterfall(d)}`;
+  h += `<div class="sub"><span>Stress test, worst of 14 scenarios · <span data-testid="stress-before">${usd(d.stress_loss_before)}</span> → <span data-testid="stress-after">${usd(d.stress_loss_after)}</span> · budget <span data-testid="budget">${usd(d.budget)}</span></span></div>${stressBars(d)}`;
+  if (inp.aqua) h += aquaBlock(d);
+  const tsOf = (k) => inp.timestamps?.[k];
+  const lines = Object.entries(inp.sources || {}).map(([k, v]) => `${k}: ${esc(v)}${tsOf(k) ? ` · ${hms(tsOf(k))}` : ""}`);
+  if (inp.request?.holdings) lines.push(`holdings: ${num(inp.request.holdings.weth, 4)} WETH, ${usd(inp.request.holdings.usdc).slice(1)} USDC`);
+  // On short viewports (< 880 px) the inputs collapse so the decision still fits without scrolling.
+  h += `<details class="inputs-d" ${innerHeight >= 880 ? "open" : ""}><summary>Inputs · ${lines.length} sources</summary><div class="inputs">${lines.join("<br>")}</div></details>`;
+  $("decision").innerHTML = h;
+  bindTips($("decision"));
+  if ($("drawer").classList.contains("open")) renderDrawer();
+  const tick = () => {
+    const btn = $("approve");
+    if (!btn || !live) return clearInterval(timer);
+    const left = Math.max(0, Math.ceil((Date.parse(d.expires_at) - Date.now()) / 1000));
+    if (left > 0) { if (!btn.dataset.busy) btn.textContent = `Approve and sign · ${left}s`; }
+    else { btn.disabled = true; btn.textContent = "Expired: request a new decision"; $("signerNote").textContent = ""; $("reeval").hidden = false; clearInterval(timer); }
+  };
+  tick(); timer = setInterval(tick, 250);
+  if (live) $("approve").onclick = () => approve(d, kind);
+  $("reeval").onclick = async () => { await seed(); renderOpps(); renderDecision(); renderArc(); };
+}
+
+function log(msg, cls = "") { S.log.push(`<span class="${cls}">${esc(new Date().toISOString().slice(11, 19))} ${esc(msg)}</span>`); const el = $("log"); if (el) { el.innerHTML = S.log.join("<br>"); el.scrollTop = el.scrollHeight; } }
+
 async function approve(d, kind) {
-  $("approve").disabled = true; $("approve").dataset.busy = "1"; $("approve").textContent = "Signing…";
+  const btn = $("approve");
+  btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = "Signing…";
   S.busy = true;
   try {
     const signer = S.signer || (S.signer = await demoSigner());
@@ -419,12 +531,29 @@ async function approve(d, kind) {
   } catch (e) { S.busy = false; log(String(e.shortMessage || e.message || e), "bad"); renderDecision(); }
 }
 
-// ── positions ────────────────────────────────────────────────────────────
+// ── API drawer: the exact /evaluate request and Decision for the selected item ──
+function renderDrawer() {
+  const it = S.seed?.items[S.sel];
+  if (!it) { $("drawerBody").innerHTML = unavailable("engine"); return; }
+  const req = JSON.stringify(it.decision.inputs.request, null, 2), res = JSON.stringify(it.decision, null, 2);
+  $("drawerBody").innerHTML = `
+    <div class="sub"><span>Request</span><button type="button" class="btn ghost sm" data-copy="${esc(req)}">Copy</button></div>
+    <div class="endpoint">POST ${esc(ENGINE)}/evaluate</div><pre data-testid="api-request">${esc(req)}</pre>
+    <div class="sub"><span>Response · Decision</span><button type="button" class="btn ghost sm" data-copy="${esc(res)}">Copy</button></div>
+    <pre data-testid="api-response">${esc(res)}</pre>`;
+}
+function openDrawer() { renderDrawer(); const dr = $("drawer"); dr.classList.add("open"); dr.setAttribute("aria-hidden", "false"); $("drawerClose").focus(); }
+function closeDrawer() { const dr = $("drawer"); dr.classList.remove("open"); dr.setAttribute("aria-hidden", "true"); $("viewApi").focus(); }
+$("viewApi").addEventListener("click", openDrawer);
+$("drawerClose").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("drawer").classList.contains("open")) closeDrawer(); });
+
+// ── positions: Aqua ──────────────────────────────────────────────────────
 async function renderAqua() {
   const el = $("aqua");
   if (!S.up.engine) { el.innerHTML = unavailable("engine"); return; }
-  if (!S.info) { el.innerHTML = unavailable(S.up.engine ? "demo/curves.json (make demo-chain)" : "engine"); return; }
-  if (!S.up.chain) { el.innerHTML = unavailable("demo chain " + RPC); return; }
+  if (!S.info) { el.innerHTML = unavailable("demo/curves.json"); return; }
+  if (!S.up.chain) { el.innerHTML = unavailable("demo chain"); return; }
   try {
     const from = BigInt(S.info.fork_block) + 1n, at = now();
     const [ships, swaps] = await Promise.all([
@@ -439,27 +568,26 @@ async function renderAqua() {
       const raw = (t) => V.pub.readContract({ address: A.AQUA, abi: rawAbi, functionName: "rawBalances", args: [S.info.maker, A.ROUTER, c.strategy_hash, t] });
       const [[w, n], [u]] = await Promise.all([raw(A.WETH), raw(A.USDC)]);
       const shipped = n > 0; S.shipped[c.strategy_hash] = shipped;
-      const rs = src("Aqua.rawBalances · " + RPC, at);
-      h += `<div class="curve"><div class="curve-t">${name} · ${usd(c.range_low_usdc / 1e6)}–${num(c.range_high_usdc / 1e6, 2)}
-        <span class="pill ${shipped ? "SHIPPED" : "NOT_SHIPPED"}">${shipped ? "SHIPPED" : "NOT SHIPPED"}</span></div>
-        <div class="hash" ${rs}>holds ${num(Number(w) / 1e18, 4)} WETH · ${num(Number(u) / 1e6, 2)} USDC · fee ${num(c.fee_instruction / 1e7, 4)}%</div>`;
+      h += `<div class="curve"><div class="curve-t">${name} · ${usd(c.range_low_usdc / 1e6)}–${usd(c.range_high_usdc / 1e6)}
+        <span class="chip state">${shipped ? "Shipped" : "Not shipped"}</span></div>
+        <div class="line" ${tip("chain Aqua.rawBalances", at)}>holds ${num(Number(w) / 1e18, 4)} WETH · ${num(Number(u) / 1e6, 2)} USDC · fee ${pct(c.fee_instruction / 1e9, 4)}</div>`;
       if (shipped) {
-        // A probe quote, capped at the curve's real balance of the token it pays out.
+        // Probe quote, capped at the curve's real balance of the token it pays out (quote() ignores it).
         const call = c.side === "call_like";
         const q = await adapter.cappedQuote(c, call ? A.USDC : A.WETH, call ? A.WETH : A.USDC, call ? 100_000_000n : 10n ** 16n);
         const fill = Number(q.fillable) / (call ? 1e18 : 1e6);
-        h += `<div class="hash" ${src("router.quote() capped at Aqua.rawBalances · " + RPC, at)}>quote ${call ? "100 USDC → " + num(fill, 5) + " WETH" : "0.01 WETH → " + num(fill, 2) + " USDC"}${q.capped ? " (capped at balance)" : ""}</div>`;
+        h += `<div class="line" ${tip("chain router.quote(), capped at Aqua.rawBalances", at)}>quote ${call ? `100.00 USDC → ${num(fill, 4)} WETH` : `0.0100 WETH → ${num(fill, 2)} USDC`}${q.capped ? " · capped at balance" : ""}</div>`;
       }
       const ship = ships.find((l) => l.args.strategyHash === c.strategy_hash);
-      if (ship) h += `<div class="hash" data-testid="ship-tx" data-tx="${ship.transactionHash}">ship ${short(ship.transactionHash)} · block ${ship.blockNumber} <button class="btn ghost sm" data-verify="${ship.transactionHash}">Verify</button> <span data-out="${ship.transactionHash}"></span></div>`;
+      if (ship) h += `<div class="line" data-testid="ship-tx" data-tx="${ship.transactionHash}">ship ${hashChip(ship.transactionHash)} block ${ship.blockNumber.toLocaleString("en-US")} <button class="btn ghost sm" type="button" data-verify="${ship.transactionHash}">Verify</button> <span data-out="${ship.transactionHash}"></span></div>`;
       for (const f of swaps.filter((l) => l.args.orderHash === c.strategy_hash)) {
         const buy = f.args.tokenOut.toLowerCase() === A.WETH.toLowerCase();
         const eth = Number(buy ? f.args.amountOut : f.args.amountIn) / 1e18, usdc = Number(buy ? f.args.amountIn : f.args.amountOut) / 1e6;
-        h += `<div class="hash" data-testid="fill-tx" data-tx="${f.transactionHash}">fill ${short(f.transactionHash)} · ${buy ? "bought" : "sold"} ${num(eth, 4)} WETH for ${num(usdc, 2)} USDC <button class="btn ghost sm" data-verify="${f.transactionHash}">Verify</button> <span data-out="${f.transactionHash}"></span></div>`;
+        h += `<div class="line" data-testid="fill-tx" data-tx="${f.transactionHash}">fill ${hashChip(f.transactionHash)} ${buy ? "bought" : "sold"} ${num(eth, 4)} WETH for ${num(usdc, 2)} USDC <button class="btn ghost sm" type="button" data-verify="${f.transactionHash}">Verify</button> <span data-out="${f.transactionHash}"></span></div>`;
       }
       h += `</div>`;
     }
-    el.innerHTML = h + `<div class="small" style="margin-top:6px">Options-like payoffs from swap curves, not option contracts.</div>`;
+    el.innerHTML = h + `<p class="empty">Options-like payoffs from swap curves, not option contracts.</p>`;
     el.querySelectorAll("[data-verify]").forEach((b) => b.addEventListener("click", () => verifyTx(b.dataset.verify)));
     bindTips(el);
   } catch (e) { el.innerHTML = unavailable("demo chain: " + (e.shortMessage || e.message)); }
@@ -469,51 +597,52 @@ async function verifyTx(hash) {
   const out = document.querySelector(`[data-out="${hash}"]`);
   try {
     const rc = await V.pub.getTransactionReceipt({ hash });
-    out.innerHTML = `<span data-testid="verify-result" style="color:var(--${rc.status === "success" ? "green" : "red"})">${rc.status} · block ${rc.blockNumber} · gas ${rc.gasUsed.toLocaleString()}</span>`;
+    out.innerHTML = `<span data-testid="verify-result" class="${rc.status === "success" ? "ok-text" : "bad-text"}">${rc.status} · block ${rc.blockNumber.toLocaleString("en-US")} · ${rc.gasUsed.toLocaleString("en-US")} gas</span>`;
   } catch { out.innerHTML = unavailable("receipt"); }
 }
 
+// ── positions: v4 hook ───────────────────────────────────────────────────
 function feeChart(points, flatPct) {
-  const W = 420, H = 140, L = 42, R = 8, top = 8, bot = 20, fees = points.map((p) => p.fee);
+  const W = 420, H = 150, L = 58, R = 8, top = 8, bot = 32, fees = points.map((p) => p.fee);
   const hi = Math.max(1, Math.ceil(Math.max(...fees, flatPct) * 4) / 4), n = points.length;
   const x = (i) => L + (n === 1 ? 0 : (i / (n - 1)) * (W - L - R)), y = (v) => top + (1 - v / hi) * (H - top - bot);
   let g = "";
-  for (let t = 0; t <= hi + 1e-9; t += hi / 4) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 5}" y="${y(t) + 3}" text-anchor="end">${t.toFixed(2)}%</text>`;
-  g += `<line class="ref" x1="${L}" x2="${W - R}" y1="${y(flatPct)}" y2="${y(flatPct)}"/><text x="${W - R}" y="${y(flatPct) - 4}" text-anchor="end" style="fill:var(--text)">static ${flatPct.toFixed(2)}%</text>`;
-  g += `<path d="${points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.fee).toFixed(1)}`).join(" ")}" fill="none" stroke="var(--c-edge)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  for (let t = 0; t <= hi + 1e-9; t += hi / 4) g += `<line class="axis" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 6}" y="${y(t) + 4}" text-anchor="end">${t.toFixed(2)}%</text>`;
+  g += `<line class="ref" x1="${L}" x2="${W - R}" y1="${y(flatPct)}" y2="${y(flatPct)}"/>`;
+  g += `<path d="${points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.fee).toFixed(1)}`).join(" ")}" fill="none" stroke="var(--text)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
   points.forEach((p, i) => {
-    g += `<circle cx="${x(i)}" cy="${y(p.fee)}" r="4" fill="var(--c-edge)" stroke="var(--surface)" stroke-width="2"/>`;
-    g += `<rect class="hit" x="${x(i) - 8}" y="${top}" width="16" height="${H - top - bot}" data-tip="${esc(`block ${p.block}<br>fee ${p.pips.toLocaleString()} pips · ${p.fee.toFixed(3)}%<br>σ_ann ${(p.sigma * 100).toFixed(1)}%`)}"/>`;
+    g += `<rect class="hit" x="${x(i) - 8}" y="${top}" width="16" height="${H - top - bot}" data-tip="${esc(`block ${p.block.toLocaleString("en-US")}\nfee ${feePips(p.pips)}\nσ_ann ${pct(p.sigma, 2)}`)}"/>`;
   });
-  g += `<text x="${L}" y="${H - 4}">block ${points[0].block}</text><text x="${W - R}" y="${H - 4}" text-anchor="end">${points[n - 1].block}</text>`;
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Hook fee per block against a static 0.30% pool">${g}</svg>
-    <div class="legend"><span><i style="background:var(--c-edge)"></i>hook fee per block</span><span><i class="line"></i>static 0.30%</span></div>`;
+  g += `<text x="${L}" y="${H - 16}">${points[0].block.toLocaleString("en-US")}</text><text x="${W - R}" y="${H - 16}" text-anchor="end">${points[n - 1].block.toLocaleString("en-US")}</text>`;
+  g += `<text x="${(L + W - R) / 2}" y="${H - 2}" text-anchor="middle">block</text><text x="9" y="${(top + H - bot) / 2}" transform="rotate(-90 9 ${(top + H - bot) / 2})" text-anchor="middle">fee (%)</text>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Hook fee per block from ${points[0].block} to ${points[n - 1].block}, against a static ${flatPct.toFixed(2)}% pool">${g}</svg>
+    <div class="legend"><span><i></i>hook fee per block</span><span><i class="dash"></i>static pool ${feePips(flatPct * 1e4)}</span></div>`;
 }
 
 async function renderHook() {
   const el = $("hook"), h = S.info?.hook;
   if (!S.up.engine) { el.innerHTML = unavailable("engine"); return; }
-  if (!h) { el.innerHTML = unavailable(S.up.engine ? "v4 hook (make hook-pool)" : "engine"); return; }
-  if (h.live?.error || !S.up.chain) { el.innerHTML = unavailable("demo chain " + (h.live?.error || RPC)); return; }
+  if (!h) { el.innerHTML = unavailable("v4 hook deployment (make hook-pool)"); return; }
+  if (h.live?.error || !S.up.chain) { el.innerHTML = unavailable("demo chain"); return; }
   const lv = h.live, at = S.at.info;
-  let html = `<div class="cells c4">
-    <div class="cell" data-testid="hook-fee"><div class="k">Fee · ${Number(lv.fee_pips).toLocaleString()} pips</div><div class="v" ${src("hook.getFee · " + RPC, at)}>${num(lv.fee_pips / 1e4, 3)}%</div></div>
-    <div class="cell"><div class="k">σ_ann</div><div class="v" ${src("hook.getVolatility · " + RPC, at)}>${num(lv.sigma * 100, 1)}%</div></div>
-    <div class="cell"><div class="k">Pool</div><div class="v" ${src("StateView.getSlot0 hooked pool · " + RPC, at)}>${usd(lv.hooked_price)}</div></div>
-    <div class="cell"><div class="k">Gap</div><div class="v" ${src("StateView.getSlot0 hooked vs main ETH/USDC pool · " + RPC, at)}>${num(lv.gap_bps, 1)} bps</div></div></div>`;
+  let html = `<div class="cells">
+    <div class="cell" data-testid="hook-fee"><div class="k">Fee now</div><div class="v" ${tip("chain hook.getFee", at)} tabindex="0">${feePips(lv.fee_pips)}</div></div>
+    <div class="cell"><div class="k">σ_ann</div><div class="v" ${tip("chain hook.getVolatility", at)} tabindex="0">${pct(lv.sigma, 2)}</div></div>
+    <div class="cell"><div class="k">Hooked pool</div><div class="v" ${tip("chain StateView.getSlot0, hooked pool", at)} tabindex="0">${usd(lv.hooked_price)} per ETH</div></div>
+    <div class="cell"><div class="k">Gap to main pool</div><div class="v" ${tip("chain StateView.getSlot0, hooked vs main ETH/USDC pool", at)} tabindex="0">${pct(lv.gap_bps / 1e4, 2)} (${num(lv.gap_bps, 1)} bps)</div></div></div>`;
   try {
     const logs = await V.pub.getLogs({ address: h.hook, event: V.events.feeUpdated, args: { poolId: h.hooked_pool_id }, fromBlock: BigInt(S.info.fork_block) + 1n });
     const pts = logs.map((l) => ({ block: Number(l.blockNumber), pips: Number(l.args.fee), fee: Number(l.args.fee) / 1e4, sigma: Number(l.args.sigma) / 1e18 }));
-    html += pts.length ? `<div class="sub">Fee per block · ${pts.length} FeeUpdated events</div>${feeChart(pts, Number(h.static_fee) / 1e4)}` : `<div class="small" style="margin-top:6px">No FeeUpdated events yet.</div>`;
+    html += pts.length ? `<div class="sub"><span>Fee per block · ${pts.length} FeeUpdated events</span></div>${feeChart(pts, Number(h.static_fee) / 1e4)}` : `<p class="empty">No fee updates on chain yet.</p>`;
   } catch (e) { html += unavailable("FeeUpdated logs: " + (e.shortMessage || e.message)); }
   el.innerHTML = html; bindTips(el);
 }
 
-const arcLink = (h) => `<a href="${ARC.explorer}/tx/${h}" target="_blank" rel="noopener">${short(h)}</a>`;
+// ── positions: Arc ───────────────────────────────────────────────────────
 async function renderArc() {
   const el = $("arc"), dep = S.info?.arc;
   if (!S.up.engine) { el.innerHTML = unavailable("engine"); return; }
-  if (!dep) { el.innerHTML = unavailable(S.up.engine ? "Arc escrow (make deploy-arc-testnet)" : "engine"); return; }
+  if (!dep) { el.innerHTML = unavailable("Arc escrow (not deployed)"); return; }
   try {
     const abi = V.viem.parseAbi(["function reserve() view returns (uint256)"]), from = BigInt(dep.deployed_block), at = now();
     const [reserve, f, st] = await Promise.all([
@@ -523,14 +652,14 @@ async function renderArc() {
     ]);
     const ids = [...S.history.map((d) => d.decision_id), ...(S.seed?.items || []).map((i) => i.decision.decision_id)];
     const byKey = new Map(ids.map((id) => [V.viem.keccak256(V.viem.toHex(id)), id])), name = (k) => byKey.get(k) || short(k);
-    let h = `<div class="cells c2"><div class="cell"><div class="k">Escrow</div><div class="v"><a href="${ARC.explorer}/address/${dep.escrow}" target="_blank" rel="noopener">${short(dep.escrow)}</a></div></div>
-      <div class="cell"><div class="k">Reserve</div><div class="v" ${src("RiskPilotEscrow.reserve · Arc testnet", at)}>${num(Number(reserve) / 1e6, 4)} USDC</div></div></div>`;
+    let h = `<div class="cells"><div class="cell"><div class="k">Escrow</div><div class="v">${hashChip(dep.escrow, `${ARC.explorer}/address/${dep.escrow}`)}</div></div>
+      <div class="cell"><div class="k">Reserve</div><div class="v" ${tip("Arc testnet RiskPilotEscrow.reserve", at)} tabindex="0">${num(Number(reserve) / 1e6, 2)} USDC</div></div></div>`;
     const rows = [...f.map((l) => ({ b: l.blockNumber, t: `fund ${name(l.args.decisionId)} · ${num(Number(l.args.amount) / 1e6, 2)} USDC`, tx: l.transactionHash })),
-      ...st.map((l) => ({ b: l.blockNumber, t: `settle ${name(l.args.decisionId)} · paid ${num(Number(l.args.payout) / 1e6, 6)} USDC`, tx: l.transactionHash }))].sort((a, b) => Number(a.b - b.b));
-    h += rows.length ? rows.map((r) => `<div class="hash" ${src("Funded/Settled logs · Arc testnet", at)}>${esc(r.t)} · ${arcLink(r.tx)}</div>`).join("") : `<div class="small" style="margin-top:6px">No escrow transactions yet.</div>`;
+      ...st.map((l) => ({ b: l.blockNumber, t: `settle ${name(l.args.decisionId)} · paid ${num(Number(l.args.payout) / 1e6, 2)} USDC`, tx: l.transactionHash }))].sort((a, b) => Number(a.b - b.b));
+    h += rows.length ? rows.map((r) => `<div class="line" ${tip("Arc testnet Funded / Settled logs", at)}>${esc(r.t)} ${hashChip(r.tx, `${ARC.explorer}/tx/${r.tx}`)}</div>`).join("") : `<p class="empty">No escrow transactions yet.</p>`;
     const d = S.seed?.items[S.sel]?.decision;
     if (d?.verdict === "APPROVE" && Date.parse(d.expires_at) > Date.now()) {
-      h += `<div class="act"><button class="btn ghost sm" id="arcFund">Fund ${esc(dep.stake_usdc)} USDC</button><span class="countdown" id="arcOut"></span></div>`;
+      h += `<div class="act"><button class="btn ghost sm" type="button" id="arcFund">Fund ${esc(dep.stake_usdc)} USDC</button><span class="signer" id="arcOut"></span></div>`;
     }
     el.innerHTML = h; bindTips(el);
     if ($("arcFund")) $("arcFund").onclick = () => fundArc(d, dep);
@@ -543,30 +672,30 @@ async function fundArc(d, dep) {
     const signer = await arcSigner();
     const adapter = arcAdapter({ viem: V.viem, arcPub: V.arcPub, dep, usdc: ARC.usdc, stakeUnits: V.viem.parseUnits(String(dep.stake_usdc), 6), signer });
     const rec = await execute(adapter, d, signer, V.arcPub, (m) => { out.textContent = m; });
-    out.innerHTML = `funded ${arcLink(rec.tx_hash)}`;
+    out.innerHTML = `funded ${hashChip(rec.tx_hash, `${ARC.explorer}/tx/${rec.tx_hash}`)}`;
     await renderArc();
   } catch (e) { out.innerHTML = `<span class="unavail">${esc(e.shortMessage || e.message)}</span>`; }
 }
 
 // ── history ──────────────────────────────────────────────────────────────
 function renderHistory() {
-  if (!S.up.engine) { $("history").innerHTML = unavailable("engine " + ENGINE); return; }
+  if (!S.up.engine) { $("history").innerHTML = unavailable("engine"); return; }
+  if (!S.history.length) { $("history").innerHTML = `<p class="empty">No decisions yet.</p>`; return; }
   const txs = new Map(S.executions.map((e) => [e.decision_id, e]));
   const rows = S.history.map((d) => {
     const e = txs.get(d.decision_id);
-    return `<tr data-testid="history-row" data-decision="${d.decision_id}" data-verdict="${d.verdict}"><td class="small" style="white-space:nowrap">${ts(d.created_at)}</td><td>${esc(d.opportunity_id)}</td><td><span class="pill ${d.verdict}">${d.verdict}</span></td>
-      <td style="font-family:var(--body);color:var(--text-muted);min-width:260px">${esc(d.reason)}</td>
-      <td class="hash" style="white-space:nowrap">${e ? `${short(e.tx_hash)}${e.settlement_tx ? ` · settle ${arcLink(e.settlement_tx)}` : ""}` : ""}</td>
-      <td style="white-space:nowrap"><button class="btn ghost sm" data-replay="${d.decision_id}">Replay</button> <span data-rout="${d.decision_id}"></span></td></tr>`;
+    return `<tr data-testid="history-row" data-decision="${d.decision_id}" data-verdict="${d.verdict}"><td class="num" style="text-align:left">${hms(d.created_at)}</td><td class="mono">${esc(d.opportunity_id)}</td><td><span class="chip ${d.verdict}">${d.verdict}</span></td>
+      <td style="color:var(--text-2)">${esc(d.reason)}</td>
+      <td>${e ? hashChip(e.tx_hash) : ""}${e?.settlement_tx ? ` settle ${hashChip(e.settlement_tx, `${ARC.explorer}/tx/${e.settlement_tx}`)}` : ""}</td>
+      <td style="white-space:nowrap"><button class="btn ghost sm" type="button" data-replay="${d.decision_id}">Replay</button> <span data-rout="${d.decision_id}"></span></td></tr>`;
   }).join("");
-  $("history").innerHTML = `<table><thead><tr><th>Time</th><th>Opportunity</th><th>Verdict</th><th>Reason</th><th>Transaction</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  $("history").innerHTML = `<table><thead><tr><th scope="col">Time</th><th scope="col">Opportunity</th><th scope="col">Verdict</th><th scope="col">Reason</th><th scope="col">Transaction</th><th scope="col"><span style="position:absolute;left:-9999px">Replay</span></th></tr></thead><tbody>${rows}</tbody></table>`;
   document.querySelectorAll("[data-replay]").forEach((b) => b.addEventListener("click", async () => {
     const out = document.querySelector(`[data-rout="${b.dataset.replay}"]`);
     try {
       const r = await engine(`/decisions/${b.dataset.replay}/replay`, { method: "POST" });
-      out.innerHTML = `<span data-testid="replay-result" style="color:var(--${r.matches ? "green" : "red"})">${r.matches ? "identical" : "differs"} · ${r.decision.verdict} · net ${usd(r.decision.net_edge)}</span>`;
-    }
-    catch { out.innerHTML = unavailable("engine replay"); }
+      out.innerHTML = `<span data-testid="replay-result" class="${r.matches ? "ok-text" : "bad-text"}">${r.matches ? "identical" : "differs"} · ${r.decision.verdict} · net ${usd(r.decision.net_edge)}</span>`;
+    } catch { out.innerHTML = unavailable("engine"); }
   }));
 }
 
@@ -586,7 +715,7 @@ async function loadEngine() {
 
 async function seed() {
   try { S.seed = await engine("/demo/seed", { method: "POST" }); S.seedErr = null; }
-  catch (e) { S.seed = null; S.seedErr = "engine POST /demo/seed: " + e.message; }
+  catch (e) { S.seed = null; S.seedErr = "engine"; }
   const approved = S.seed?.items.findIndex((i) => i.decision.verdict === "APPROVE");
   if (approved >= 0) S.sel = approved;
 }
@@ -607,7 +736,7 @@ async function heartbeat() {
   if (was.engine !== S.up.engine || was.chain !== S.up.chain) {
     // A source came back: reseed so nothing on screen predates the outage.
     if (S.up.engine && !was.engine) await seed();
-    if (!S.up.engine) { S.seed = null; S.seedErr = "engine " + ENGINE; }
+    if (!S.up.engine) { S.seed = null; S.seedErr = "engine"; }
     await refreshAll();
   } else {
     renderStatus();
@@ -623,6 +752,7 @@ async function main() {
   if (V) { try { S.chain = await readChain(); S.up.chain = true; S.signer = await demoSigner(); } catch { S.up.chain = false; } }
   if (S.up.engine) await seed();
   await refreshAll();
+  if (S.chain) lastBlock = S.chain.block;
   setInterval(heartbeat, HEARTBEAT_MS);
   setInterval(() => document.querySelectorAll("[data-age]").forEach((el) => { el.textContent = `${age(el.dataset.age)} s`; }), 1000);
 }

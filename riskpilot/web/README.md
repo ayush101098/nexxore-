@@ -76,5 +76,5 @@ main transaction, then verify. The page then POSTs the Execution to the engine.
 - [x] **Stopping the engine** blanks the engine panels to *Source unavailable*, with no old reason
   left on screen. This was tested by failing every request to the engine after load.
 - [x] **Approve and sign** is disabled on both REJECTs and on a shipped or expired APPROVE.
-- [x] **None of the removed items appear:** no Escalation Index, Regime, Kelly sizing, the
-  Polymarket, Binance or whale feeds, BTC, Autopilot, the loop timer, paper P&L, or hero copy.
+- [x] **None of the items PRD 6 removes from this page appear.** A grep over `web/` for each of
+  them returns nothing.

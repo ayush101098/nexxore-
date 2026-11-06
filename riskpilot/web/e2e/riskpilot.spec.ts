@@ -101,6 +101,8 @@ test("7. stop the engine: every panel shows Source unavailable within 5 s", asyn
   for (const id of ["opps", "decision", "aqua", "hook", "arc", "history"]) {
     expect(await page.locator(`#${id}`).textContent(), `no numbers left in #${id}`).not.toMatch(/\$\d/);
   }
+  // Engine-sourced status cells drop their values too (WETH/USDC stay: live chain reads).
+  await expect(page.locator("#status")).not.toContainText("Balanced");
   await startEngine();
 });
 
