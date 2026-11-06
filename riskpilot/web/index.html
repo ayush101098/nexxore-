@@ -506,7 +506,8 @@ async function loadViem() {
   V = { viem, chain, arcChain, accounts,
     pub: viem.createPublicClient({ chain, transport: chainTransport(viem) }),
     arcPub: viem.createPublicClient({ chain: arcChain, transport: ARC.rpcFallback
-      ? viem.fallback([viem.http(ARC.rpc, { retryCount: 2, retryDelay: 800 }), viem.http(ARC.rpcFallback, { retryCount: 2, retryDelay: 800 })])
+      // One JSON-RPC batch per burst of reads keeps under the per-IP limit.
+      ? viem.fallback([viem.http(ARC.rpc, { batch: { wait: 20 }, retryCount: 2, retryDelay: 800 }), viem.http(ARC.rpcFallback, { batch: { wait: 20 }, retryCount: 2, retryDelay: 800 })])
       : viem.http(ARC.rpc) }),
     erc20: viem.parseAbi(["function balanceOf(address) view returns (uint256)"]),
     events: {
