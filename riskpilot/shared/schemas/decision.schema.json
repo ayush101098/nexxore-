@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://riskpilot.dev/schemas/decision.schema.json",
+  "title": "Decision",
+  "description": "The engine's verdict on one Opportunity. Every module reads and stores this; decision_id links opportunity, transaction and settlement.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decision_id",
+    "opportunity_id",
+    "verdict",
+    "gross_edge",
+    "costs",
+    "risk_charge",
+    "net_edge",
+    "stress_loss_before",
+    "stress_loss_after",
+    "budget",
+    "reason",
+    "inputs",
+    "model_version",
+    "created_at",
+    "expires_at"
+  ],
+  "properties": {
+    "decision_id": { "$ref": "common.schema.json#/$defs/decisionId" },
+    "opportunity_id": { "$ref": "common.schema.json#/$defs/opportunityId" },
+    "verdict": {
+      "description": "REQUOTE: quote expired or moved past tolerance. REQUIRE_REVIEW: inputs stale or out of range.",
+      "enum": ["APPROVE", "REJECT", "REQUOTE", "REQUIRE_REVIEW"]
+    },
+    "gross_edge": { "$ref": "common.schema.json#/$defs/decimal" },
+    "costs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gas", "slippage", "fees", "hedge"],
+      "properties": {
+        "gas": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+        "slippage": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+        "fees": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+        "hedge": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" }
+      }
+    },
+    "risk_charge": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+    "net_edge": {
+      "$ref": "common.schema.json#/$defs/decimal",
+      "description": "gross_edge - sum(costs) - risk_charge."
+    },
+    "stress_loss_before": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+    "stress_loss_after": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+    "budget": {
+      "$ref": "common.schema.json#/$defs/nonNegativeDecimal",
+      "description": "The user's worst-scenario loss limit."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One sentence naming the term that decided it."
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Enough to replay the decision.",
+      "required": ["prices", "sources", "timestamps"],
+      "properties": {
+        "prices": {
+          "type": "object",
+          "additionalProperties": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" }
+        },
+        "sources": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "timestamps": {
+          "type": "object",
+          "additionalProperties": { "$ref": "common.schema.json#/$defs/utcTimestamp" }
+        },
+        "volatility": {
+          "$ref": "common.schema.json#/$defs/nonNegativeDecimal",
+          "description": "The single stated annualized volatility input."
+        }
+      }
+    },
+    "model_version": { "type": "string", "minLength": 1 },
+    "created_at": { "$ref": "common.schema.json#/$defs/utcTimestamp" },
+    "expires_at": { "$ref": "common.schema.json#/$defs/utcTimestamp" }
+  }
+}

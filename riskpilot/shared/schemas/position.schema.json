@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://riskpilot.dev/schemas/position.schema.json",
+  "title": "Position",
+  "description": "An open or closed exposure created by executing an approved Decision. The engine updates it when an Execution is POSTed to /executions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["position_id", "decision_id", "primitive", "params", "collateral", "entry", "greeks", "status"],
+  "properties": {
+    "position_id": { "$ref": "common.schema.json#/$defs/positionId" },
+    "decision_id": { "$ref": "common.schema.json#/$defs/decisionId" },
+    "primitive": { "enum": ["aqua", "v4_swap"] },
+    "params": {
+      "type": "object",
+      "description": "Primitive-specific parameters, e.g. Aqua curve ranges or v4 swap amounts."
+    },
+    "collateral": {
+      "$ref": "common.schema.json#/$defs/nonNegativeDecimal",
+      "description": "Collateral committed, in USD."
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["price", "at"],
+      "properties": {
+        "price": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+        "at": { "$ref": "common.schema.json#/$defs/utcTimestamp" }
+      }
+    },
+    "greeks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["delta", "gamma", "vega", "theta"],
+      "properties": {
+        "delta": { "$ref": "common.schema.json#/$defs/decimal" },
+        "gamma": { "$ref": "common.schema.json#/$defs/decimal" },
+        "vega": { "$ref": "common.schema.json#/$defs/decimal" },
+        "theta": { "$ref": "common.schema.json#/$defs/decimal" }
+      }
+    },
+    "status": { "enum": ["pending", "open", "closed", "failed"] }
+  }
+}

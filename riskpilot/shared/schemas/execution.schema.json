@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://riskpilot.dev/schemas/execution.schema.json",
+  "title": "Execution",
+  "description": "Result of an adapter's verify(): the on-chain transaction for a Decision and, once settled, its Arc settlement transaction.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["decision_id", "chain_id", "tx_hash", "status", "verified_at", "settlement_tx"],
+  "properties": {
+    "decision_id": { "$ref": "common.schema.json#/$defs/decisionId" },
+    "chain_id": { "type": "integer", "minimum": 1 },
+    "tx_hash": { "$ref": "common.schema.json#/$defs/txHash" },
+    "status": { "enum": ["pending", "confirmed", "reverted"] },
+    "verified_at": {
+      "description": "When verify() read the receipt; null until verified.",
+      "oneOf": [{ "$ref": "common.schema.json#/$defs/utcTimestamp" }, { "type": "null" }]
+    },
+    "settlement_tx": {
+      "description": "Arc escrow settle() transaction; null until settled.",
+      "oneOf": [{ "$ref": "common.schema.json#/$defs/txHash" }, { "type": "null" }]
+    }
+  }
+}

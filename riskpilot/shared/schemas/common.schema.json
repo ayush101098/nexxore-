@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://riskpilot.dev/schemas/common.schema.json",
+  "title": "Common definitions",
+  "description": "Shared primitives. Amounts in USD and prices are decimal strings; times are ISO 8601 UTC.",
+  "$defs": {
+    "decimal": {
+      "description": "Signed decimal as a string, e.g. \"-4.60\". Never a JSON number, to avoid float rounding.",
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "nonNegativeDecimal": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "utcTimestamp": {
+      "description": "ISO 8601 UTC with a Z suffix, e.g. 2026-11-06T09:30:00Z.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$"
+    },
+    "pair": {
+      "description": "ETH/USDC only; multi-asset support is out of scope.",
+      "const": "ETH/USDC"
+    },
+    "opportunityId": { "type": "string", "pattern": "^opp_[A-Za-z0-9]+$" },
+    "decisionId": { "type": "string", "pattern": "^dec_[A-Za-z0-9]+$" },
+    "positionId": { "type": "string", "pattern": "^pos_[A-Za-z0-9]+$" },
+    "txHash": { "type": "string", "pattern": "^0x[0-9a-fA-F]{64}$" }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://riskpilot.dev/schemas/opportunity.schema.json",
+  "title": "Opportunity",
+  "description": "Something the scanner found. Feeds the quant engine, which turns it into a Decision.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "opportunity_id",
+    "type",
+    "pair",
+    "source_venue",
+    "target",
+    "observed_price",
+    "reference_price",
+    "size",
+    "observed_at",
+    "source"
+  ],
+  "properties": {
+    "opportunity_id": { "$ref": "common.schema.json#/$defs/opportunityId" },
+    "type": { "enum": ["price_gap", "aqua_premium", "vol_regime"] },
+    "pair": { "$ref": "common.schema.json#/$defs/pair" },
+    "source_venue": { "type": "string", "minLength": 1, "description": "Venue where the observed price was seen." },
+    "target": { "type": "string", "minLength": 1, "description": "Venue or primitive the trade would execute on." },
+    "observed_price": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+    "reference_price": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal" },
+    "size": { "$ref": "common.schema.json#/$defs/nonNegativeDecimal", "description": "Trade size in USD." },
+    "observed_at": { "$ref": "common.schema.json#/$defs/utcTimestamp" },
+    "source": { "type": "string", "minLength": 1, "description": "Data source of the observation (API, RPC, pool)." }
+  }
+}
