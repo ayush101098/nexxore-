@@ -112,6 +112,31 @@ Deploy targets, in order:
 
 During the calm phase traders paid 0.07–0.10%, against 0.30% in the static pool.
 
+## Why it matters for Uniswap: the same gap, three pools
+
+The scanner reads every v4 ETH/USDC pool on the demo chain. The engine then prices the same
+$10,000 gap through each pool, using its own fee and a V4Quoter quote at that size:
+
+| Pool | Fee | Gap | Net edge | Verdict |
+|---|---|---|---|---|
+| Hooked pool (calm market) | 0.22% (2,161 pips), from the hook | 48 bp | **$15.38** | APPROVE |
+| Static 0.30% comparison pool | 0.30% | 48 bp | $7.19 | APPROVE |
+| The fork's own ETH/USDC 0.30% pool | 0.30% | 24 bp | −$15.80 | REJECT |
+
+- **When the market is calm,** the hook charges less than a static pool, so the same trade nets
+  about twice as much and flows that a 0.30% pool would price out can trade.
+- **When it's volatile,** the fee rises to the 1.00% cap, and LPs are paid for the risk.
+- **On the page:** the fee is read live from `hook.getFee`. "Approve and sign" swaps through the
+  hooked pool with `v4Adapter`, and the page shows the fee the PoolManager's `Swap` event recorded.
+  Because the hook re-estimates on the first swap of each block, that can differ from the fee
+  quoted at decision time; the swap's minimum output covers the difference.
+- **Collateral across primitives:** a WETH sale can't leave less than live Aqua curves have
+  promised. Once the 7 ETH call-like curve is shipped, the same sale is refused.
+
+`make hook-pool` deploys each pool with 1,000 WETH of liquidity, which is deep enough to trade
+$10,000 through. Its swap history runs calm, then volatile, then a 60-block calm tail, so the
+on-chain fee rises to the cap and comes back down (to 2,161 pips at the end).
+
 ## Public testnet
 
 `make deploy-unichain-sepolia` deploys to Unichain Sepolia (chain 1301):

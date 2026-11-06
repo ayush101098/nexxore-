@@ -23,11 +23,11 @@ hook-demo:
 # Deploy the hook and the live pools on the demo chain, funded by Anvil account #2.
 hook-pool:
 	@LP=$$(cast wallet address --private-key $(LP_PK)); \
-	cast rpc --rpc-url $(RPC) anvil_setBalance $$LP 0x3635C9ADC5DEA00000 >/dev/null; \
-	cast send --rpc-url $(RPC) --private-key $(LP_PK) $(WETH) 'deposit()' --value 250ether >/dev/null; \
+	cast rpc --rpc-url $(RPC) anvil_setBalance $$LP 0xa2a15d09519be00000 >/dev/null; \
+	cast send --rpc-url $(RPC) --private-key $(LP_PK) $(WETH) 'deposit()' --value 2200ether >/dev/null; \
 	cast rpc --rpc-url $(RPC) anvil_impersonateAccount $(USDC_HOLDER) >/dev/null; \
 	cast rpc --rpc-url $(RPC) anvil_setBalance $(USDC_HOLDER) 0xDE0B6B3A7640000 >/dev/null; \
-	cast send --rpc-url $(RPC) --from $(USDC_HOLDER) --unlocked $(USDC) 'transfer(address,uint256)' $$LP 600000000000 >/dev/null; \
+	cast send --rpc-url $(RPC) --from $(USDC_HOLDER) --unlocked $(USDC) 'transfer(address,uint256)' $$LP 5000000000000 >/dev/null; \
 	cast rpc --rpc-url $(RPC) anvil_stopImpersonatingAccount $(USDC_HOLDER) >/dev/null; \
 	mkdir -p demo; \
 	LP_PRIVATE_KEY=$(LP_PK) forge script script/HookPool.s.sol --rpc-url $(RPC) --broadcast --slow
