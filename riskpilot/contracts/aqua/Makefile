@@ -7,9 +7,9 @@ CURVE ?= upside
 
 .PHONY: test deps demo-chain demo-fill demo-reset
 
+# Paths are relative to this directory, so this works wherever the repo root is.
 deps:
-	cd ../.. && git submodule update --init contracts/aqua/lib/swap-vm contracts/aqua/lib/aqua \
-		contracts/aqua/lib/solidity-utils contracts/aqua/lib/openzeppelin-contracts contracts/aqua/lib/forge-std
+	git submodule update --init lib/swap-vm lib/aqua lib/solidity-utils lib/openzeppelin-contracts lib/forge-std
 
 test: deps
 	forge test -vv
