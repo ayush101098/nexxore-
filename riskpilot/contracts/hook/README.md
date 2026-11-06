@@ -9,7 +9,7 @@ through it.
 make test        # 6 tests
 make hook-demo   # same swaps through the hooked pool and a static 0.30% pool, on the demo chain (simulated)
 make hook-pool   # deploy the hook + live pools on the demo chain (needs make demo-chain in ../aqua)
-make deploy-unichain-sepolia   # public testnet, needs a funded DEPLOYER_PRIVATE_KEY
+make deploy-unichain-sepolia SENDER=0xYourAddress   # public testnet, signed by your wallet
 ```
 
 ## Where to look
@@ -121,5 +121,8 @@ During the calm phase traders paid 0.07–0.10%, against 0.30% in the static poo
 - **Blocks per year:** 31,536,000.
 - **Dry run:** a dry run against the live chain mines the hook address
   `0xf9874aeC0137f5A0ffE1F75A0A3B56381EF99080` and needs about 0.000003 ETH.
-- **Not deployed yet.** TODO: deploy from a funded testnet key, then add the
-  address and the deploy transaction link here.
+- **Not deployed yet.** The deploy is signed by your own wallet (`--interactive`, nothing stored).
+  CREATE2 makes the address independent of the sender.
+
+  TODO: run `make deploy-unichain-sepolia SENDER=0x905a…c697`, then add the deploy transaction link
+  here (`deployments/1301.json` records the address).

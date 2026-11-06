@@ -32,7 +32,11 @@ hook-pool:
 	mkdir -p demo; \
 	LP_PRIVATE_KEY=$(LP_PK) forge script script/HookPool.s.sol --rpc-url $(RPC) --broadcast --slow
 
-# Public testnet deploy (needs a funded key): see README.
+# Public testnet deploy, signed by your own wallet: forge prompts for the key (nothing is stored).
+# Usage: make deploy-unichain-sepolia SENDER=0xYourAddress   (WALLET=--ledger or --account <name> also work)
+WALLET ?= --interactive
 deploy-unichain-sepolia:
-	forge script script/DeployHook.s.sol --rpc-url $${UNICHAIN_SEPOLIA_RPC_URL:?set UNICHAIN_SEPOLIA_RPC_URL} \
-		--private-key $${DEPLOYER_PRIVATE_KEY:?set DEPLOYER_PRIVATE_KEY} --broadcast
+	@test -n "$(SENDER)" || { echo "usage: make deploy-unichain-sepolia SENDER=0xYourAddress"; exit 1; }
+	mkdir -p deployments
+	forge script script/DeployHook.s.sol --rpc-url $${UNICHAIN_SEPOLIA_RPC_URL:-https://sepolia.unichain.org} \
+		--sender $(SENDER) $(WALLET) --broadcast

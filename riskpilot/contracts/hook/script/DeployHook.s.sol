@@ -10,7 +10,7 @@ import {HookMiner} from "@uniswap/v4-periphery/src/utils/HookMiner.sol";
 import {VolatilityFeeHook} from "../src/VolatilityFeeHook.sol";
 
 /// @notice Deploy VolatilityFeeHook to a public v4 testnet, at a mined address with its permission bits.
-///         make deploy-unichain-sepolia (needs UNICHAIN_SEPOLIA_RPC_URL and a funded DEPLOYER_PRIVATE_KEY).
+///         make deploy-unichain-sepolia SENDER=<your address>: signs with your own wallet (--interactive).
 contract DeployHook is Script {
     function run() external {
         (IPoolManager manager, uint256 blocksPerYear) = _chain();
@@ -28,6 +28,13 @@ contract DeployHook is Script {
         console.log("VolatilityFeeHook", expected);
         console.log("PoolManager", address(manager));
         console.log("blocksPerYear", blocksPerYear);
+
+        string memory k = "hook";
+        vm.serializeUint(k, "chain_id", block.chainid);
+        vm.serializeAddress(k, "pool_manager", address(manager));
+        vm.serializeUint(k, "blocks_per_year", blocksPerYear);
+        vm.serializeAddress(k, "deployer", msg.sender);
+        vm.writeJson(vm.serializeAddress(k, "hook", expected), string.concat("./deployments/", vm.toString(block.chainid), ".json"));
     }
 
     /// @dev Addresses from https://developers.uniswap.org/contracts/v4/deployments; block times

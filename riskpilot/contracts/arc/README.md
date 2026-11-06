@@ -6,8 +6,8 @@ approved RiskPilot decision and settles the result in USDC, keyed by
 
 ```bash
 make test                 # 7 tests (forge)
-make deploy-arc-testnet   # from DEPLOYER_PRIVATE_KEY in ../../.env; fund it at https://faucet.circle.com
-make arc-settle DECISION=dec_… AMOUNT=5   # operator: engine payout -> settle() -> recorded on the Execution
+make deploy-arc-testnet SENDER=0xYourAddress   # signs with your wallet (forge prompts; nothing stored)
+make arc-settle DECISION=dec_… AMOUNT=5        # operator (your wallet): engine payout -> settle() -> recorded
 make arc-status DECISION=dec_…
 ```
 
@@ -118,11 +118,12 @@ Plus `test_ADecisionFundsOnce` and `test_ZeroAmountsRevert`.
 
 ## Deployment
 
-**Not deployed yet.** A dry run against Arc testnet's live state passes: the
-escrow would deploy at `0xa4dd1f23D66F0A85D6e69137bdcEA225D56c1AdC` and needs
-about 0.031 USDC of gas.
+**Not deployed yet.** Deploys are signed by your own wallet only. `--interactive` makes forge and
+cast prompt for the key at signing time, so it is never written to disk or passed around.
+`WALLET=--ledger` or `WALLET=--account <keystore>` also work. A dry run as
+`0x905aCd442c7B3EF9BfEB0A3189f3686c1Cd0c697` passes: the escrow would deploy at
+`0x64c1Af27bdBEcdA432BB4C8cCFec83099962e51E` (that address depends on the account's nonce) with that
+wallet as operator, and needs about 0.031 USDC of gas.
 
-TODO: fund the deployer `0xE8977d49981cf5d0f7aa6eA92dC5CBFE9C9d15F0` at
-https://faucet.circle.com (Arc testnet), then run `make deploy-arc-testnet`.
-After that, add the escrow address and the fund and settle transaction links
-here.
+TODO: run `make deploy-arc-testnet SENDER=0x905a…c697`, then fund and settle one approved decision.
+After that, add the escrow address and the fund and settle transaction links here.

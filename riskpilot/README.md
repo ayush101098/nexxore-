@@ -60,9 +60,9 @@ Position.
 
 | Component | Chain | Address | Key lines |
 |---|---|---|---|
-| VolatilityFeeHook | Demo chain (mainnet fork @ 26,354,292); Unichain Sepolia pending a funded key | demo: `0x3be8…1080`; Sepolia (mined, not deployed): `0xf987…9080` | `contracts/hook/src/VolatilityFeeHook.sol`: `beforeSwap` 114–126, fee rule 101–105, estimator 128–155 |
+| VolatilityFeeHook | Demo chain (mainnet fork @ 26,354,292); Unichain Sepolia: pending your deploy | demo: `0x3be8…1080`; Sepolia (mined): `0xf987…9080` | `contracts/hook/src/VolatilityFeeHook.sol`: `beforeSwap` 114–126, fee rule 101–105, estimator 128–155 |
 | Aqua Options curves | Demo chain, deployed AquaSwapVMRouter v1.0.2 `0x1111…0de` | strategy hashes in `contracts/aqua/demo/curves.json` | `contracts/aqua/src/AquaCurves.sol`, `AquaCollateral.sol` |
-| RiskPilotEscrow | Arc testnet (5042002), pending a funded key | dry run: `0xa4dd…1AdC` | `contracts/arc/src/RiskPilotEscrow.sol` |
+| RiskPilotEscrow | Arc testnet (5042002), pending your deploy | dry run from your wallet: `0x64c1…e51E` | `contracts/arc/src/RiskPilotEscrow.sol` |
 
 ## Setup
 
