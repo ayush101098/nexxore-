@@ -49,8 +49,8 @@ def test_scan_is_deterministic(client):
 
 
 def test_unwired_live_source_is_501(client):
-    r = client.post("/scan", json={"sources": ["v4_pool"]})
-    assert r.status_code == 501 and "TODO(PRD 4)" in r.json()["detail"]
+    r = client.post("/scan", json={"sources": ["uniswap_api"]})
+    assert r.status_code == 501 and "TODO" in r.json()["detail"]
 
 
 def test_decision_id_traces_from_opportunity_to_settlement(client):

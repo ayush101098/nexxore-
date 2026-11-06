@@ -59,3 +59,23 @@ def test_read_holdings_decodes_weth_and_usdc():
     h = read_holdings("http://127.0.0.1:8545", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", post=post)
     assert (h.weth, h.usdc) == (2, 5000)
     assert seen["body"][0]["params"][0]["data"].endswith("f39fd6e51aad88f6f4ce6ab8827279cfffb92266")
+
+
+def test_hook_pool_state_decodes_prices_fee_and_sigma():
+    from scanner.live import hook_pool_state
+
+    def slot0(sqrt):
+        return "0x" + hex(sqrt)[2:].rjust(64, "0") + "0" * 192
+
+    hooked_sqrt = 1677950713849892938281714721534475  # tick 199225 (USDC/WETH)
+    main_sqrt = 3731765585919062999246429  # tick -199275 (ETH/USDC)
+
+    def post(url, body):
+        results = [slot0(hooked_sqrt), slot0(main_sqrt), hex(10_000), hex(4 * 10**18)]
+        return [{"id": c["id"], "result": r} for c, r in zip(body, results)]
+
+    hook = {"hook": "0x" + "11" * 20, "hooked_pool_id": "0x" + "aa" * 32, "main_pool_id": "0x" + "bb" * 32}
+    s = hook_pool_state("http://x", hook, post=post)
+    assert 2229 < s["hooked_price"] < 2230 and 2217 < s["main_price"] < 2219
+    assert 49 < s["gap_bps"] < 51  # ~0.5% by construction
+    assert (s["fee_pips"], s["sigma"]) == (10_000, 4)

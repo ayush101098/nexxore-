@@ -19,7 +19,7 @@ from pricing import DAYS_PER_YEAR, aqua_position, aqua_premium_floor
 from profiles import PROFILES
 from scanner import Source, scan
 from scanner.holdings import DEFAULT_RPC, read_gas_gwei, read_holdings
-from scanner.live import AquaRouterSource, HookedV4PoolSource, UniswapTradingApiSource
+from scanner.live import AquaRouterSource, HookedV4PoolSource, UniswapTradingApiSource, hook_pool_state, load_hook
 from scanner.recorded import RecordedSource
 from schemas import validate
 from store import Store
@@ -243,7 +243,15 @@ def create_app(
             raise HTTPException(404, "no demo/curves.json; run make demo-chain in contracts/aqua")
         # Wei amounts exceed JS's safe-integer range: send them as strings.
         big = lambda v: {k: big(x) for k, x in v.items()} if isinstance(v, dict) else (str(v) if isinstance(v, int) and abs(v) > 2**53 else v)
-        return big(curves)
+        info = big(curves)
+        hook = load_hook()
+        if hook is not None:
+            try:
+                live = {k: str(v) for k, v in hook_pool_state(os.environ.get("DEMO_RPC_URL", DEFAULT_RPC), hook).items()}
+            except (OSError, RuntimeError, ValueError) as e:
+                live = {"error": str(e)}
+            info["hook"] = {**hook, "live": live}
+        return info
 
     @app.post("/decisions/{decision_id}/replay")
     def post_replay(decision_id: str) -> dict:
