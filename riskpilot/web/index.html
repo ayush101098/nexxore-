@@ -158,7 +158,7 @@ details table { margin-top:var(--s1); font-size:11px; }
 .overlay { position:fixed; inset:0; background:rgba(5,8,12,0.78); display:flex; align-items:center; justify-content:center; z-index:40; padding:var(--s2); }
 .overlay[hidden] { display:none; }
 .picker { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:var(--s3); max-width:880px; width:100%; }
-.picker h2 { font-size:16px; font-weight:600; margin-bottom:4px; }
+.picker h2 { font-size:16px; font-weight:600; margin-bottom:4px; outline:none; }
 .picker > p { color:var(--text-2); margin-bottom:var(--s2); }
 .cards { display:grid; grid-template-columns:repeat(3, 1fr); gap:var(--s2); }
 .card { text-align:left; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r); padding:var(--s2); color:var(--text); cursor:pointer; font-size:12px; }
@@ -234,7 +234,7 @@ details table { margin-top:var(--s1); font-size:11px; }
 <div id="tip" role="tooltip"></div>
 <div class="overlay" id="profilePick" hidden role="dialog" aria-modal="true" aria-labelledby="h-prof">
   <div class="picker">
-    <h2 id="h-prof">Choose a risk profile</h2>
+    <h2 id="h-prof" tabindex="-1">Choose a risk profile</h2>
     <p>Chosen once for this wallet and signed by it. Every limit below is fixed by the profile; the engine derives the rest each block.</p>
     <div class="cards" id="profileCards"></div>
     <p class="err" id="profileErr" aria-live="polite"></p>
@@ -261,6 +261,10 @@ const A = {
 // Anvil account #0 (public test key) signs on the demo chain only when no browser wallet is on 31337.
 const DEMO_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 const API = ENGINE + "/v1";
+// Read-only unless served by a local engine (make up) or pointed at one: the public page never asks
+// a visitor's wallet for anything. ?readonly=1 forces it.
+const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const READ_ONLY = qs.get("readonly") === "1" || (!LOCAL && !qs.has("engine"));
 // Arc testnet, or the local Arc stand-in (make arc-rehearsal) when arcRpc points at localhost.
 const ARC_LOCAL = /localhost|127\.0\.0\.1/.test(ARC.rpc);
 
@@ -315,6 +319,8 @@ async function loadViem() {
 // EIP-6963: every injected wallet announces itself; window.ethereum is the fallback.
 window.addEventListener("eip6963:announceProvider", (e) => { if (!S.providers.some((p) => p.info.uuid === e.detail.info.uuid)) S.providers.push(e.detail); });
 window.dispatchEvent(new Event("eip6963:requestProvider"));
+// Whose opportunities the page shows: the signer, or (read-only) the demo maker, with no wallet asked.
+const viewer = () => S.signer?.address || (READ_ONLY ? S.info?.maker : null);
 const injected = () => S.providers[0]?.provider || window.ethereum || null;
 
 // Switch the wallet to a chain, adding it first if the wallet does not know it.
@@ -328,6 +334,7 @@ async function switchTo(provider, chainId, params) {
 }
 
 async function demoSigner() {
+  if (READ_ONLY) return null;
   const provider = injected();
   if (provider && !qs.has("demoKey")) {
     try {
@@ -405,12 +412,12 @@ function renderStatus() {
   const tok = (raw, dec, unit, d) => (c && raw !== undefined
     ? `<span data-testid="hold-${unit}" ${tip(`chain balanceOf ${unit}`, c.at)} tabindex="0">${num(Number(raw) / 10 ** dec, d)} ${unit}</span>` : unavailable("demo chain"));
   const eng = S.up.engine; // engine-sourced cells drop their values while the engine is down
-  const wallet = S.signer?.address;
+  const wallet = viewer();
   $("status").innerHTML = [
     cell("Chain", !c ? unavailable("demo chain")
       : eng && info ? `<span ${tip("chain eth_chainId · fork block from demo/curves.json", c.at)} tabindex="0">Ethereum mainnet fork · block ${Number(info.fork_block).toLocaleString("en-US")}</span>`
       : `<span ${tip("chain eth_chainId, eth_blockNumber", c.at)} tabindex="0">chain ${c.chainId} · head ${c.block.toLocaleString("en-US")}</span>`, "wide"),
-    cell("Wallet", wallet ? `<span class="mono" ${tip(`signer: ${S.signer.kind}`, c?.at)} tabindex="0">${short(wallet)}</span>` : unavailable("wallet")),
+    cell("Wallet", wallet ? `<span class="mono" ${tip(READ_ONLY ? "read-only: the demo maker, no wallet connected" : `signer: ${S.signer.kind}`, c?.at)} tabindex="0">${short(wallet)}${READ_ONLY ? " · read-only" : ""}</span>` : unavailable("wallet")),
     cell("WETH", tok(c?.weth, 18, "WETH", 4)),
     cell("USDC", tok(c?.usdc, 6, "USDC", 2)),
     cell("Profile", eng && S.profile ? `<span data-testid="profile-status" data-tip="${esc(derivationTip(pr))}" tabindex="0">${esc(S.profiles?.[S.profile]?.label || S.profile)}${pr ? ` · ${budgetLine(pr)}` : ""}</span> <button type="button" class="linkbtn" id="profileChange" data-testid="profile-change">Change</button>`
@@ -436,7 +443,7 @@ function showPicker(changing = false) {
   $("profileErr").textContent = changing ? "Changing cancels any live approval; everything is re-evaluated under the new profile." : "";
   $("profilePick").hidden = false;
   $("profileCards").querySelectorAll("[data-profile]").forEach((b) => { b.onclick = () => chooseProfile(b.dataset.profile); });
-  $("profileCards").querySelector("button")?.focus();
+  $("h-prof").focus(); // focus the dialog, not a card: nothing is preselected
 }
 async function chooseProfile(name) {
   const wallet = S.signer.address, setAt = now();
@@ -559,6 +566,7 @@ function liveShipped(d) {
 
 // Why "Approve and sign" is disabled: the engine's own reason, up to its detail in brackets.
 function whyDisabled(d, shipped, kind) {
+  if (READ_ONLY) return "Read-only page: run make up to sign";
   if (shipped) return "Already shipped";
   if (!S.up.chain) return "Demo chain unavailable";
   if (d.verdict === "APPROVE") return Date.parse(d.expires_at) <= Date.now() ? "Requoting…" : kind ? "Approve and sign" : "No adapter for this venue";
@@ -603,11 +611,12 @@ function settleChip(id) {
 function renderDecision() {
   clearInterval(timer);
   $("viewApi").disabled = !(S.up.engine && S.seed);
+  if (READ_ONLY && !S.up.engine) { $("decision").innerHTML = `<p class="empty" data-testid="read-only">Read-only page. Run <span class="mono">make up</span> and open localhost:8000/riskpilot to evaluate and sign.</p>`; $("viewApi").disabled = true; return; }
   if (!S.up.engine || !S.seed) { $("decision").innerHTML = S.up.engine && S.needsProfile ? `<p class="empty">No decisions until a profile is chosen.</p>` : unavailable(S.seedErr || "engine"); return; }
   if (S.busy) return; // the stepper owns the button until the signature flow ends
   const it = S.seed.items[selectIndex()], d = it.decision, inp = d.inputs, ds = tip(`engine /v1/evaluate · ${d.model_version}`, d.created_at);
   const shipped = liveShipped(d), kind = adapterFor(d);
-  const live = d.verdict === "APPROVE" && Date.parse(d.expires_at) > Date.now() && !shipped && kind && S.up.chain;
+  const live = !READ_ONLY && d.verdict === "APPROVE" && Date.parse(d.expires_at) > Date.now() && !shipped && kind && S.up.chain;
   const signed = d.signature ? `Signed by engine ${d.signature.signer}` : "Unsigned";
   const last = S.lastTx[it.key];
   let h = `<div class="dec-head" data-testid="decision" data-decision="${d.decision_id}" data-key="${esc(it.key)}"><span class="chip ${d.verdict}" data-testid="dec-verdict">${d.verdict}</span>
@@ -891,7 +900,7 @@ function renderHistory() {
 
 // ── data + stream ────────────────────────────────────────────────────────
 async function readChain() {
-  const who = S.signer?.address || S.info?.maker, [block, chainId] = await Promise.all([V.pub.getBlockNumber(), V.pub.getChainId()]);
+  const who = viewer() || S.info?.maker, [block, chainId] = await Promise.all([V.pub.getBlockNumber(), V.pub.getChainId()]);
   const out = { block, chainId, at: now() };
   if (who) [out.weth, out.usdc] = await Promise.all([A.WETH, A.USDC].map((t) => V.pub.readContract({ address: t, abi: V.erc20, functionName: "balanceOf", args: [who] })));
   return out;
@@ -906,9 +915,9 @@ async function loadEngine() {
 }
 
 async function loadProfile() {
-  if (!S.signer) return;
-  try { S.profile = (await engine(`/profile?wallet=${S.signer.address}`)).profile; S.needsProfile = false; }
-  catch (e) { if (e.status === 404) { S.profile = null; S.needsProfile = true; } else throw e; }
+  if (!viewer()) return;
+  S.profile = (await engine(`/profile?wallet=${viewer()}`)).profile;
+  S.needsProfile = S.profile == null;
 }
 
 // One render at a time; a request during a render runs once more after it, so the last state always lands.
@@ -939,7 +948,7 @@ function engineDown() {
 let es = null;
 function connect() {
   if (es) es.close();
-  es = new EventSource(`${API}/stream${S.signer ? `?wallet=${S.signer.address}` : ""}`);
+  es = new EventSource(`${API}/stream${viewer() ? `?wallet=${viewer()}` : ""}`);
   es.onopen = async () => {
     if (!S.up.engine) { // back after an outage: reload so nothing on screen predates it
       try { await loadEngine(); await loadProfile(); S.up.engine = true; } catch { return; }
@@ -1004,7 +1013,7 @@ async function main() {
   try { await loadViem(); } catch { /* chain panels report the CDN as unavailable */ }
   if (V) { try { S.signer = await demoSigner(); S.chain = await readChain(); S.up.chain = true; } catch { S.up.chain = false; } }
   try { await loadEngine(); await loadProfile(); S.up.engine = true; } catch { S.up.engine = false; }
-  if (S.up.engine && S.needsProfile) showPicker();
+  if (S.up.engine && S.needsProfile && !READ_ONLY) showPicker();
   connect();
   await refreshAll();
   S.perf.loaded = performance.now() - t0;

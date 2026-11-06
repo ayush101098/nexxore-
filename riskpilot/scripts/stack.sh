@@ -3,6 +3,7 @@
 #   up       start everything (from demo/frozen/ when it exists, else build the chain and freeze it)
 #   down     stop everything
 #   reset    down, then up from the frozen chain state and SQLite copy; checks the decision ids match
+#   restart-engine   restart only the engine (same DB), e.g. to show the arc-worker's catch-up
 #   freeze   save the running chain state, the engine DB and the demo files to demo/frozen/
 # ARC_REHEARSAL=1 also starts a local Arc stand-in (chain id 5042002, 6-decimal mock USDC, public
 # Anvil keys) so the whole Approve and sign -> fund -> arc-worker settle flow runs offline.
@@ -19,7 +20,8 @@ ARC_PK=0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a  # Anv
 log() { printf '%s %s\n' "$(date +%H:%M:%S)" "$*"; }
 wait_for() { for _ in $(seq 1 120); do eval "$1" >/dev/null 2>&1 && return 0; sleep 0.25; done; echo "timed out: $2" >&2; return 1; }
 stop() { [ -f "$RUN/$1.pid" ] && kill "$(cat "$RUN/$1.pid")" 2>/dev/null || true; rm -f "$RUN/$1.pid"; }
-port_free() { ! lsof -ti ":$1" >/dev/null 2>&1; }
+listening() { lsof -ti "tcp:$1" -sTCP:LISTEN 2>/dev/null; }
+port_free() { [ -z "$(listening "$1")" ]; }
 
 chain_up() {
   port_free 8545 || { log "chain already on :8545"; return; }
@@ -91,11 +93,12 @@ open(sys.argv[1], "wb").write(raw)' "$FROZEN/anvil-state.json"
 }
 
 down() { stop engine; stop anvil; stop arc; pkill -f "anvil --port 8547 --chain-id 5042002" 2>/dev/null || true
-  for p in 8000 8545 8547; do wait_for "! lsof -ti :$p" "port $p to close" || lsof -ti ":$p" | xargs kill -9 2>/dev/null || true; done; }
+  for p in 8000 8545 8547; do wait_for "port_free $p" "port $p to close" || listening "$p" | xargs kill -9 2>/dev/null || true; done; }
 
 case "${1:-up}" in
   up) FREEZE_AFTER=0; chain_up; arc_up; engine_up; [ "$FREEZE_AFTER" = 1 ] && freeze; true ;;
   down) down; log "stack stopped" ;;
+  restart-engine) stop engine; wait_for "port_free 8000" "port 8000 to close"; KEEP_DB=1; arc_up; engine_up ;;
   freeze) freeze ;;
   reset)
     t0=$(date +%s)

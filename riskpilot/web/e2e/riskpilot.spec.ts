@@ -88,9 +88,15 @@ test("4. call-like curve: Approve enabled, counts down, requotes in place keepin
   const first = await secs();
   expect(first).toBeGreaterThan(0);
   expect(first).toBeLessThanOrEqual(30);
-  // It counts down (a requote may land meanwhile and restart it, so poll for a lower value).
-  await expect.poll(secs, { timeout: 5_000 }).toBeLessThan(first);
-  const later = await secs();
+  // It counts down: some reading is lower than the one 1.2 s before it (a requote landing in
+  // between restarts it, so compare consecutive readings rather than the first one).
+  let prev = first, later = NaN;
+  for (let i = 0; i < 8 && Number.isNaN(later); i++) {
+    await page.waitForTimeout(1_200);
+    const now = await secs();
+    if (now < prev) later = now; else prev = now;
+  }
+  expect(later, "countdown decreased").toBeGreaterThan(0);
   // Requote in place: before it runs out the engine re-issues the decision; the selection stays.
   await expect.poll(secs, { timeout: 20_000 }).toBeGreaterThan(later);
   await expect(page.getByTestId("decision")).toHaveAttribute("data-key", /aqua_premium:.*call_like/);
@@ -230,4 +236,18 @@ test("12. demo pools are tagged as seeded on the fork", async ({ page }) => {
   await expect(row(page, "Price gap · hooked").getByTestId("demo-tag")).toHaveText("Demo pool · seeded on fork");
   await expect(row(page, "Price gap · static").getByTestId("demo-tag")).toHaveText("Demo pool · seeded on fork");
   await expect(row(page, "Price gap · v4 ETH/USDC").getByTestId("demo-tag")).toHaveCount(0);
+});
+
+test("13. read-only page: no wallet requests, nothing signable", async ({ page }) => {
+  await page.addInitScript(() => {
+    const calls: string[] = ((window as any).__walletCalls = []);
+    (window as any).ethereum = { request: async ({ method }: { method: string }) => { calls.push(method); throw new Error("no"); }, on() {} };
+  });
+  await page.goto("/riskpilot?readonly=1");
+  await expect(page.locator("[data-testid=opp-row]")).toHaveCount(ROWS); // the wallet already chose a profile
+  await expect(page.getByTestId("profile-card")).toHaveCount(0);
+  await select(page, "Call-like");
+  await expect(page.getByTestId("approve")).toBeDisabled();
+  await expect(page.getByTestId("approve")).toHaveText("Read-only page: run make up to sign");
+  expect(await page.evaluate(() => (window as any).__walletCalls)).toEqual([]);
 });

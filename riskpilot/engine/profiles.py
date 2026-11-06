@@ -62,6 +62,11 @@ def stress_budget(profile: Profile, wallet_value: Decimal | None) -> tuple[Decim
     return (share, "share") if share < profile.budget_cap else (profile.budget_cap, "cap")
 
 
+def _fixed(d: Decimal) -> str:
+    """Never scientific notation (str(Decimal("6.56E-7"))): wallets and viem parse fixed-point."""
+    return format(d, "f")
+
+
 def derive(profile: Profile, wallet_value: Decimal | None, impact: Decimal | None = None,
            base_fee_gwei: Decimal | None = None, tip_gwei: Decimal | None = None) -> dict:
     """The values a decision is made with this block, with how each was derived."""
@@ -78,8 +83,8 @@ def derive(profile: Profile, wallet_value: Decimal | None, impact: Decimal | Non
         "requote_move": str(REQUOTE_MOVE),
     }
     if impact is not None:
-        out["slippage_tolerance"] = str(min(profile.max_slippage, impact + SLIPPAGE_PAD).quantize(Decimal("0.000001")))
+        out["slippage_tolerance"] = _fixed(min(profile.max_slippage, impact + SLIPPAGE_PAD).quantize(Decimal("0.000001")))
     if base_fee_gwei is not None:
-        out["gas_ceiling_gwei"] = str((2 * base_fee_gwei + (tip_gwei or 0)).quantize(Decimal("0.000000001")))
-        out["tip_gwei"] = str((tip_gwei or Decimal(0)).quantize(Decimal("0.000000001")))
+        out["gas_ceiling_gwei"] = _fixed((2 * base_fee_gwei + (tip_gwei or 0)).quantize(Decimal("0.000000001")))
+        out["tip_gwei"] = _fixed((tip_gwei or Decimal(0)).quantize(Decimal("0.000000001")))
     return out

@@ -106,7 +106,7 @@ def create_app(
         description="Risk-aware execution engine for programmable liquidity. Every route is also served under /v1.",
         openapi_url="/openapi.json",
     )
-    app.state.hub, app.state.key, app.state.latest = hub, key, latest
+    app.state.hub, app.state.key, app.state.latest, app.state.store = hub, key, latest, store
 
     @app.middleware("http")
     async def _v1_and_metrics(request: Request, call_next):
@@ -376,10 +376,8 @@ def create_app(
 
     @app.get("/profile")
     def get_wallet_profile(wallet: str) -> dict:
-        row = store.get_profile(wallet)
-        if row is None:
-            raise HTTPException(404, f"no profile for {wallet}; choose one with PUT /profile")
-        return row
+        """The wallet's profile; profile is null until the wallet chooses one (PUT /v1/profile)."""
+        return store.get_profile(wallet) or {"wallet": wallet.lower(), "profile": None, "set_at": None}
 
     @app.put("/profile")
     def put_wallet_profile(body: dict) -> dict:
@@ -646,5 +644,18 @@ def create_app(
     @app.get("/health")
     def health() -> dict:
         return health_body()
+
+    def versioned_openapi() -> dict:
+        """The published spec (docs/openapi.yaml, /v1/openapi.json): every path under /v1."""
+        if app.openapi_schema is None:
+            from fastapi.openapi.utils import get_openapi
+
+            spec = get_openapi(title=app.title, version=app.version, description=app.description, routes=app.routes)
+            spec["paths"] = {("/v1" + p): v for p, v in spec["paths"].items() if not p.startswith("/riskpilot")}
+            spec["servers"] = [{"url": "http://localhost:8000", "description": "make up"}]
+            app.openapi_schema = spec
+        return app.openapi_schema
+
+    app.openapi = versioned_openapi
 
     return app

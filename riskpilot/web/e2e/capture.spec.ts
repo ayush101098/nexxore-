@@ -7,8 +7,14 @@ import { startEngine, stopEngine } from "./stack";
 test.skip(!process.env.CAPTURE, "set CAPTURE=1 to produce PR screenshots");
 const OUT = resolve(__dirname, "..", "..", "docs", "screenshots");
 
-async function open(page: Page) {
+async function open(page: Page, shoot?: string) {
   await page.goto("/riskpilot");
+  const card = page.locator("[data-testid=profile-card][data-profile=moderate]");
+  await Promise.race([card.waitFor({ timeout: 15_000 }), page.locator("[data-testid=opp-row]").first().waitFor({ timeout: 15_000 })]);
+  if (await card.isVisible()) {
+    if (shoot) await page.screenshot({ path: join(OUT, shoot) });
+    await card.click();
+  }
   await expect(page.locator("[data-testid=opp-row]")).toHaveCount(5);
   await expect(page.locator("#hook svg")).toBeVisible();
 }
@@ -17,7 +23,7 @@ test("console is clean on load", async ({ page }) => {
   const problems: string[] = [];
   page.on("console", (m) => { if (m.type() === "error" || m.type() === "warning") problems.push(`${m.type()}: ${m.text()}`); });
   page.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
-  await open(page);
+  await open(page, "0-profile-picker.png"); // the suite starts with a fresh DB: a fresh wallet
   await page.waitForTimeout(3_000);
   expect(problems).toEqual([]);
 });
@@ -48,7 +54,17 @@ test("screenshots", async ({ page }) => {
   await page.waitForTimeout(300);
   await page.screenshot({ path: join(OUT, "5-api-drawer.png") });
   await page.getByRole("button", { name: "Close" }).click();
-  await stopEngine();
+  await page.getByTestId("profile-status").hover();
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: join(OUT, "7-profile-derivation.png") });
+  await page.locator("[data-testid=opp-row][data-label^='Call-like']").click();
+  const steps = page.getByTestId("approve");
+  await steps.click();
+  await expect(steps).toHaveText(/^(Signing|Confirming) [12] of/);
+  await page.screenshot({ path: join(OUT, "8-stepper.png") });
+  await expect(page.getByTestId("confirmed")).toBeVisible({ timeout: 30_000 });
+  await page.screenshot({ path: join(OUT, "9-confirmed.png") });
+  await stopEngine("SIGKILL");
   await expect(page.locator("#opps")).toContainText("Source unavailable: engine", { timeout: 5_000 });
   await page.waitForTimeout(500);
   await page.screenshot({ path: join(OUT, "4-engine-down.png") });

@@ -61,10 +61,14 @@ def test_slippage_and_gas_ceiling():
     assert d["slippage_tolerance"] == "0.001700"  # impact + 5 bp, under the 0.50% max
     assert (d["gas_ceiling_gwei"], d["tip_gwei"]) == ("21.000000000", "1.000000000")  # 2 x base fee + tip
     assert derive(PROFILES["conservative"], None, impact=Decimal("0.01"))["slippage_tolerance"] == "0.003000"
+    # A near-zero base fee (empty blocks on the demo chain) stays fixed-point, never 6.56E-7.
+    tiny = derive(PROFILES["moderate"], None, base_fee_gwei=Decimal("0.000000283"), tip_gwei=Decimal("0.00000009"))
+    assert (tiny["gas_ceiling_gwei"], tiny["tip_gwei"]) == ("0.000000656", "0.000000090")
 
 
 def test_seed_needs_a_signed_profile():
     c = client(**HELD)
+    assert c.get(f"/profile?wallet={MAKER}").json()["profile"] is None
     r = c.post("/demo/seed")
     assert r.status_code == 409 and r.json()["detail"]["needs_profile"] is True
     set_at = "2026-11-06T14:00:00Z"

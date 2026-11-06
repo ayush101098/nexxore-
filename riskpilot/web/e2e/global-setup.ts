@@ -6,6 +6,8 @@ export default async function globalSetup() {
   });
   if (parseInt(chainId, 16) !== 31337) throw new Error(`unexpected chain id ${chainId}`);
   await snapshotChain();
+  // E2E_EXTERNAL=1: use the stack `make up` started (e.g. ARC_REHEARSAL=1 make demo-reset).
+  if (process.env.E2E_EXTERNAL) return;
   await stopEngine().catch(() => {});
   await startEngine(true);
 }

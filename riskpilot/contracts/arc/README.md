@@ -6,8 +6,9 @@ approved RiskPilot decision and settles the result in USDC, keyed by
 
 ```bash
 make test                 # 7 tests (forge)
-make deploy-arc-testnet SENDER=0xYourAddress   # signs with your wallet (forge prompts; nothing stored)
-make arc-settle DECISION=dec_… AMOUNT=5        # operator (your wallet): engine payout -> settle() -> recorded
+make arc-deploy SENDER=0xYourAddress   # deploy only; writes deployments/arc-testnet.json (your wallet signs)
+make arc-rehearsal                     # the same against a local Anvil on :8547 with a mock USDC
+make arc-settle DECISION=dec_… AMOUNT=5   # manual fallback; the engine's arc-worker settles on its own
 make arc-status DECISION=dec_…
 ```
 
@@ -70,18 +71,26 @@ edge pro rata to the escrowed amount. It requires an APPROVE decision with a
 verified Execution. It's the engine's priced result, not a realized-P&L
 measurement.
 
-## Flow
+## Flow: Arc settles itself
 
-1. The engine returns APPROVE, and the `/riskpilot` page offers **Fund on Arc**
-   for that decision. It uses a browser wallet on chain 5042002: approve, then
-   `fund(keccak256(decision_id), amount)`.
-2. The strategy executes on its own chain, and the page records the verified
-   Execution.
-3. `make arc-settle DECISION=… AMOUNT=…` asks the engine for the payout,
-   calls `settle` as the operator, and POSTs the settle transaction to
-   `/decisions/{id}/settlement`.
-4. The page's Arc panel lists every Funded and Settled event with explorer links,
-   matched back to the decision.
+1. **Deploy once:** `make arc-deploy SENDER=0x…` (your wallet signs). It writes
+   `deployments/arc-testnet.json`: escrow, operator, USDC `0x3600…0000` (6 decimals), deploy tx, block.
+2. **Fund inside Approve and sign.** For an approved decision, the page's single button runs
+   the trade, then switches the wallet to Arc ("Switching to Arc testnet…") and funds the
+   escrow: approve the exact stake, then `fund(keccak256(decision_id), amount)`.
+3. **The arc-worker settles** (`engine/arc_worker.py`, started with the engine). It follows
+   `Funded` (getLogs from the deployment block, so a restart catches up), waits for the
+   decision's verified execution, reads `deposits()` (only status Funded is ever settled, so a
+   restart never settles twice), calls `settle(decisionId, payout)` with `ARC_OPERATOR_KEY` from
+   the engine's environment, waits for 1 confirmation and records the tx in the `settlements`
+   table. It retries 3 times (2 s, 8 s, 30 s), then reports "Settlement failed: <reason>".
+4. **The page shows** Funded → Settling → Settled · view tx on the decision, and "Refund
+   available" with a Refund button once 24 h pass unsettled.
+
+`make arc-settle` remains as a manual fallback. **Rehearsal:** `ARC_REHEARSAL=1 make up` (repo
+root) runs the same flow against a local Anvil stand-in (chain id 5042002, 6-decimal mock USDC,
+public Anvil keys); `web/e2e/arc.spec.ts` checks one click through to Settled and that an engine
+restart adds no second `Settled` event.
 
 ## TypeScript helper: `ts/escrow.ts` (viem)
 

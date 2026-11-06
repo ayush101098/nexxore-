@@ -1,6 +1,6 @@
-# RiskPilot
+# RiskPilot: pricing liquidity risk
 
-A risk-aware DeFi execution agent for ETH/USDC.
+Risk-aware execution engine for programmable liquidity (ETH/USDC).
 
 ## What it is
 
@@ -21,6 +21,19 @@ Primitives:
   approved strategy's lock and settlement.
 
 Out of scope: automated execution, mainnet funds, multi-asset support.
+
+**Profiles, chosen once.** A wallet picks Conservative, Moderate or Aggressive on first connect
+and signs it (EIP-191). Every limit is fixed by the profile (λ, stress budget share and cap,
+minimum edge, k, Aqua fee margin, max slippage, max position share). Each block the engine
+derives the rest: stress budget = min(share × wallet value, cap), slippage limit =
+min(profile max, simulated impact + 5 bp), position cap, and gas ceiling = 2 × base fee + tip
+(`eth_feeHistory`). For the demo wallet the Moderate budget is the $250 cap.
+
+**One action.** The page scans, evaluates, sizes and requotes on every block by itself; the
+user's only trade control is **Approve and sign** (plus Refund after 24 h on Arc). One click
+runs every transaction the decision needs (exact-amount approvals, the trade, the Arc funding)
+as a stepper, or as one EIP-5792 batch when the wallet supports it, re-validating and
+re-simulating before each. The arc-worker settles on Arc without anyone pressing anything.
 
 ## Pre-event vs event work
 
@@ -67,26 +80,51 @@ Position.
 ## Setup
 
 ```bash
-cp .env.example .env          # fill in testnet RPCs and keys
-python3 -m venv .venv && .venv/bin/pip install -r shared/requirements.txt
-.venv/bin/pytest shared/tests
-
-cd engine                     # quant engine, see engine/README.md
-../.venv/bin/pip install -r requirements.txt
-../.venv/bin/pytest
-../.venv/bin/uvicorn main:app --reload
+python3 -m venv .venv && .venv/bin/pip install -r shared/requirements.txt -r engine/requirements.txt
+cp .env.example .env              # AQUA_FORK_RPC_URL: an Ethereum mainnet archive RPC
+make up                           # demo chain :8545 + engine :8000; first run builds and freezes it
+open http://localhost:8000/riskpilot
+make demo-reset                   # back to the frozen chain and SQLite copy, same decision ids, ~3 s
+ARC_REHEARSAL=1 make demo-reset   # plus a local Arc stand-in: Approve and sign -> fund -> worker settles
+make test                         # engine + schema tests, then the e2e suite
+make outage-test                  # kill the engine for real, headed browser
+make down
 ```
 
-```bash
-export AQUA_FORK_RPC_URL=<Ethereum mainnet archive RPC>
-cd contracts/aqua && make demo-chain      # demo chain on :8545 (Anvil fork, chain 31337)
-cd contracts/hook && make hook-pool       # VolatilityFeeHook + live pools on the demo chain
-cd engine && DEMO_RPC_URL=http://127.0.0.1:8545 ../.venv/bin/uvicorn main:app
-open http://localhost:8000/riskpilot      # the demo page (also served at nexxore.xyz/riskpilot)
-cd contracts/hook && make test hook-demo  # 6 tests; fee per block vs a static 0.30% pool
-cd contracts/arc && make test             # 7 tests; make deploy-arc-testnet once the key is funded
-```
+Contracts: `cd contracts/{aqua,hook,arc} && make test` (12, 6 and 7 Foundry tests).
 
-## Demo
+**Public testnets, from your own wallet** (forge prompts for the key; nothing is stored):
+`make testnet SENDER=0xYourAddress` deploys the hook to Unichain Sepolia and the escrow to Arc
+(`make arc-deploy` alone writes `contracts/arc/deployments/arc-testnet.json`). Then start the
+engine with `ARC_OPERATOR_KEY` exported in your terminal and the arc-worker settles every funded
+decision. Without it, decisions show "Funded · waiting for operator key".
 
-TODO: demo script in `docs/`.
+## Using it from a wallet or agent: API v1
+
+The engine's API is versioned under `/v1` (the unversioned paths remain as aliases). The spec is
+`docs/openapi.yaml` (`make openapi`), also served at `/v1/openapi.json`.
+
+| Endpoint | Does |
+|---|---|
+| `PUT /v1/profile` | Set the wallet's profile; body `{wallet, profile, set_at, signature}`, EIP-191 over the message in `api.profile_message` |
+| `GET /v1/opportunities?wallet=` | The wallet's evaluated opportunities this block |
+| `GET /v1/stream?wallet=` | Server-sent events: `block`, `opportunity`, `decision`, `health`, `settlement`; 15 s heartbeat |
+| `POST /v1/evaluate` | Evaluate any opportunity; with `wallet`, under its profile and derived limits |
+| `GET /v1/decisions/{id}` | A stored decision, with its EIP-712 signature |
+| `POST /v1/decisions/{id}/build` | EIP-5792 `calls[]` for a live, signed APPROVE; 409 if expired, not APPROVE, unsigned, or made under an old profile |
+| `POST /v1/executions` | Report a verified execution (idempotent) |
+| `GET /v1/positions?wallet=` | Open positions |
+| `POST /v1/decisions/{id}/replay` | Re-run from recorded inputs; must be identical |
+| `GET /v1/health`, `GET /v1/metrics` | Dependencies and warnings; p50/p95 per route |
+
+Decisions are signed by the engine key (`RISKPILOT_ENGINE_KEY`; ephemeral if unset, and
+`/v1/health` says so) as EIP-712 `RiskPilotDecision{id, wallet, inputsHash, verdict, expiresAt}`.
+`decision_id` = hash(inputs, block, engine version).
+
+## What's next
+
+- **Decision-gated hook.** The v4 hook checks the engine's EIP-712 decision signature in
+  `beforeSwap`, so a pool only fills flow that RiskPilot approved.
+- **MCP wrapper.** The v1 API as MCP tools, so any agent can `evaluate`, `build` and `report`.
+- **Scanner-proposed curves.** The scanner proposes Aqua ranges and sizes, instead of the two
+  fixed demo curves.

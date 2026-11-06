@@ -38,7 +38,7 @@ arc-rehearsal: deps
 	@USDC=$$(forge create test/RiskPilotEscrow.t.sol:MockUSDC --rpc-url $(REHEARSAL_RPC) --private-key $(REHEARSAL_PK) --broadcast --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["deployedTo"])'); \
 	ARC_REHEARSAL=true ARC_USDC=$$USDC ARC_DEPLOYMENT_OUT=./deployments/arc-rehearsal.json \
 	forge script script/DeployEscrow.s.sol --rpc-url $(REHEARSAL_RPC) --private-key $(REHEARSAL_PK) --broadcast -q && \
-	python3 script/record_deploy_tx.py broadcast/DeployEscrow.s.sol/31337/run-latest.json deployments/arc-rehearsal.json && \
+	python3 script/record_deploy_tx.py broadcast/DeployEscrow.s.sol/$$(cast chain-id --rpc-url $(REHEARSAL_RPC))/run-latest.json deployments/arc-rehearsal.json && \
 	cat deployments/arc-rehearsal.json
 
 # Operator step (manual fallback; the arc-worker does this automatically): ask the engine for the payout of an executed decision, settle on Arc from your
