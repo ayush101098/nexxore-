@@ -154,6 +154,22 @@ test("4c. a stale wallet nonce after demo-reset gives a plain instruction, not a
   await expect(page.getByTestId("approve")).toBeEnabled(); // the decision is still live: try again after the reset
 });
 
+test("4d. an approval edited down in the wallet stops with a plain message, before a swap that would revert", async ({ page }) => {
+  const snap = await rpc<string>("evm_snapshot");
+  try {
+    await installWallet(page, DEMO_WALLET, undefined, { approveDivisor: 10n }); // the user cut the spending cap
+    await page.goto("/riskpilot");
+    await expect(page.locator("[data-testid=opp-row]")).toHaveCount(ROWS);
+    await select(page, "Price gap · static");
+    await page.getByTestId("approve").click();
+    await expect(page.locator("#log")).toContainText(/approved 0\.\d+ WETH, but this trade needs \d\.\d+ WETH/, { timeout: 30_000 });
+    await expect(page.locator("#log")).toContainText("leave the wallet's spending cap as proposed");
+    await expect(page.locator("#log")).not.toContainText("swap through the v4 pool · sign");
+  } finally {
+    await rpc("evm_revert", [snap]);
+  }
+});
+
 test("5. one click ships the curve, even when the first prompt takes longer than the 30 s TTL; receipts verified", async ({ page }) => {
   test.setTimeout(180_000);
   // A person reads the approval prompt for 35 s: the decision expires mid-flow, and the ship must still go.

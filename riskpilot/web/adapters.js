@@ -51,8 +51,30 @@ export async function execute(adapter, decision, signer, pub, log = () => {}, { 
     const rc = await pub.waitForTransactionReceipt({ hash });
     if (rc.status !== "success") throw new Error(`${tx.label} reverted (${hash})`);
     log(`${tx.label} confirmed in block ${rc.blockNumber}`, "ok");
+    if (tx.request.functionName === "approve") await checkAllowance(pub, signer.address, tx.request);
   }
   return adapter.verify(hash);
+}
+
+// A wallet lets the user edit an approval's spending cap. If the confirmed allowance is below what
+// the next step needs, stop here with a plain message instead of sending a transaction that reverts.
+const ERC20_READ = [
+  { type: "function", name: "allowance", stateMutability: "view", inputs: [{ type: "address" }, { type: "address" }], outputs: [{ type: "uint256" }] },
+  { type: "function", name: "decimals", stateMutability: "view", inputs: [], outputs: [{ type: "uint8" }] },
+  { type: "function", name: "symbol", stateMutability: "view", inputs: [], outputs: [{ type: "string" }] },
+];
+async function checkAllowance(pub, owner, request) {
+  const [spender, need] = request.args;
+  const token = request.address;
+  const have = await pub.readContract({ address: token, abi: ERC20_READ, functionName: "allowance", args: [owner, spender] });
+  if (have >= need) return;
+  const [dec, sym] = await Promise.all([
+    pub.readContract({ address: token, abi: ERC20_READ, functionName: "decimals" }).catch(() => 18),
+    pub.readContract({ address: token, abi: ERC20_READ, functionName: "symbol" }).catch(() => "tokens"),
+  ]);
+  const fmt = (v) => (Number(v) / 10 ** Number(dec)).toLocaleString("en-US", { maximumFractionDigits: 6 });
+  throw new AdapterRefused(`approved ${fmt(have)} ${sym}, but this trade needs ${fmt(need)} ${sym}. `
+    + "Press Approve and sign again and leave the wallet's spending cap as proposed.");
 }
 
 /** Does this wallet offer atomic batches (EIP-5792) on chainId? */
@@ -208,7 +230,8 @@ export function v4Adapter({ viem, pub, chainId, hook, A, signer, aquaCommitted =
     const tol = Number(d.inputs.profile?.slippage_tolerance ?? d.inputs.request.tolerance);
     const ethDelta = Number(d.inputs.proposed_position.params.trade_eth); // + buy ETH, - sell ETH
     const sell = ethDelta < 0, price = Number(m.quote.price);
-    const amountIn = sell ? viem.parseUnits(Math.abs(ethDelta).toFixed(18), 18) : viem.parseUnits(Number(d.inputs.request.size).toFixed(6), 6);
+    // 6 decimals: float noise (4.485451000000000299) would show up in the wallet's spending-cap field.
+    const amountIn = sell ? viem.parseUnits(Math.abs(ethDelta).toFixed(6), 18) : viem.parseUnits(Number(d.inputs.request.size).toFixed(6), 6);
     const expected = sell ? Math.abs(ethDelta) * price * (1 - fee) : Number(d.inputs.request.size) * (1 - fee) / price;
     const minOut = sell ? viem.parseUnits((expected * (1 - tol)).toFixed(6), 6) : viem.parseUnits((expected * (1 - tol)).toFixed(18), 18);
     return { sell, tokenIn: sell ? A.WETH : A.USDC, amountIn, minOut,

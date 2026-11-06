@@ -782,6 +782,7 @@ function walletError(e) {
     return "Reset your wallet's activity data: the demo chain was reset, so the wallet's saved nonce is stale (MetaMask: Settings → Advanced → Clear activity tab data), then try again.";
   }
   if (/user (rejected|denied)|rejected the request/i.test(raw)) return "Cancelled in the wallet.";
+  if (/exceeds allowance|insufficient allowance/i.test(raw)) return "The wallet approved less than this trade needs. Press Approve and sign again and keep the proposed spending cap.";
   return String(e?.shortMessage || e?.message || e);
 }
 

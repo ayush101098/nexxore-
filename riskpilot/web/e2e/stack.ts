@@ -110,7 +110,7 @@ export async function rpcAt<T = any>(url: string, method: string, params: unknow
 /** sendError: make every eth_sendTransaction fail with this message (e.g. MetaMask's stale-nonce text).
  *  firstSendDelayMs: wait this long before the first send, like a person reading a wallet prompt. */
 export async function installWallet(page: Page, address: string = DEMO_WALLET, privateKey?: `0x${string}`,
-  opts: { sendError?: string; firstSendDelayMs?: number } = {}) {
+  opts: { sendError?: string; firstSendDelayMs?: number; approveDivisor?: bigint } = {}) {
   let sends = 0;
   const account = privateKey ? privateKeyToAccount(privateKey) : null;
   await page.exposeFunction("__rpWallet", async (method: string, params: any[], chainId: number) => {
@@ -124,6 +124,13 @@ export async function installWallet(page: Page, address: string = DEMO_WALLET, p
       case "eth_sendTransaction":
         if (opts.sendError) throw Object.assign(new Error(opts.sendError), { code: -32603 });
         if (sends++ === 0 && opts.firstSendDelayMs) await new Promise((r) => setTimeout(r, opts.firstSendDelayMs));
+        // approveDivisor: like a user editing the spending cap in the wallet, approve less than asked.
+        if (opts.approveDivisor && String(params[0]?.data ?? params[0]?.input ?? "").startsWith("0x095ea7b3")) {
+          const tx = { ...params[0] }, data = String(tx.data ?? tx.input);
+          const amount = BigInt("0x" + data.slice(74, 138)) / opts.approveDivisor;
+          tx.data = data.slice(0, 74) + amount.toString(16).padStart(64, "0"); delete tx.input;
+          params = [tx, ...params.slice(1)];
+        }
         await rpcAt(url, "anvil_impersonateAccount", [address]);
         return rpcAt(url, "eth_sendTransaction", params);
       default: return rpcAt(url, method, params);
