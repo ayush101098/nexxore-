@@ -286,9 +286,11 @@ test("11. Conservative: budget $150 (cap); change re-evaluates everything", asyn
   // so the curve is rejected before the stress rule is reached.
   expect(d.reason).toMatch(/^Rejected: curve fee 0\.227% below premium floor/);
   await expect(page.getByTestId("approve")).toHaveText(d.reason.split(" (")[0]);
-  await page.getByTestId("profile-change").click();
-  await page.locator("[data-testid=profile-card][data-profile=moderate]").click();
+  // The header switch changes it in one click (the wallet signs).
+  await expect(page.locator("[data-testid=profile-seg][data-profile=conservative]")).toHaveAttribute("aria-pressed", "true");
+  await page.locator("[data-testid=profile-seg][data-profile=moderate]").click();
   await expect(page.getByTestId("profile-status")).toHaveText("Moderate · budget $250 (cap)");
+  await expect(page.locator("[data-testid=profile-seg][data-profile=moderate]")).toHaveAttribute("aria-pressed", "true");
 });
 
 test("12. demo pools are tagged as seeded on the fork", async ({ page }) => {

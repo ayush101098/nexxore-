@@ -53,6 +53,13 @@ button { font-family:var(--sans); }
 .eyebrow { font-size:11.5px; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-2); }
 .hero h1 { font-size:26px; font-weight:650; letter-spacing:-0.025em; line-height:1.15; color:var(--text); margin:1px 0 3px; }
 .hero p { font-size:14px; color:#d4d4d8; max-width:760px; }
+.hero-r { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+.acct { display:flex; flex-direction:column; gap:5px; }
+.acct .k { font-size:11px; color:var(--text-2); }
+.hero-r .seg button { height:30px; padding:0 12px; font-size:13px; }
+.hero-r .seg button:disabled { cursor:not-allowed; opacity:.55; }
+.hero-r .btn { height:36px; padding:0 16px; text-decoration:none; }
+.hero-r .on { width:7px; height:7px; border-radius:50%; background:#22c55e; }
 .steps { display:flex; gap:6px; list-style:none; flex-wrap:wrap; }
 .steps li { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-2); border:1px solid var(--border); border-radius:999px; padding:3px 10px 3px 4px; background:var(--surface); }
 .steps b { width:18px; height:18px; border-radius:999px; background:var(--surface-3); color:var(--text); font-size:11px; font-weight:600; display:grid; place-items:center; }
@@ -295,6 +302,7 @@ details table { margin-top:var(--s1); font-size:11px; }
       <div><div class="eyebrow">Nexxore · RiskPilot</div>
       <h1>Pricing liquidity risk</h1>
       <p>Prices LP positions as options, stress-tests them against your wallet, and executes only what you sign.</p></div></div>
+    <div class="hero-r" id="account" aria-label="Risk profile and wallet"></div>
   </header>
   <div class="top"><div class="status" id="status" aria-label="Status"></div></div>
   <div class="snap" id="offline" data-testid="offline-banner" hidden><span class="chip REQUOTE">Offline</span>
@@ -590,7 +598,7 @@ function renderStatus() {
       : eng && info ? `<span ${tip("chain eth_chainId · fork block from demo/curves.json", c.at)} tabindex="0">Ethereum mainnet fork · block ${Number(info.fork_block).toLocaleString("en-US")}</span>`
       : `<span ${tip("chain eth_chainId, eth_blockNumber", c.at)} tabindex="0">chain ${c.chainId} · head ${c.block.toLocaleString("en-US")}</span>`, "wide"),
     cell("Wallet", (wallet ? `<span class="mono" ${tip(S.signer ? `signer: ${S.signer.kind}` : "viewing the demo wallet; connect yours to sign", c?.at)} tabindex="0">${short(wallet)}</span>` : unavailable("wallet"))
-      + (!S.signer && !READ_ONLY && injected() ? ` <button type="button" class="linkbtn" id="walletConnect" data-testid="wallet-connect">Connect</button>` : "")),
+),
     cell("WETH", tok(c?.weth, 18, "WETH", 4)),
     cell("USDC", tok(c?.usdc, 6, "USDC", 2)),
     cell("Profile", eng && S.profile ? `<span data-testid="profile-status" data-tip="${esc(derivationTip(pr))}" tabindex="0">${esc(S.profiles?.[S.profile]?.label || S.profile)}${pr ? ` · ${budgetLine(pr)}` : ""}</span>${S.signer ? ` <button type="button" class="linkbtn" id="profileChange" data-testid="profile-change">Change</button>` : ""}`
@@ -598,16 +606,40 @@ function renderStatus() {
     cell("Engine", eng && S.health ? `<span data-tip="${esc(`engine /v1/health · signed by engine ${S.health.engine_signer}${S.health.warnings?.length ? "\n" + S.health.warnings.join("\n") : ""}`)}" tabindex="0">${esc(S.health.model_version)}</span>` : unavailable("engine")),
   ].join("");
   if ($("profileChange")) $("profileChange").onclick = () => showPicker(true);
-  if ($("walletConnect")) $("walletConnect").onclick = connectWallet;
   $("offline").hidden = S.up.engine;
   bindTips($("status"));
+  renderAccount();
 }
 
-async function connectWallet() {
+// Header controls: the risk profile (each change is signed by the wallet) and the wallet itself.
+function renderAccount() {
+  const P = S.profiles || {}, off = !S.up.engine || READ_ONLY;
+  const seg = ["conservative", "moderate", "aggressive"].map((n) => {
+    const p = P[n], label = p?.label || n[0].toUpperCase() + n.slice(1);
+    const t = p ? `${label}: ${PROFILE_BLURB[n]}\nstress budget ${pct(p.budget_share, 1).replace(".0%", "%")} of wallet, cap ${usd(p.budget_cap).replace(/\.00$/, "")} · max slippage ${pct(p.max_slippage, 2)}\n${S.signer ? "Your wallet signs the change." : "Connect a wallet to choose; it signs the choice."}` : "";
+    return `<button type="button" data-testid="profile-seg" data-profile="${n}" aria-pressed="${S.profile === n}" ${off || !p ? "disabled" : ""} ${t ? `data-tip="${esc(t)}"` : ""}>${esc(label)}</button>`;
+  }).join("");
+  const wallet = READ_ONLY ? ""
+    : S.signer ? `<button type="button" class="btn ghost" id="walletMain" data-testid="wallet-connected" data-tip="${esc(`${S.signer.kind} · ${S.signer.address}`)}"><span class="on"></span>${short(S.signer.address)}</button>`
+    : injected() ? `<button type="button" class="btn" id="walletConnect" data-testid="wallet-connect">Connect wallet</button>`
+    : `<a class="btn ghost" data-testid="wallet-install" href="https://metamask.io/download/" target="_blank" rel="noopener">Install a wallet to sign</a>`;
+  $("account").innerHTML = `<div class="acct"><span class="k">Risk profile</span><div class="seg" role="group" aria-label="Risk profile">${seg}</div></div>${wallet}`;
+  $("account").querySelectorAll("[data-profile]").forEach((b) => { b.onclick = () => pickProfile(b.dataset.profile); });
+  if ($("walletConnect")) $("walletConnect").onclick = () => connectWallet();
+  bindTips($("account"));
+}
+async function pickProfile(name) {
+  if (!S.signer) return connectWallet(name);
+  if (name !== S.profile) await chooseProfile(name);
+}
+
+async function connectWallet(want) {
   S.signer = await demoSigner();
-  if (!S.signer) { log("No wallet connected: approve the connection in your wallet and try again.", "bad"); return; }
+  if (!S.signer) { log("No wallet connected: approve the connection in your wallet and try again.", "bad"); renderAccount(); return; }
   await loadProfile();
-  if (S.needsProfile) showPicker();
+  renderAccount();
+  if (want && want !== S.profile) await chooseProfile(want);
+  else if (S.needsProfile) showPicker();
   connect(); // the stream now follows the connected wallet
   await refreshAll();
 }
@@ -641,7 +673,10 @@ async function chooseProfile(name) {
     $("profilePick").hidden = true;
     renderStatus(); renderOpps(); renderDecision();
     renderBrief(true); renderAnswers();
-  } catch (e) { $("profileErr").textContent = `Not set: ${e.shortMessage || e.message}`; }
+  } catch (e) {
+    $("profileErr").textContent = `Not set: ${e.shortMessage || e.message}`;
+    if ($("profilePick").hidden) log(`Profile not changed: ${e.shortMessage || e.message}`, "bad");
+  }
 }
 
 // ── opportunities ────────────────────────────────────────────────────────
@@ -866,6 +901,9 @@ function renderDecision() {
   };
   tick(); timer = setInterval(tick, 250);
   if (live) $("approve").onclick = () => approve(d, kind, it.key);
+  else if (!S.signer && !READ_ONLY && injected() && d.verdict === "APPROVE") {
+    const b = $("approve"); b.disabled = false; b.textContent = "Connect wallet to sign"; b.onclick = () => connectWallet();
+  }
   renderWorkflow();
 }
 
