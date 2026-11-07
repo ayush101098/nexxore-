@@ -10,6 +10,10 @@ STATE="$APP/deploy/state"
 ANVIL_PORT="${ANVIL_PORT:-8545}"
 DATA="${DATA_DIR:-/data}"; mkdir -p "$DATA" 2>/dev/null && [ -w "$DATA" ] || DATA="$(mktemp -d)"
 : "${AQUA_FORK_RPC_URL:?set AQUA_FORK_RPC_URL (an Ethereum mainnet archive RPC) in the host environment}"
+# Pasted values often carry a trailing newline, space or quotes: strip them before anything reads them.
+for k in AQUA_FORK_RPC_URL ZG_API_KEY ARC_OPERATOR_KEY RISKPILOT_ENGINE_KEY DATABASE_URL ARC_RPC_URL; do
+  [ -n "${!k:-}" ] && export "$k=$(printf '%s' "${!k}" | tr -d "[:space:]\"'")"
+done
 # Check each secret's shape (never its value) so a pasted command or a truncated key fails with a clear message.
 bad=0
 case "$AQUA_FORK_RPC_URL" in http://*|https://*|ws://*|wss://*) ;; *) echo "AQUA_FORK_RPC_URL must be a URL (https://eth-mainnet.g.alchemy.com/v2/…), not a command"; bad=1;; esac
