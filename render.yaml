@@ -22,8 +22,8 @@ services:
         - riskpilot/engine/**
         - riskpilot/shared/**
         - riskpilot/contracts/arc/deployments/**
-    # The free plan has no persistent disk: the engine DB lives in /tmp, so decision history starts
-    # fresh after a restart (the chain does anyway). On starter, add: disk {name, mountPath: /data, sizeGB: 1}.
+    # Decisions, profiles, executions, settlements and assistant answers live in Neon Postgres
+    # (DATABASE_URL), so they survive restarts on the free plan; without it, SQLite in /tmp.
     envVars:
       - key: AQUA_FORK_RPC_URL   # an Ethereum mainnet archive RPC (Alchemy)
         sync: false
@@ -32,6 +32,8 @@ services:
       - key: ARC_OPERATOR_KEY    # the arc-worker's operator key (riskpilot/.secrets/arc-operator.key)
         sync: false
       - key: RISKPILOT_ENGINE_KEY  # decision signatures (riskpilot/.secrets/engine.key)
+        sync: false
+      - key: DATABASE_URL        # Neon Postgres, pooled connection string (postgresql://…?sslmode=require)
         sync: false
       - key: ARC_RPC_URL
         value: https://rpc.testnet.arc.io

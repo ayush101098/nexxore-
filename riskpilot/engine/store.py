@@ -1,4 +1,7 @@
-"""SQLite storage for decisions, positions and executions. Enough for the demo."""
+"""Storage for decisions, positions, executions, profiles, settlements and the assistant log.
+
+SQLite locally (Store); Postgres for the hosted agent (store_pg.PgStore), picked by open_store().
+"""
 
 import json
 import sqlite3
@@ -143,3 +146,12 @@ class Store:
         w = wallet.lower()
         return sorted((c for c in self._read("SELECT body FROM assistant_contexts") if c.get("wallet") == w),
                       key=lambda c: c.get("as_of", ""))
+
+
+def open_store(target: str):
+    """A postgres:// or postgresql:// URL opens Postgres (Neon); anything else is a SQLite path."""
+    if target.startswith(("postgres://", "postgresql://")):
+        from store_pg import PgStore
+
+        return PgStore(target)
+    return Store(target)

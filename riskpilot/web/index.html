@@ -999,6 +999,7 @@ async function renderAqua() {
       }
       h += `</div>`;
     }
+    if (!S.up.engine) { el.innerHTML = unavailable("engine"); return; } // the engine went down while reading
     el.innerHTML = h + `<p class="empty">Options-like payoffs from swap curves.</p>`;
     bindTips(el);
   } catch (e) { el.innerHTML = unavailable("demo chain: " + (e.shortMessage || e.message)); }
@@ -1047,6 +1048,7 @@ async function renderHook() {
     html += pts.length ? `<div class="sub"><span>Fee per block · ${pts.length} FeeUpdated events</span></div>${feeChart(pts, Number(h.static_fee) / 1e4)}` : `<p class="empty">No fee updates on chain yet.</p>`;
   } catch (e) { html += unavailable("FeeUpdated logs: " + (e.shortMessage || e.message)); }
   html += await v4Swaps();
+  if (!S.up.engine) { el.innerHTML = unavailable("engine"); return; } // the engine went down while reading
   el.innerHTML = html; bindTips(el);
 }
 
@@ -1105,6 +1107,7 @@ async function renderArc(force = false) {
     rows.sort((a, b) => Number(a.b - b.b));
     h += rows.length ? rows.map((r) => `<div class="line" data-testid="arc-row" ${tip("Arc Funded / Settled logs", at)}>${esc(r.t)} ${hashChip(r.tx, explorer && `${explorer}/tx/${r.tx}`)}${r.extra}</div>`).join("")
       : `<p class="empty">No escrows yet. Funding happens inside Approve and sign.</p>`;
+    if (!S.up.engine) { el.innerHTML = unavailable("engine"); return; } // the engine went down while reading
     el.innerHTML = h; bindTips(el); el.dataset.ok = "1";
     el.querySelectorAll("[data-refund]").forEach((b) => { b.onclick = () => refundArc(b.dataset.refund, dep); });
   } catch (e) { el.innerHTML = unavailable("Arc: " + (e.shortMessage || e.message)); delete el.dataset.ok; }
@@ -1310,7 +1313,9 @@ async function refreshAll() {
 function engineDown() {
   if (!S.up.engine && !S.seed) return;
   S.up.engine = false; S.seed = null; S.seedErr = "engine"; S.perf.downAt = performance.now();
-  renderStatus(); renderOpps(); renderDecision(); renderHistory(); renderPositions(); renderBrief();
+  renderStatus(); renderOpps(); renderDecision(); renderHistory(); renderBrief();
+  // Straight away, not queued behind a positions render that may be waiting on Arc's RPC.
+  renderAqua(); renderHook(); renderArc(true);
 }
 
 // Push, not polling: the engine streams block, opportunity, decision, health and settlement events.

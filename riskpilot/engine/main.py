@@ -13,7 +13,7 @@ import time
 from api import create_app
 from arc_worker import ArcWorker
 from demo import load_arc
-from store import Store
+from store import open_store
 
 
 class JsonLogs(logging.Formatter):
@@ -32,7 +32,8 @@ logging.getLogger("riskpilot").handlers = [handler]
 logging.getLogger("riskpilot").setLevel(logging.INFO)
 logging.getLogger("riskpilot").propagate = False
 
-store = Store(os.environ.get("RISKPILOT_DB", "riskpilot.db"))
+# DATABASE_URL (Neon Postgres) on the hosted agent; a SQLite file locally.
+store = open_store(os.environ.get("DATABASE_URL") or os.environ.get("RISKPILOT_DB", "riskpilot.db"))
 arc = load_arc()
 worker = None
 _arc_cache: dict = {}
