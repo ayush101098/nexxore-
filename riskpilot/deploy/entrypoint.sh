@@ -10,6 +10,14 @@ STATE="$APP/deploy/state"
 ANVIL_PORT="${ANVIL_PORT:-8545}"
 DATA="${DATA_DIR:-/data}"; mkdir -p "$DATA" 2>/dev/null && [ -w "$DATA" ] || DATA="$(mktemp -d)"
 : "${AQUA_FORK_RPC_URL:?set AQUA_FORK_RPC_URL (an Ethereum mainnet archive RPC) in the host environment}"
+# Check each secret's shape (never its value) so a pasted command or a truncated key fails with a clear message.
+bad=0
+case "$AQUA_FORK_RPC_URL" in http://*|https://*|ws://*|wss://*) ;; *) echo "AQUA_FORK_RPC_URL must be a URL (https://eth-mainnet.g.alchemy.com/v2/…), not a command"; bad=1;; esac
+for k in ARC_OPERATOR_KEY RISKPILOT_ENGINE_KEY; do
+  v="${!k:-}"; [ -z "$v" ] || [[ "$v" =~ ^(0x)?[0-9a-fA-F]{64}$ ]] || { echo "$k must be a 64-hex private key (got ${#v} characters)"; bad=1; }
+done
+case "${DATABASE_URL:-postgresql://}" in postgres://*|postgresql://*) ;; *) echo "DATABASE_URL must start with postgresql://"; bad=1;; esac
+[ "$bad" = 0 ] || exit 1
 BLOCK=26354292
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 
